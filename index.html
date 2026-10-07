@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Aplikacja do nauki hiragany — 46 podstawowych znaków japońskich z animacjami kresek i trybem egzaminu.">
+  <title>Hiragana — nauka i egzamin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script>
+    document.documentElement.dataset.theme =
+    localStorage.getItem('hiragana-theme') ||
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">JAPOŃSKI • HIRAGANA</div>
+        <h1>Hiragana</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="homeBtn" class="ghost hidden">← Menu</button>
+        <button id="muteToggle" class="icon-btn" type="button" aria-label="Wycisz dźwięk"></button>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Zmień motyw"></button>
+      </div>
+    </header>
+
+    <main id="app"></main>
+
+    <footer>
+      <span>Prosta aplikacja lokalna</span>
+      <span>•</span>
+      <span>46 podstawowych znaków + ん</span>
+      <span>•</span>
+      <span>Kształty znaków: KanjiVG (CC BY-SA 3.0)</span>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
