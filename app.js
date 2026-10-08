@@ -91,6 +91,26 @@ function getAll() {
   );
 }
 
+/*
+   Kategorie używane przez zwijane sekcje w trybie nauki.
+   Kategoria jest wyprowadzana z istniejącego `group.id`, więc nie duplikujemy
+   żadnych danych kana — korzystamy z `scriptData` przez `getGroups()`.
+   Kolejność sekcji i kana wewnątrz nich jest zgodna z kolejnością `getGroups()`.
+*/
+const LEARN_CATEGORIES = [
+  { id: 'basic', label: 'Basic', openByDefault: true },
+  { id: 'dakuten', label: 'Dakuten' },
+  { id: 'handakuten', label: 'Handakuten' },
+  { id: 'yoon', label: 'Yōon' }
+];
+
+function learnCategoryOf(groupId) {
+  if (groupId.startsWith('dakuten')) return 'dakuten';
+  if (groupId.startsWith('handakuten')) return 'handakuten';
+  if (groupId.startsWith('yoon')) return 'yoon';
+  return 'basic';
+}
+
 function getStrokeText() {
   return scriptData[state.script].strokeText;
 }
@@ -1515,30 +1535,40 @@ function renderSettingsFocused(focusKey) {
 
 function renderLearn() {
   const current = item(state.kana);
-  const currentGroup = getGroup(state.group);
   const count = getStrokeCounts()[state.kana];
 
   app.innerHTML = `
     <section class="learner">
 
       <aside class="sidebar card">
-        <h3>Rzędy</h3>
-        <div class="group-grid">
-          ${getGroups().map(group => `
-            <button class="group-btn ${group.id === state.group ? 'active' : ''}" data-group="${group.id}">
-              ${group.shortName}
-            </button>
-          `).join('')}
-        </div>
+        <h3>Znaki</h3>
 
-        <h3 style="margin-top:20px">Znaki</h3>
-        <div class="kana-list">
-          ${currentGroup.chars.map(([kana, romaji]) => `
-            <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" title="${romaji}">
-              ${kana}
-            </button>
-          `).join('')}
-        </div>
+        ${LEARN_CATEGORIES.map(category => {
+          // grupy w kolejności getGroups() — kolejność znaków bez zmian
+          const groups = getGroups().filter(group => learnCategoryOf(group.id) === category.id);
+          const count = groups.reduce((sum, group) => sum + group.chars.length, 0);
+
+          // sekcja z aktywnym znakiem jest otwarta; dzięki temu nawigacja
+          // klawiaturowa automatycznie odsłania kategorię docelową
+          const holdsActive = groups.some(group => group.id === state.group);
+          const open = category.openByDefault || holdsActive;
+
+          return `
+            <details class="learn-section" data-category="${category.id}"${open ? ' open' : ''}>
+              <summary class="learn-section-head">
+                <span class="learn-section-label">${category.label}</span>
+                <span class="learn-section-count">${count}</span>
+              </summary>
+              <div class="learn-section-body">
+                ${groups.map(group => group.chars.map(([kana, romaji]) => `
+                  <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.id}" title="${romaji}">
+                    ${kana}
+                  </button>
+                `).join('')).join('')}
+              </div>
+            </details>
+          `;
+        }).join('')}
 
         <div class="keyboard-hints">
           <small>← → nawigacja • Spacja/R odtwórz • Enter kreska • A cały znak</small>
@@ -1594,20 +1624,13 @@ function renderLearn() {
     </section>
   `;
 
-  /* przełączanie rzędów */
-  document.querySelectorAll('[data-group]').forEach(button => {
-    button.onclick = () => {
-      Audio.click();
-      state.group = button.dataset.group;
-      state.kana = getGroup(state.group).chars[0][0];
-      renderLearn();
-    };
-  });
-
-  /* przełączanie znaków */
+  /* wybór znaku — ustawiamy też grupę, bo wszystkie znaki są teraz widoczne
+     naraz; samo `state.kana` rozjechałoby się z `state.group` używanym
+     przez nawigację i nagłówek karty */
   document.querySelectorAll('[data-kana]').forEach(button => {
     button.onclick = () => {
       Audio.click();
+      state.group = button.dataset.group;
       state.kana = button.dataset.kana;
       renderLearn();
     };

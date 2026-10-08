@@ -578,13 +578,6 @@ footer {
   margin: 4px 0 12px;
 }
 
-.group-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
-}
-
-.group-btn,
 .kana-btn {
   border: 1px solid var(--line);
   background: var(--card-solid);
@@ -599,24 +592,92 @@ footer {
     transform .15s ease;
 }
 
-.group-btn:hover,
 .kana-btn:hover {
   border-color: var(--accent-hover);
   transform: translateY(-1px);
 }
 
-.group-btn.active {
-  background: var(--soft);
-  border-color: #c8b0ff;
-  color: var(--accent-dark);
-  font-weight: 800;
+/* =========================================================
+   LEARN: KATEGORIE KANA (accordion)
+   Zastępuje poprzednią siatkę przycisków "Rzędy".
+========================================================= */
+
+.learn-section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card-solid);
+  margin-top: 8px;
+  overflow: hidden;
 }
 
-.kana-list {
-  margin-top: 16px;
+.learn-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 13px;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+  transition: background .15s ease;
+}
+
+.learn-section-head::-webkit-details-marker {
+  display: none;
+}
+
+/* własna strzałka — nie zależna od domyślnego markera przeglądarki */
+.learn-section-head::before {
+  content: '▶';
+  font-size: .7rem;
+  color: var(--accent);
+  transition: transform .15s ease;
+  flex: 0 0 auto;
+}
+
+.learn-section[open] > .learn-section-head::before {
+  transform: rotate(90deg);
+}
+
+.learn-section-head:hover {
+  background: var(--soft);
+}
+
+.learn-section-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.learn-section-label {
+  flex: 1 1 auto;
+}
+
+.learn-section-count {
+  flex: 0 0 auto;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--progress-bg);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.learn-section-body {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 7px;
+  padding: 4px 13px 13px;
+  min-width: 0;
+}
+
+/*
+   `min-width: 0` pozwala kolumnom skurczyć się poniżej min-content kana,
+   dzięki czemu siatka nie wypycha poza ekran na wąskich viewportach
+   (domyślne `min-width: auto` pozwalałoby przyciskiem rozpychać kolumny).
+*/
+.learn-section-body .kana-btn {
+  min-width: 0;
 }
 
 .kana-btn {
