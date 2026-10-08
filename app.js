@@ -1292,6 +1292,8 @@ function renderMenu() {
       <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
     </div>
 
+    ${masteryDonutHTML()}
+
     <section class="menu">
       <button class="menu-card" id="learnCard">
         <div class="menu-icon">✍️</div>
@@ -1311,8 +1313,6 @@ function renderMenu() {
         <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>
       </button>
     </section>
-
-    ${masteryDonutHTML()}
   `;
 
   document.getElementById('learnCard').onclick = () => { Audio.click(); setScreen('learn'); };
