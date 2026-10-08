@@ -108,6 +108,115 @@ function getLookalikes() {
 
 
 /* =========================================================
+   USTAWIENIA — jedyne źródło prawdy dla preferencji
+
+   Blok MUSI być zadeklarowany przed `Audio` i `state`, bo obie
+   te rzeczy czytają ustawienia w trakcie ewaluacji modułu.
+   Walidacja celowo NIE korzysta ze `state` ani `scriptData`,
+   bo `state` jeszcze w tym momencie nie istnieje.
+   ========================================================= */
+
+const SETTINGS_STORE_KEY = 'hiragana-settings';
+
+// klucze sprzed T26 — pozostają w localStorage, służą do odtworzenia
+const LEGACY_THEME_KEY = 'hiragana-theme';
+const LEGACY_MUTED_KEY = 'hiragana-muted';
+
+const SETTINGS_DEFAULTS = {
+  theme: 'system',
+  muted: false,
+  script: 'hiragana'
+};
+
+const THEME_VALUES = ['light', 'dark', 'system'];
+const SCRIPT_VALUES = ['hiragana', 'katakana'];
+
+/*
+ * Zwraca `{ theme, muted, script }`, gdzie każde pole to poprawna
+ * wartość albo `null`, gdy w źródle jest brak lub błędna wartość.
+ * Nieznane pola są odrzucane. Nie zależy od `state` ani `scriptData`.
+ */
+function validateSettings(raw) {
+  const src = (raw && typeof raw === 'object') ? raw : {};
+
+  return {
+    theme: THEME_VALUES.includes(src.theme) ? src.theme : null,
+    muted: typeof src.muted === 'boolean' ? src.muted : null,
+    script: SCRIPT_VALUES.includes(src.script) ? src.script : null
+  };
+}
+
+function readLegacyTheme() {
+  try {
+    const value = localStorage.getItem(LEGACY_THEME_KEY);
+    return (value === 'light' || value === 'dark') ? value : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function readLegacyMuted() {
+  try {
+    return localStorage.getItem(LEGACY_MUTED_KEY) === 'true';
+  } catch (error) {
+    return false;
+  }
+}
+
+/*
+ * Odczyt z klucza `hiragana-settings` z odtworzeniem pole po polu:
+ * poprawna wartość → klucz sprzed T26 → wartość domyślna.
+ * Zapisujemy tylko wtedy, gdy faktycznie coś naprawiliśmy,
+ * żeby zwykłe wczytanie nie pisało do localStorage.
+ */
+function loadSettings() {
+  let raw = null;
+  let stored = false;
+
+  try {
+    const value = localStorage.getItem(SETTINGS_STORE_KEY);
+    if (value !== null) {
+      stored = true;
+      raw = JSON.parse(value);
+    }
+  } catch (error) {
+    raw = null;   // uszkodzony JSON — traktujemy jak brak danych
+  }
+
+  const valid = validateSettings(raw);
+
+  const normalized = {
+    theme: valid.theme || readLegacyTheme() || SETTINGS_DEFAULTS.theme,
+    muted: valid.muted !== null ? valid.muted : readLegacyMuted(),
+    script: valid.script || SETTINGS_DEFAULTS.script
+  };
+
+  let rewrite = !stored;
+  if (stored) {
+    try {
+      rewrite = JSON.stringify(raw) !== JSON.stringify(normalized);
+    } catch (error) {
+      rewrite = true;
+    }
+  }
+
+  if (rewrite) saveSettings(normalized);
+
+  return normalized;
+}
+
+function saveSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_STORE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    /* np. tryb prywatny - aplikacja działa dalej bez zapisu */
+  }
+}
+
+let settings = loadSettings();
+
+
+/* =========================================================
    DANE: KRESKI (Hiragana)
    Każdy element tablicy = JEDNA osobna kreska, w kolejności
    rysowania. Opisy są orientacyjne — warto je porównać
@@ -441,7 +550,7 @@ scriptData.katakana.strokeText = katakanaStrokeText;
 
 const Audio = (() => {
   let ctx = null;
-  let muted = localStorage.getItem('hiragana-muted') === 'true';
+  let muted = settings.muted;
 
   function getCtx() {
     if (!ctx) {
@@ -489,9 +598,8 @@ const Audio = (() => {
       tone(1046.5, 0.25, 'sine', 0.22, 0.36);
     },
     get muted() { return muted; },
-    toggleMute() {
-      muted = !muted;
-      localStorage.setItem('hiragana-muted', String(muted));
+    setMuted(value) {
+      muted = !!value;
       return muted;
     }
   };
@@ -504,14 +612,23 @@ const Audio = (() => {
 
 const state = {
   screen: 'menu',
-  script: 'hiragana',
+  script: settings.script,
   group: 'a',
   kana: 'あ',
   exam: null,
-  theme:
-    localStorage.getItem('hiragana-theme') ||
-    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  // preferencja żyje w `settings.theme`; tu trzymamy tę samą wartość surową,
+  // bo `updateThemeButton()` rozróżnia 'system' (ikona ◐), a `resolveTheme()`
+  // i tak rozstrzyga 'system' przy każdym zastosowaniu motywu
+  theme: settings.theme
 };
+
+// grupa i znak zawsze muszą należeć do aktywnego skryptu
+// (inaczej np. przy starcie w Katakanie `state.kana` wskazywałoby 'あ')
+{
+  const firstGroup = getGroups()[0];
+  state.group = firstGroup.id;
+  state.kana = firstGroup.chars[0][0];
+}
 
 const app = document.getElementById('app');
 const homeBtn = document.getElementById('homeBtn');
@@ -1012,10 +1129,52 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
    MOTYW + DŹWIĘK
 ========================================================= */
 
+/*
+ * 'system' zamieniamy na konkretny motyw już w T1, żeby zachować
+ * dotychczasowe zachowanie i nie ustawiać data-theme="system",
+ * którego CSS jeszcze nie obsługuje. T2 doda nasłuch zmiany OS.
+ */
+function resolveTheme(theme) {
+  if (THEME_VALUES.includes(theme) && theme !== 'system') return theme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 function applyTheme() {
-  document.documentElement.dataset.theme = state.theme;
-  localStorage.setItem('hiragana-theme', state.theme);
+  document.documentElement.dataset.theme = resolveTheme(state.theme);
   updateThemeButton();
+}
+
+/* --- ustawienia: jedyna ścieżka zapisu preferencji --- */
+
+function setTheme(theme) {
+  if (!THEME_VALUES.includes(theme)) return;
+
+  settings.theme = theme;
+  state.theme = theme;
+  saveSettings(settings);
+  applyTheme();
+}
+
+function setMuted(value) {
+  settings.muted = !!value;
+  saveSettings(settings);
+  Audio.setMuted(settings.muted);
+  updateMuteButton();
+}
+
+function setScript(script) {
+  if (!SCRIPT_VALUES.includes(script)) return;
+
+  settings.script = script;
+  state.script = script;
+
+  // zależny stan grupy i znaku musi zawsze należeć do nowego skryptu
+  const firstGroup = getGroups()[0];
+  state.group = firstGroup.id;
+  state.kana = firstGroup.chars[0][0];
+
+  saveSettings(settings);
+  updateScriptHeader();
 }
 
 function updateThemeButton() {
@@ -1034,14 +1193,27 @@ function updateThemeButton() {
   }
 }
 
+function updateMuteButton() {
+  const button = document.getElementById('muteToggle');
+  if (!button) return;
+
+  button.innerHTML = Audio.muted ? '🔇' : '🔊';
+  button.title = Audio.muted ? 'Włącz dźwięk' : 'Wycisz';
+}
+
 function createThemeToggle() {
   const button = document.getElementById('themeToggle');
   if (!button) return;
 
+  /*
+   * Decyzja idzie po aktualnie *widocznym* motywie, nie po `state.theme`.
+   * Przy preferencji 'system' `state.theme` to 'system', więc porównanie
+   * `=== 'dark'` dawałoby 'dark' i pierwsze kliknięcie nic by nie zmieniło
+   * (martwe kliknięcie, gdy systemowy motyw to ciemny).
+   */
   button.onclick = () => {
     Audio.click();
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    applyTheme();
+    setTheme(resolveTheme(state.theme) === 'dark' ? 'light' : 'dark');
   };
 
   updateThemeButton();
@@ -1051,17 +1223,11 @@ function setupMuteToggle() {
   const button = document.getElementById('muteToggle');
   if (!button) return;
 
-  function updateIcon() {
-    button.innerHTML = Audio.muted ? '🔇' : '🔊';
-    button.title = Audio.muted ? 'Włącz dźwięk' : 'Wycisz';
-  }
-
   button.onclick = () => {
-    Audio.toggleMute();
-    updateIcon();
+    setMuted(!Audio.muted);
   };
 
-  updateIcon();
+  updateMuteButton();
 }
 
 
@@ -1095,6 +1261,7 @@ function render() {
   if (state.screen === 'menu') renderMenu();
   if (state.screen === 'learn') renderLearn();
   if (state.screen === 'exam') renderExam();
+  if (state.screen === 'settings') renderSettings();
 }
 
 // zawsze trzeba zatrzymać timer, żeby po wyjściu nie wyskoczyło nowe pytanie
@@ -1124,13 +1291,19 @@ function renderMenu() {
       <button class="menu-card" id="learnCard">
         <div class="menu-icon">✍️</div>
         <h2>Tryb nauki</h2>
-        <p>Wybierz rząd hiragany, zobacz znak, liczbę kresek i prawidłową kolejność ich rysowania.</p>
+        <p>Wybierz rząd ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, zobacz znak, liczbę kresek i prawidłową kolejność ich rysowania.</p>
       </button>
 
       <button class="menu-card" id="examCard">
         <div class="menu-icon">📝</div>
         <h2>Tryb egzaminu</h2>
         <p>Wybierz zakres znaków i ćwicz tak długo, jak chcesz. Błędy dostajesz w formie fiszki.</p>
+      </button>
+
+      <button class="menu-card settings-entry" id="settingsCard">
+        <div class="menu-icon">⚙️</div>
+        <h2>Ustawienia</h2>
+        <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>
       </button>
     </section>
 
@@ -1149,18 +1322,190 @@ function renderMenu() {
     homeBtn.classList.remove('hidden');
     showExamSetup();
   };
+  document.getElementById('settingsCard').onclick = () => { Audio.click(); setScreen('settings'); };
 
   document.querySelectorAll('[data-script]').forEach(btn => {
     btn.onclick = () => {
       Audio.click();
-      state.script = btn.dataset.script;
-      const firstGroup = getGroups()[0];
-      state.group = firstGroup.id;
-      state.kana = firstGroup.chars[0][0];
-      updateScriptHeader();
+      setScript(btn.dataset.script);
       renderMenu();
     };
   });
+}
+
+
+/* =========================================================
+   USTAWIENIA
+   ========================================================= */
+
+/*
+ * Klucze localStorage należące do aplikacji — używane tylko przy "wyczyść wszystko".
+ * Funkcja, a nie stała: `PROGRESS_KEY` i `SETTINGS_KEY` są deklarowane niżej
+ * w pliku, więc lista musi być budowana dopiero w chwili użycia.
+ */
+function appStorageKeys() {
+  return [
+    SETTINGS_STORE_KEY,
+    SETTINGS_KEY,
+    PROGRESS_KEY,
+    LEGACY_THEME_KEY,
+    LEGACY_MUTED_KEY
+  ];
+}
+
+/*
+   * `data-focus-key` służy do przywracania fokusu po przerysowaniu
+   * (patrz renderSettingsFocused) — dzięki niemu nie trzeba szukać po labelu.
+   */
+function settingsPill(value, current, label, attr, focusKey) {
+  const active = value === current;
+  return `<button class="script-btn ${active ? 'active' : ''}" ${attr}="${value}" data-focus-key="${focusKey}" aria-pressed="${active}">${label}</button>`;
+}
+
+function resetProgressData() {
+  progress = { version: 1, chars: {} };
+  saveProgress();
+}
+
+function resetSettings() {
+  setTheme(SETTINGS_DEFAULTS.theme);
+  setMuted(SETTINGS_DEFAULTS.muted);
+  setScript(SETTINGS_DEFAULTS.script);
+}
+
+function clearAllData() {
+  stopExam();
+
+  appStorageKeys().forEach(key => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      /* np. tryb prywatny - pomijamy */
+    }
+  });
+
+  // ponowne wczytanie odtwarza stan świeżej instalacji
+  settings = loadSettings();
+  progress = loadProgress();
+
+  state.script = settings.script;
+  state.theme = settings.theme;   // surowa preferencja, tak jak przy starcie
+  Audio.setMuted(settings.muted);
+
+  const firstGroup = getGroups()[0];
+  state.group = firstGroup.id;
+  state.kana = firstGroup.chars[0][0];
+}
+
+function renderSettings() {
+  app.innerHTML = `
+    <section class="settings">
+      <div class="eyebrow">USTAWIENIA</div>
+      <h2>Ustawienia</h2>
+
+      <div class="settings-group card">
+        <h3>Wygląd</h3>
+        <div class="settings-row">
+          <span class="settings-label" id="themeLabel">Motyw</span>
+          <div class="settings-pills" role="group" aria-labelledby="themeLabel">
+            ${settingsPill('light', settings.theme, 'Jasny', 'data-theme-set', 'theme-light')}
+            ${settingsPill('dark', settings.theme, 'Ciemny', 'data-theme-set', 'theme-dark')}
+            ${settingsPill('system', settings.theme, 'Systemowy', 'data-theme-set', 'theme-system')}
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group card">
+        <h3>Dźwięk</h3>
+        <div class="settings-row">
+          <span class="settings-label" id="soundLabel">Efekty dźwiękowe</span>
+          <div class="settings-pills" role="group" aria-labelledby="soundLabel">
+            ${settingsPill('false', String(settings.muted), 'Włączone', 'data-muted-set', 'muted-false')}
+            ${settingsPill('true', String(settings.muted), 'Wyłączone', 'data-muted-set', 'muted-true')}
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group card">
+        <h3>Nauka</h3>
+        <div class="settings-row">
+          <span class="settings-label" id="scriptLabel">Domyślny skrypt</span>
+          <div class="settings-pills" role="group" aria-labelledby="scriptLabel">
+            ${settingsPill('hiragana', settings.script, 'ひ Hiragana', 'data-script-set', 'script-hiragana')}
+            ${settingsPill('katakana', settings.script, 'カ Katakana', 'data-script-set', 'script-katakana')}
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group card">
+        <h3>Dane</h3>
+        <div class="settings-actions">
+          <button class="btn btn-secondary" id="resetSettingsBtn" data-focus-key="reset-settings">Przywróć ustawienia domyślne</button>
+          <button class="btn btn-secondary" id="resetProgressBtn" data-focus-key="reset-progress">Zresetuj postęp</button>
+          <button class="btn btn-danger" id="clearAllDataBtn" data-focus-key="clear-all">Wyczyść wszystkie dane</button>
+        </div>
+      </div>
+    </section>
+  `;
+
+  document.querySelectorAll('[data-theme-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setTheme(btn.dataset.themeSet);
+      renderSettingsFocused('theme-' + btn.dataset.themeSet);
+    };
+  });
+
+  document.querySelectorAll('[data-muted-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setMuted(btn.dataset.mutedSet === 'true');
+      renderSettingsFocused('muted-' + btn.dataset.mutedSet);
+    };
+  });
+
+  document.querySelectorAll('[data-script-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setScript(btn.dataset.scriptSet);
+      renderSettingsFocused('script-' + btn.dataset.scriptSet);
+    };
+  });
+
+  document.getElementById('resetSettingsBtn').onclick = () => {
+    if (confirm('Przywrócić ustawienia domyślne? Postępy i ustawienia egzaminu zostaną bez zmian.')) {
+      resetSettings();
+      renderSettingsFocused('reset-settings');
+    }
+  };
+
+  document.getElementById('resetProgressBtn').onclick = () => {
+    if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?')) {
+      resetProgressData();
+      renderSettingsFocused('reset-progress');
+    }
+  };
+
+  document.getElementById('clearAllDataBtn').onclick = () => {
+    if (!confirm('Wyczyść WSZYSTKIE dane aplikacji? Ustawienia, postępy i ustawienia egzaminu zostaną usunięte. Tej operacji nie można cofnąć.')) return;
+    if (!confirm('Na pewno? Zostaniesz z aplikacją jak po świeżej instalacji.')) return;
+
+    clearAllData();
+    renderSettingsFocused('clear-all');
+  };
+}
+
+/*
+   * Każde ustawienie zapisuje się natychmiast i przerysowuje ekran, a `render()`
+   * podmienia cały `innerHTML` — fokus przepadłby wtedy na `<body>` i osoba
+   * obsługująca klawiaturę musiałaby zaczynać Tab od nowa. Dlatego po
+   * przerysowaniu przywracamy fokus na tym samym kontrolu.
+   */
+function renderSettingsFocused(focusKey) {
+  render();
+
+  const target = app.querySelector(`[data-focus-key="${focusKey}"]`);
+  if (target) target.focus();
 }
 
 
@@ -1824,7 +2169,7 @@ function showExamSetup() {
       <h2>Wybierz zakres</h2>
 
       <p style="color:var(--muted)">
-        Zaznacz rzędy hiragany, które chcesz ćwiczyć.
+        Zaznacz rzędy ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, które chcesz ćwiczyć.
         Egzamin trwa tak długo, jak chcesz. Znaki, które sprawiają Ci trudność,
         będą wracały częściej.
       </p>
@@ -1944,8 +2289,7 @@ function showExamSetup() {
   if (resetButton) {
     resetButton.onclick = () => {
       if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?')) {
-        progress = { version: 1, chars: {} };
-        saveProgress();
+        resetProgressData();
         showExamSetup();
       }
     };
