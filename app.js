@@ -3129,3 +3129,88 @@ function resultText(score, total) {
 ========================================================= */
 
 render();
+
+
+/* =========================================================
+   T14 — OFFLINE PWA
+   ------------------------------------------------------------
+   Tylko rejestracja Service Workera i komunikat o nowej wersji.
+   Świadomie nie dotyka: setScript, settings, localStorage, Audio,
+   render/setScreen. Dzięki temu aktywna sesja (np. trwający Exam)
+   nigdy nie jest przerywana automatycznym reloadem.
+   ========================================================= */
+
+function showUpdateBanner(registration) {
+  if (document.getElementById('updateBanner')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'updateBanner';
+
+  // style inline, żeby style.css pozostał nietknięty (T14)
+  banner.style.cssText = [
+    'position:fixed', 'left:12px', 'right:12px', 'bottom:12px', 'z-index:9999',
+    'display:flex', 'align-items:center', 'gap:12px', 'flex-wrap:wrap',
+    'padding:12px 14px', 'border-radius:16px',
+    'border:1px solid var(--line)', 'background:var(--card-solid)',
+    'color:var(--ink)', 'box-shadow:var(--shadow)',
+    'font-size:.9rem', 'font-weight:600', 'max-width:520px', 'margin:0 auto'
+  ].join(';');
+
+  const text = document.createElement('span');
+  text.style.cssText = 'flex:1 1 180px';
+  text.textContent = 'Nowa wersja dostępna — Odśwież';
+
+  const reloadBtn = document.createElement('button');
+  reloadBtn.type = 'button';
+  reloadBtn.textContent = 'Odśwież';
+  reloadBtn.style.cssText = [
+    'font:inherit', 'font-weight:700', 'cursor:pointer',
+    'padding:8px 18px', 'border-radius:999px',
+    'border:2px solid var(--accent)', 'background:var(--accent)', 'color:#fff'
+  ].join(';');
+
+  // Reload TYLKO na świadome kliknięcie — nigdy automatycznie.
+  reloadBtn.onclick = () => {
+    const waiting = registration.waiting;
+    if (waiting) {
+      waiting.postMessage('SKIP_WAITING');
+      waiting.addEventListener('statechange', function onChange(e) {
+        if (e.target.state === 'activated') location.reload();
+      });
+    } else {
+      location.reload();
+    }
+  };
+
+  banner.append(text, reloadBtn);
+  document.body.appendChild(banner);
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  // `sw.js` leży obok index.html, więc scope = katalog aplikacji
+  // (/hiragana-study/ na GitHub Pages, / na localhost).
+  navigator.serviceWorker.register('sw.js').then(registration => {
+    registration.addEventListener('updatefound', () => {
+      const installing = registration.installing;
+      if (!installing) return;
+
+      installing.addEventListener('statechange', () => {
+        // `controller` istnieje = to nie pierwsza instalacja,
+        // więc nowy SW przejmuje kontrolę dopiero po reloadzie.
+        if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner(registration);
+        }
+      });
+    });
+  }).catch(() => {
+    /* np. brak secure context — aplikacja działa jak dotąd */
+  });
+}
+
+if (document.readyState === 'complete') {
+  registerServiceWorker();
+} else {
+  window.addEventListener('load', registerServiceWorker, { once: true });
+}
