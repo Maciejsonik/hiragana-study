@@ -1178,32 +1178,50 @@ function progressSummary() {
 
 function loadExamSettings() {
   const defaults = {
-    groups: ['a'], options: 6, outside: true,
-    modes: { romajiKanaPick: true, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: false },
+    groups: ['a'],
+    options: 6,
+    limit: 0, // 0 = bez limitu
+    outside: true,
+    modes: {
+      romajiKanaPick: true,
+      kanaRomajiPick: false,
+      romajiKanaType: false,
+      kanaRomajiType: false
+    },
     timer: 0   // 0 = wyłączony, 5/10/15 = sekundy na pytanie
   };
 
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+
     if (saved) {
       const validGroups = (saved.groups || []).filter(id => getGroup(id));
       const modes = saved.modes || {};
+
       const parsedModes = {
         romajiKanaPick: modes.romajiKanaPick !== false,
         kanaRomajiPick: !!modes.kanaRomajiPick,
         romajiKanaType: !!modes.romajiKanaType,
         kanaRomajiType: !!modes.kanaRomajiType
       };
+
       // przynajmniej jeden tryb musi być aktywny
-      if (!parsedModes.romajiKanaPick && !parsedModes.kanaRomajiPick && !parsedModes.romajiKanaType && !parsedModes.kanaRomajiType) {
+      if (
+        !parsedModes.romajiKanaPick &&
+        !parsedModes.kanaRomajiPick &&
+        !parsedModes.romajiKanaType &&
+        !parsedModes.kanaRomajiType
+      ) {
         parsedModes.romajiKanaPick = true;
       }
+
       return {
         groups: validGroups.length ? validGroups : defaults.groups,
         options: [4, 6, 8].includes(saved.options) ? saved.options : defaults.options,
+        limit: [0, 5, 10, 20, 30].includes(saved.limit) ? saved.limit : defaults.limit,
         outside: saved.outside !== false,
         modes: parsedModes,
-        timer: [0, 5, 10, 15].includes(saved.timer) ? saved.timer : 0
+        timer: [0, 5, 10, 15].includes(saved.timer) ? saved.timer : defaults.timer
       };
     }
   } catch (error) {
@@ -1360,6 +1378,16 @@ function similarTo(kana) {
   return result;
 }
 
+function kanaCategory(c) {
+  const groupId = c.groupId;
+
+  if (groupId.startsWith('yoon-')) return 'yoon';
+  if (groupId.startsWith('handakuten-')) return 'handakuten';
+  if (groupId.startsWith('dakuten-')) return 'dakuten';
+
+  return 'basic';
+}
+
 /*
  * Rozpraszacze: znaki z wybranego zakresu (waga 2), opcjonalnie spoza zakresu (0.6),
  * z premią za podobny wygląd i za znaki, z którymi już to pytanie pomyliłeś.
@@ -1367,15 +1395,35 @@ function similarTo(kana) {
 function pickDistractors(question, count, pool, outside) {
   const inPool = new Set(pool.map(c => c.kana));
   const similar = similarTo(question.kana);
-  const confused = (progress.chars[question.kana] && progress.chars[question.kana].confused) || {};
+  const confused =
+    (progress.chars[question.kana] &&
+      progress.chars[question.kana].confused) || {};
+
+  const questionCategory = kanaCategory(question);
 
   const weighted = all
     .filter(c => c.kana !== question.kana)
     .map(c => {
-      if (!inPool.has(c.kana) && !outside) return null;
+      const isInPool = inPool.has(c.kana);
 
-      let w = inPool.has(c.kana) ? 2 : 0.6;
-      if (similar.has(c.kana)) w += 4;
+      if (!isInPool && !outside) return null;
+
+      const category = kanaCategory(c);
+
+      let w;
+
+      if (isInPool) {
+        w = 2;
+      } else if (category === questionCategory) {
+        w = 0.8;
+      } else {
+        w = 0.08;
+      }
+
+      if (similar.has(c.kana)) {
+        w += category === questionCategory ? 4 : 0.5;
+      }
+
       w += (confused[c.kana] || 0) * 3;
 
       return { item: c, w };
@@ -1462,6 +1510,7 @@ function readSetup() {
   return {
     selected: [...document.querySelectorAll('#examGroups input:checked')].map(input => input.value),
     options: Number(document.getElementById('optionsCount').value),
+    limit: Number(document.getElementById('questionLimit').value),
     outside: document.getElementById('outsideOpt').checked,
     modes: {
       romajiKanaPick: document.getElementById('modeA').checked,
@@ -1516,6 +1565,15 @@ function showExamSetup() {
         </label>
 
         <label>
+          Liczba pytań:
+          <select id="questionLimit">
+            ${[[0,'Bez limitu'],[5,'5'],[10,'10'],[20,'20'],[30,'30']]
+              .map(([v,l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
+              .join('')}
+          </select>
+        </label>
+
+        <label>
           Timer:
           <select id="timerOpt">
             ${[[0,'Wyłączony'],[5,'5s'],[10,'10s'],[15,'15s']].map(([v,l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`).join('')}
@@ -1563,7 +1621,7 @@ function showExamSetup() {
   document.getElementById('noGroups').onclick = () => { Audio.click(); setExamGroups([]); };
 
   document.getElementById('startSelectedExam').onclick = () => {
-    const { selected, options, outside, modes, timer } = readSetup();
+    const { selected, options, limit, outside, modes, timer } = readSetup();
 
     if (!selected.length) {
       document.getElementById('examSetupError').textContent = 'Wybierz przynajmniej jeden rząd.';
@@ -1576,8 +1634,8 @@ function showExamSetup() {
     }
 
     Audio.click();
-    saveExamSettings({ groups: selected, options, outside, modes, timer });
-    startExam(selected, { options, outside, modes, timer });
+    saveExamSettings({ groups: selected, options, limit, outside, modes, timer });
+    startExam(selected, { options, limit, outside, modes, timer });
   };
 
   const practiceButton = document.getElementById('practiceHardSetup');
@@ -1613,7 +1671,7 @@ function setExamGroups(groupIds) {
    EGZAMIN: PRZEBIEG
 ========================================================= */
 
-function startExam(groupIds, { kanaList = null, options, outside, modes, timer: timerSec } = {}) {
+function startExam(groupIds, { kanaList = null, options, limit, outside, modes, timer: timerSec } = {}) {
   stopExam();
 
   const settings = loadExamSettings();
@@ -1631,6 +1689,7 @@ function startExam(groupIds, { kanaList = null, options, outside, modes, timer: 
     groups: groupIds,
     kanaList,
     options: options || settings.options,
+    limit: limit !== undefined ? limit : settings.limit,
     outside: outside === undefined ? settings.outside : outside,
     enabledModes,
     currentMode: null,
@@ -1666,6 +1725,11 @@ function pickExamMode(exam) {
 function nextExamQuestion() {
   const exam = state.exam;
   if (!exam || exam.finished) return;
+
+  if (exam.limit > 0 && exam.total >= exam.limit) {
+    finishExam();
+    return;
+  }
 
   clearTimeout(exam.timer);
   clearInterval(exam.timerCountdown);
@@ -1777,6 +1841,18 @@ function examChromeHTML(exam, contentHTML) {
   `;
 }
 
+function examProgressHTML() {
+  const exam = state.exam;
+
+  if (!exam || exam.limit <= 0) return '';
+
+  return `
+    <div class="exam-progress">
+      Pytanie ${exam.total + 1} / ${exam.limit}
+    </div>
+  `;
+}
+
 function renderExamQuestion(question) {
   const exam = state.exam;
   const mode = exam.currentMode;
@@ -1801,6 +1877,8 @@ function renderRomajiToKanaPick(question) {
   const options = shuffle([question, ...wrongOptions]);
 
   const content = `
+    ${examProgressHTML()}
+
     <div class="prompt">
       <div class="polish">Jaki znak oznacza:</div>
       <div class="question">${question.romaji}</div>
@@ -1840,6 +1918,8 @@ function renderKanaToRomajiPick(question) {
   const options = shuffle([question, ...wrongOptions]);
 
   const content = `
+    ${examProgressHTML()}
+
     <div class="prompt">
       <div class="polish">Jakie romaji odpowiada temu znakowi:</div>
       <div class="question question-kana">${question.kana}</div>
@@ -1875,6 +1955,8 @@ function renderRomajiToKanaType(question) {
   const exam = state.exam;
 
   const content = `
+    ${examProgressHTML()}
+
     <div class="prompt">
       <div class="polish">Wpisz znak kana dla:</div>
       <div class="question">${question.romaji}</div>
@@ -1995,6 +2077,8 @@ function renderKanaToRomajiType(question) {
   const exam = state.exam;
 
   const content = `
+    ${examProgressHTML()}
+
     <div class="prompt">
       <div class="polish">Wpisz romaji dla tego znaku:</div>
       <div class="question question-kana">${question.kana}</div>
@@ -2084,12 +2168,51 @@ function renderKanaToRomajiType(question) {
 
 /* Punkty doświadczenia za poprawną odpowiedź */
 function calcXP(exam) {
-  let xp = 10;
-  if (exam.currentMode === 'romaji-kana-type' || exam.currentMode === 'kana-romaji-type') xp = 20;
-  if (exam.streak >= 5) xp += 5;
-  if (exam.streak >= 10) xp += 10;
-  if (exam.timerSec > 0) xp += 5;  // bonus za timer
-  return xp;
+  const baseXP = 10;
+
+  // Liczba odpowiedzi
+  const optionsMultiplier = {
+    4: 1.00,
+    6: 1.15,
+    8: 1.30
+  }[exam.options] || 1.00;
+
+  // Timer
+  const timerMultiplier = {
+    0: 1.00,
+    15: 1.10,
+    10: 1.20,
+    5: 1.35
+  }[exam.timerSec] || 1.00;
+
+  // Wpisywanie zamiast wyboru
+  const typingMultiplier =
+    exam.currentMode === 'romaji-kana-type' ||
+    exam.currentMode === 'kana-romaji-type'
+      ? 1.5
+      : 1.00;
+
+  // Streak
+  let streakMultiplier = 1.00;
+
+  if (exam.streak >= 12) {
+    streakMultiplier = 1.50;
+  } else if (exam.streak >= 8) {
+    streakMultiplier = 1.35;
+  } else if (exam.streak >= 5) {
+    streakMultiplier = 1.20;
+  } else if (exam.streak >= 3) {
+    streakMultiplier = 1.10;
+  }
+
+  const xp =
+    baseXP *
+    optionsMultiplier *
+    timerMultiplier *
+    typingMultiplier *
+    streakMultiplier;
+
+  return Math.round(xp);
 }
 
 /* Konfetti na ekranie wyniku */
