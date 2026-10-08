@@ -1,57 +1,121 @@
 /* =========================================================
-   DANE: RZĘDY
-========================================================= */
+   DANE: SKRYPTY (Hiragana / Katakana)
+   ========================================================= */
 
-const groups = [
-  { id: 'a', name: 'Samogłoski', shortName: 'Samo', chars: [['あ', 'a'], ['い', 'i'], ['う', 'u'], ['え', 'e'], ['お', 'o']] },
-  { id: 'k', name: 'K', shortName: 'K', chars: [['か', 'ka'], ['き', 'ki'], ['く', 'ku'], ['け', 'ke'], ['こ', 'ko']] },
-  { id: 's', name: 'S', shortName: 'S', chars: [['さ', 'sa'], ['し', 'shi'], ['す', 'su'], ['せ', 'se'], ['そ', 'so']] },
-  { id: 't', name: 'T', shortName: 'T', chars: [['た', 'ta'], ['ち', 'chi'], ['つ', 'tsu'], ['て', 'te'], ['と', 'to']] },
-  { id: 'n', name: 'N', shortName: 'N', chars: [['な', 'na'], ['に', 'ni'], ['ぬ', 'nu'], ['ね', 'ne'], ['の', 'no']] },
-  { id: 'h', name: 'H', shortName: 'H', chars: [['は', 'ha'], ['ひ', 'hi'], ['ふ', 'fu'], ['へ', 'he'], ['ほ', 'ho']] },
-  { id: 'm', name: 'M', shortName: 'M', chars: [['ま', 'ma'], ['み', 'mi'], ['む', 'mu'], ['め', 'me'], ['も', 'mo']] },
-  { id: 'y', name: 'Y', shortName: 'Y', chars: [['や', 'ya'], ['ゆ', 'yu'], ['よ', 'yo']] },
-  { id: 'r', name: 'R', shortName: 'R', chars: [['ら', 'ra'], ['り', 'ri'], ['る', 'ru'], ['れ', 're'], ['ろ', 'ro']] },
-  { id: 'w', name: 'W', shortName: 'W', chars: [['わ', 'wa'], ['を', 'wo'], ['ん', 'n']] },
+const scriptData = {
+  hiragana: {
+    groups: [
+      { id: 'a', name: 'Samogłoski', shortName: 'Samo', chars: [['あ', 'a'], ['い', 'i'], ['う', 'u'], ['え', 'e'], ['お', 'o']] },
+      { id: 'k', name: 'K', shortName: 'K', chars: [['か', 'ka'], ['き', 'ki'], ['く', 'ku'], ['け', 'ke'], ['こ', 'ko']] },
+      { id: 's', name: 'S', shortName: 'S', chars: [['さ', 'sa'], ['し', 'shi'], ['す', 'su'], ['せ', 'se'], ['そ', 'so']] },
+      { id: 't', name: 'T', shortName: 'T', chars: [['た', 'ta'], ['ち', 'chi'], ['つ', 'tsu'], ['て', 'te'], ['と', 'to']] },
+      { id: 'n', name: 'N', shortName: 'N', chars: [['な', 'na'], ['に', 'ni'], ['ぬ', 'nu'], ['ね', 'ne'], ['の', 'no']] },
+      { id: 'h', name: 'H', shortName: 'H', chars: [['は', 'ha'], ['ひ', 'hi'], ['ふ', 'fu'], ['へ', 'he'], ['ほ', 'ho']] },
+      { id: 'm', name: 'M', shortName: 'M', chars: [['ま', 'ma'], ['み', 'mi'], ['む', 'mu'], ['め', 'me'], ['も', 'mo']] },
+      { id: 'y', name: 'Y', shortName: 'Y', chars: [['や', 'ya'], ['ゆ', 'yu'], ['よ', 'yo']] },
+      { id: 'r', name: 'R', shortName: 'R', chars: [['ら', 'ra'], ['り', 'ri'], ['る', 'ru'], ['れ', 're'], ['ろ', 'ro']] },
+      { id: 'w', name: 'W', shortName: 'W', chars: [['わ', 'wa'], ['を', 'wo'], ['ん', 'n']] },
 
-  { id: 'dakuten-k', name: 'Dakuten K', shortName: 'D K', chars: [['が', 'ga'], ['ぎ', 'gi'], ['ぐ', 'gu'], ['げ', 'ge'], ['ご', 'go']] },
-  { id: 'dakuten-s', name: 'Dakuten S', shortName: 'D S', chars: [['ざ', 'za'], ['じ', 'ji'], ['ず', 'zu'], ['ぜ', 'ze'], ['ぞ', 'zo']] },
-  { id: 'dakuten-t', name: 'Dakuten T', shortName: 'D T', chars: [['だ', 'da'], ['ぢ', 'ji'], ['づ', 'zu'], ['で', 'de'], ['ど', 'do']] },
-  { id: 'dakuten-h', name: 'Dakuten H', shortName: 'D H', chars: [['ば', 'ba'], ['び', 'bi'], ['ぶ', 'bu'], ['べ', 'be'], ['ぼ', 'bo']] },
+      { id: 'dakuten-k', name: 'Dakuten K', shortName: 'D K', chars: [['が', 'ga'], ['ぎ', 'gi'], ['ぐ', 'gu'], ['げ', 'ge'], ['ご', 'go']] },
+      { id: 'dakuten-s', name: 'Dakuten S', shortName: 'D S', chars: [['ざ', 'za'], ['じ', 'ji'], ['ず', 'zu'], ['ぜ', 'ze'], ['ぞ', 'zo']] },
+      { id: 'dakuten-t', name: 'Dakuten T', shortName: 'D T', chars: [['だ', 'da'], ['ぢ', 'ji'], ['づ', 'zu'], ['で', 'de'], ['ど', 'do']] },
+      { id: 'dakuten-h', name: 'Dakuten H', shortName: 'D H', chars: [['ば', 'ba'], ['び', 'bi'], ['ぶ', 'bu'], ['べ', 'be'], ['ぼ', 'bo']] },
 
-  { id: 'handakuten-h', name: 'Handakuten H', shortName: 'HD H', chars: [['ぱ', 'pa'], ['ぴ', 'pi'], ['ぷ', 'pu'], ['ぺ', 'pe'], ['ぽ', 'po']] },
+      { id: 'handakuten-h', name: 'Handakuten H', shortName: 'HD H', chars: [['ぱ', 'pa'], ['ぴ', 'pi'], ['ぷ', 'pu'], ['ぺ', 'pe'], ['ぽ', 'po']] },
 
-  { id: 'yoon-k', name: 'Yōon K', shortName: 'Y K', chars: [['きゃ', 'kya'], ['きゅ', 'kyu'], ['きょ', 'kyo']] },
-  { id: 'yoon-s', name: 'Yōon S', shortName: 'Y S', chars: [['しゃ', 'sha'], ['しゅ', 'shu'], ['しょ', 'sho']] },
-  { id: 'yoon-t', name: 'Yōon T', shortName: 'Y T', chars: [['ちゃ', 'cha'], ['ちゅ', 'chu'], ['ちょ', 'cho']] },
-  { id: 'yoon-n', name: 'Yōon N', shortName: 'Y N', chars: [['にゃ', 'nya'], ['にゅ', 'nyu'], ['にょ', 'nyo']] },
-  { id: 'yoon-h', name: 'Yōon H', shortName: 'Y H', chars: [['ひゃ', 'hya'], ['ひゅ', 'hyu'], ['ひょ', 'hyo']] },
-  { id: 'yoon-m', name: 'Yōon M', shortName: 'Y M', chars: [['みゃ', 'mya'], ['みゅ', 'myu'], ['みょ', 'myo']] },
-  { id: 'yoon-r', name: 'Yōon R', shortName: 'Y R', chars: [['りゃ', 'rya'], ['りゅ', 'ryu'], ['りょ', 'ryo']] },
-  { id: 'yoon-g', name: 'Yōon G', shortName: 'Y G', chars: [['ぎゃ', 'gya'], ['ぎゅ', 'gyu'], ['ぎょ', 'gyo']] },
-  { id: 'yoon-j', name: 'Yōon J', shortName: 'Y J', chars: [['じゃ', 'ja'], ['じゅ', 'ju'], ['じょ', 'jo']] },
-  { id: 'yoon-b', name: 'Yōon B', shortName: 'Y B', chars: [['びゃ', 'bya'], ['びゅ', 'byu'], ['びょ', 'byo']] },
-  { id: 'yoon-p', name: 'Yōon P', shortName: 'Y P', chars: [['ぴゃ', 'pya'], ['ぴゅ', 'pyu'], ['ぴょ', 'pyo']] }
-];
+      { id: 'yoon-k', name: 'Yōon K', shortName: 'Y K', chars: [['きゃ', 'kya'], ['きゅ', 'kyu'], ['きょ', 'kyo']] },
+      { id: 'yoon-s', name: 'Yōon S', shortName: 'Y S', chars: [['しゃ', 'sha'], ['しゅ', 'shu'], ['しょ', 'sho']] },
+      { id: 'yoon-t', name: 'Yōon T', shortName: 'Y T', chars: [['ちゃ', 'cha'], ['ちゅ', 'chu'], ['ちょ', 'cho']] },
+      { id: 'yoon-n', name: 'Yōon N', shortName: 'Y N', chars: [['にゃ', 'nya'], ['にゅ', 'nyu'], ['にょ', 'nyo']] },
+      { id: 'yoon-h', name: 'Yōon H', shortName: 'Y H', chars: [['ひゃ', 'hya'], ['ひゅ', 'hyu'], ['ひょ', 'hyo']] },
+      { id: 'yoon-m', name: 'Yōon M', shortName: 'Y M', chars: [['みゃ', 'mya'], ['みゅ', 'myu'], ['みょ', 'myo']] },
+      { id: 'yoon-r', name: 'Yōon R', shortName: 'Y R', chars: [['りゃ', 'rya'], ['りゅ', 'ryu'], ['りょ', 'ryo']] },
+      { id: 'yoon-g', name: 'Yōon G', shortName: 'Y G', chars: [['ぎゃ', 'gya'], ['ぎゅ', 'gyu'], ['ぎょ', 'gyo']] },
+      { id: 'yoon-j', name: 'Yōon J', shortName: 'Y J', chars: [['じゃ', 'ja'], ['じゅ', 'ju'], ['じょ', 'jo']] },
+      { id: 'yoon-b', name: 'Yōon B', shortName: 'Y B', chars: [['びゃ', 'bya'], ['びゅ', 'byu'], ['びょ', 'byo']] },
+      { id: 'yoon-p', name: 'Yōon P', shortName: 'Y P', chars: [['ぴゃ', 'pya'], ['ぴゅ', 'pyu'], ['ぴょ', 'pyo']] }
+    ],
+    strokeText: {},
+    lookalikes: []
+  },
+  katakana: {
+    groups: [
+      { id: 'a', name: 'Samogłoski', shortName: 'Samo', chars: [['ア', 'a'], ['イ', 'i'], ['ウ', 'u'], ['エ', 'e'], ['オ', 'o']] },
+      { id: 'k', name: 'K', shortName: 'K', chars: [['カ', 'ka'], ['キ', 'ki'], ['ク', 'ku'], ['ケ', 'ke'], ['コ', 'ko']] },
+      { id: 's', name: 'S', shortName: 'S', chars: [['サ', 'sa'], ['シ', 'shi'], ['ス', 'su'], ['セ', 'se'], ['ソ', 'so']] },
+      { id: 't', name: 'T', shortName: 'T', chars: [['タ', 'ta'], ['チ', 'chi'], ['ツ', 'tsu'], ['テ', 'te'], ['ト', 'to']] },
+      { id: 'n', name: 'N', shortName: 'N', chars: [['ナ', 'na'], ['ニ', 'ni'], ['ヌ', 'nu'], ['ネ', 'ne'], ['ノ', 'no']] },
+      { id: 'h', name: 'H', shortName: 'H', chars: [['ハ', 'ha'], ['ヒ', 'hi'], ['フ', 'fu'], ['ヘ', 'he'], ['ホ', 'ho']] },
+      { id: 'm', name: 'M', shortName: 'M', chars: [['マ', 'ma'], ['ミ', 'mi'], ['ム', 'mu'], ['メ', 'me'], ['モ', 'mo']] },
+      { id: 'y', name: 'Y', shortName: 'Y', chars: [['ヤ', 'ya'], ['ユ', 'yu'], ['ヨ', 'yo']] },
+      { id: 'r', name: 'R', shortName: 'R', chars: [['ラ', 'ra'], ['リ', 'ri'], ['ル', 'ru'], ['レ', 're'], ['ロ', 'ro']] },
+      { id: 'w', name: 'W', shortName: 'W', chars: [['ワ', 'wa'], ['ヲ', 'wo'], ['ン', 'n']] },
 
-const all = groups.flatMap(group =>
-  group.chars.map(([kana, romaji]) => ({
-    kana,
-    romaji,
-    group: group.name,
-    groupId: group.id
-  }))
-);
+      { id: 'dakuten-k', name: 'Dakuten K', shortName: 'D K', chars: [['ガ', 'ga'], ['ギ', 'gi'], ['グ', 'gu'], ['ゲ', 'ge'], ['ゴ', 'go']] },
+      { id: 'dakuten-s', name: 'Dakuten S', shortName: 'D S', chars: [['ザ', 'za'], ['ジ', 'ji'], ['ズ', 'zu'], ['ゼ', 'ze'], ['ゾ', 'zo']] },
+      { id: 'dakuten-t', name: 'Dakuten T', shortName: 'D T', chars: [['ダ', 'da'], ['ヂ', 'ji'], ['ヅ', 'zu'], ['デ', 'de'], ['ド', 'do']] },
+      { id: 'dakuten-h', name: 'Dakuten H', shortName: 'D H', chars: [['バ', 'ba'], ['ビ', 'bi'], ['ブ', 'bu'], ['ベ', 'be'], ['ボ', 'bo']] },
+
+      { id: 'handakuten-h', name: 'Handakuten H', shortName: 'HD H', chars: [['パ', 'pa'], ['ピ', 'pi'], ['プ', 'pu'], ['ペ', 'pe'], ['ポ', 'po']] },
+
+      { id: 'yoon-k', name: 'Yōon K', shortName: 'Y K', chars: [['キャ', 'kya'], ['キュ', 'kyu'], ['キョ', 'kyo']] },
+      { id: 'yoon-s', name: 'Yōon S', shortName: 'Y S', chars: [['シャ', 'sha'], ['シュ', 'shu'], ['ショ', 'sho']] },
+      { id: 'yoon-t', name: 'Yōon T', shortName: 'Y T', chars: [['チャ', 'cha'], ['チュ', 'chu'], ['チョ', 'cho']] },
+      { id: 'yoon-n', name: 'Yōon N', shortName: 'Y N', chars: [['ニャ', 'nya'], ['ニュ', 'nyu'], ['ニョ', 'nyo']] },
+      { id: 'yoon-h', name: 'Yōon H', shortName: 'Y H', chars: [['ヒャ', 'hya'], ['ヒュ', 'hyu'], ['ヒョ', 'hyo']] },
+      { id: 'yoon-m', name: 'Yōon M', shortName: 'Y M', chars: [['ミャ', 'mya'], ['ミュ', 'myu'], ['ミョ', 'myo']] },
+      { id: 'yoon-r', name: 'Yōon R', shortName: 'Y R', chars: [['リャ', 'rya'], ['リュ', 'ryu'], ['リョ', 'ryo']] },
+      { id: 'yoon-g', name: 'Yōon G', shortName: 'Y G', chars: [['ギャ', 'gya'], ['ギュ', 'gyu'], ['ギョ', 'gyo']] },
+      { id: 'yoon-j', name: 'Yōon J', shortName: 'Y J', chars: [['ジャ', 'ja'], ['ジュ', 'ju'], ['ジョ', 'jo']] },
+      { id: 'yoon-b', name: 'Yōon B', shortName: 'Y B', chars: [['ビャ', 'bya'], ['ビュ', 'byu'], ['ビョ', 'byo']] },
+      { id: 'yoon-p', name: 'Yōon P', shortName: 'Y P', chars: [['ピャ', 'pya'], ['ピュ', 'pyu'], ['ピョ', 'pyo']] }
+    ],
+    strokeText: {},
+    lookalikes: []
+  }
+};
+
+function getGroups() {
+  return scriptData[state.script].groups;
+}
+
+function getAll() {
+  const groups = getGroups();
+  return groups.flatMap(group =>
+    group.chars.map(([kana, romaji]) => ({
+      kana,
+      romaji,
+      group: group.name,
+      groupId: group.id
+    }))
+  );
+}
+
+function getStrokeText() {
+  return scriptData[state.script].strokeText;
+}
+
+function getStrokeCounts() {
+  const strokeText = getStrokeText();
+  return Object.fromEntries(
+    Object.entries(strokeText).map(([kana, strokes]) => [kana, strokes.length])
+  );
+}
+
+function getLookalikes() {
+  return scriptData[state.script].lookalikes;
+}
 
 
 /* =========================================================
-   DANE: KRESKI
+   DANE: KRESKI (Hiragana)
    Każdy element tablicy = JEDNA osobna kreska, w kolejności
    rysowania. Opisy są orientacyjne — warto je porównać
    z tabelą kolejności kresek (np. na Wikipedii / w podręczniku).
-========================================================= */
+   ========================================================= */
 
-const strokeText = {
+// Hiragana strokeText - moved to scriptData.hiragana.strokeText below
+const hiraganaStrokeText = {
   // Samogłoski
   'あ': ['pozioma kreska u góry', 'pionowa kreska w dół, lekko wygięta, przecina poziomą', 'duży łuk z pętlą: od lewej, przez prawą stronę, kończy się na dole'],
   'い': ['lewa kreska w dół, dłuższa, z lekkim hakiem na końcu', 'prawa kreska, krótsza i niższa'],
@@ -209,14 +273,12 @@ const strokeText = {
   'ぴょ': ['główna kreska ぱ', 'kółko handakuten ぱ', 'pierwsza kreska małego ょ', 'druga kreska małego ょ']
 };
 
-const strokeCounts = Object.fromEntries(
-  Object.entries(strokeText).map(([kana, strokes]) => [kana, strokes.length])
-);
+scriptData.hiragana.strokeText = hiraganaStrokeText;
 
 
 /* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
-========================================================= */
+   ========================================================= */
 
 const Audio = (() => {
   let ctx = null;
@@ -283,6 +345,7 @@ const Audio = (() => {
 
 const state = {
   screen: 'menu',
+  script: 'hiragana',
   group: 'a',
   kana: 'あ',
   exam: null,
@@ -299,12 +362,27 @@ const homeBtn = document.getElementById('homeBtn');
    POMOCNICZE
 ========================================================= */
 
+function updateScriptHeader() {
+  const eyebrow = document.getElementById('scriptEyebrow');
+  const title = document.getElementById('appTitle');
+
+  if (!eyebrow || !title) return;
+
+  if (state.script === 'katakana') {
+    eyebrow.textContent = 'JAPOŃSKI • KATAKANA';
+    title.textContent = 'Katakana';
+  } else {
+    eyebrow.textContent = 'JAPOŃSKI • HIRAGANA';
+    title.textContent = 'Hiragana';
+  }
+}
+
 function item(kana) {
-  return all.find(x => x.kana === kana);
+  return getAll().find(x => x.kana === kana);
 }
 
 function getGroup(groupId) {
-  return groups.find(group => group.id === groupId);
+  return getGroups().find(group => group.id === groupId);
 }
 
 function shuffle(array) {
@@ -328,14 +406,14 @@ function getSelectedExamCharacters() {
   if (!exam) return [];
 
   if (exam.kanaList) {
-    return all.filter(character => exam.kanaList.includes(character.kana));
+    return getAll().filter(character => exam.kanaList.includes(character.kana));
   }
 
-  return all.filter(character => exam.groups.includes(character.groupId));
+  return getAll().filter(character => exam.groups.includes(character.groupId));
 }
 
 function strokeListHTML(kana, tag = 'div') {
-  return (strokeText[kana] || []).map((description, index) => `
+  return (getStrokeText()[kana] || []).map((description, index) => `
     <${tag} class="stroke-step">
       <span class="number">${index + 1}</span>
       <span>${description}</span>
@@ -354,18 +432,18 @@ function navigateKana(delta) {
 
   let newIndex = currentIndex + delta;
 
+  const allGroups = getGroups();
+
   if (newIndex < 0) {
-    // przejdź do poprzedniego rzędu
-    const groupIndex = groups.findIndex(g => g.id === state.group);
-    const prevGroupIndex = (groupIndex - 1 + groups.length) % groups.length;
-    state.group = groups[prevGroupIndex].id;
+    const groupIndex = allGroups.findIndex(g => g.id === state.group);
+    const prevGroupIndex = (groupIndex - 1 + allGroups.length) % allGroups.length;
+    state.group = allGroups[prevGroupIndex].id;
     const prevGroup = getGroup(state.group);
     state.kana = prevGroup.chars[prevGroup.chars.length - 1][0];
   } else if (newIndex >= kanaList.length) {
-    // przejdź do następnego rzędu
-    const groupIndex = groups.findIndex(g => g.id === state.group);
-    const nextGroupIndex = (groupIndex + 1) % groups.length;
-    state.group = groups[nextGroupIndex].id;
+    const groupIndex = allGroups.findIndex(g => g.id === state.group);
+    const nextGroupIndex = (groupIndex + 1) % allGroups.length;
+    state.group = allGroups[nextGroupIndex].id;
     state.kana = getGroup(state.group).chars[0][0];
   } else {
     state.kana = kanaList[newIndex];
@@ -379,8 +457,8 @@ function navigateKana(delta) {
  */
 function masteryDonutHTML() {
   const counts = { mastered: 0, good: 0, learning: 0, hard: 0, new: 0 };
-  all.forEach(c => { counts[masteryLevel(c.kana)]++; });
-  const total = all.length;
+  getAll().forEach(c => { counts[masteryLevel(c.kana)]++; });
+  const total = getAll().length;
 
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
@@ -853,6 +931,7 @@ function render() {
   createThemeToggle();
   setupMuteToggle();
   applyTheme();
+  updateScriptHeader();
 
   if (state.screen === 'menu') renderMenu();
   if (state.screen === 'learn') renderLearn();
@@ -896,6 +975,11 @@ function renderMenu() {
       </button>
     </section>
 
+    <div class="script-switcher">
+      <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
+      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
+    </div>
+
     ${masteryDonutHTML()}
   `;
 
@@ -906,6 +990,18 @@ function renderMenu() {
     homeBtn.classList.remove('hidden');
     showExamSetup();
   };
+
+  document.querySelectorAll('[data-script]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      state.script = btn.dataset.script;
+      const firstGroup = getGroups()[0];
+      state.group = firstGroup.id;
+      state.kana = firstGroup.chars[0][0];
+      updateScriptHeader();
+      renderMenu();
+    };
+  });
 }
 
 
@@ -916,7 +1012,7 @@ function renderMenu() {
 function renderLearn() {
   const current = item(state.kana);
   const currentGroup = getGroup(state.group);
-  const count = strokeCounts[state.kana];
+  const count = getStrokeCounts()[state.kana];
 
   app.innerHTML = `
     <section class="learner">
@@ -924,7 +1020,7 @@ function renderLearn() {
       <aside class="sidebar card">
         <h3>Rzędy</h3>
         <div class="group-grid">
-          ${groups.map(group => `
+          ${getGroups().map(group => `
             <button class="group-btn ${group.id === state.group ? 'active' : ''}" data-group="${group.id}">
               ${group.shortName}
             </button>
@@ -1156,7 +1252,7 @@ function statsText(kana) {
 function practiceList(limit = 12) {
   const byDifficulty = kana => errorRate(kana) * 100 + progress.chars[kana].wrong;
 
-  const known = all.map(c => c.kana).filter(kana => progress.chars[kana] && progress.chars[kana].seen);
+  const known = getAll().map(c => c.kana).filter(kana => progress.chars[kana] && progress.chars[kana].seen);
 
   const hard = known.filter(kana => masteryLevel(kana) === 'hard').sort((a, b) => byDifficulty(b) - byDifficulty(a));
 
@@ -1370,9 +1466,11 @@ const LOOKALIKES = [
   ['びょ', 'ぴょ']
 ];
 
+scriptData.hiragana.lookalikes = LOOKALIKES;
+
 function similarTo(kana) {
   const result = new Set();
-  LOOKALIKES.forEach(group => {
+  getLookalikes().forEach(group => {
     if (group.includes(kana)) group.forEach(k => { if (k !== kana) result.add(k); });
   });
   return result;
@@ -1401,7 +1499,7 @@ function pickDistractors(question, count, pool, outside) {
 
   const questionCategory = kanaCategory(question);
 
-  const weighted = all
+  const weighted = getAll()
     .filter(c => c.kana !== question.kana)
     .map(c => {
       const isInPool = inPool.has(c.kana);
@@ -1452,7 +1550,7 @@ function progressPanelHTML() {
     `;
   }
 
-  const hard = all
+  const hard = getAll()
     .filter(c => masteryLevel(c.kana) === 'hard')
     .sort((a, b) => errorRate(b.kana) - errorRate(a.kana))
     .slice(0, 8);
@@ -1468,7 +1566,7 @@ function progressPanelHTML() {
       </div>
 
       <div class="progress-map">
-        ${all.map(c => `
+        ${getAll().map(c => `
           <span class="map-cell ${masteryLevel(c.kana)}" title="${c.romaji}">
             ${c.kana}<small>${c.romaji}</small>
           </span>
@@ -1538,7 +1636,7 @@ function showExamSetup() {
       </p>
 
       <div class="exam-groups" id="examGroups">
-        ${groups.map(group => `
+        ${getGroups().map(group => `
           <label class="exam-group-option">
             <input type="checkbox" value="${group.id}" ${settings.groups.includes(group.id) ? 'checked' : ''}>
             <span>
@@ -1617,7 +1715,7 @@ function showExamSetup() {
 
   document.getElementById('onlyA').onclick = () => { Audio.click(); setExamGroups(['a']); };
   document.getElementById('aPlusK').onclick = () => { Audio.click(); setExamGroups(['a', 'k']); };
-  document.getElementById('allGroups').onclick = () => { Audio.click(); setExamGroups(groups.map(g => g.id)); };
+  document.getElementById('allGroups').onclick = () => { Audio.click(); setExamGroups(getGroups().map(g => g.id)); };
   document.getElementById('noGroups').onclick = () => { Audio.click(); setExamGroups([]); };
 
   document.getElementById('startSelectedExam').onclick = () => {
@@ -2050,7 +2148,7 @@ function renderRomajiToKanaType(question) {
 ========================================================= */
 
 function flashcardHTML(question, chosen) {
-  const count = strokeCounts[question.kana];
+  const count = getStrokeCounts()[question.kana];
 
   return `
     <div class="flashcard">
