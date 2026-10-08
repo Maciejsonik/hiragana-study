@@ -33,9 +33,19 @@ The application is intentionally simple and currently consists of three main sou
 ├── index.html
 ├── app.js
 ├── style.css
-├── TODO.md
+├── sw.js
+├── manifest.webmanifest
+├── offline.html
+├── icons/
+│   ├── icon-192.png
+│   ├── icon-512.png
+│   ├── maskable-512.png
+│   └── apple-touch-icon.png
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
 ├── PROJECT.md
-└── CHANGELOG.md
+└── README.md
 ```
 
 ### `index.html`
@@ -43,8 +53,9 @@ The application is intentionally simple and currently consists of three main sou
 Contains:
 
 - document metadata,
+- PWA metadata (`manifest`, icons, `theme-color` per OS theme),
 - Google Fonts,
-- initial theme detection,
+- initial theme detection (pre-paint bootstrap, see section 44),
 - application shell,
 - header,
 - theme/mute buttons,
@@ -72,7 +83,9 @@ Contains essentially all application logic:
 - result screen,
 - audio,
 - keyboard controls,
-- touch gestures.
+- touch gestures,
+- centralized user settings (see section 45),
+- Service Worker registration and update banner.
 
 ### `style.css`
 
@@ -91,6 +104,25 @@ Contains all visual styling:
 - typing mode,
 - confetti,
 - responsive behavior.
+
+### `sw.js`
+
+Service Worker registered from `app.js`. See section 44.
+
+### `manifest.webmanifest`
+
+Web App Manifest. See section 44.
+
+### `offline.html`
+
+Minimal navigation fallback, shown only when the document itself is missing
+from Cache Storage and the browser is offline. In normal offline use the
+Service Worker serves the cached `index.html`.
+
+### `icons/`
+
+Application icons: 192×192, 512×512, a 512×512 `maskable` variant (Android
+adaptive icons) and a 180×180 `apple-touch-icon` (iOS home screen).
 
 ---
 
@@ -118,10 +150,15 @@ app.js
     ├── exam flow
     ├── answer handling
     ├── result handling
+    ├── settings / personalization
+    ├── service worker registration
     └── keyboard/touch controls
     ↓
 style.css
 ```
+
+`sw.js` runs alongside as a separate service worker global scope and never
+shares state with the page.
 
 T16 will eventually introduce modules/code splitting, but **do not prematurely refactor the current architecture while implementing earlier feature work**.
 
@@ -189,6 +226,11 @@ Current character set:
 ```
 
 Total: **46 basic kana + ん**.
+
+This section documents the **hiragana** base dataset. Katakana follows exactly
+the same group/char structure in `scriptData.katakana` (see section 33), and
+the same sections apply to it: 46 basic + ん, dakuten, handakuten and yōon
+groups, 104 characters in total.
 
 ---
 
@@ -902,10 +944,10 @@ Progress can be completely reset through the UI.
 
 # 24. Theme
 
-Theme is stored in:
+Theme is stored in the centralized settings store (see section 45):
 
 ```text
-hiragana-theme
+hiragana-settings = { theme, muted, script }
 ```
 
 Supported themes:
@@ -913,12 +955,17 @@ Supported themes:
 ```text
 light
 dark
+system
 ```
 
 The initial theme is selected from:
 
 1. saved localStorage preference,
-2. system preference.
+2. legacy `hiragana-theme` preference (migration only),
+3. system preference.
+
+The pre-paint bootstrap in `index.html` resolves the theme before the first
+paint, so there is no flash of the wrong theme.
 
 The `<html>` element receives:
 
@@ -932,11 +979,12 @@ or:
 data-theme="dark"
 ```
 
-### Known audit point
+### Resolved audit point
 
-There appears to be an unreachable/unused "system" branch in the theme button/update logic, while the actual toggle only switches between light and dark.
-
-This should be cleaned up if still present after the next audit.
+The previously unreachable "system" branch is now used: `system` is a real,
+user-selectable preference (T26), the theme button shows a dedicated `◐` glyph
+for it, and the quick toggle flips between light and dark based on the
+currently **visible** theme so a click is never a no-op.
 
 ---
 
@@ -944,11 +992,14 @@ This should be cleaned up if still present after the next audit.
 
 Audio currently uses the Web Audio API and does not require external sound files.
 
-Stored setting:
+Stored setting (inside the settings store, see section 45):
 
 ```text
-hiragana-muted
+hiragana-settings = { ..., muted, ... }
 ```
+
+The legacy `hiragana-muted` key is read once during migration and is never
+written again.
 
 Available sounds:
 
@@ -1035,6 +1086,17 @@ Important dynamic classes/IDs include:
 .xp-badge
 .confetti
 .timer-bar
+```
+
+Added by later phases:
+
+```text
+.script-switcher      menu script selector
+.mastery-overview     progress chart on the menu
+.settings             Settings screen
+.settings-group       settings sections
+.settings-pills       segmented preference controls
+#updateBanner         non-blocking service worker update notice
 ```
 
 ---
@@ -1172,7 +1234,7 @@ T6  KanjiVG source of truth            DONE
 
 ```text
 T7  multi-mode exam                    DONE
-T8  dakuten / handakuten / yōon        DEFERRED
+T8  dakuten / handakuten / yōon        DONE
 T9  exam timer                         DONE
 ```
 
@@ -1182,6 +1244,14 @@ T9  exam timer                         DONE
 T10 XP system                          DONE
 T11 mobile touch gestures              DONE
 T12 confetti                           DONE
+```
+
+## Phase 4
+
+```text
+T17 katakana mode                      DONE
+T26 settings / personalization        DONE
+T14 offline PWA                        DONE
 ```
 
 ### T9 extension
@@ -1204,39 +1274,40 @@ T9 extension:
 
 The roadmap has been reordered around feature value and learning-system completeness.
 
-## Immediate priority
+## Already shipped
 
 ```text
-T8  Dakuten / Handakuten / Yōon
+T8  Dakuten / Handakuten / Yōon      DONE
+T17 Katakana mode                   DONE
+T26 Settings / Personalization     DONE
+T14 Offline PWA                    DONE
 ```
 
-This expands the basic hiragana system into voiced, semi-voiced and combined sounds.
+These are implemented and live. Sections 32 (T8), 33 (T17), 37 (T14),
+39 (T26), 44 (Offline architecture) and 45 (Settings architecture) describe
+the shipped behaviour.
 
 ## Next major priorities
 
 ```text
-T17 Katakana mode
+T21 Spaced repetition / learning engine
 T15 Long-term statistics
 T13 Canvas drawing mode
-T14 Offline PWA
 T16 Code splitting
 ```
 
 Recommended order:
 
 ```text
-T8 → T17 → T15 → T13 → T14 → T16
+T21 → T15 → T13 → T16
 ```
 
 ### Rationale
 
-**T8 — Dakuten / Handakuten / Yōon**
+**T21 — Spaced repetition / learning engine**
 
-Makes the hiragana learning system substantially more complete before moving to another script.
-
-**T17 — Katakana**
-
-Natural second script once the core hiragana system is sufficiently complete.
+The natural next step: the progress/mastery data already collected can drive
+scheduling instead of only weighting distractors.
 
 **T15 — Long-term statistics**
 
@@ -1245,10 +1316,6 @@ Builds on the existing progress/mastery data without requiring a fundamentally d
 **T13 — Canvas drawing mode**
 
 Adds an interactive handwriting layer and makes use of the existing KanjiVG stroke data.
-
-**T14 — Offline PWA**
-
-Adds installation/offline capabilities after the core feature set is more stable.
 
 **T16 — Code splitting**
 
@@ -1316,22 +1383,27 @@ T8 should be implemented as an extension of the current data model where practic
 
 # 33. T17 — Katakana Mode
 
+Status: **SHIPPED**.
+
 Goal:
 
 > Add katakana as a second Japanese script while preserving the existing learning architecture.
 
-Expected functionality:
+Implemented functionality:
 
-- katakana dataset,
-- katakana groups,
-- katakana learning mode,
-- katakana stroke animation,
-- katakana progress,
-- katakana mastery,
-- katakana exam questions,
-- script selection.
+- katakana dataset (`scriptData.katakana`, same group/char structure),
+- 26 groups / 104 characters, mirroring hiragana,
+- katakana stroke descriptions and counts,
+- katakana KanjiVG stroke animation,
+- katakana progress and mastery,
+- katakana exam questions and distractors,
+- 56 lookalike groups (vs 61 for hiragana),
+- script selection: menu switcher plus a default-script setting (see section 45).
 
-The implementation should avoid duplicating large amounts of existing learning/exam logic.
+Katakana shares the existing learning/exam code — it is selected through
+`scriptData[state.script]` rather than duplicated logic.
+
+The implementation avoided duplicating large amounts of existing learning/exam logic.
 
 Future combined-script practice can eventually allow:
 
@@ -1445,30 +1517,27 @@ The drawing evaluator should remain isolated enough that it can later be moved i
 
 # 37. T14 — Offline PWA
 
+Status: **SHIPPED**.
+
 Goal:
 
-> Make Hiragana Study installable and usable offline.
+> Make the app installable and usable offline.
 
-Potential functionality:
+Delivered:
 
-- web app manifest,
-- service worker,
-- cached application shell,
-- cached CSS/JS,
-- offline fallback,
-- local progress persistence,
-- cached KanjiVG data.
+- web app manifest (`manifest.webmanifest`) with icons, `standalone` display,
+  theme/background colours,
+- service worker (`sw.js`) with versioned caches,
+- precached application shell,
+- precached CSS/JS,
+- offline navigation fallback (`offline.html`),
+- local progress persistence (unchanged — stored in `localStorage`),
+- **148 precached KanjiVG assets** — all stroke data required by both scripts.
 
-Important dependency:
-
-The current application relies on remote KanjiVG sources.
-
-Therefore true offline learning requires either:
-
-1. bundling/cacheable local SVG data, or
-2. a deliberate caching strategy for previously loaded KanjiVG assets.
-
-This should be designed carefully rather than simply adding a service worker.
+The original dependency on remote KanjiVG sources was resolved by precaching
+all 148 required SVG files in the Cache Storage rather than by bundling them
+into the repository. The full cache/fetch architecture is documented in
+section 44.
 
 ---
 
@@ -1710,35 +1779,22 @@ User-provided local audio should remain local and should not require uploading f
 
 ## T26 — Settings / Personalization
 
-Potential centralized settings system.
+Status: **SHIPPED**. Full architecture is documented in section 45.
 
-Potential categories:
+Goal:
 
-```text
-Appearance
-Audio
-Learning
-Exam
-Accessibility
-Data
-```
+> Give the user a single, centralized place for persistent preferences.
 
-Possible settings:
+Delivered:
 
-- theme,
-- sound effects,
-- music,
-- volume,
-- animation intensity,
-- reduced motion,
-- default exam settings,
-- default answer count,
-- default timer,
-- default question limit,
-- learning preferences,
-- reset/export/import data.
-
-This feature should eventually become the central location for persistent user preferences.
+- centralized settings store (`hiragana-settings`),
+- light / dark / system theme preference,
+- sound effects on/off preference,
+- default script (Hiragana / Katakana) preference,
+- migration from the legacy `hiragana-theme` / `hiragana-muted` keys,
+- pre-paint theme bootstrap,
+- Settings screen with appearance / sound / learning / data sections,
+- Reset Settings, Reset Progress and Clear All Data.
 
 ---
 
@@ -1801,8 +1857,7 @@ After major feature work:
 
 ```text
 PROJECT.md
-TODO.md
-CHANGELOG.md
+README.md
 ```
 
 should reflect the current state.
@@ -1855,8 +1910,9 @@ As of the current roadmap revision:
 
 ```text
 Application status: functional
-Architecture: vanilla JS SPA
-Source files: 3
+Architecture: vanilla JS SPA + service worker
+Source files: app.js, style.css, index.html, sw.js, manifest.webmanifest,
+              offline.html, icons/
 
 Learning mode: implemented
 KanjiVG animation: implemented
@@ -1864,16 +1920,18 @@ Progress: implemented
 Adaptive exam: implemented
 4 exam modes: implemented
 Per-question timer: implemented
-Optional question limit: planned extension
+Optional question limit: implemented
 XP: implemented
 Touch gestures: implemented
 Confetti: implemented
 
-Dakuten / Handakuten / Yōon: NOT implemented
-Katakana: NOT implemented
+Dakuten / Handakuten / Yōon: implemented
+Katakana: implemented
+Settings / personalization: implemented
+Offline support (PWA): implemented
+
 Long-term statistics: NOT implemented
 Drawing mode: NOT implemented
-Offline support: NOT implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: NOT implemented
@@ -1883,27 +1941,22 @@ Daily goals: NOT implemented
 Achievements: NOT implemented
 Custom study sets: NOT implemented
 Advanced audio / lo-fi: NOT implemented
-Settings / personalization: NOT implemented
 ```
 
 ### Current active task
 
 ```text
-T8 — Dakuten / Handakuten / Yōon
+T21 — Spaced Repetition / Learning Engine
 ```
 
 ### Current recommended roadmap
 
 ```text
-T8
-↓
-T17
+T21
 ↓
 T15
 ↓
 T13
-↓
-T14
 ↓
 T16
 ```
@@ -1914,12 +1967,10 @@ Long-term:
 T18 Kanji
 T19 Vocabulary
 T20 Grammar
-T21 Spaced Repetition / Learning Engine
 T22 Daily Practice / Goals
 T23 Achievements
 T24 Custom Study Sets
 T25 Advanced Audio & Focus / Lo-fi
-T26 Settings / Personalization
 ```
 
 ---
@@ -1928,21 +1979,213 @@ T26 Settings / Personalization
 
 Repository:
 
-- GitHub: `Maciejsonik/Code`
-- Repository is private.
+- GitHub: `Maciejsonik/hiragana-study`
+- Local path: `/Users/maciek/Code/hiragana-study`
 
 GitHub Pages:
 
-- Site: `https://maciejsonik.github.io/Code/`
-- Deployment: GitHub Actions
-- Workflow: `.github/workflows/deploy-hiragana.yml`
-- Published source: `hiragana-study/`
+- Site: `https://maciejsonik.github.io/hiragana-study/`
+- Deployment: GitHub Actions, triggered by push to `main`
+- Workflow: `.github/workflows/deploy.yml`
 - Pages source: GitHub Actions
+- Published path: the repository is served from the **`/hiragana-study/` subpath**, not from the domain root
 
 Important:
 
-- Other repository projects are not deployed.
-- Current workflow copies the whole `hiragana-study/` directory.
-- Therefore `PROJECT.md` and `README.md` are also currently publicly accessible through Pages.
+- The application is hosted under a subpath. All runtime paths (manifest
+  `start_url` / `scope` / `id`, Service Worker registration, icons, stylesheet
+  and script references) are **relative** for this reason. Do not introduce
+  root-absolute (`/…`) paths.
+- The current workflow uploads the whole directory.
+- Therefore `PROJECT.md` and `README.md` are also currently publicly accessible
+  through Pages.
 
 This is currently acceptable, but the deployment workflow can later be changed to publish only the files required by the application if a cleaner public surface is desired.
+
+---
+
+# 44. Offline / PWA Architecture
+
+Status: **SHIPPED** (T14).
+
+## Manifest
+
+`manifest.webmanifest` uses relative paths throughout:
+
+```text
+id         ./
+start_url  ./
+scope      ./
+display    standalone
+theme_color #121116      (dark, the default)
+```
+
+Icons: 192×192 `any`, 512×512 `any`, 512×512 `maskable`. `apple-touch-icon` is
+linked from HTML rather than the manifest, because Safari ignores manifest icons
+for the home screen.
+
+`index.html` additionally declares two `theme-color` values scoped by
+`media="(prefers-color-scheme: …)"` so the browser chrome matches the active
+theme.
+
+## Service Worker
+
+`sw.js` sits next to `index.html`, so its scope is the application directory —
+`/hiragana-study/` on GitHub Pages, `/` on localhost. No `Service-Worker-Allowed`
+header is required.
+
+Same-origin URLs are resolved against `self.registration.scope`, so nothing
+assumes deployment at the domain root.
+
+## Versioned caches
+
+```text
+shell-v<N>      application shell
+kanjivg-v<N>    KanjiVG stroke data
+fonts-v<N>      Google Fonts
+```
+
+`<N>` is the `VERSION` constant in `sw.js`. Any change to `sw.js` makes the
+browser fetch it again and install a new worker, which is what drives updates.
+
+On `activate` the worker deletes every cache that is not one of the three
+current ones, so stale versions cannot accumulate or be served.
+
+## Fetch strategies
+
+| Request | Strategy | Reason |
+|---|---|---|
+| navigation / HTML | network-first → cache → `offline.html` | the document must never be stale |
+| same-origin JS / CSS / icons | stale-while-revalidate | instant, updates in background |
+| `cdn.jsdelivr.net/gh/KanjiVG/…` | cache-first | per-kana stroke data is stable and small |
+| `fonts.googleapis.com`, `fonts.gstatic.com` | cache-first | decorative, but removes a third-party dependency |
+| anything else | not intercepted | let the browser handle it |
+
+`raw.githubusercontent.com` is deliberately **not** intercepted: it is only the
+second fallback in `SVG_SOURCES` and is never reached while jsDelivr works.
+
+## Precache
+
+On `install`:
+
+- the shell (`./`, `index.html`, `style.css`, `app.js`, manifest, icons,
+  `offline.html`) via `cache.addAll`,
+- **all 148 KanjiVG SVG files** required by both scripts,
+- the Google Fonts stylesheet.
+
+The KanjiVG fill is deliberately tolerant: requests run with limited
+concurrency and a second retry pass, so a single failed CDN request can never
+abort the installation and a partially filled cache cannot become permanent.
+A missing SVG still degrades gracefully through the existing font-glyph fallback
+in `mountKana()`.
+
+## Update UX
+
+`skipWaiting()` and `clients.claim()` are used so a new worker activates
+promptly, but **the page is never reloaded automatically**. On `updatefound`
+→ `installed` with an existing controller, the page shows a small non-blocking
+banner:
+
+```text
+Nowa wersja dostępna — Odśwież
+```
+
+The reload happens only after the user clicks it. This protects in-progress
+sessions — for example an active exam — from being interrupted by a deploy.
+
+## Relationship to application state
+
+The service worker never touches `localStorage`. `hiragana-settings`,
+`hiragana-progress` and `hiragana-exam-settings` belong to the application
+(see section 45) and are entirely unaffected by cache versioning.
+
+---
+
+# 45. Settings Architecture
+
+Status: **SHIPPED** (T26).
+
+## Store
+
+There is no settings framework, store library or event bus. Settings are a
+single plain object plus three setter functions.
+
+```text
+hiragana-settings = { theme, muted, script }
+```
+
+- `theme`  — `light` | `dark` | `system`
+- `muted`  — boolean
+- `script` — `hiragana` | `katakana`
+
+## Centralized setters
+
+`setTheme()`, `setMuted()` and `setScript()` are the only write paths. Each
+updates the `settings` object, synchronizes the matching runtime mirror
+(`state.theme`, `Audio.muted`, `state.script`), persists, and refreshes the UI.
+
+`setScript()` additionally resets `state.group` / `state.kana` to the first
+group of the newly active script, so script-dependent state can never leak
+across scripts.
+
+## Loading and migration
+
+`loadSettings()` reads `hiragana-settings` and resolves each field
+independently:
+
+```text
+valid value in hiragana-settings  →  legacy key  →  default
+```
+
+- legacy keys: `hiragana-theme`, `hiragana-muted`
+- unknown fields are discarded, wrong types are rejected
+- corrupt JSON is recovered from the legacy keys
+- the store is rewritten only when normalization actually changed something,
+  so a plain read does not write
+- legacy keys are **read only** — they are never written again, and are not
+  deleted
+
+## Pre-paint bootstrap
+
+`index.html` contains a small synchronous script that sets
+`data-theme` on `<html>` before the first paint, using the same resolution
+order (`hiragana-settings` → legacy `hiragana-theme` → `system`). This
+prevents a light/dark flash. It performs **no writes**; migration belongs to
+`loadSettings()`.
+
+## Screens
+
+`renderSettings()` renders four sections:
+
+```text
+Wygląd     theme: light / dark / system
+Dźwięk     sound effects: on / off
+Nauka      default script: hiragana / katakana
+Dane       Reset Settings / Reset Progress / Clear All Data
+```
+
+Every control is a native `<button>` and applies immediately. Because each
+change re-renders the screen, focus is restored to the control that was
+activated (via `data-focus-key`).
+
+Destructive actions are confirmed:
+
+- Reset Settings — one confirmation,
+- Reset Progress — one confirmation,
+- Clear All Data — two confirmations.
+
+"Clear All Data" removes exactly the five application keys
+(`hiragana-settings`, `hiragana-exam-settings`, `hiragana-progress`,
+`hiragana-theme`, `hiragana-muted`) and leaves unrelated `localStorage` keys
+untouched.
+
+## Interaction with other systems
+
+- **Theme:** `applyTheme()` resolves `system` through the OS
+  `prefers-color-scheme`; `data-theme` never becomes the literal `system`.
+  The topbar quick toggle flips between light and dark based on the currently
+  *visible* theme, so a `system` preference never produces a no-op click.
+- **Audio:** `Audio.muted` mirrors `settings.muted`; audio is synthesized with
+  Web Audio oscillators and needs no asset files.
+- **Progress / exam:** untouched. `hiragana-progress` and
+  `hiragana-exam-settings` are separate stores with their own reset actions.
