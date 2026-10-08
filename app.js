@@ -1287,6 +1287,11 @@ function renderExam() {
 
 function renderMenu() {
   app.innerHTML = `
+    <div class="script-switcher">
+      <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
+      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
+    </div>
+
     <section class="menu">
       <button class="menu-card" id="learnCard">
         <div class="menu-icon">✍️</div>
@@ -1306,11 +1311,6 @@ function renderMenu() {
         <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>
       </button>
     </section>
-
-    <div class="script-switcher">
-      <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
-      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
-    </div>
 
     ${masteryDonutHTML()}
   `;
