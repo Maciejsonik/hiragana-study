@@ -1531,103 +1531,95 @@ function renderSettingsFocused(focusKey) {
 
 /* =========================================================
    TRYB NAUKI
-========================================================= */
+   ========================================================= */
 
-function renderLearn() {
-  const current = item(state.kana);
-  const count = getStrokeCounts()[state.kana];
+/*
+   Stan rozwinięcia sekcji (accordion) w panelu znaków.
 
-  app.innerHTML = `
-    <section class="learner">
+   `learnSectionOpen` trzyma WYŁĄCZNIE świadome decyzje użytkownika
+   (kliknięcie w nagłówek sekcji) i one są trwałe — zwinięta sekcja nie
+   skacze sama przy zmianie znaku.
 
-      <aside class="sidebar card">
-        <h3>Znaki</h3>
+   Sekcja bez takiej decyzji jest zwykła: otwarta jest ta, w której siedzi
+   aktywny znak. Dzięki temu w danej chwili otwarta jest najwyżej jedna
+   z sekcji nietkniętych, a najechanie strzałkami na inną sekcję nie
+   zostawia jej rozwiniętej na stałe — tylko przesuwa rozwinięcie.
+   `openByDefault` decyduje wyłącznie o pierwszym renderze (Basic startuje
+   rozwinięty); każde późniejsze zwinięcie jest już trwałe.
+*/
+const learnSectionOpen = {};
+let learnSectionStarted = false;
 
-        ${LEARN_CATEGORIES.map(category => {
-          // grupy w kolejności getGroups() — kolejność znaków bez zmian
-          const groups = getGroups().filter(group => learnCategoryOf(group.id) === category.id);
-          const count = groups.reduce((sum, group) => sum + group.chars.length, 0);
+function learnSectionIsOpen(category, activeCategory) {
+  // Sekcja z aktywnym znakiem jest otwarta ZAWSZE — inaczej strzałki gnałyby
+  // po niewidocznych znakach. To nie koliduje z trwałym zwinięciem: dotyczy
+  // sekcji, w której użytkownik właśnie pracuje, a nie tej obok.
+  if (category.id === activeCategory) return true;
+  const chosen = learnSectionOpen[category.id];
+  if (chosen !== undefined) return chosen;
+  return !learnSectionStarted && !!category.openByDefault;
+}
 
-          // sekcja z aktywnym znakiem jest otwarta; dzięki temu nawigacja
-          // klawiaturowa automatycznie odsłania kategorię docelową
-          const holdsActive = groups.some(group => group.id === state.group);
-          const open = category.openByDefault || holdsActive;
+/*
+   Panel znaków (sidebar) budujemy RAZ na skrypt i przy zmianie znaku
+   aktualizujemy tylko klasy oraz atrybut `open`.
 
-          return `
-            <details class="learn-section" data-category="${category.id}"${open ? ' open' : ''}>
-              <summary class="learn-section-head">
-                <span class="learn-section-label">${category.label}</span>
-                <span class="learn-section-count">${count}</span>
-              </summary>
-              <div class="learn-section-body">
-                ${groups.map(group => group.chars.map(([kana, romaji]) => `
-                  <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.id}" title="${romaji}">
-                    ${kana}
-                  </button>
-                `).join('')).join('')}
-              </div>
-            </details>
-          `;
-        }).join('')}
+   Wcześniej `renderLearn()` przebudowywał cały panel przez `innerHTML`, więc
+   każde przełączenie znaku tworzyło nowe `<details>` już w stanie docelowym.
+   Zmiana `open` trafiała wtedy w element „urodzony gotowy", więc przeglądarka
+   nie miała skąd rozpocząć przejścia — żadna animacja nie mogła się odtworzyć
+   (działała tylko przy kliknięciu, gdy element przeżywał). Teraz elementy
+   przeżywają zmianę znaku, więc `open` to zwykła zmiana atrybutu, a CSS
+   obsługuje ją w obie strony — także przy automatycznym zwijaniu.
+*/
+function learnSidebarHTML() {
+  return `
+    <h3>Znaki</h3>
 
-        <div class="keyboard-hints">
-          <small>← → nawigacja • Spacja/R odtwórz • Enter kreska • A cały znak</small>
-        </div>
-      </aside>
+    ${LEARN_CATEGORIES.map(category => {
+      // grupy w kolejności getGroups() — kolejność znaków bez zmian
+      const groups = getGroups().filter(group => learnCategoryOf(group.id) === category.id);
+      const count = groups.reduce((sum, group) => sum + group.chars.length, 0);
 
-      <section class="study-card card">
-
-        <div class="study-head">
-          <div>
-            <div class="eyebrow">${current.group}</div>
-            <h2 style="margin:4px 0">${current.romaji}</h2>
+      return `
+        <details class="learn-section" data-category="${category.id}">
+          <summary class="learn-section-head">
+            <span class="learn-section-label">${category.label}</span>
+            <span class="learn-section-count">${count}</span>
+          </summary>
+          <div class="learn-section-body">
+            ${groups.map(group => group.chars.map(([kana, romaji]) => `
+              <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.id}" title="${romaji}">
+                ${kana}
+              </button>
+            `).join('')).join('')}
           </div>
-          <div class="badge" id="strokeBadge">${count} ${strokeWord(count)}</div>
-        </div>
+        </details>
+      `;
+    }).join('')}
 
-        <div class="character-area">
-
-          <div class="char-panel">
-            <h3>ZNAK</h3>
-
-            <div class="svg-wrap" id="svgWrap"></div>
-
-            <div class="controls">
-              <button class="btn btn-primary" id="playStrokes" disabled>▶ Odtwórz</button>
-              <button class="btn btn-secondary" id="stepStroke" disabled>Kreska po kresce</button>
-              <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
-            </div>
-
-            <div class="kana-note" id="kanaNote"></div>
-          </div>
-
-          <div class="char-panel stroke-box">
-            <h3>KOLEJNOŚĆ RYSOWANIA</h3>
-
-            <div class="order-line" id="orderLine">${orderLineHTML(count)}</div>
-
-            <div class="stroke-list" id="strokeList">
-              ${strokeListHTML(state.kana)}
-            </div>
-          </div>
-
-        </div>
-
-        <div class="learn-nav">
-          <button class="btn btn-secondary" id="prevKana">← Poprzedni</button>
-          <button class="btn btn-secondary" id="quizMe">🧠 Sprawdź się</button>
-          <button class="btn btn-secondary" id="nextKana">Następny →</button>
-        </div>
-
-      </section>
-
-    </section>
+    <div class="keyboard-hints">
+      <small>← → nawigacja • Spacja/R odtwórz • Enter kreska • A cały znak</small>
+    </div>
   `;
+}
+
+function bindSidebar(sidebar) {
+  /* Decyzję użytkownika czytamy z KLIKNIĘCIA w nagłówek, a nie z `toggle`.
+     `toggle` jest zdarzeniem asynchronicznym i potrafi nadbiegnąć po
+     renderze, co zamieszałoby stanem; klik jest jednoznaczny. */
+  sidebar.querySelectorAll('.learn-section').forEach(section => {
+    section.querySelector('summary').onclick = () => {
+      // `onclick` wyprzedza domyślne przełączenie, więc `section.open` to
+      // jeszcze stan sprzed kliknięcia — nowy stan jest jego przeciwieństwem.
+      learnSectionOpen[section.dataset.category] = !section.open;
+    };
+  });
 
   /* wybór znaku — ustawiamy też grupę, bo wszystkie znaki są teraz widoczne
      naraz; samo `state.kana` rozjechałoby się z `state.group` używanym
      przez nawigację i nagłówek karty */
-  document.querySelectorAll('[data-kana]').forEach(button => {
+  sidebar.querySelectorAll('[data-kana]').forEach(button => {
     button.onclick = () => {
       Audio.click();
       state.group = button.dataset.group;
@@ -1635,6 +1627,98 @@ function renderLearn() {
       renderLearn();
     };
   });
+}
+
+/* Klamka panelu: aktywny przycisk, poziom opanowania i rozwinięcie sekcji. */
+function updateSidebarState(sidebar) {
+  const activeCategory = learnCategoryOf(state.group);
+
+  sidebar.querySelectorAll('[data-kana]').forEach(button => {
+    const kana = button.dataset.kana;
+    button.classList.toggle('active', kana === state.kana);
+
+    // poziom opanowania zmienia się po egzaminie, więc klasy odświeżamy
+    const level = masteryLevel(kana);
+    Array.from(button.classList)
+      .filter(name => name.startsWith('mastery-'))
+      .forEach(name => button.classList.remove(name));
+    button.classList.add('mastery-' + level);
+  });
+
+  sidebar.querySelectorAll('.learn-section').forEach(section => {
+    const category = LEARN_CATEGORIES.find(item => item.id === section.dataset.category);
+    if (category) section.open = learnSectionIsOpen(category, activeCategory);
+  });
+}
+
+function renderLearn() {
+  const current = item(state.kana);
+  const count = getStrokeCounts()[state.kana];
+
+  let sidebar = app.querySelector('.sidebar');
+  const studyCard = () => app.querySelector('.study-card');
+
+  if (!sidebar || sidebar.dataset.script !== state.script) {
+    app.innerHTML = `
+      <section class="learner">
+        <aside class="sidebar card" data-script="${state.script}"></aside>
+        <section class="study-card card"></section>
+      </section>
+    `;
+    sidebar = app.querySelector('.sidebar');
+    sidebar.innerHTML = learnSidebarHTML();
+    bindSidebar(sidebar);
+  }
+
+  updateSidebarState(sidebar);
+
+  // od teraz `openByDefault` już nie decyduje — zwinięcie przez użytkownika
+  // ma pozostać trwałe także po powrocie do tego widoku
+  learnSectionStarted = true;
+
+  studyCard().innerHTML = `
+    <div class="study-head">
+      <div>
+        <div class="eyebrow">${current.group}</div>
+        <h2 style="margin:4px 0">${current.romaji}</h2>
+      </div>
+      <div class="badge" id="strokeBadge">${count} ${strokeWord(count)}</div>
+    </div>
+
+    <div class="character-area">
+
+      <div class="char-panel">
+        <h3>ZNAK</h3>
+
+        <div class="svg-wrap" id="svgWrap"></div>
+
+        <div class="controls">
+          <button class="btn btn-primary" id="playStrokes" disabled>▶ Odtwórz</button>
+          <button class="btn btn-secondary" id="stepStroke" disabled>Kreska po kresce</button>
+          <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
+        </div>
+
+        <div class="kana-note" id="kanaNote"></div>
+      </div>
+
+      <div class="char-panel stroke-box">
+        <h3>KOLEJNOŚĆ RYSOWANIA</h3>
+
+        <div class="order-line" id="orderLine">${orderLineHTML(count)}</div>
+
+        <div class="stroke-list" id="strokeList">
+          ${strokeListHTML(state.kana)}
+      </div>
+        </div>
+
+    </div>
+
+    <div class="learn-nav">
+      <button class="btn btn-secondary" id="prevKana">← Poprzedni</button>
+      <button class="btn btn-secondary" id="quizMe">🧠 Sprawdź się</button>
+      <button class="btn btn-secondary" id="nextKana">Następny →</button>
+    </div>
+  `;
 
   /* nawigacja ← → */
   document.getElementById('prevKana').onclick = () => { Audio.click(); navigateKana(-1); };
@@ -1667,7 +1751,7 @@ function renderLearn() {
       });
     },
     onFail: () => {
-      note.textContent = 'Nie udało się pobrać animacji (brak internetu?) — pokazuję znak z czcionki.';
+      note.textContent = 'Nie udało się pobrać animacji (brak internetu?) — pokazujemy znak z czcionki.';
     }
   }).then(player => {
     if (!player) return;

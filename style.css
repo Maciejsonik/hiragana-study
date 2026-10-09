@@ -601,6 +601,48 @@ footer {
    LEARN: KATEGORIE KANA (accordion)
    Zastępuje poprzednią siatkę przycisków "Rzędy".
 ========================================================= */
+/*
+   Animacja rozwijania i zwijania sekcji.
+
+   Zawartość `<details>` jest ukrywana przez przeglądarkę, więc zwykłe
+   `max-height` na `.learn-section-body` nic by nie dało — przy zwiniętej
+   sekcji element po prostu nie istnieje w layoutcie. `::details-content`
+   wskazuje dokładnie tę warstwę, którą ukrywa `<details>`:
+
+     height: 0            → sekcja zwinięta
+     height: auto          → sekcja rozwinięta
+
+   `interpolate-size: allow-keywords` pozwala przejściowo liczyć na `auto`,
+   a `allow-discrete` pilnuje, żeby `content-visibility` zmieniło się dopiero
+   na końcu (inaczej treść znikałaaby w połowie animacji zamykania).
+
+   Dzięki temu przejście działa tak samo przy kliknięciu i przy
+   automatycznym rozwijaniu/zwijaniu po nawigacji strzałkami — panel znaków
+   nie jest przebudowywany przy zmianie znaku, więc elementy `<details>`
+   przeżywają zmianę `open`.
+*/
+:root {
+  interpolate-size: allow-keywords;
+}
+
+.learn-section::details-content {
+  height: 0;
+  overflow: hidden;
+  transition:
+    height .2s ease,
+    content-visibility .2s allow-discrete;
+}
+
+.learn-section[open]::details-content {
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learn-section::details-content {
+    transition: none;
+  }
+}
+
 
 .learn-section {
   border: 1px solid var(--line);
@@ -662,10 +704,19 @@ footer {
   border-radius: 999px;
   padding: 2px 9px;
 }
+/*
+   Cztery kolumny, nie pięć: dwuznakowe kana yōon (きゃ, しゅ, ちょ…) są
+   wyraźnie szersze od jednoznakowych. Przy pięciu kolumnach w 280px
+   sidebarze przycisk miał 37px, czyli 29px miejsca na glify — きゃ nie
+   mieścił się i łamał się na dwa wiersze, przez co wszystkie przyciski
+   w sekcji Yōon były dwukrotnie wyższe i wyglądały jak kolumna.
+   Cztery kolumny dają ~48px, więc każdy znak mieści się w jednej linii
+   bez zmiany szerokości sidebara (a więc bez ściskania karty nauki).
+*/
 
 .learn-section-body {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 7px;
   padding: 4px 13px 13px;
   min-width: 0;
