@@ -369,7 +369,7 @@ footer {
   line-height: 1.55;
 }
 
-.menu-card.settings-entry {
+.menu-card-full {
   grid-column: 1 / -1;
 }
 
@@ -427,6 +427,120 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* =========================================================
+   PRZEGLĄD (T21)
+   ========================================================= */
+
+.review {
+  max-width: 820px;
+  margin: 50px auto 0;
+}
+
+.review > h2 {
+  margin: 4px 0 18px;
+}
+
+.review-summary {
+  color: var(--muted);
+  font-size: .95rem;
+  margin: 0 0 14px;
+}
+
+.review-empty {
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.review-empty-title {
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.review-empty p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.review-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.review-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card-solid);
+}
+
+/* kafelek znaku — wizualnie spójny z .kana-btn z Learn, ale osobna klasa,
+   żeby nie dziedziczyć semantyki masteryLevel() jako statusu SRS */
+.review-kana {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 1.1rem;
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease;
+}
+
+.review-kana:hover {
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.review-kana:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.review-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.review-tag {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--progress-bg);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.review-tag-warn {
+  background: color-mix(in srgb, var(--bad) 16%, transparent);
+  color: var(--bad);
+}
+
+.review-tag-quiet {
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.review-start {
+  display: block;
+  margin: 0 auto;
 }
 
 .btn-danger {
@@ -601,6 +715,7 @@ footer {
    LEARN: KATEGORIE KANA (accordion)
    Zastępuje poprzednią siatkę przycisków "Rzędy".
 ========================================================= */
+
 /*
    Animacja rozwijania i zwijania sekcji.
 
@@ -642,7 +757,6 @@ footer {
     transition: none;
   }
 }
-
 
 .learn-section {
   border: 1px solid var(--line);
@@ -704,6 +818,7 @@ footer {
   border-radius: 999px;
   padding: 2px 9px;
 }
+
 /*
    Cztery kolumny, nie pięć: dwuznakowe kana yōon (きゃ, しゅ, ちょ…) są
    wyraźnie szersze od jednoznakowych. Przy pięciu kolumnach w 280px
@@ -713,7 +828,6 @@ footer {
    Cztery kolumny dają ~48px, więc każdy znak mieści się w jednej linii
    bez zmiany szerokości sidebara (a więc bez ściskania karty nauki).
 */
-
 .learn-section-body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

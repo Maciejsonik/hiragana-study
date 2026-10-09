@@ -1252,6 +1252,7 @@ T12 confetti                           DONE
 T17 katakana mode                      DONE
 T26 settings / personalization        DONE
 T14 offline PWA                        DONE
+T21 spaced repetition engine          DONE
 ```
 
 ### T9 extension
@@ -2189,3 +2190,126 @@ untouched.
   Web Audio oscillators and needs no asset files.
 - **Progress / exam:** untouched. `hiragana-progress` and
   `hiragana-exam-settings` are separate stores with their own reset actions.
+
+# 46. Spaced Repetition (T21)
+
+Shipped alongside the existing adaptive weighting. SRS is deliberately kept
+**separate from legacy mastery** — see "Legacy vs SRS mastery" below.
+
+## Storage
+
+```text
+localStorage:
+  hiragana-progress  version 2
+```
+
+```js
+{
+  version: 2,
+  chars: {
+    "あ": {
+      // legacy fields (unchanged, still drive chart/practice/exam)
+      seen, correct, wrong, recent, confused, last,
+      // SRS fields (new)
+      stage, reps, due, lapses
+    }
+  }
+}
+```
+
+## Ladder
+
+`stage` is an index into a fixed ladder. `reps` counts correct answers **on the
+current stage only**, so `dueReps` is a progress-through-rung counter.
+
+| stage | interval | reps to advance |
+| ----- | -------- | ---------------- |
+| 0     | 0 d      | 1                |
+| 1     | 1 d      | 1                |
+| 2     | 3 d      | 1                |
+| 3     | 7 d      | 1                |
+| 4     | 14 d     | 2                |
+| 5     | 30 d     | 2                |
+| 6     | 60 d     | 2                |
+| 7     | 120 d    | 3 (`MAX_STAGE`) |
+
+A wrong answer drops one stage and counts a `lapse`, except at stage 0 — failing
+the very first rung is ordinary learning, not a retention loss.
+
+## Status
+
+`deriveStatus()` is computed on read and never stored:
+
+| status     | condition                                | label          |
+| ---------- | ---------------------------------------- | -------------- |
+| `unseen`   | no valid progress record                 | —              |
+| `learning` | stage 0                                  | W trakcie nauki |
+| `review`   | any stage below max, or max without reps | Do powtórki    |
+| `mastered` | stage `MAX_STAGE` **and** `reps >= 3`    | Długi odstęp   |
+
+`mastered` requires confirmation **on** the top rung. `scheduleAnswer()` must
+therefore cap `reps` at `MAX_STAGE` rather than zeroing it — zeroing there makes
+`mastered` unreachable, because the status would be revoked on the very answer
+that earned it. Wrong answers still drop a stage, so mastery is lost and must be
+re-earned.
+
+The review screen deliberately avoids "Opanowane"/"mastered" wording, so a status
+derived from spaced repetition is never mistaken for the legacy level.
+
+## Migration (v1 → v2)
+
+`migrateProgress()` runs on load. Missing SRS fields on an otherwise valid record
+are seeded from the legacy level, so a user's existing history is preserved
+rather than reset:
+
+| legacy level | seeded stage |
+| ------------ | ------------ |
+| mastered     | 3            |
+| good         | 2            |
+| learning     | 1            |
+| hard         | 0            |
+
+Fresh records seed stage 0. `due` is 0, `reps` and `lapses` are 0.
+
+Corruption handling: negative and non-integer values are treated as damage and
+replaced by the seed, while a positive out-of-range `stage` (e.g. 99) is clamped
+to `MAX_STAGE` — an overshoot still points at a genuinely practised kana and
+should not be hidden. Non-object entries are **kept** in `chars` (no data loss)
+but excluded from the queue and from `progressSummary()`.
+
+`progressSummary()` sums only records passing `isProgressRecord()`, so `seen` and
+`correct` come from the same set and the percentage cannot exceed 100 or become
+`NaN` on damaged data.
+
+## Queue
+
+```js
+dueList(now)      // every due kana, sorted due → lapses → stage → codepoint
+dueCount(now)     // length of the queue
+reviewSession()   // queue capped at MAX_REVIEW_PER_SESSION (20)
+```
+
+Only Exam feeds the schedule. Learn stays browse-only, and `exam-timeout` updates
+legacy stats but never touches SRS — a timeout is not a retention failure.
+
+## Legacy vs SRS mastery
+
+Two independent systems coexist on purpose:
+
+| | legacy `masteryLevel()` | SRS `deriveStatus()` |
+| - | ----------------------- | -------------------- |
+| input | `seen`, `correct`, `recent` | `stage`, `reps` |
+| time | historical accuracy | schedule position |
+| used by | progress chart, `practiceList()`, `difficultyMultiplier()`, exam weighting, kana colours | review screen only |
+
+Do not merge them. Exam weighting must not shift because a kana reached a long
+SRS interval — that would change existing practice behaviour as a side effect of
+adding review.
+
+## Tests
+
+`tests.html` + `tests.js` are a dependency-free harness. They rebuild the page
+from the real `index.html` and load the real `app.js`, so they cannot drift from
+the app. They are a dev tool: not in `SHELL_ASSETS`, never precached.
+
+---

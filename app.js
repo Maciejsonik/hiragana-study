@@ -1281,6 +1281,7 @@ function render() {
   if (state.screen === 'menu') renderMenu();
   if (state.screen === 'learn') renderLearn();
   if (state.screen === 'exam') renderExam();
+  if (state.screen === 'review') renderReview();
   if (state.screen === 'settings') renderSettings();
 }
 
@@ -1327,7 +1328,13 @@ function renderMenu() {
         <p>Wybierz zakres znaków i ćwicz tak długo, jak chcesz. Błędy dostajesz w formie fiszki.</p>
       </button>
 
-      <button class="menu-card settings-entry" id="settingsCard">
+      <button class="menu-card menu-card-full" id="reviewCard">
+        <div class="menu-icon">🔄</div>
+        <h2>Powtórki</h2>
+        <p>Znaki zaplanowane na dziś — powtórki w rozstawie rosnącym co do dnia.</p>
+      </button>
+
+      <button class="menu-card menu-card-full" id="settingsCard">
         <div class="menu-icon">⚙️</div>
         <h2>Ustawienia</h2>
         <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>
@@ -1342,6 +1349,7 @@ function renderMenu() {
     homeBtn.classList.remove('hidden');
     showExamSetup();
   };
+  document.getElementById('reviewCard').onclick = () => { Audio.click(); setScreen('review'); };
   document.getElementById('settingsCard').onclick = () => { Audio.click(); setScreen('settings'); };
 
   document.querySelectorAll('[data-script]').forEach(btn => {
@@ -1351,6 +1359,102 @@ function renderMenu() {
       renderMenu();
     };
   });
+}
+
+
+/* =========================================================
+   PRZEGLĄD — KOLEJKA SRS (T21)
+   ========================================================= */
+
+/*
+   Świadomy wybór słów: ten ekran NIE używa „Opanowane"/„mastered".
+   Słowo „opanowane" należy w aplikacji do `masteryLevel()` (legacy
+   statystyka odpowiedzi), a SRS ma własne, inne znaczenie. Zanim
+   etykiety nie zostaną ujednolicone (osobne zadanie), ten ekran
+   mówi wyłącznie o terminach powtórki.
+*/
+const REVIEW_STATUS_LABEL = {
+  unseen:   'Nowy',
+  learning: 'W trakcie nauki',
+  review:   'Do powtórki',
+  mastered: 'Długi odstęp'
+};
+
+function reviewIntervalText(entry) {
+  const days = REVIEW_STAGES[entry.stage].intervalDays;
+  if (days === 0) return 'w tej sesji';
+  if (days === 1) return 'za 1 dzień';
+  return `za ${days} dni`;
+}
+
+function renderReview() {
+  const now = Date.now();
+  const due = dueList(now);
+  const session = due.slice(0, MAX_REVIEW_PER_SESSION);
+
+  app.innerHTML = `
+    <section class="review">
+      <div class="eyebrow">PRZEGLĄD</div>
+      <h2>Powtórki</h2>
+
+      ${due.length === 0 ? `
+        <div class="review-empty card">
+          <p class="review-empty-title">Wszystko na czas</p>
+          <p>Nie ma tu żadnego znaku zaplanowanego na dziś. Nowe znaki dodasz, ćwicząc w trybie nauki.</p>
+          <button class="btn btn-primary" id="reviewGoLearn">Przejdź do nauki</button>
+        </div>
+      ` : `
+        <p class="review-summary">
+          Do powtórki: <strong>${due.length}</strong>${due.length > MAX_REVIEW_PER_SESSION
+            ? ` &nbsp;·&nbsp; dziś: ${MAX_REVIEW_PER_SESSION}` : ''}
+        </p>
+
+        <ul class="review-list">
+          ${session.map(item => `
+            <li class="review-row">
+              <button class="review-kana ${masteryLevel(item.kana) === 'new' ? '' : `mastery-${masteryLevel(item.kana)}`}" data-review-kana="${item.kana}">${item.kana}</button>
+              <span class="review-meta">
+                <span class="review-tag">${REVIEW_STATUS_LABEL[deriveStatus(progress.chars[item.kana])]}</span>
+                ${progress.chars[item.kana].lapses > 0
+                  ? `<span class="review-tag review-tag-warn">Potknięcia: ${progress.chars[item.kana].lapses}</span>`
+                  : ''}
+                <span class="review-tag review-tag-quiet">${reviewIntervalText(progress.chars[item.kana])}</span>
+              </span>
+            </li>
+          `).join('')}
+        </ul>
+
+        <button class="btn btn-primary review-start" id="reviewStartBtn">Rozpocznij powtórki</button>
+      `}
+    </section>
+  `;
+
+  const startBtn = document.getElementById('reviewStartBtn');
+  if (startBtn) {
+    startBtn.onclick = () => {
+      Audio.click();
+      const settings = loadExamSettings();
+      startExam([], {
+        kanaList: session.map(item => item.kana),
+        options: settings.options,
+        outside: settings.outside
+      });
+    };
+  }
+
+  document.querySelectorAll('[data-review-kana]').forEach(button => {
+    button.onclick = () => {
+      Audio.click();
+      const kana = button.dataset.reviewKana;
+      const character = item(kana);
+      if (character) state.group = character.groupId;
+      state.kana = kana;
+      setScreen('learn');
+    };
+  });
+
+  const goLearn = document.getElementById('reviewGoLearn');
+  if (goLearn) goLearn.onclick = () => { Audio.click(); setScreen('learn'); };
 }
 
 
@@ -1383,7 +1487,7 @@ function settingsPill(value, current, label, attr, focusKey) {
 }
 
 function resetProgressData() {
-  progress = { version: 1, chars: {} };
+  progress = { version: PROGRESS_VERSION, chars: {} };
   saveProgress();
 }
 
@@ -1708,8 +1812,8 @@ function renderLearn() {
 
         <div class="stroke-list" id="strokeList">
           ${strokeListHTML(state.kana)}
-      </div>
         </div>
+      </div>
 
     </div>
 
@@ -1776,24 +1880,243 @@ function renderLearn() {
   });
 }
 
+/* =========================================================
+   SRS — SPACED REPETITION (T21)
+   ------------------------------------------------------------
+   Harmonogram jest oddzielony od istniejącego `masteryLevel()`:
+
+     masteryLevel()  →  „legacy mastery": statystyka odpowiedzi
+     deriveStatus()  →  „SRS status": potwierdzenie przez powtórki w czasie
+
+   To DWA różne znaczenia słowa „opanowane" i celowo nie zostały scalone
+   (patrz PROJECT.md, T21). `stage` jest JEDYNYM zapisywanym stanem —
+   statusy pochodne liczone są na żądanie, więc nie mogą się ze sobą
+   rozjechać.
+
+   Wszystkie funkcje w tej sekcji są czyste: dostają `now` parametrem
+   i nie wołają `Date.now()`, `localStorage` ani `progress`.
+   ========================================================= */
+
+// Drabinka odstępów. `requiredReps` to liczba poprawnych odpowiedzi
+// potrzebna, aby OPUŚCIĆ dany etap (etapy 4-6 wymagają dwóch).
+const REVIEW_STAGES = [
+  { intervalDays: 0,   requiredReps: 1 },   // 0 — powtórka w tej samej sesji
+  { intervalDays: 1,   requiredReps: 1 },   // 1
+  { intervalDays: 3,   requiredReps: 1 },   // 2
+  { intervalDays: 7,   requiredReps: 1 },   // 3
+  { intervalDays: 14,  requiredReps: 2 },   // 4
+  { intervalDays: 30,  requiredReps: 2 },   // 5
+  { intervalDays: 60,  requiredReps: 2 },   // 6
+  { intervalDays: 120, requiredReps: 3 }    // 7 — MAX_STAGE
+];
+
+const MAX_STAGE = REVIEW_STAGES.length - 1;
+const MASTERED_REPS = REVIEW_STAGES[MAX_STAGE].requiredReps;
+const MAX_REVIEW_PER_SESSION = 20;
+const DAY_MS = 86400000;
+
+/*
+   Uczeń przesuwa się o jeden stopień dopiero, gdy zbierze
+   `requiredReps` poprawnych odpowiedzi na bieżącym stopniu.
+   `reps` liczy poprawne odpowiedzi TYLKO na bieżącym stopniu.
+*/
+function scheduleAnswer(entry, { correct, source, now }) {
+  // Przekroczenie czasu nie dotyka harmonogramu — to nie jest porażka
+  // retencyjna, tylko za wolne odpowiedź.
+  if (source === 'exam-timeout') return entry;
+
+  if (correct) {
+    const required = REVIEW_STAGES[entry.stage].requiredReps;
+    entry.reps++;
+
+    if (entry.stage === MAX_STAGE) {
+      /*
+        Ostatni stopień NIE zeruje `reps` — to właśnie `reps` przechowuje
+        potwierdzenie opanowania, a `deriveStatus()` czyta je jako
+        `reps >= MASTERED_REPS`. Zerowanie cofnęłoby `mastered` natychmiast
+        po jego osiągnięciu, przez co status byłby nieosiągalny.
+
+        `reps` zostało już zwiększone powyżej, więc trzy poprawne odpowiedzi
+        dają kolejno 1, 2, 3, a czwarte i kolejne tylko odsuwają `due`.
+        Błędna odpowiedź spada niżej (patrz niżej) i gubi status.
+      */
+      entry.reps = Math.min(entry.reps, MASTERED_REPS);
+      entry.due = now + REVIEW_STAGES[MAX_STAGE].intervalDays * DAY_MS;
+    } else if (entry.reps >= required) {
+      entry.reps = 0;
+      entry.stage++;
+      entry.due = now + REVIEW_STAGES[entry.stage].intervalDays * DAY_MS;
+    } else {
+      entry.due = now + REVIEW_STAGES[entry.stage].intervalDays * DAY_MS;
+    }
+  } else {
+    // Porażka na etapie 0 to zwykłe uczenie się, nie „potknięcie".
+    // Potknięcie liczymy dopiero po wyjściu z nauki w sesji.
+    if (entry.stage >= 1) {
+      entry.lapses++;
+      entry.stage = Math.max(0, entry.stage - 1);
+    }
+    entry.reps = 0;
+    entry.due = now;
+  }
+
+  return entry;
+}
+
+/*
+   Status SRS — wyliczany, nigdy nie zapisywany.
+   `mastered` wymaga potwierdzenia powtórkami, a nie tylko wysokiego
+   wyniku historycznego.
+*/
+function deriveStatus(entry) {
+  if (!isProgressRecord(entry)) return 'unseen';
+  if (entry.stage === 0) return 'learning';
+  if (entry.stage === MAX_STAGE && entry.reps >= MASTERED_REPS) return 'mastered';
+  return 'review';
+}
 
 /* =========================================================
    POSTĘPY (zapis w localStorage)
    Dla każdego znaku: ile prób, ile poprawnych, ostatnie 6 wyników
-   oraz z czym go mylisz.
+   oraz z czym go mylisz. Od T21 dokładam stan SRS (patrz wyżej).
 ========================================================= */
 
 const PROGRESS_KEY = 'hiragana-progress';
+const PROGRESS_VERSION = 2;
 const SETTINGS_KEY = 'hiragana-exam-settings';
+
+/*
+   WALIDACJA REKORDÓW POSTĘPU
+   ------------------------------------------------------------
+   Trzy niezależne reguły, celowo rozdzielone:
+
+   1. isProgressRecord()  — czy to w ogóle zapisany, ćwiczony znak?
+      Odzwierciedla dokładnie test używany przez `masteryLevel()`
+      (`!entry.seen → 'new'`), więc SRS nie wymyśla własnego
+      pojęcia poprawności danych.
+
+   2. normalizeSrs()      — nadpisanie pól SRS w rekordzie, który
+      przeszedł (1). Uruchamiane RAZ, przy wczytaniu/migracji.
+
+   3. dueList()           — przy budowaniu kolejki rekord jest tylko
+      SPRAWDZANY i ewentualnie POMIJANY. Nigdy nie jest „naprawiany"
+      na bieżąco, bo to oznaczałoby wymyślanie stanu przeglądu
+      dla uszkodzonych danych.
+
+   Ważne: rekordy, które nie są obiektami, NIE SĄ usuwane — zostają
+   w `progress.chars`, są pomijane przez `dueList()` i nie dostają
+   pól SRS. Dzięki temu nic nie kasujemy użytkownikowi.
+========================================================= */
+
+function isProgressRecord(entry) {
+  return !!entry
+    && typeof entry === 'object'
+    && !Array.isArray(entry)
+    && Number.isFinite(entry.seen)
+    && entry.seen > 0;
+}
+
+// Używane też przez progressSummary() — nieobiektowy rekord daje 0,
+// zamiast zatruć sumę wartością undefined/NaN.
+function progressStat(entry, field) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return 0;
+  const value = entry[field];
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+const isPlainInt = value =>
+  Number.isFinite(value) && Number.isInteger(value);
+
+/*
+   Nadpisuje wyłącznie pola SRS w rekordzie, który przeszedł
+   `isProgressRecord()`. Brakujące / źle typowane / ujemne / nieskończone
+   wartości dostają default. `stage` spoza zakresu jest przycinany
+   (a nie odrzucany), bo rekord wskazuje realnie ćwiczony znak —
+   odrzucenie ukryłoby go użytkownikowi.
+*/
+function normalizeSrs(entry, seededStage) {
+  // Ujemne i niecałkowite wartości to uszkodzenie, więc dostają default.
+  // Dodatnia wartość PONAD zakresem (np. 99) wygląda jak zbyt zachłanne
+  // przejście, więc ją przycinamy zamiast odrzucać — rekord wskazuje
+  // realnie ćwiczony znak i nie chcemy go użytkownikowi ukrywać.
+  entry.stage = isPlainInt(entry.stage) && entry.stage >= 0
+    ? Math.min(entry.stage, MAX_STAGE)
+    : seededStage;
+
+  entry.reps = isPlainInt(entry.reps) && entry.reps >= 0
+    ? Math.min(entry.reps, MASTERED_REPS)
+    : 0;
+
+  entry.due = Number.isFinite(entry.due) && entry.due >= 0 ? entry.due : 0;
+
+  entry.lapses = isPlainInt(entry.lapses) && entry.lapses >= 0 ? entry.lapses : 0;
+
+  return entry;
+}
+
+// Defensive check przy budowaniu kolejki: nie ufamy pamięci w trakcie sesji.
+function hasUsableSrs(entry) {
+  return isProgressRecord(entry)
+    && isPlainInt(entry.stage)
+    && entry.stage >= 0
+    && entry.stage <= MAX_STAGE
+    && isPlainInt(entry.reps)
+    && entry.reps >= 0
+    && Number.isFinite(entry.due)
+    && entry.due >= 0
+    && isPlainInt(entry.lapses)
+    && entry.lapses >= 0;
+}
+
+/*
+   Konserwatywne przesianie ze statystyków legacy na drabinkę SRS.
+   Legacy nie zawiera ŻADNEJ informacji o czasie (pole `last` jest
+   zapisywane, ale nigdy nie czytane), więc nie możemy uczciwie
+   obiecać długiego odstępu — znak potwierdza się realnymi powtórkami.
+*/
+function legacyStageSeed(kana) {
+  switch (masteryLevel(kana)) {
+    case 'mastered': return 3;
+    case 'good':     return 2;
+    case 'learning': return 1;
+    case 'hard':     return 0;
+    default:         return 0;
+  }
+}
+
+function migrateProgress(data) {
+  if (data && data.version >= PROGRESS_VERSION) return data;
+
+  const chars = (data && typeof data.chars === 'object' && data.chars) || {};
+
+  for (const kana of Object.keys(chars)) {
+    const entry = chars[kana];
+
+    // Rekord nie-obiektowy: zostaje w `chars` nietknięty, ale nie dostaje
+    // pól SRS i nie wejdzie do kolejki. Nic nie kasujemy.
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+
+    // `seen` poza zakresem → 0, żeby `progressSummary()` nigdy nie zwrócił NaN,
+    // a rekord przestał być „ćwiczonym" (`masteryLevel` → 'new').
+    if (!Number.isFinite(entry.seen) || entry.seen < 0) entry.seen = 0;
+
+    if (isProgressRecord(entry)) normalizeSrs(entry, legacyStageSeed(kana));
+    // Rekord z `seen === 0` celowo NIE dostaje pól SRS — nie był ćwiczony.
+  }
+
+  data.chars = chars;
+  data.version = PROGRESS_VERSION;
+  return data;
+}
 
 function loadProgress() {
   try {
     const data = JSON.parse(localStorage.getItem(PROGRESS_KEY));
-    if (data && data.chars) return data;
+    if (data && data.chars) return migrateProgress(data);
   } catch (error) {
     /* uszkodzony zapis - zaczynamy od zera */
   }
-  return { version: 1, chars: {} };
+  return { version: PROGRESS_VERSION, chars: {} };
 }
 
 let progress = loadProgress();
@@ -1806,8 +2129,15 @@ function saveProgress() {
   }
 }
 
-function recordAnswer(kana, correct, chosenKana) {
-  const entry = progress.chars[kana] ||
+/*
+   `source` jest BEZ wartości domyślnej celowo — pominięcie go ma być
+   widocznym błędem, a nie cichym złym zachowaniem:
+     'exam'          — odpowiedź oceniona (podnosi harmonogram SRS)
+     'exam-timeout'  — upłynął czas: NIE zmienia SRS, tylko statystyki
+*/
+function recordAnswer(kana, correct, chosenKana, source) {
+  const existing = progress.chars[kana];
+  const entry = existing ||
     (progress.chars[kana] = { seen: 0, correct: 0, wrong: 0, recent: [], confused: {}, last: 0 });
 
   entry.seen++;
@@ -1817,11 +2147,30 @@ function recordAnswer(kana, correct, chosenKana) {
   entry.recent.push(correct ? 1 : 0);
   if (entry.recent.length > 6) entry.recent.shift();
 
-  entry.last = Date.now();
+  const now = Date.now();
+  entry.last = now;
 
   if (!correct && chosenKana) {
     entry.confused[chosenKana] = (entry.confused[chosenKana] || 0) + 1;
   }
+
+  /*
+    Przekroczenie czasu kończy się TUTAJ — przed jakimkolwiek dostępem do SRS.
+    Nie chcemy nawet inicjalizować pól harmonogramu, bo timeout nie jest
+    odpowiedzią ocenioną: nie awansuje, nie resetuje, nie nalicza potknięcia.
+  */
+  if (source === 'exam-timeout') {
+    saveProgress();
+    return;
+  }
+
+  // Rekord świeży dostaje stage 0; istniejący zapis w formacie legacy
+  // bez pól SRS dziedziczy etap ze swojej dotychczasowej oceny, żeby migracja
+  // dawała ten sam wynik niezależnie od tego, kiedy SRS zostało dodane.
+  if (!hasUsableSrs(entry)) {
+    normalizeSrs(entry, existing ? legacyStageSeed(kana) : 0);
+  }
+  scheduleAnswer(entry, { correct: correct, source: source, now: now });
 
   saveProgress();
 }
@@ -1845,6 +2194,50 @@ function masteryLevel(kana) {
   if (entry.seen >= 10 && overall >= 0.9 && entry.recent.length >= 5 && entry.recent.slice(-5).every(r => r === 1)) return 'mastered';
   if (entry.recent.length >= 4 && rate === 0) return 'good';
   return 'learning';
+}
+
+/*
+   KOLEJKA PRZEGLĄDU (T21)
+   ------------------------------------------------------------
+   Budujemy ją wyłącznie z rekordów, które przechodzą walidację
+   (`isProgressRecord` + `hasUsableSrs`). Rekord uszkodzony jest
+   POMIJANY — nigdy nie zamieniamy go w „znak do powtórki".
+
+   Kolejność jest w pełni deterministyczna (4 klucze), więc ten sam
+   stan zawsze daje tę samą listę:
+     1. `due` rosnąco   — najbardziej zaległe najpierw
+     2. `lapses` malejąco — najbardziej wiotkie najpierw
+     3. `stage` rosnąco — najsłabsze najpierw
+     4. kodepoint znaku  — ostatni, całkowity tiebreak
+
+   Kolejka jest z natury per-skrypt: `getAll()` to `scriptData[state.script]`.
+*/
+function dueList(now = Date.now()) {
+  return getAll()
+    .map(character => ({ kana: character.kana, entry: progress.chars[character.kana] }))
+    .filter(item => hasUsableSrs(item.entry) && item.entry.due <= now)
+    .sort((a, b) => (
+      (a.entry.due - b.entry.due)
+      || (b.entry.lapses - a.entry.lapses)
+      || (a.entry.stage - b.entry.stage)
+      || (a.kana.codePointAt(0) - b.kana.codePointAt(0))
+    ))
+    .map(item => ({
+      kana: item.kana,
+      stage: item.entry.stage,
+      reps: item.entry.reps,
+      due: item.entry.due,
+      lapses: item.entry.lapses
+    }));
+}
+
+function dueCount(now = Date.now()) {
+  return dueList(now).length;
+}
+
+// Znaków w jednej sesji nie przycinamy do „dueList().length", tylko do limitu.
+function reviewSession(now = Date.now()) {
+  return dueList(now).slice(0, MAX_REVIEW_PER_SESSION).map(item => item.kana);
 }
 
 function topConfusion(kana) {
@@ -1877,9 +2270,13 @@ function practiceList(limit = 12) {
 }
 
 function progressSummary() {
-  const entries = Object.values(progress.chars);
-  const seen = entries.reduce((sum, e) => sum + e.seen, 0);
-  const correct = entries.reduce((sum, e) => sum + e.correct, 0);
+  // Liczymy tylko rekordy, które przechodzą `isProgressRecord()`.
+  // Dzięki temu `seen` i `correct` pochodzą z tego samego zbioru, więc
+  // procent nie może przekroczyć 100 mimo uszkodzonych wpisów.
+  // Dla poprawnych danych wynik jest identyczny jak przed T21.
+  const entries = Object.values(progress.chars).filter(isProgressRecord);
+  const seen = entries.reduce((sum, e) => sum + progressStat(e, 'seen'), 0);
+  const correct = entries.reduce((sum, e) => sum + progressStat(e, 'correct'), 0);
   return { seen, correct, percent: seen ? Math.round((correct / seen) * 100) : 0 };
 }
 
@@ -2513,7 +2910,7 @@ function startQuestionTimer(exam) {
         exam.streak = 0;
         exam.mistakes[exam.current.kana] = (exam.mistakes[exam.current.kana] || 0) + 1;
         exam.waiting = true;
-        recordAnswer(exam.current.kana, false, null);
+        recordAnswer(exam.current.kana, false, null, 'exam-timeout');
         Audio.wrong();
 
         const feedback = document.getElementById('feedback');
@@ -2733,7 +3130,7 @@ function renderRomajiToKanaType(question) {
     clearInterval(exam.timerCountdown);
 
     const correct = typed === question.kana;
-    recordAnswer(question.kana, correct, null);
+    recordAnswer(question.kana, correct, null, 'exam');
 
     input.disabled = true;
     checkBtn.disabled = true;
@@ -2855,7 +3252,7 @@ function renderKanaToRomajiType(question) {
     clearInterval(exam.timerCountdown);
 
     const correct = typed === question.romaji;
-    recordAnswer(question.kana, correct, null);
+    recordAnswer(question.kana, correct, null, 'exam');
 
     input.disabled = true;
     checkBtn.disabled = true;
@@ -2990,7 +3387,7 @@ function answerExam(button, question) {
   const chosenKana = button.dataset.answer;
   const correct = chosenKana === question.kana;
 
-  recordAnswer(question.kana, correct, chosenKana);
+  recordAnswer(question.kana, correct, chosenKana, 'exam');
 
   document.querySelectorAll('.answer').forEach(answer => {
     answer.disabled = true;
