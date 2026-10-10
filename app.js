@@ -1328,13 +1328,13 @@ function renderMenu() {
         <p>Wybierz zakres znaków i ćwicz tak długo, jak chcesz. Błędy dostajesz w formie fiszki.</p>
       </button>
 
-      <button class="menu-card menu-card-full" id="reviewCard">
+      <button class="menu-card full" id="reviewCard">
         <div class="menu-icon">🔄</div>
         <h2>Powtórki</h2>
         <p>Znaki zaplanowane na dziś — powtórki w rozstawie rosnącym co do dnia.</p>
       </button>
 
-      <button class="menu-card menu-card-full" id="settingsCard">
+      <button class="menu-card full" id="settingsCard">
         <div class="menu-icon">⚙️</div>
         <h2>Ustawienia</h2>
         <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>

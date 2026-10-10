@@ -2308,8 +2308,39 @@ adding review.
 
 ## Tests
 
-`tests.html` + `tests.js` are a dependency-free harness. They rebuild the page
-from the real `index.html` and load the real `app.js`, so they cannot drift from
-the app. They are a dev tool: not in `SHELL_ASSETS`, never precached.
+Two dependency-free harnesses, no build step. Both rebuild the page from the real
+`index.html` and load the real `app.js`, so they cannot drift from the app.
+
+```text
+tests.html       + tests.js        SRS / migration / queue       (188 assertions)
+tests-learn.html + tests-learn.js  learn panel / layout / motion ( 53 assertions)
+```
+
+Run them over HTTP — `file://` blocks `fetch('index.html')` and
+`fetch('style.css')`:
+
+```sh
+python3 -m http.server 8000
+# http://localhost:8000/tests.html
+# http://localhost:8000/tests-learn.html
+```
+
+Result lands in a `<pre id="R">` as `TOTAL PASS=n FAIL=0`, and the page title
+becomes `ALL PASS` or `FAILURES`, so it is scriptable.
+
+`tests-learn.html` additionally loads `style.css`: its layout assertions (kana
+wrapping, section heights) are meaningless without real CSS.
+
+Both are dev tools: not in `SHELL_ASSETS`, never precached.
+
+### What these tests do NOT cover
+
+Animation is not measured by height. `getComputedStyle(el, '::details-content')`
+returns the **before-change** value while a transition is running, and pending
+KanjiVG SVG fetches stall the compositor clock in headless. The tests therefore
+check that the animation is **wired** (CSS, `::details-content`, `allow-discrete`,
+`prefers-reduced-motion`) and that `<details>` survives a kana switch — without
+which a transition could not replay at all. Smoothness and appearance still need
+a human eye in a real browser.
 
 ---

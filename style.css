@@ -369,7 +369,7 @@ footer {
   line-height: 1.55;
 }
 
-.menu-card-full {
+.menu-card.full {
   grid-column: 1 / -1;
 }
 

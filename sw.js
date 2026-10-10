@@ -21,7 +21,7 @@
    należą do aplikacji (T26) i są w pełni niezależne od cache.
    ========================================================= */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 
 const SHELL_CACHE = `shell-${VERSION}`;
 const KANJIVG_CACHE = `kanjivg-${VERSION}`;

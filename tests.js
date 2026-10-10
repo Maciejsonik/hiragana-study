@@ -526,8 +526,23 @@
      ===================================================== */
   try {
     const swSrc = await (await fetch('sw.js')).text();
-    ok('sw.js bumped to v3', /const VERSION = 'v3'/.test(swSrc), '');
+
+    /*
+      NIE wpisujemy tu konkretnej wersji ('v3', 'v4', ...) — każdy bump
+      potem by łamał ten test. Sprawdzamy MECHANIZM wersjonowania:
+      VERSION ma kształt vN, a nazwy cache są od niej wyprowadzane.
+    */
+    const version = (swSrc.match(/const VERSION = '(v\d+)'/) || [])[1];
+    ok('sw.js declares VERSION as vN', !!version, version || 'brak');
+    ok('cache names derive from VERSION',
+       /const SHELL_CACHE\s*=\s*`shell-\$\{VERSION\}`/.test(swSrc)
+       && /const KANJIVG_CACHE\s*=\s*`kanjivg-\$\{VERSION\}`/.test(swSrc));
+    ok('activate removes old cache versions', /activate/.test(swSrc) && /delete/.test(swSrc));
+
+    // pliki testowe to narzędzia deweloperskie — nigdy nie w precache
     ok('tests not precached', swSrc.indexOf('tests.js') < 0 && swSrc.indexOf('tests.html') < 0, '');
+    ok('learn-panel tests not precached',
+       swSrc.indexOf('tests-learn.js') < 0 && swSrc.indexOf('tests-learn.html') < 0);
   } catch (e) { ok('service worker version', false, e.message); }
 
   /* =====================================================
@@ -572,6 +587,26 @@
     ok('chart still above cards', (function () {
       return document.querySelector('#app').firstElementChild.classList.contains('script-switcher');
     })(), '');
+
+    // klasa modyfikatora karty pełnoszerokiej: `.menu-card.full`.
+    // Dawniej było to osobna klasa `.menu-card-full` — pilnujemy, żeby
+    // nie wróciła i żeby obie karty (Przegląd i Ustawienia) ją miały.
+    ['reviewCard', 'settingsCard'].forEach(function (id) {
+      const el = document.getElementById(id);
+      ok(id + ' uses .menu-card.full',
+         el.classList.contains('menu-card') && el.classList.contains('full'),
+         el.className);
+      ok(id + ' has no stale .menu-card-full', !el.classList.contains('menu-card-full'), el.className);
+    });
+    ok('no element carries the legacy full-width class',
+       document.querySelectorAll('.menu-card-full').length === 0,
+       String(document.querySelectorAll('.menu-card-full').length));
+
+    const cssText = await (await fetch('style.css')).text();
+    ok('style.css defines .menu-card.full',
+       /\.menu-card\.full\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/.test(cssText));
+    ok('style.css has no stale .menu-card-full selector',
+       cssText.indexOf('.menu-card-full') < 0);
   } catch (e) { ok('review UI', false, e.message); }
 
   /* =====================================================
