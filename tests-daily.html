@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Daily statistics — tests</title>
+  <!--
+    Runner testów statystyk dziennych (T15 faza 1: samo zbieranie).
+
+    Testuje magazyn `hiragana-daily`: granice dnia lokalnego, atrybucję
+    odpowiedzi, semantykę timeoutu, czas sesji, przypisanie XP,
+    przycinanie historii, uszkodzone zapisy oraz reset i czyszczenie danych.
+
+    Tak jak tests.html — NIE kopiujemy szkieletu z index.html: pobieramy
+    prawdziwy plik i wstawiamy jego <body>, więc testy działają na aktualnym
+    markupu i nie rozjeżdżają się z aplikacją.
+
+    Pliki tests-daily.html / tests-daily.js są NARZĄDZIEM deweloperskim:
+    nie wchodzą do SHELL_ASSETS i nie są precache'owane przez Service Worker.
+  -->
+  <pre id="testOut">uruchamianie…</pre>
+  <script>
+    (function () {
+      function out(text) { document.getElementById('testOut').textContent = text; }
+
+      fetch('index.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var parsed = new DOMParser().parseFromString(html, 'text/html');
+          var body = document.createElement('div');
+          body.innerHTML = parsed.body.innerHTML;
+
+          // usuwamy istniejący runner, wstawiamy markup aplikacji
+          document.getElementById('testOut').remove();
+          while (body.firstChild) document.body.appendChild(body.firstChild);
+
+          var app = document.createElement('script');
+          app.src = 'app.js';
+          document.body.appendChild(app);
+
+          app.onload = function () {
+            var tests = document.createElement('script');
+            tests.src = 'tests-daily.js';
+            document.body.appendChild(tests);
+          };
+        })
+        .catch(function (error) {
+          out('Nie udało się wczytać index.html: ' + error.message);
+        });
+    })();
+  </script>
+</body>
+</html>

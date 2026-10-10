@@ -1291,6 +1291,9 @@ function stopExam() {
     clearTimeout(state.exam.timer);
     clearInterval(state.exam.timerCountdown);
     state.exam.finished = true;
+    // T15: zamknięcie sesji przez wyjście z egzaminu (Menu, powtórka,
+    // czyszczenie danych). `recorded` pilnuje, by zapis poszedł raz.
+    recordSessionStats(state.exam);
   }
   state.exam = null;
 }
@@ -1437,7 +1440,8 @@ function renderReview() {
       startExam([], {
         kanaList: session.map(item => item.kana),
         options: settings.options,
-        outside: settings.outside
+        outside: settings.outside,
+        kind: 'review'
       });
     };
   }
@@ -1472,6 +1476,7 @@ function appStorageKeys() {
     SETTINGS_STORE_KEY,
     SETTINGS_KEY,
     PROGRESS_KEY,
+    DAILY_STATS_KEY,
     LEGACY_THEME_KEY,
     LEGACY_MUTED_KEY
   ];
@@ -1486,6 +1491,12 @@ function settingsPill(value, current, label, attr, focusKey) {
   return `<button class="script-btn ${active ? 'active' : ''}" ${attr}="${value}" data-focus-key="${focusKey}" aria-pressed="${active}">${label}</button>`;
 }
 
+/*
+   Reset postępu NIE rusza historii dziennej. Są to dwie różne rzeczy:
+   `hiragana-progress` to stan znaków, `hiragana-daily` to dziennik tego,
+   co się działo. Kasowanie jednego nie powinno po cichu kasować drugiego —
+   dlatego historia ma własny, jawnie nazwany przycisk w Ustawieniach.
+*/
 function resetProgressData() {
   progress = { version: PROGRESS_VERSION, chars: {} };
   saveProgress();
@@ -1566,6 +1577,7 @@ function renderSettings() {
         <div class="settings-actions">
           <button class="btn btn-secondary" id="resetSettingsBtn" data-focus-key="reset-settings">Przywróć ustawienia domyślne</button>
           <button class="btn btn-secondary" id="resetProgressBtn" data-focus-key="reset-progress">Zresetuj postęp</button>
+          <button class="btn btn-secondary" id="clearDailyStatsBtn" data-focus-key="clear-stats">Wyczyść statystyki</button>
           <button class="btn btn-danger" id="clearAllDataBtn" data-focus-key="clear-all">Wyczyść wszystkie dane</button>
         </div>
       </div>
@@ -1604,9 +1616,23 @@ function renderSettings() {
   };
 
   document.getElementById('resetProgressBtn').onclick = () => {
-    if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?')) {
+    if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
+                'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.')) {
       resetProgressData();
       renderSettingsFocused('reset-progress');
+    }
+  };
+
+  // Historia jest nieodwracalna, więc osobny przycisk i osobne pytanie.
+  // Świadomie NIE wchodzi w "Zresetuj postęp" — tam użytkownik kasuje
+  // stan znaków, a nie dziennik tego, co robił.
+  document.getElementById('clearDailyStatsBtn').onclick = () => {
+    if (confirm('Na pewno wyczyścić całą historię nauki?\n\n' +
+                'Znikną dzienniki odpowiedzi, sesji, XP i czasu nauki.\n' +
+                'Tej operacji nie da się cofnąć — statystyk nie da się odtworzyć.\n\n' +
+                'Postęp znaków pozostanie bez zmian.')) {
+      clearDailyStats();
+      renderSettingsFocused('clear-stats');
     }
   };
 
@@ -1985,6 +2011,194 @@ const PROGRESS_KEY = 'hiragana-progress';
 const PROGRESS_VERSION = 2;
 const SETTINGS_KEY = 'hiragana-exam-settings';
 
+/* =========================================================
+   STATYSTYKI DZIENNE (T15 — faza 1: samo zbieranie)
+   ------------------------------------------------------------
+   OSOBNY klucz localStorage, celowo obok `hiragana-progress`,
+   a nie w nim: harmonogram SRS, migracja v1→v2 i `PROGRESS_VERSION`
+   pozostają nietknięte. Ten magazyn odpowiada na pytanie "co
+   robiłem w dniu X", tamten — "jak wygląda mój znak dziś".
+
+   Dane są nieodwracalnie przydatne: przeszłej historii nie da się
+   odtworzyć, więc zbieranie zaczyna się tu, a wykresy (faza 2)
+   powstają później.
+
+   Kształt dnia:
+     answers, correct        — sumy ze wszystkich źródeł
+     examAnswers, reviewAnswers — podział wg źródła, dzięki któremu
+                               sumy da się sprawdzić na oko
+     exams, reviews, xp, seconds
+
+   `answers` liczy TAKŻE przekroczenia czasu, bo `recordAnswer()`
+   zwiększa `seen` również przy timeout — inaczej „dzisiaj" przeczyłoby
+   „łącznie". Timeout nigdy nie trafia do `correct` ani do `reviews`
+   (ten rośnie wyłącznie na zakończeniu sesji).
+========================================================= */
+
+const DAILY_STATS_KEY = 'hiragana-daily';
+const DAILY_STATS_VERSION = 1;
+const DAILY_STATS_MAX_DAYS = 400;
+
+/*
+   Klucz dnia w KALENDARZU LOKALNYM.
+
+   `toISOString()` zwraca UTC, więc odpowiedź o 23:30 trafiłaby do
+   następnego dnia. Budujemy datę z rozdzielników, używając czasu
+   lokalnego — dzięki temu granica dnia zgadza się z tym, co widzi
+   użytkownik, a zmiana strefy czasowej nie przesuwa granicy dnia.
+*/
+function localDayKey(timestamp = Date.now()) {
+  const date = new Date(timestamp);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return date.getFullYear() + '-' + month + '-' + day;
+}
+
+/* Pusty, poprawny dzień — wszystkie liczniki zerowe. */
+function emptyDailyStats() {
+  return {
+    answers: 0, correct: 0,
+    examAnswers: 0, reviewAnswers: 0,
+    exams: 0, reviews: 0, xp: 0, seconds: 0
+  };
+}
+
+/*
+   Wczytanie jest z założenia OPTYMISTYCZNE przy błędach: uszkodzony
+   zapis statystyk to strata historii, nie awaria nauki. Dlatego każda
+   niepoprawna struktura sprowadza się do pustego magazynu, a `try`
+   nie dopuszcza wyjątku do reszty aplikacji (tryb prywatny itp.).
+*/
+function loadDailyStats() {
+  try {
+    const raw = localStorage.getItem(DAILY_STATS_KEY);
+    if (!raw) return { version: DAILY_STATS_VERSION, days: {} };
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { version: DAILY_STATS_VERSION, days: {} };
+    }
+    if (!parsed.days || typeof parsed.days !== 'object' || Array.isArray(parsed.days)) {
+      return { version: DAILY_STATS_VERSION, days: {} };
+    }
+    return { version: DAILY_STATS_VERSION, days: parsed.days };
+  } catch (error) {
+    return { version: DAILY_STATS_VERSION, days: {} };
+  }
+}
+
+function saveDailyStats(stats) {
+  try {
+    localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
+  } catch (error) {
+    /* np. tryb prywatny — brak zapisu nie może przerwać nauki */
+  }
+}
+
+/*
+   Przycięcie historii. Deterministyczne: granica liczona jest od
+   wstrzykniętego `now`, więc test nie musi polegać na zegarku.
+   ZAWSZE zostawiamy dzień `now` i `DAILY_STATS_MAX_DAYS` poprzednich.
+*/
+function pruneDailyStats(stats, now = Date.now()) {
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - DAILY_STATS_MAX_DAYS);
+  const limit = localDayKey(cutoff.getTime());
+
+  const kept = {};
+  Object.keys(stats.days)
+    // KLUCZE ROSNĄ z czasem, więc granica to >= (dzień wczoraj ma mniejszy
+    // klucz niż dzisiaj i zniknąłby przy odwrotnym porównaniu)
+    .filter(key => key >= limit)
+    .forEach(key => { kept[key] = stats.days[key]; });
+
+  stats.days = kept;
+  return stats;
+}
+
+/* Dzień o podanym kluczu, znormalizowany do kompletu liczników. */
+function dailyBucket(stats, key) {
+  const existing = stats.days[key];
+  if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+    stats.days[key] = emptyDailyStats();
+  } else {
+    const base = emptyDailyStats();
+    Object.keys(base).forEach(field => {
+      const value = existing[field];
+      if (Number.isFinite(value) && value >= 0) base[field] = Math.floor(value);
+    });
+    stats.days[key] = base;
+  }
+  return stats.days[key];
+}
+
+/* Odpowiedź — wywoływane z recordAnswer(). */
+function recordDailyAnswer(correct, now = Date.now()) {
+  const stats = loadDailyStats();
+  const bucket = dailyBucket(stats, localDayKey(now));
+
+  /*
+    Podziału NIE bierzemy z `source`: WSZYSTKIE pytania ocenione
+    przekazują `'exam'` — również w sesji powtórek. Jedynym pewnym
+    źródłem wiedzy o tym, że to powtórka, jest trwająca sesja.
+  */
+  const isReview = !!(state.exam && state.exam.kind === 'review');
+
+  bucket.answers++;
+  if (isReview) bucket.reviewAnswers++;
+  else bucket.examAnswers++;
+
+  // `correct` jest fałszywe dla timeoutu, więc timeout nigdy nie
+  // trafi tutaj — a tym samym nie wliczy się do `correct`
+  if (correct) bucket.correct++;
+
+  pruneDailyStats(stats, now);
+  saveDailyStats(stats);
+}
+
+/*
+   Zakończenie sesji. Wywoływane z `finishExam()` i `stopExam()`, bo
+   sesja kończy się obydwoma drogami (a `startExam()` sam wywołuje
+   `stopExam()`), dlatego zapis jest zabezpieczony flagiem `recorded`
+   i wykonuje się dokładnie raz.
+
+   `kind` rozróżnia powtórki od zwykłych egzaminów. Nie da się tu użyć
+   `kanaList`: powtórki (app.js: „Rozpocznij powtórki”) i tryb
+   „ćwicz trudne" obie przekazują listę znaków.
+*/
+function recordSessionStats(exam, now = Date.now()) {
+  if (!exam || exam.recorded) return;
+  exam.recorded = true;
+
+  const startedAt = exam.startedAt;
+  const seconds = Number.isFinite(startedAt) && startedAt > 0 && now >= startedAt
+    ? Math.round((now - startedAt) / 1000)
+    : 0;
+
+  const stats = loadDailyStats();
+  const bucket = dailyBucket(stats, localDayKey(now));
+
+  bucket.exams++;
+  if (exam.kind === 'review') bucket.reviews++;
+
+  // XP już policzone przez `calcXP()` w trakcie sesji — tylko je
+  // przepisujemy, nigdy nie liczymy drugi raz
+  if (Number.isFinite(exam.xp) && exam.xp > 0) bucket.xp += Math.floor(exam.xp);
+  bucket.seconds += seconds;
+
+  pruneDailyStats(stats, now);
+  saveDailyStats(stats);
+}
+
+/* Kasowanie samej historii — postęp znaków zostaje nietknięty. */
+function clearDailyStats() {
+  try {
+    localStorage.removeItem(DAILY_STATS_KEY);
+  } catch (error) {
+    /* ignorujemy — historia i tak jest best-effort */
+  }
+}
+
 /*
    WALIDACJA REKORDÓW POSTĘPU
    ------------------------------------------------------------
@@ -2160,6 +2374,7 @@ function recordAnswer(kana, correct, chosenKana, source) {
     odpowiedzią ocenioną: nie awansuje, nie resetuje, nie nalicza potknięcia.
   */
   if (source === 'exam-timeout') {
+    recordDailyAnswer(false, now);
     saveProgress();
     return;
   }
@@ -2172,6 +2387,7 @@ function recordAnswer(kana, correct, chosenKana, source) {
   }
   scheduleAnswer(entry, { correct: correct, source: source, now: now });
 
+  recordDailyAnswer(correct, now);
   saveProgress();
 }
 
@@ -2785,7 +3001,7 @@ function showExamSetup() {
       Audio.click();
       const { selected, options, outside } = readSetup();
       saveExamSettings({ groups: selected.length ? selected : settings.groups, options, outside });
-      startExam([], { kanaList: practiceList(), options, outside });
+      startExam([], { kanaList: practiceList(), options, outside, kind: 'practice' });
     };
   }
 
@@ -2811,7 +3027,8 @@ function setExamGroups(groupIds) {
    EGZAMIN: PRZEBIEG
 ========================================================= */
 
-function startExam(groupIds, { kanaList = null, options, limit, outside, modes, timer: timerSec } = {}) {
+function startExam(groupIds, { kanaList = null, options, limit, outside, modes, timer: timerSec,
+                               kind = 'exam' } = {}) {
   stopExam();
 
   const settings = loadExamSettings();
@@ -2849,7 +3066,12 @@ function startExam(groupIds, { kanaList = null, options, limit, outside, modes, 
     mistakes: {},
     streak: 0,
     bestStreak: 0,
-    xp: 0                     // punkty doświadczenia w tej sesji
+    xp: 0,                    // punkty doświadczenia w tej sesji
+    // T15: start sesji liczony RAZ. Czas na ekranie wyniku oraz poza
+    // sesją nie wchodzi do `seconds` — domykamy go w finishExam/stopExam.
+    startedAt: Date.now(),
+    kind,                     // 'exam' | 'review' | 'practice'
+    recorded: false           // zabezpieczenie przed podwójnym zapisem
   };
 
   state.screen = 'exam';
@@ -3509,6 +3731,10 @@ function finishExam() {
   clearInterval(exam.timerCountdown);
   exam.finished = true;
 
+  // T15: koniec mierzalnej sesji. Zapisujemy PRZED ekranem wyniku,
+  // żeby czas spędzony na czytaniu wyniku nie liczył się jako nauka.
+  recordSessionStats(exam);
+
   renderExamResult();
 }
 
@@ -3576,7 +3802,7 @@ function renderExamResult() {
       Audio.click();
       const settings = loadExamSettings();
       stopExam();
-      startExam([], { kanaList: practiceList(), options: settings.options, outside: settings.outside });
+      startExam([], { kanaList: practiceList(), options: settings.options, outside: settings.outside, kind: 'practice' });
     };
   }
 

@@ -2306,6 +2306,85 @@ Do not merge them. Exam weighting must not shift because a kana reached a long
 SRS interval — that would change existing practice behaviour as a side effect of
 adding review.
 
+## Daily statistics (T15, phase 1 — collection only)
+
+```text
+localStorage:
+  hiragana-daily  version 1
+```
+
+A **separate** key from `hiragana-progress`, deliberately: that one answers
+"what does this kana look like today", this one answers "what did I do on a
+given day". SRS scheduling, `PROGRESS_VERSION` and the v1→v2 migration are
+untouched by anything here.
+
+```js
+{ version: 1, days: {
+    "2026-10-10": {
+      answers, correct,            // totals across sources
+      examAnswers, reviewAnswers,  // attribution split
+      exams, reviews, xp, seconds
+    } } }
+```
+
+### Field semantics
+
+| field | definition |
+| ----- | ---------- |
+| `answers` | every `recordAnswer()` call on that local calendar day, **timeouts included** |
+| `correct` | of those, graded correct — `exam-timeout` never is |
+| `examAnswers` / `reviewAnswers` | the same calls split by session kind, so the totals are auditable |
+| `exams` | non-review sessions that **ended** |
+| `reviews` | review sessions that **ended** |
+| `xp` | `exam.xp` read once at session end — never recomputed, never awarded twice |
+| `seconds` | `endedAt - startedAt`; result screen and time outside a session excluded; missing or invalid → `0` |
+
+### Rules that are easy to get wrong
+
+- **A timeout counts as an answer.** `recordAnswer()` also increments legacy
+  `seen` on timeout, so excluding it would make "today" contradict the lifetime
+  total. It is never counted as `correct`, and it can never increment `reviews`
+  — that moves only when a session ends.
+- **The source argument cannot identify a review.** Every graded answer passes
+  `'exam'`, including during a review session. Attribution therefore comes from
+  the live session's `kind`, which is why `startExam()` gained one.
+- **`kind`, not `kanaList`.** Both review sessions and "practice hard" pass a
+  kana list, so the list cannot tell them apart; `practice` is its own kind.
+- **Sessions end through two paths** — `finishExam()` and `stopExam()` — and
+  `startExam()` itself calls `stopExam()`. Recording is guarded by a `recorded`
+  flag so it happens exactly once.
+- **Day keys are local.** Built from `getFullYear/getMonth/getDate`, never
+  `toISOString()`, which is UTC and would file a late-evening session under the
+  next day.
+
+### Streak definition
+
+Consecutive local calendar days with `answers > 0`, counting back from today. If
+today has no activity yet, the streak is computed from the most recent recorded
+day and labelled with how many days ago that was. Never inferred from lifetime
+kana counters.
+
+### Reset semantics
+
+| action | progress | history |
+| ------ | -------- | ------- |
+| "Zresetuj postęp" | cleared | **kept** |
+| "Wyczyść statystyki" | kept | cleared (explicit confirmation) |
+| "Wyczyść wszystkie dane" | cleared | cleared |
+
+The two stores are registered together in `appStorageKeys()`, so "clear all"
+cannot leave history behind.
+
+Writes are best-effort: a failed `localStorage` write or read is swallowed, so
+private-browsing never breaks the learning experience. History is pruned to
+`DAILY_STATS_MAX_DAYS` (400) days using an injectable clock, so the cutoff is
+deterministic and testable.
+
+Phase 2 (14-day chart, streaks, honest "no earlier history" state) renders in
+the existing progress panel. No statistics are displayed yet.
+
+---
+
 ## Tests
 
 Two dependency-free harnesses, no build step. Both rebuild the page from the real
@@ -2314,6 +2393,7 @@ Two dependency-free harnesses, no build step. Both rebuild the page from the rea
 ```text
 tests.html       + tests.js        SRS / migration / queue       (188 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion ( 53 assertions)
+tests-daily.html + tests-daily.js  daily statistics collection  ( 66 assertions)
 ```
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and
