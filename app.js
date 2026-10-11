@@ -2199,6 +2199,210 @@ function clearDailyStats() {
   }
 }
 
+/* =========================================================
+   STATYSTYKI DZIENNE — ODCZYT I PREZENTACJA (T15 faza 2)
+   ------------------------------------------------------------
+   Wszystko poniżej jest READ-ONLY: nic nie zapisuje do
+   `hiragana-daily`. Jedynym zapisem pozostaje `recordDailyAnswer()`
+   i `recordSessionStats()` z fazy 1.
+
+   Żadna funkcja nie woła Date.now() — czas dostaje jawnie, dzięki
+   czemu wykres i serie dni są deterministyczne i testowalne.
+========================================================= */
+
+const DAILY_WINDOW_DAYS = 14;
+
+/* Ile dni ma zapisana historia i jaki jest najstarszy ZACHOWANY dzień. */
+function dailyHistoryExtent(stats = loadDailyStats()) {
+  const keys = Object.keys(stats.days).sort();
+  if (!keys.length) return { count: 0, firstKey: null, lastKey: null };
+  return { count: keys.length, firstKey: keys[0], lastKey: keys[keys.length - 1] };
+}
+
+/* Przesunięcie `date` o `delta` dni, zwracając znacznik czasu. */
+function shiftDay(timestamp, delta) {
+  const date = new Date(timestamp);
+  date.setDate(date.getDate() + delta);
+  return date.getTime();
+}
+
+/*
+   Okno ostatnich `days` dni — od najstarszego do dzisiejszego.
+
+   Trzy stany, bo „nie zbieraliśmy wtedy danych" i „wtedy nie ćwiczyłeś”
+   to dwie różne prawdy i nie wolno ich zlewać:
+
+     'before' — dzień wcześniejszy niż najstarszy ZACHOWANY wpis,
+                czyli zanim w ogóle zbierano historię
+     'idle'   — dzień już objęty zbieraniem, ale bez zapisanej aktywności
+     'active' — dzień z odpowiedziami
+
+   'idle' jest bezpieczne dla dnia bez KLUCZA: faza 1 zapisuje wpis przy
+   KAŻDEJ odpowiedzi i przy każdym zakończeniu sesji, więc brak klucza
+   w obrębie zbieranego okresu oznacza po prostu brak aktywności.
+*/
+function dailyWindow(now, days = DAILY_WINDOW_DAYS) {
+  const stats = loadDailyStats();
+  const extent = dailyHistoryExtent(stats);
+
+  const rows = [];
+  for (let offset = days - 1; offset >= 0; offset--) {
+    const timestamp = shiftDay(now, -offset);
+    const key = localDayKey(timestamp);
+    const bucket = extent.count ? (stats.days[key] || null) : null;
+    const answers = bucket && Number.isFinite(bucket.answers) ? bucket.answers : 0;
+
+    let state = 'idle';
+    if (!extent.count || key < extent.firstKey) state = 'before';
+    else if (answers > 0) state = 'active';
+
+    rows.push({ key, timestamp, bucket, answers, state });
+  }
+  return { window: rows, extent, stats };
+}
+
+/*
+   Serie zgodnie z definicją w PROJECT.md:
+
+     "Consecutive local calendar days with `answers > 0`, counting back
+      from today. If today has no activity yet, the streak is computed
+      from the most recent recorded day and labelled with how many days
+      ago that was."
+
+   Czyli:
+     • dziś aktywnie  → kotwica = dziś, `live` = true
+     • dziś pusto      → kotwica = ostatni aktywny dzień, `live` = false
+     • pusto dziś i nigdzie aktywnie → current 0, brak kotwicy
+
+   `current` to ZAWSZE seria kończąca się na kotwicy, a `live` mówi
+   wprost, czy liczymy ją dzisiaj — dzięki temu UI nie sugeruje aktywności
+   w dniu, w którym jej nie było.
+
+   `best` to najdłuższa seria w ZACHOWANYCH dniach (przycięcie kasuje starsze),
+   dlatego etykieta mówi wprost „z zachowanych dni".
+*/
+function dailyStreaks(now, stats = loadDailyStats()) {
+  const keys = Object.keys(stats.days).sort();
+  const hasAnswers = key => {
+    const bucket = stats.days[key];
+    return !!bucket && Number.isFinite(bucket.answers) && bucket.answers > 0;
+  };
+
+  const todayKey = localDayKey(now);
+  const todayActive = hasAnswers(todayKey);
+
+  // kotwica: dziś, albo ostatni dzień z aktywnością
+  let anchorKey = null;
+  let daysAgo = null;
+  for (let back = 0; back <= DAILY_STATS_MAX_DAYS; back++) {
+    const key = localDayKey(shiftDay(now, -back));
+    if (hasAnswers(key)) { anchorKey = key; daysAgo = back; break; }
+  }
+
+  /*
+    Seria kończąca się na kotwicy. Idziemy OD kotwicy dalej w tył i liczymy
+    kolejne aktywne dni aż do pierwszej przerwy. Kotwica może być dziś
+    albo kilka dni wstecz — dlatego startujemy od `daysAgo`, nie od 0.
+  */
+  let current = 0;
+  if (anchorKey) {
+    for (let back = daysAgo; back <= daysAgo + DAILY_STATS_MAX_DAYS; back++) {
+      if (!hasAnswers(localDayKey(shiftDay(now, -back)))) break;
+      current++;
+    }
+  }
+
+  // najdłuższa seria wśród zachowanych dni
+  let best = 0;
+  let run = 0;
+  let previousKey = null;
+  keys.forEach(key => {
+    const contiguous = previousKey !== null
+      && localDayKey(shiftDay(new Date(previousKey + 'T00:00:00').getTime(), 1)) === key;
+    run = hasAnswers(key) ? (contiguous ? run + 1 : 1) : 0;
+    if (run > best) best = run;
+    previousKey = key;
+  });
+
+  return {
+    current: current,
+    live: todayActive,
+    lastActiveKey: anchorKey,
+    lastActiveDaysAgo: daysAgo,
+    best: best
+  };
+}
+
+/* Sumy z całej ZACHOWANEJ historii. Niczego nie domyślamy się. */
+function dailyTotals(stats = loadDailyStats()) {
+  const extent = dailyHistoryExtent(stats);
+  const totals = emptyDailyStats();
+
+  Object.keys(stats.days).forEach(key => {
+    const bucket = stats.days[key];
+    if (!bucket || typeof bucket !== 'object') return;
+    Object.keys(totals).forEach(field => {
+      const value = bucket[field];
+      if (Number.isFinite(value) && value > 0) totals[field] += Math.floor(value);
+    });
+  });
+
+  return {
+    answers: totals.answers,
+    correct: totals.correct,
+    exams: totals.exams,
+    reviews: totals.reviews,
+    xp: totals.xp,
+    seconds: totals.seconds,
+    daysTracked: Object.keys(stats.days).filter(key => {
+      const bucket = stats.days[key];
+      return bucket && Number.isFinite(bucket.answers) && bucket.answers > 0;
+    }).length,
+    firstKey: extent.firstKey
+  };
+}
+
+/*
+   Skuteczność w oknie: `correct / answers`.
+
+   Gdy `answers === 0` zwracamy `percent: null`, a nie 0 — „nie było
+   odpowiedzi" i „0% poprawnych" to dwie różne informacje, a wykres
+   nie może sugerować drugiej.
+*/
+function dailyAccuracy(now, days = DAILY_WINDOW_DAYS) {
+  const { window: rows } = dailyWindow(now, days);
+  let answers = 0;
+  let correct = 0;
+  rows.forEach(row => {
+    answers += row.answers;
+    if (row.bucket && Number.isFinite(row.bucket.correct)) correct += row.bucket.correct;
+  });
+
+  return {
+    percent: answers > 0 ? Math.round((correct / answers) * 100) : null,
+    answers: answers,
+    correct: correct,
+    hasData: answers > 0
+  };
+}
+
+/* Sekundy jako czytelny czas — z polskimi liczbami mnogimi. */
+function formatDuration(totalSeconds) {
+  const seconds = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.floor(totalSeconds) : 0;
+  if (seconds < 60) return seconds + ' s';
+
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+
+  const hoursLabel = hours + ' ' + (hours === 1 ? 'godzina' : hours < 5 ? 'godziny' : 'godzin');
+  // 0 i 5+ -> "minut"; 1 -> "minuta"; 2-4 -> "minuty"
+  const minutesWord = restMinutes === 1 ? 'minuta'
+    : (restMinutes >= 2 && restMinutes <= 4) ? 'minuty' : 'minut';
+  const minutesLabel = restMinutes + ' ' + minutesWord;
+  return hours > 0 ? hoursLabel + ' ' + minutesLabel : minutesLabel;
+}
+
 /*
    WALIDACJA REKORDÓW POSTĘPU
    ------------------------------------------------------------
@@ -2795,13 +2999,137 @@ function pickDistractors(question, count, pool, outside) {
    EGZAMIN: WYBÓR ZAKRESU
 ========================================================= */
 
+/* "2026-10-10" -> "10.10.2026" */
+function formatDayLabel(key) {
+  const parts = String(key).split('-');
+  if (parts.length !== 3) return key;
+  return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
+/* Opis jednego słupka dla `title`/`aria-label`. */
+function describeDay(row) {
+  const label = formatDayLabel(row.key);
+  if (row.state === 'before') return label + ' — historia nie była jeszcze zbierana';
+  if (row.state === 'idle') return label + ' — bez aktywności';
+  return label + ' — ' + row.answers + (row.answers === 1 ? ' odpowiedź' : ' odpowiedzi');
+}
+
+/*
+   Sekcja statystyk dziennych. Zwraca '' gdy nie ma żadnej historii —
+   nowy użytkownik wciąż widzi dokładnie ten sam panel co wcześniej.
+*/
+function dailyStatsHTML(now = Date.now()) {
+  const { window: rows, extent } = dailyWindow(now);
+
+  if (!extent.count) {
+    return `
+      <div class="daily-block daily-empty">
+        <p class="daily-hint">
+          Statystyki nauki zaczynają się zbierać od teraz. Jeszcze nie ma
+          żadnych zapisanych dni.
+        </p>
+      </div>
+    `;
+  }
+
+  const streaks = dailyStreaks(now);
+  const totals = dailyTotals();
+  const accuracy = dailyAccuracy(now);
+  const active = rows.filter(row => row.state === 'active');
+  const maxAnswers = rows.reduce((max, row) => Math.max(max, row.answers), 0);
+  const bestActive = active.reduce((best, row) => (!best || row.answers > best.answers ? row : best), null);
+
+  /*
+    Etykieta niesie CAŁY stan, żeby nie sugerować aktywności dziś:
+      • live  → liczymy dzisiaj
+      • !live → seria przeniesiona z poprzedniego aktywnego dnia
+      • 0 z kotwicą → seria przerwana
+  */
+  const daysAgoText = streaks.lastActiveDaysAgo === 1
+    ? 'wczoraj'
+    : streaks.lastActiveDaysAgo + ' dni temu';
+
+  let streakLabel;
+  if (streaks.current > 0 && streaks.live) {
+    streakLabel = 'dni z rzędu';
+  } else if (streaks.current > 0) {
+    streakLabel = 'dni z rzędu · przeniesiony z ' + daysAgoText;
+  } else if (streaks.lastActiveKey) {
+    streakLabel = 'Seria przerwana · ostatnio ' + daysAgoText;
+  } else {
+    streakLabel = 'Brak aktywności w zapisanej historii';
+  }
+
+  // UWAGA: `accuracy.answers` to liczba z OKNA, nie suma z całej historii.
+  // Podanie `totals.answers` kłamałoby ("ostatnie 14 dni: 512 odpowiedzi").
+  const summaryText = 'Ostatnie ' + DAILY_WINDOW_DAYS + ' dni: ' + accuracy.answers +
+    ' odpowiedzi' + (bestActive
+      ? ', najwięcej ' + bestActive.answers + ' w dniu ' + formatDayLabel(bestActive.key)
+      : ', bez aktywności');
+
+  const bars = rows.map(row => {
+    const height = row.state === 'active' && maxAnswers > 0
+      ? Math.max(6, Math.round((row.answers / maxAnswers) * 100))
+      : 0;
+    const described = describeDay(row);
+    return `
+      <div class="daily-bar-slot ${row.state}" title="${described}" aria-label="${described}">
+        <div class="daily-bar-track">
+          <div class="daily-bar" style="height:${height}%"></div>
+        </div>
+        <span class="daily-bar-label">${formatDayLabel(row.key).slice(0, 5)}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="daily-block">
+      <h3>Statystyki nauki</h3>
+
+      <div class="daily-streak-row">
+        <div class="daily-streak">
+          <span class="daily-streak-value${streaks.live ? ' live' : ''}">${streaks.current}</span>
+          <span class="daily-streak-label">${streakLabel}</span>
+        </div>
+        <div class="daily-streak muted">
+          <span class="daily-streak-value">${streaks.best}</span>
+          <span class="daily-streak-label">najlepszy (z zachowanych dni)</span>
+        </div>
+      </div>
+
+      <div class="daily-chart" role="img" aria-label="${summaryText}" title="${summaryText}">
+        ${bars}
+      </div>
+      <div class="daily-grid">
+        <div class="daily-stat"><b>${totals.answers}</b><span>odpowiedzi</span></div>
+        <div class="daily-stat"><b>${accuracy.hasData ? accuracy.percent + '%' : '—'}</b><span>skuteczność (14 dni)</span></div>
+        <div class="daily-stat"><b>${totals.exams}</b><span>egzaminów</span></div>
+        <div class="daily-stat"><b>${totals.reviews}</b><span>powtórek</span></div>
+        <div class="daily-stat"><b>${totals.xp}</b><span>XP</span></div>
+        <div class="daily-stat"><b>${formatDuration(totals.seconds)}</b><span>czas nauki</span></div>
+      </div>
+
+      <p class="daily-hint">
+        Dane od <b>${formatDayLabel(totals.firstKey)}</b> · przechowujemy ${DAILY_STATS_MAX_DAYS} dni
+      </p>
+    </div>
+  `;
+}
+
 function progressPanelHTML() {
   const stats = progressSummary();
+
+  /*
+    Sekcja dzienna liczona ZAWSZE. `resetProgressData()` czyści postęp,
+    a historię zostawia, więc „brak postępu + obecna historia" to stan
+    osiągalny — statystyki nie mogą zniknąć razem ze starym `if`.
+  */
+  const daily = dailyStatsHTML();
 
   if (!stats.seen) {
     return `
       <div class="progress-panel">
         <h3>Twoje postępy</h3>
+        ${daily}
         <p style="color:var(--muted);margin:0">
           Statystyki i trudne znaki pojawią się tutaj po pierwszym egzaminie.
         </p>
@@ -2819,6 +3147,8 @@ function progressPanelHTML() {
   return `
     <div class="progress-panel">
       <h3>Twoje postępy</h3>
+
+      ${daily}
 
       <div style="color:var(--muted)">
         Odpowiedzi: <b>${stats.seen}</b> • skuteczność: <b>${stats.percent}%</b>
@@ -3008,7 +3338,10 @@ function showExamSetup() {
   const resetButton = document.getElementById('resetProgress');
   if (resetButton) {
     resetButton.onclick = () => {
-      if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?')) {
+      // Tekst tylko — `resetProgressData()` nadal czyści postęp i zostawia
+      // historię. Zgodne z tym samym komunikatem co w Ustawieniach (linia ~1619).
+      if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
+                  'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.')) {
         resetProgressData();
         showExamSetup();
       }

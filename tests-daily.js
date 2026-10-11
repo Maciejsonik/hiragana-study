@@ -42,6 +42,14 @@
   /* Znacznik sesji podstawowy: 2026-10-10 12:00 lokalnie. */
   const NOON = new Date(2026, 9, 10, 12, 0, 0).getTime();
 
+  // recordAnswer() wewnetrznie liczy Date.now(); podmieniamy zegar, zeby
+  // test nie zalezal od zegara maszyny.
+  function withClock(timestamp, fn) {
+    const real = Date.now;
+    Date.now = () => timestamp;
+    try { return fn(); } finally { Date.now = real; }
+  }
+
   (async () => {
     try {
       setScript('hiragana');
@@ -159,7 +167,7 @@
       saveProgress();
       state.exam = { kind: 'review', startedAt: NOON, recorded: false, xp: 0 };
 
-      recordAnswer('あ', false, null, 'exam-timeout');
+      withClock(NOON, () => recordAnswer('あ', false, null, 'exam-timeout'));
       let t = day(localDayKey(NOON));
       ok('D28 timeout counts as an answer', t.answers === 1, String(t.answers));
       ok('D29 timeout is never correct', t.correct === 0, String(t.correct));
@@ -170,14 +178,14 @@
       // timeout w egzaminie: examAnswers, nie reviewAnswers
       reset();
       state.exam = { kind: 'exam', startedAt: NOON, recorded: false, xp: 0 };
-      recordAnswer('か', false, null, 'exam-timeout');
+      withClock(NOON, () => recordAnswer('か', false, null, 'exam-timeout'));
       t = day(localDayKey(NOON));
       ok('D33 exam timeout -> examAnswers', t.examAnswers === 1 && t.reviewAnswers === 0);
       ok('D34 exam timeout -> no session counter', t.exams === 0 && t.reviews === 0);
 
       // timeout nie rusza harmonogramu SRS (to weryfikuje brak regresji)
       const beforeSrs = { ...progress.chars['か'] };
-      recordAnswer('か', false, null, 'exam-timeout');
+      withClock(NOON, () => recordAnswer('か', false, null, 'exam-timeout'));
       ok('D35 repeated timeouts leave SRS stage untouched',
          progress.chars['か'].stage === beforeSrs.stage && progress.chars['か'].reps === beforeSrs.reps,
          JSON.stringify({ stage: progress.chars['か'].stage, reps: progress.chars['か'].reps }));
@@ -345,7 +353,7 @@
       reset();
       progress = { version: PROGRESS_VERSION, chars: {} };
       state.exam = { kind: 'exam', startedAt: NOON, recorded: false, xp: 0 };
-      recordAnswer('き', true, null, 'exam');
+      withClock(NOON, () => recordAnswer('き', true, null, 'exam'));
       ok('D63 progress v2 still written by recordAnswer',
          progress.chars['き'].seen === 1 && progress.chars['き'].stage === 1,
          JSON.stringify({ seen: progress.chars['き'].seen, stage: progress.chars['き'].stage }));
@@ -354,6 +362,223 @@
       ok('D65 daily stats recorded alongside',
          day(localDayKey(NOON)).answers === 1);
       state.exam = null;
+
+      /* =====================================================
+         10. ODCZYT — okno, serie, sumy, skuteczność (T15 faza 2)
+         ===================================================== */
+
+      /* -- pomocnicze -- */
+      function seed(daysMap) { reset(); put(daysMap); }
+      const at = key => new Date(key + 'T12:00:00').getTime();
+      const act = n => ({ answers: n, correct: Math.round(n * 0.5), examAnswers: n, reviewAnswers: 0,
+                         exams: 1, reviews: 0, xp: 10, seconds: 300 });
+      const K09 = '2026-10-09', K10 = '2026-10-10', K11 = '2026-10-11', K12 = '2026-10-12';
+      const NOW = at(K12);                 // "dzisiaj" dla wszystkich testów
+
+      /* --- okno --- */
+      seed({ [K10]: act(5), [K11]: act(3), [K12]: act(9) });
+      const win = dailyWindow(NOW);
+      ok('W1 okno ma 14 dni', win.window.length === DAILY_WINDOW_DAYS, String(win.window.length));
+      ok('W2 okno uporzadkowane od najstarszego',
+         win.window[0].key < win.window[win.window.length - 1].key);
+      ok('W3 ostatni dzien okna to dzis', win.window[DAILY_WINDOW_DAYS - 1].key === K12);
+      ok('W4 dzis ma 9 odpowiedzi', win.window[DAILY_WINDOW_DAYS - 1].answers === 9);
+      ok('W5 extent: 3 zachowane dni', win.extent.count === 3, String(win.extent.count));
+      ok('W6 firstKey = najstarszy ZACHOWANY dzien', win.extent.firstKey === K10, String(win.extent.firstKey));
+
+      const states = win.window.map(r => r.state);
+      ok('W7 dni przed firstKey sa before',
+         states.slice(0, DAILY_WINDOW_DAYS - 3).every(x => x === 'before'));
+      ok('W8 dni z aktywnoscia sa active', states.slice(-3).every(x => x === 'active'));
+      ok('W9 dzien before nie ma odpowiedzi', win.window[0].answers === 0);
+
+      // brak klucza PO firstKey = bez aktywnosci (faza 1 zapisuje przy kazdej akcji)
+      seed({ [K10]: act(4), [K12]: act(2) });
+      const idleWin = dailyWindow(NOW);
+      ok('W10 brak klucza po firstKey to idle, nie before',
+         idleWin.window[DAILY_WINDOW_DAYS - 2].state === 'idle',
+         idleWin.window[DAILY_WINDOW_DAYS - 2].state);
+      ok('W11 brak klucza po firstKey = 0 odpowiedzi',
+         idleWin.window[DAILY_WINDOW_DAYS - 2].answers === 0);
+
+      reset();
+      const emptyWin = dailyWindow(NOW);
+      ok('W12 pusty magazyn: count 0', emptyWin.extent.count === 0);
+      ok('W13 pusty magazyn: cale okno to before', emptyWin.window.every(r => r.state === 'before'));
+
+      /* --- serie (definicja z PROJECT.md) --- */
+      seed({ [K12]: act(5) });
+      let st = dailyStreaks(NOW);
+      ok('S1 dzis aktywnie: live=true', st.live === true);
+      ok('S2 dzis aktywnie: current=1', st.current === 1, String(st.current));
+      ok('S3 dzis aktywnie: 0 dni temu', st.lastActiveDaysAgo === 0);
+
+      seed({ [K11]: act(3), [K12]: act(4) });
+      st = dailyStreaks(NOW);
+      ok('S4 dwa dni aktywne: current=2', st.current === 2, String(st.current));
+      ok('S5 live=true gdy dzis aktywne', st.live === true);
+
+      seed({ [K11]: act(3) });                       // dzis pusto
+      st = dailyStreaks(NOW);
+      ok('S6 dzis pusto: live=false', st.live === false);
+      ok('S7 seria przeniesiona: current=1', st.current === 1, String(st.current));
+      ok('S8 dzis pusto: 1 dzien temu', st.lastActiveDaysAgo === 1, String(st.lastActiveDaysAgo));
+      ok('S9 dzis pusto: kotwica = wczoraj', st.lastActiveKey === K11, String(st.lastActiveKey));
+
+      seed({ [K10]: act(5), [K12]: act(2) });       // 11 pusto przerywa serie
+      st = dailyStreaks(NOW);
+      ok('S10 jedna przerwa przerywa serie', st.current === 1, String(st.current));
+      ok('S11 po przerwie kotwica to dzis', st.lastActiveKey === K12);
+
+      // dzis pusto, ostatnia aktywnosc 3 dni temu (10 i 11 to przerwy)
+      seed({ [K09]: act(9) });
+      st = dailyStreaks(NOW);
+      ok('S12 kilka przerw: current=1', st.current === 1, String(st.current));
+      ok('S13 kilka przerw: kotwica 3 dni temu', st.lastActiveDaysAgo === 3, String(st.lastActiveDaysAgo));
+      ok('S13b dzis pusto -> live=false', st.live === false);
+
+      reset();
+      st = dailyStreaks(NOW);
+      ok('S14 brak historii: current=0', st.current === 0);
+      ok('S15 brak historii: live=false', st.live === false);
+      ok('S16 brak historii: lastActiveKey=null', st.lastActiveKey === null);
+      ok('S17 brak historii: lastActiveDaysAgo=null', st.lastActiveDaysAgo === null);
+      ok('S18 brak historii: best=0', st.best === 0);
+
+      seed({ '2026-09-20': act(1), '2026-09-21': act(1), '2026-09-22': act(1), '2026-09-23': act(1),
+             [K12]: act(2) });
+      st = dailyStreaks(NOW);
+      ok('S19 best liczony w calym zachowanym okresie', st.best === 4, String(st.best));
+      ok('S20 current = tylko seria konczaca sie dzis', st.current === 1, String(st.current));
+
+      /* --- sumy --- */
+      seed({ [K10]: { answers: 10, correct: 7, examAnswers: 7, reviewAnswers: 3, exams: 2, reviews: 1, xp: 60, seconds: 600 },
+              [K11]: { answers: 5, correct: 2, examAnswers: 2, reviewAnswers: 3, exams: 1, reviews: 2, xp: 30, seconds: 240 } });
+      const tot = dailyTotals();
+      ok('T1 suma odpowiedzi', tot.answers === 15, String(tot.answers));
+      ok('T2 suma poprawnych', tot.correct === 9, String(tot.correct));
+      ok('T3 suma egzaminow', tot.exams === 3, String(tot.exams));
+      ok('T4 suma powtorek', tot.reviews === 3, String(tot.reviews));
+      ok('T5 suma XP', tot.xp === 90, String(tot.xp));
+      ok('T6 suma sekund', tot.seconds === 840, String(tot.seconds));
+      ok('T7 dni z aktywnoscia', tot.daysTracked === 2, String(tot.daysTracked));
+      ok('T8 firstKey = najstarszy zachowany dzien', tot.firstKey === K10, String(tot.firstKey));
+
+      /* --- skutecznosc --- */
+      seed({ [K12]: { answers: 10, correct: 8, examAnswers: 10, reviewAnswers: 0, exams: 1, reviews: 0, xp: 0, seconds: 0 } });
+      const acc = dailyAccuracy(NOW);
+      ok('A1 percent = correct/answers', acc.percent === 80, String(acc.percent));
+      ok('A2 hasData przy danych', acc.hasData === true);
+      ok('A3 licznik z okna', acc.answers === 10, String(acc.answers));
+
+      seed({ '2026-01-01': act(50) });              // historia poza oknem
+      const accNone = dailyAccuracy(NOW);
+      ok('A4 brak odpowiedzi w oknie: percent=null', accNone.percent === null, String(accNone.percent));
+      ok('A5 brak odpowiedzi: hasData=false', accNone.hasData === false);
+      ok('A6 licznik = 0', accNone.answers === 0);
+
+      reset();
+      const accEmpty = dailyAccuracy(NOW);
+      ok('A7 pusty magazyn: percent=null', accEmpty.percent === null);
+      ok('A8 pusty magazyn: hasData=false', accEmpty.hasData === false);
+
+      /* --- formatDuration --- */
+      ok('F1 0 s', formatDuration(0) === '0 s', formatDuration(0));
+      ok('F2 59 s', formatDuration(59) === '59 s', formatDuration(59));
+      ok('F3 60 s = 1 minuta', formatDuration(60) === '1 minuta', formatDuration(60));
+      ok('F4 120 s = 2 minuty', formatDuration(120) === '2 minuty', formatDuration(120));
+      ok('F5 300 s = 5 minut', formatDuration(300) === '5 minut', formatDuration(300));
+      ok('F6 3600 s = 1 godzina 0 minut', formatDuration(3600) === '1 godzina 0 minut', formatDuration(3600));
+      ok('F7 8100 s = 2 godziny 15 minut', formatDuration(8100) === '2 godziny 15 minut', formatDuration(8100));
+      ok('F8 ujemne/NaN -> 0 s', formatDuration(-5) === '0 s' && formatDuration(NaN) === '0 s');
+
+      ok('L1 formatDayLabel', formatDayLabel('2026-10-05') === '05.10.2026', formatDayLabel('2026-10-05'));
+      ok('L2 describeDay before', describeDay({ key: K10, state: 'before', answers: 0 }).indexOf('nie była jeszcze zbierana') > 0);
+      ok('L3 describeDay idle', describeDay({ key: K10, state: 'idle', answers: 0 }).indexOf('bez aktywności') > 0);
+
+      /* =====================================================
+         11. PREZENTACJA
+         ===================================================== */
+      reset();
+      progress = { version: PROGRESS_VERSION, chars: {} };
+      saveProgress();
+      let html = dailyStatsHTML(NOW);
+      ok('R1 pusty magazyn: sekcja widoczna', html.indexOf('daily-block') > 0);
+      ok('R2 pusty magazyn: brak wykresu', html.indexOf('daily-chart') < 0);
+      ok('R3 pusty magazyn: komunikat o rozpoczeciu', html.indexOf('Jeszcze nie ma') > 0);
+
+      seed({ [K12]: act(4) });
+      ok('R4 historia bez postepu: wykres jest', dailyStatsHTML(NOW).indexOf('daily-chart') > 0);
+      const panel = progressPanelHTML();
+      ok('R5 panel pokazuje sekcje mimo stats.seen===0',
+         panel.indexOf('Statystyki nauki') > 0, 'seen=' + progressSummary().seen);
+      ok('R6 panel zachowuje komunikat o postepie',
+         panel.indexOf('Statystyki i trudne znaki pojawią się tutaj') > 0);
+
+      progress = { version: PROGRESS_VERSION, chars: {
+        'あ': { seen: 5, correct: 4, wrong: 1, recent: [1], confused: {}, last: 1, stage: 1, reps: 0, due: 0, lapses: 0 }
+      } };
+      saveProgress();
+      const full = progressPanelHTML();
+      ok('R7 panel z postępem pokazuje sekcje', full.indexOf('Statystyki nauki') > 0);
+      ok('R8 wiersz lifetime bez zmian', full.indexOf('Odpowiedzi: <b>5</b>') > 0);
+      ok('R9 sekcja dzienna PRZED mapa opanowania',
+         full.indexOf('Statystyki nauki') < full.indexOf('progress-map'));
+      ok('R10 panel zachowuje mape', full.indexOf('progress-map') > 0);
+
+      reset();
+      const full2 = progressPanelHTML();
+      ok('R11 brak historii: panel bez wykresu', full2.indexOf('daily-chart') < 0);
+      ok('R12 brak historii: lifetime widoczny', full2.indexOf('Odpowiedzi: <b>5</b>') > 0);
+
+      seed({ [K12]: act(6) });
+      ok('R13 seria aktywna dziś: brak oznaczenia przeniesienia',
+         dailyStatsHTML(NOW).indexOf('przeniesiony z') < 0);
+      seed({ [K11]: act(6) });
+      ok('R14 seria przeniesiona: "przeniesiony z wczoraj"',
+         dailyStatsHTML(NOW).indexOf('przeniesiony z wczoraj') > 0);
+      ok('R15 best opisany jako z zachowanych dni',
+         dailyStatsHTML(NOW).indexOf('z zachowanych dni') > 0);
+
+      seed({ '2026-01-01': act(50) });
+      const noWindow = dailyStatsHTML(NOW);
+      ok('R16 brak danych w oknie: kreska zamiast 0%', noWindow.indexOf('>—<') > 0);
+      ok('R17 brak danych w oknie: komunikat o braku aktywnosci',
+         noWindow.indexOf('bez aktywności') > 0);
+
+      seed({ [K10]: act(3), [K12]: act(4) });
+      const retained = dailyStatsHTML(NOW);
+      ok('R18 komunikat podaje najstarszy zachowany dzien',
+         retained.indexOf('10.10.2026') > 0);
+      ok('R19 komunikat podaje limit retencji',
+         retained.indexOf(String(DAILY_STATS_MAX_DAYS)) > 0);
+
+      const barsHtml = dailyStatsHTML(NOW);
+      ok('R20 kazdy slupek ma title i aria-label',
+         (barsHtml.match(/daily-bar-slot[^>]*(title="[^"]+" aria-label="[^"]+")/g) || []).length === DAILY_WINDOW_DAYS,
+         String((barsHtml.match(/daily-bar-slot/g) || []).length));
+      ok('R21 wykres ma opis tekstowy dla czytnikow',
+         barsHtml.indexOf('role="img" aria-label="Ostatnie 14 dni') > 0);
+
+      const src = await (await fetch('app.js')).text();
+      ok('R22 dwa resety z ta sama informacja o historii',
+         (src.match(/Historia dzienna pozostanie bez zmian/g) || []).length === 2,
+         String((src.match(/Historia dzienna pozostanie bez zmian/g) || []).length));
+      // resetProgressData() czyści TYLKO progress — nie może dotykać historii.
+      const resetBody = (src.match(/function resetProgressData\(\)[\s\S]*?\n\}/) || [''])[0];
+      ok('R23 resetProgressData nie odwoluje sie do historii',
+         resetBody.indexOf('saveProgress()') > 0
+         && resetBody.indexOf('DAILY_STATS') < 0
+         && resetBody.indexOf('clearDailyStats') < 0);
+
+      seed({ [K12]: act(4) });
+      progress = { version: PROGRESS_VERSION, chars: { 'あ': { seen: 3, correct: 2, wrong: 1, recent: [1], confused: {}, last: 1, stage: 1, reps: 0, due: 0, lapses: 0 } } };
+      saveProgress();
+      resetProgressData();
+      ok('R24 reset: kana wyczyszczone', Object.keys(progress.chars).length === 0);
+      ok('R25 reset: historia zachowana', !!store());
+      clearDailyStats();
+      reset();
 
       report();
     } catch (e) {

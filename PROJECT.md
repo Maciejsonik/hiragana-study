@@ -2385,6 +2385,57 @@ the existing progress panel. No statistics are displayed yet.
 
 ---
 
+### Phase 2 — presentation
+
+Read-only. Nothing here writes to `hiragana-daily`; the only writers remain
+`recordDailyAnswer()` and `recordSessionStats()`.
+
+The section lives **inside the existing progress panel**, above the mastery map,
+and is rendered **regardless of legacy progress**: "Zresetuj postęp" clears
+kana records while keeping history, so "no progress but history" is a normal,
+reachable state and the statistics must not vanish with the old early return.
+The legacy lifetime line, mastery map and hard-characters list are unchanged.
+
+| helper | returns |
+| ------ | ------- |
+| `dailyWindow(now, days = 14)` | 14 rows, oldest → newest, each `{key, answers, state}` where state is `before` \| `idle` \| `active` |
+| `dailyStreaks(now)` | `{current, live, lastActiveKey, lastActiveDaysAgo, best}` |
+| `dailyTotals()` | the eight stored counters plus `daysTracked` and `firstKey` |
+| `dailyAccuracy(now, days = 14)` | `{percent, answers, correct, hasData}` |
+| `formatDuration(seconds)` | `"0 s"`, `"1 minuta"`, `"2 godziny 15 minut"` … |
+
+All take `now` explicitly — no `Date.now()` inside — so the chart and streaks
+are deterministic and testable.
+
+**Chart.** 14 local days, bar height proportional to that day's `answers`.
+Three visually distinct states, because "we were not collecting yet" and
+"you did not study that day" are different facts:
+
+- `before` — earlier than the oldest retained day: a hatched slot and **no bar**
+- `idle` — inside the collected period but no recorded activity: a flat bar
+- `active` — a real bar
+
+A missing key at or after the oldest retained day counts as `idle`, not
+`unknown`: phase 1 writes a key on every answer and every session end.
+
+**Streaks.** Exactly the definition above, with one addition the UI needs:
+`live` is `true` only when **today** is active. When today is idle the streak is
+carried over from the most recent active day and the label says so explicitly
+("przeniesiony z wczoraj") rather than implying activity today. A zero-activity
+day between two runs breaks the run. `best` is the longest run **among retained
+days** and is labelled as such, because pruning drops anything older than
+`DAILY_STATS_MAX_DAYS`.
+
+**Accuracy.** Rolling 14-day `correct / answers`. With no answers in the window
+`percent` is `null` and the UI renders "—", never 0%: "no answers" and "0%
+correct" are different statements.
+
+**Start date.** `firstKey` is the oldest **retained** day, not the day the user
+started. The panel says "Dane od … · przechowujemy 400 dni" so retention is
+visible rather than implied. Nothing is backfilled or estimated.
+
+---
+
 ## Tests
 
 Two dependency-free harnesses, no build step. Both rebuild the page from the real
@@ -2393,7 +2444,7 @@ Two dependency-free harnesses, no build step. Both rebuild the page from the rea
 ```text
 tests.html       + tests.js        SRS / migration / queue       (188 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion ( 53 assertions)
-tests-daily.html + tests-daily.js  daily statistics collection  ( 66 assertions)
+tests-daily.html + tests-daily.js  daily statistics (collect+read) (152 assertions)
 ```
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and
