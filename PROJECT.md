@@ -1811,6 +1811,10 @@ Delivered:
 
 # 40. Development Rules
 
+Working rules for coding agents — scope, testing, cache versioning, Git and
+reporting — live in `AGENTS.md`. The rules below are domain invariants:
+properties of the application itself that any change has to preserve.
+
 ## Rule 1 — User data is authoritative
 
 For current application behavior, existing source code is the source of truth.
@@ -1827,65 +1831,14 @@ Actual SVG path data determines:
 - stroke order,
 - reference geometry.
 
-## Rule 3 — Incremental development
+## Rule 3 — Preserve existing behaviour
 
-Implement one TODO task at a time.
+A change must not silently alter behaviour outside its stated scope.
 
-Current active roadmap task:
-
-```text
-T8
-```
-
-Do not implement T17/T15/T13/T14/T16 simultaneously.
-
-## Rule 4 — Avoid premature refactoring
-
-T16 is explicitly reserved for code splitting.
-
-Do not restructure the whole app merely because `app.js` is large.
-
-## Rule 5 — Preserve existing functionality
-
-Every feature change must preserve:
-
-- learning mode,
-- KanjiVG animation,
-- progress,
-- mastery,
-- exam modes,
-- timer,
-- question limit,
-- XP,
-- result screen,
-- theme,
-- audio,
-- mobile gestures.
-
-## Rule 6 — Keep documentation synchronized
-
-After major feature work:
-
-```text
-PROJECT.md
-README.md
-```
-
-should reflect the current state.
-
-## Rule 7 — Prefer small, testable changes
-
-For large features:
-
-```text
-data
-→ rendering
-→ interaction
-→ evaluation
-→ polish
-```
-
-rather than one enormous rewrite.
+There is deliberately no enumeration of features to preserve here: such a list
+goes stale the first time a feature is added, and a stale list is worse than
+none. The test harnesses are the mechanical guard — extend them, and run them
+before finishing.
 
 ---
 
