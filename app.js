@@ -3917,7 +3917,7 @@ function spawnConfetti() {
   container.className = 'confetti-container';
   document.body.appendChild(container);
 
-  const colors = ['#8d5cf6', '#ff6b35', '#2f9e6d', '#e6a23c', '#d95c67', '#d4a017'];
+  const colors = ['var(--accent)', 'var(--good)', 'var(--warn)', 'var(--bad)', 'var(--mastered)'];
 
   for (let i = 0; i < 60; i++) {
     const piece = document.createElement('div');

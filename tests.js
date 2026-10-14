@@ -758,6 +758,64 @@
   } catch (e) { ok('timeout w trybach tekstowych', false, e.message); }
 
   /* =====================================================
+     17. KONFETTI PODĄŻA ZA MOTYWEM (#11)
+     ===================================================== */
+  try {
+    // tests.html wstawia tylko <body> z index.html, więc <link> do
+    // style.css nie istnieje i tokeny motywu nie są zdefiniowane.
+    // Wstrzykujemy arkusz na czas tej sekcji, żeby mierzyć realne
+    // kolory, a nie nierozwiązane referencje.
+    const cssText = await (await fetch('style.css')).text();
+    const styleEl = document.createElement('style');
+    styleEl.textContent = cssText;
+    document.head.appendChild(styleEl);
+
+    const prevTheme = document.documentElement.dataset.theme;
+    const TOKENS = ['var(--accent)', 'var(--good)', 'var(--warn)', 'var(--bad)', 'var(--mastered)'];
+
+    function collectConfettiColors() {
+      spawnConfetti();
+      const container = document.querySelector('.confetti-container');
+      const pieces = [...container.querySelectorAll('.confetti-piece')];
+      const inline = pieces.map(p => p.style.background);
+      // computed MUSI być czytane w DOM — oderwany element zwraca ''
+      const computed = [...new Set(pieces.map(p => getComputedStyle(p).backgroundColor))];
+      container.remove();
+      return { count: pieces.length, inline, computed };
+    }
+
+    document.documentElement.dataset.theme = 'light';
+    const light = collectConfettiColors();
+
+    ok('CF1 konfetti tworzy 60 elementów', light.count === 60, String(light.count));
+    ok('CF2 każdy kolor to referencja do tokenu, nie literał',
+       light.inline.every(c => c.indexOf('var(--') === 0),
+       [...new Set(light.inline)].slice(0, 3).join(' '));
+    ok('CF3 użyte wyłącznie dozwolone tokeny',
+       light.inline.every(c => TOKENS.indexOf(c) !== -1),
+       [...new Set(light.inline)].filter(c => TOKENS.indexOf(c) === -1).join(',') || 'brak obcych');
+
+    document.documentElement.dataset.theme = 'dark';
+    const dark = collectConfettiColors();
+
+    // właściwa regresja: przy zakodowanych hexach obie wartości byłyby
+    // identyczne, bo paleta nie zależała od motywu
+    const shared = light.computed.filter(c => dark.computed.indexOf(c) !== -1);
+    ok('CF4 ciemny motyw daje inne kolory niż jasny', shared.length === 0,
+       'wspólne: ' + (shared.join(', ') || 'brak'));
+    ok('CF5 kolory faktycznie się rozwiązują',
+       light.computed.length === 5 && dark.computed.length === 5,
+       'jasny ' + light.computed.length + ' [' + light.computed.join(' ') + ']');
+    ok('CF6 każdy kolor jest nieprzezroczysty',
+       [...light.computed, ...dark.computed].every(c => c && c !== 'rgba(0, 0, 0, 0)'),
+       (light.computed.concat(dark.computed)).join(' '));
+
+    if (prevTheme) document.documentElement.dataset.theme = prevTheme;
+    else delete document.documentElement.dataset.theme;
+    styleEl.remove();
+  } catch (e) { ok('konfetti', false, e.message); }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();
