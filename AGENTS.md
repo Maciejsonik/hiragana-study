@@ -4,8 +4,21 @@ Working instructions for coding agents in this repository.
 
 `PROJECT.md` is the project documentation — architecture, feature status,
 roadmap, audit points. **This file is not a summary of it.** It describes how
-to work here. Where the two disagree about behaviour, the code and `PROJECT.md`
-win.
+to work here.
+
+## Sources of truth
+
+They are not equal, and the order matters:
+
+- **The code is authoritative** about how the application actually behaves.
+- **`PROJECT.md` is a record** of architecture, features and roadmap. It is
+  useful and it is maintained, but it is documentation — it can be out of date.
+- **This file** describes how to work here, not what the app does.
+
+When documentation and code disagree, the documentation is not evidence of
+current behaviour. Trust the code, and say so. If the divergence is within the
+scope of the task you are doing, update the documentation in the same commit;
+if it is not, report it rather than quietly working around it.
 
 Some sections describe how the project is built *today*. Those are orientation,
 not law. Confirm the current shape in the code before relying on it, and prefer
@@ -224,8 +237,11 @@ inspection. Say plainly what was not confirmed.
 ## 5. Conventions
 
 - Code comments and UI strings: **Polish** — matching the existing files.
-- `PROJECT.md`, `README.md`, commit messages and this file: **English**.
+- `AGENTS.md`, `PROJECT.md` and commit messages: **English**.
 - Identifiers: **English**.
+- Other documentation: **keep the language the file is already written in.**
+  `README.md` is Polish; do not translate it as a side effect of some other
+  task. Change a document's language only when the task explicitly asks for it.
 
 This split is the existing convention. Keep it, and match the file you are
 editing before assuming it still holds.
