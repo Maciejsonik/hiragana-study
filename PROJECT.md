@@ -2437,7 +2437,7 @@ tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 asser
 ```
 
 The counts are a snapshot, not a contract — read the total from the run
-output rather than expecting these numbers. Sections 17 and 18 wait on
+output rather than expecting these numbers. Sections 18 and 19 wait on
 real timers, so `tests.html` takes noticeably longer than the other two.
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and

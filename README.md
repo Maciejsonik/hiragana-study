@@ -20,6 +20,40 @@ http://localhost:8000
 
 Aplikacja jest w pełni statyczna — nie wymaga npm, bundlera ani kroku budowania. Wystarczy dowolny serwer plików statycznych.
 
+## Testy
+
+Aplikacja ma trzy harnessy testowe uruchamiane w przeglądarce. Nie wymagają
+npm, bundlera ani kroku budowania — to zwykłe strony HTML i skrypty.
+
+```bash
+python3 -m http.server 8000
+```
+
+Następnie otwórz:
+
+```
+http://localhost:8000/tests.html          SRS, migracja, ustawienia egzaminu, timeout, konfetti, granica limitu
+http://localhost:8000/tests-learn.html    panel nauki, layout, animacje
+http://localhost:8000/tests-daily.html    statystyki dzienne
+```
+
+**Musi to być HTTP.** Harnessy pobierają `index.html` i `app.js` przez
+`fetch()`, a `file://` to blokuje.
+
+Wynik pojawia się w bloku `<pre id="R">` jako `TOTAL PASS=n FAIL=0`, a tytuł
+zakładki zmienia się na `ALL PASS n` albo `FAILURES n`.
+
+Każdy harness odbudowuje stronę z prawdziwego `index.html` i wczytuje
+prawdziwy `app.js`, więc testy nie mogą rozjechać się z aplikacją.
+
+Harnessy to narzędzia deweloperskie: **nie są precache'owane przez Service
+Worker** i nie wchodzą do budżetu offline użytkownika. Istnieje asercja,
+która pilnuje tego — jeśli kiedyś dodasz pliki testowe do `SHELL_ASSETS`,
+musi zmienić się i ta asercja.
+
+`tests.html` ma sekcje czekające na prawdziwe liczniki, więc działa wyraźnie
+dłużej niż pozostałe dwa.
+
 ## GitHub Pages
 
 Aplikacja jest publikowana przez GitHub Pages:
@@ -93,6 +127,8 @@ hiragana-study/
 ├── manifest.webmanifest  manifest PWA
 ├── offline.html          fallback nawigacji, gdy dokument nie jest w cache
 ├── icons/                ikony aplikacji (192, 512, maskable, apple-touch-icon)
+├── tests*.html + tests*.js  harnessy testowe (narzędzia deweloperskie)
 ├── README.md
-└── PROJECT.md            dokumentacja projektu
+├── PROJECT.md            dokumentacja projektu i stan prac
+└── AGENTS.md             zasady pracy dla agentów kodujących
 ```

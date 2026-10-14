@@ -610,7 +610,7 @@
   } catch (e) { ok('review UI', false, e.message); }
 
   /* =====================================================
-     15. USTAWIENIA EGZAMINU — „ćwicz trudne" nie może ich gubić
+     16. USTAWIENIA EGZAMINU — „ćwicz trudne" nie może ich gubić
      ===================================================== */
   try {
     const full = {
@@ -680,7 +680,7 @@
   } catch (e) { ok('ustawienia egzaminu', false, e.message); }
 
   /* =====================================================
-     16. TIMEOUT W TRYBACH TEKSTOWYCH
+     17. TIMEOUT W TRYBACH TEKSTOWYCH
      ===================================================== */
   try {
     const groups = [getGroups()[0].id];
@@ -758,7 +758,7 @@
   } catch (e) { ok('timeout w trybach tekstowych', false, e.message); }
 
   /* =====================================================
-     17. KONFETTI PODĄŻA ZA MOTYWEM (#11)
+     18. KONFETTI PODĄŻA ZA MOTYWEM (#11)
      ===================================================== */
   try {
     // tests.html wstawia tylko <body> z index.html, więc <link> do
@@ -816,7 +816,7 @@
   } catch (e) { ok('konfetti', false, e.message); }
 
   /* =====================================================
-     18. GRANICA LIMITU I ZAKOŃCZENIE EGZAMINU (#13, #14, #16)
+     19. GRANICA LIMITU I ZAKOŃCZENIE EGZAMINU (#13, #14, #16)
      ===================================================== */
   try {
     const bGroups = [getGroups()[0].id];

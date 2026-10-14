@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Lokalna kopia stroke'ów SVG do pracy offline — trzeci wpis w SVG_SOURCES
+# w app.js. KanjiVG jest pobierany z CDN, więc ten katalog istnieje tylko
+# u kogoś, kto świadomie pobiera pliki ręcznie; nie jest częścią aplikacji.
+svg/
+
+# Edytory
+.vscode/
+.idea/
+
+# Logi
+*.log
