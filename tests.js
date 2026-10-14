@@ -610,6 +610,154 @@
   } catch (e) { ok('review UI', false, e.message); }
 
   /* =====================================================
+     15. USTAWIENIA EGZAMINU — „ćwicz trudne" nie może ich gubić
+     ===================================================== */
+  try {
+    const full = {
+      groups: ['a'],
+      options: 4,
+      limit: 10,
+      outside: false,
+      modes: {
+        romajiKanaPick: true,
+        kanaRomajiPick: true,
+        romajiKanaType: true,
+        kanaRomajiType: true
+      },
+      timer: 15
+    };
+
+    // dwa znaki „hard", żeby przycisk „ćwicz trudne" był aktywny
+    const hard = { seen: 8, correct: 3, wrong: 5, recent: [0, 0, 0, 1, 1, 0], confused: {}, last: 1 };
+    progress = { version: PROGRESS_VERSION, chars: { 'あ': { ...hard }, 'い': { ...hard } } };
+    saveProgress();
+
+    saveExamSettings(JSON.parse(JSON.stringify(full)));
+    showExamSetup();
+    await new Promise(r => setTimeout(r, 120));
+
+    ok('CFG1 przycisk „ćwicz trudne" aktywny przy 2 trudnych znakach',
+       !!document.getElementById('practiceHardSetup')
+       && !document.getElementById('practiceHardSetup').disabled);
+
+    document.getElementById('practiceHardSetup').click();
+    await new Promise(r => setTimeout(r, 120));
+
+    const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+
+    // to jest właśnie regresja: wcześniej zapisywano tylko {groups, options, outside}
+    ok('CFG2 tryby pytań przetrwały „ćwicz trudne"',
+       stored.modes && stored.modes.romajiKanaPick && stored.modes.kanaRomajiPick
+       && stored.modes.romajiKanaType && stored.modes.kanaRomajiType,
+       JSON.stringify(stored.modes));
+    ok('CFG3 limit pytań przetrwał', stored.limit === 10, String(stored.limit));
+    ok('CFG4 timer przetrwał', stored.timer === 15, String(stored.timer));
+    ok('CFG5 liczba odpowiedzi przetrwała', stored.options === 4, String(stored.options));
+    ok('CFG6 „dodawaj spoza zakresu" przetrwało', stored.outside === false, String(stored.outside));
+
+    const reloaded = loadExamSettings();
+    ok('CFG7 loadExamSettings odtwarza limit', reloaded.limit === 10, String(reloaded.limit));
+    ok('CFG8 loadExamSettings odtwarza timer', reloaded.timer === 15, String(reloaded.timer));
+    ok('CFG9 loadExamSettings odtwarza wszystkie tryby',
+       reloaded.modes.romajiKanaPick && reloaded.modes.kanaRomajiPick
+       && reloaded.modes.romajiKanaType && reloaded.modes.kanaRomajiType);
+
+    // sesja „ćwicz trudne" ma używać tych samych ustawień
+    const ex = state.exam;
+    ok('CFG10 sesja dostała timer', ex && ex.timerSec === 15, ex && String(ex.timerSec));
+    ok('CFG11 sesja dostała limit', ex && ex.limit === 10, ex && String(ex.limit));
+    ok('CFG12 sesja dostała liczbę odpowiedzi', ex && ex.options === 4, ex && String(ex.options));
+    ok('CFG13 sesja dostała 4 tryby',
+       ex && Object.values(ex.enabledModes).filter(Boolean).length === 4,
+       ex && JSON.stringify(ex.enabledModes));
+    ok('CFG14 sesja jest typu practice', ex && ex.kind === 'practice', ex && ex.kind);
+    ok('CFG15 sesja ma listę znaków do ćwiczenia', ex && Array.isArray(ex.kanaList) && ex.kanaList.length === 2,
+       ex && ex.kanaList && String(ex.kanaList.length));
+
+    stopExam();
+    progress = { version: PROGRESS_VERSION, chars: {} };
+    saveProgress();
+  } catch (e) { ok('ustawienia egzaminu', false, e.message); }
+
+  /* =====================================================
+     16. TIMEOUT W TRYBACH TEKSTOWYCH
+     ===================================================== */
+  try {
+    const groups = [getGroups()[0].id];
+
+    /* `romajiKanaType` = widzisz romaji, wpisujesz KANA -> #kanaInput / #checkKana
+       `kanaRomajiType` = widzisz kana, wpisujesz ROMAJI -> #romajiInput / #checkRomaji */
+
+    // --- tryb: widzisz romaji, wpisujesz kana
+    startExam(groups, {
+      options: 4, limit: 0, outside: false,
+      modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: true, kanaRomajiType: false },
+      timer: 5
+    });
+    await new Promise(r => setTimeout(r, 200));
+
+    const ex = state.exam;
+    ok('TYP1 tryb romaji->kana wystartował', !!ex && ex.currentMode === 'romaji-kana-type',
+       ex && ex.currentMode);
+    ok('TYP2 #kanaInput istnieje i jest aktywny',
+       !!document.getElementById('kanaInput') && !document.getElementById('kanaInput').disabled);
+    ok('TYP3 #checkKana istnieje i jest aktywny',
+       !!document.getElementById('checkKana') && !document.getElementById('checkKana').disabled);
+
+    const totalBefore = ex.total, wrongBefore = ex.wrong, scoreBefore = ex.score;
+    await new Promise(r => setTimeout(r, 6000));
+
+    ok('TYP4 timeout zaliczył pytanie jako błędne',
+       ex.total === totalBefore + 1 && ex.wrong === wrongBefore + 1,
+       'total ' + totalBefore + '->' + ex.total + ', wrong ' + wrongBefore + '->' + ex.wrong);
+    ok('TYP5 timeout NIE dodał punktów', ex.score === scoreBefore, String(ex.score));
+    ok('TYP6 #kanaInput zablokowany po timeoutie',
+       document.getElementById('kanaInput').disabled === true);
+    ok('TYP7 #checkKana zablokowany po timeoutie',
+       document.getElementById('checkKana').disabled === true);
+
+    // ponowne wysłanie odpowiedzi nie może nic dodać
+    const wrongNow = ex.wrong;
+    document.getElementById('checkKana').click();
+    ok('TYP8 ponowne wysłanie po timeoutie nie zmienia wyniku',
+       ex.wrong === wrongNow && ex.score === scoreBefore,
+       'wrong ' + wrongNow + ', score ' + ex.score);
+    stopExam();
+
+    // --- tryb: widzisz kana, wpisujesz romaji
+    startExam(groups, {
+      options: 4, limit: 0, outside: false,
+      modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: true },
+      timer: 5
+    });
+    await new Promise(r => setTimeout(r, 200));
+    ok('TYP9 tryb kana->romaji wystartował',
+       !!state.exam && state.exam.currentMode === 'kana-romaji-type',
+       state.exam && state.exam.currentMode);
+    await new Promise(r => setTimeout(r, 6000));
+    ok('TYP10 #romajiInput zablokowany po timeoutie',
+       document.getElementById('romajiInput').disabled === true);
+    ok('TYP11 #checkRomaji zablokowany po timeoutie',
+       document.getElementById('checkRomaji').disabled === true);
+    stopExam();
+
+    // --- tryb wyboru nadal blokuje .answer (regresja w obie strony)
+    startExam(groups, {
+      options: 4, limit: 0, outside: false,
+      modes: { romajiKanaPick: true, kanaRomajiPick: true, romajiKanaType: false, kanaRomajiType: false },
+      timer: 5
+    });
+    await new Promise(r => setTimeout(r, 200));
+    ok('TYP12 tryb wyboru pokazuje przyciski .answer',
+       document.querySelectorAll('.answer').length > 0);
+    await new Promise(r => setTimeout(r, 6000));
+    ok('TYP13 przyciski .answer zablokowane po timeoutie',
+       [...document.querySelectorAll('.answer')].every(a => a.disabled));
+    stopExam();
+    setScreen('menu');
+  } catch (e) { ok('timeout w trybach tekstowych', false, e.message); }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

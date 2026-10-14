@@ -3328,9 +3328,14 @@ function showExamSetup() {
   if (practiceButton) {
     practiceButton.onclick = () => {
       Audio.click();
-      const { selected, options, outside } = readSetup();
-      saveExamSettings({ groups: selected.length ? selected : settings.groups, options, outside });
-      startExam([], { kanaList: practiceList(), options, outside, kind: 'practice' });
+      const { selected, options, limit, outside, modes, timer } = readSetup();
+      saveExamSettings({
+        groups: selected.length ? selected : settings.groups,
+        options, limit, outside, modes, timer
+      });
+      startExam([], {
+        kanaList: practiceList(), options, limit, outside, modes, timer, kind: 'practice'
+      });
     };
   }
 
@@ -3473,6 +3478,11 @@ function startQuestionTimer(exam) {
 
         // wyłącz przyciski odpowiedzi
         document.querySelectorAll('.answer').forEach(a => { a.disabled = true; });
+        ['kanaInput', 'checkKana', 'romajiInput', 'checkRomaji'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.disabled = true;
+        });
+
         const correctBtn = document.querySelector(`[data-answer="${exam.current.kana}"]`);
         if (correctBtn) correctBtn.classList.add('correct');
       }
