@@ -1299,17 +1299,19 @@ T8  Dakuten / Handakuten / Yōon      DONE
 T17 Katakana mode                   DONE
 T26 Settings / Personalization     DONE
 T14 Offline PWA                    DONE
+T21 Spaced repetition              DONE
+T15 Long-term statistics           DONE
 ```
 
 These are implemented and live. Sections 32 (T8), 33 (T17), 37 (T14),
-39 (T26), 44 (Offline architecture) and 45 (Settings architecture) describe
-the shipped behaviour.
+39 (T26), 44 (Offline architecture), 45 (Settings architecture) and
+46 (Spaced repetition) describe the shipped behaviour; the daily statistics
+store and its read-only aggregation are documented under
+"Daily statistics (T15)".
 
 ## Next major priorities
 
 ```text
-T21 Spaced repetition / learning engine
-T15 Long-term statistics
 T13 Canvas drawing mode
 T16 Code splitting
 ```
@@ -1317,27 +1319,18 @@ T16 Code splitting
 Recommended order:
 
 ```text
-T21 → T15 → T13 → T16
+T13 → T16
 ```
 
 ### Rationale
 
-**T21 — Spaced repetition / learning engine**
-
-The natural next step: the progress/mastery data already collected can drive
-scheduling instead of only weighting distractors.
-
-**T15 — Long-term statistics**
-
-Builds on the existing progress/mastery data without requiring a fundamentally different architecture.
-
 **T13 — Canvas drawing mode**
 
-Adds an interactive handwriting layer and makes use of the existing KanjiVG stroke data.
+Adds an interactive handwriting layer and makes use of the existing KanjiVG stroke data. It is the largest remaining item that adds value for the learner rather than maintenance.
 
 **T16 — Code splitting**
 
-Technical architecture work should happen after the feature set has stabilized.
+Technical architecture work should happen after the feature set has stabilized. `app.js` is now a single large bundle; splitting it is worth doing, but only once the remaining feature decisions are settled, so that boundaries do not have to be redrawn afterwards.
 
 ---
 
@@ -1900,10 +1893,16 @@ rather than one enormous rewrite.
 
 These are not necessarily bugs; they are items to verify.
 
+Resolved in the 2026-10 audit-fix round:
+
+- **3. Timer timeout in typed modes — RESOLVED.** The timeout disabled only `.answer` buttons, which typed modes do not have, so the text field and "Sprawdź" stayed enabled after time expired. Both pairs are now disabled. Grading was never at risk: the timeout sets `exam.answered`, and `submitTypedAnswer()` returns early on it, so a late submission could not affect the score or daily stats. Covered by the TYP assertions in `tests.js`.
+- **4. Hard-practice settings preservation — RESOLVED.** The practice-hard button saved only `{groups, options, outside}`, and `saveExamSettings()` overwrites wholesale, so `limit`, `modes` and `timer` were lost on every use — four question modes collapsed to one, timer and limit reset to 0. `readSetup()` already returned every field; the caller now passes the full set to both `saveExamSettings()` and `startExam()`. Covered by the CFG assertions in `tests.js`.
+- **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
+
+Still open:
+
 1. `masteryLevel()` ordering of `hard` vs `mastered`.
 2. Manual stroke counts vs KanjiVG actual counts.
-3. Timer timeout behavior in typed modes.
-4. Hard-practice settings preservation.
 5. Theme system branch.
 6. `mountKana().finish()` behavior.
 7. Global keyboard listener interaction with text inputs.
@@ -1914,7 +1913,6 @@ These are not necessarily bugs; they are items to verify.
 12. KanjiVG remote dependency means the application is not currently fully offline.
 13. Question-limit off-by-one behavior when the final question is answered.
 14. Automatic exam completion after a timed-out final question.
-15. Preservation of timer/question-limit settings when retrying an exam.
 16. Interaction between automatic exam completion and the existing wrong-answer feedback flow.
 17. Future multi-character kana representation for yōon.
 18. KanjiVG compatibility for combined kana and future kanji data.
@@ -1948,13 +1946,13 @@ Katakana: implemented
 Settings / personalization: implemented
 Offline support (PWA): implemented
 
-Long-term statistics: NOT implemented
+Long-term statistics: implemented
 Drawing mode: NOT implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: NOT implemented
 Grammar: NOT implemented
-Spaced repetition engine: NOT implemented
+Spaced repetition engine: implemented
 Daily goals: NOT implemented
 Achievements: NOT implemented
 Custom study sets: NOT implemented
@@ -1964,16 +1962,17 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-T21 — Spaced Repetition / Learning Engine
+(none in progress)
 ```
+
+T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
+documented, as are the two audit fixes in this round: preserving exam
+settings after "Ćwicz trudne znaki", and disabling typed-mode controls when
+the clock runs out. T13 is the next planned item but has not been started.
 
 ### Current recommended roadmap
 
 ```text
-T21
-↓
-T15
-↓
 T13
 ↓
 T16
@@ -2323,7 +2322,7 @@ Do not merge them. Exam weighting must not shift because a kana reached a long
 SRS interval — that would change existing practice behaviour as a side effect of
 adding review.
 
-## Daily statistics (T15, phase 1 — collection only)
+## Daily statistics (T15)
 
 ```text
 localStorage:
@@ -2397,8 +2396,7 @@ private-browsing never breaks the learning experience. History is pruned to
 `DAILY_STATS_MAX_DAYS` (400) days using an injectable clock, so the cutoff is
 deterministic and testable.
 
-Phase 2 (14-day chart, streaks, honest "no earlier history" state) renders in
-the existing progress panel. No statistics are displayed yet.
+Phase 2 is described in full below. Both phases are shipped.
 
 ---
 
@@ -2455,13 +2453,15 @@ visible rather than implied. Nothing is backfilled or estimated.
 
 ## Tests
 
-Two dependency-free harnesses, no build step. Both rebuild the page from the real
-`index.html` and load the real `app.js`, so they cannot drift from the app.
+Three dependency-free harnesses, no build step. All three rebuild the page
+from the real `index.html` and load the real `app.js`, so they cannot drift
+from the app.
 
 ```text
-tests.html       + tests.js        SRS / migration / queue       (188 assertions)
-tests-learn.html + tests-learn.js  learn panel / layout / motion ( 53 assertions)
-tests-daily.html + tests-daily.js  daily statistics (collect+read) (152 assertions)
+tests.html       + tests.js        SRS / migration / queue,
+                                   exam settings, typed-mode timeout (216 assertions)
+tests-learn.html + tests-learn.js  learn panel / layout / motion       ( 75 assertions)
+tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and
