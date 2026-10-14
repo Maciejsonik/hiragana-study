@@ -816,6 +816,118 @@
   } catch (e) { ok('konfetti', false, e.message); }
 
   /* =====================================================
+     18. GRANICA LIMITU I ZAKOŃCZENIE EGZAMINU (#13, #14, #16)
+     ===================================================== */
+  try {
+    const bGroups = [getGroups()[0].id];
+    const PICK = { romajiKanaPick: true, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: false };
+    const settle = () => new Promise(r => setTimeout(r, 950));
+
+    function clickAnswer(correct) {
+      const kana = state.exam.current.kana;
+      const btn = correct
+        ? document.querySelector('[data-answer="' + kana + '"]')
+        : [...document.querySelectorAll('[data-answer]')].find(b => b.dataset.answer !== kana);
+      if (btn) btn.click();
+      return !!btn;
+    }
+
+    // --- #13: granica limitu pytań -------------------------------
+    startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 0 });
+    await new Promise(r => setTimeout(r, 200));
+
+    ok('LIM1 pierwsze pytanie wyświetlone',
+       !!state.exam.current && document.querySelectorAll('[data-answer]').length === 4,
+       String(document.querySelectorAll('[data-answer]').length));
+
+    clickAnswer(true); await settle();
+    clickAnswer(true); await settle();
+
+    const ex = state.exam;
+    ok('LIM2 po 2 odpowiedziach egzamin trwa', ex.finished === false && ex.total === 2,
+       'total ' + ex.total + ', finished ' + ex.finished);
+    ok('LIM3 trzecie pytanie jest dostępne', !!ex.current && document.querySelectorAll('[data-answer]').length > 0,
+       ex.current && ex.current.kana);
+    ok('LIM4 wynik zgadza się z liczbą odpowiedzi', ex.score === 2 && ex.wrong === 0,
+       'score ' + ex.score + ', wrong ' + ex.wrong);
+
+    clickAnswer(true); await settle();
+
+    ok('LIM5 egzamin zakończył się dokładnie po N odpowiedziach', ex.total === 3, 'total ' + ex.total);
+    ok('LIM6 egzamin jest zakończony', ex.finished === true, String(ex.finished));
+    ok('LIM7 nie ma dodatkowego pytania po limicie',
+       !ex.current || document.querySelectorAll('[data-answer]').length === 0,
+       String(document.querySelectorAll('[data-answer]').length));
+    ok('LIM8 wynik policzony dokładnie raz', ex.score === 3 && ex.wrong === 0,
+       'score ' + ex.score + ', wrong ' + ex.wrong);
+
+    // --- #14: timeout na pytaniu ostatnim -------------------------
+    startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 5 });
+    await new Promise(r => setTimeout(r, 200));
+    clickAnswer(true); await settle();
+    clickAnswer(true); await settle();
+
+    const t = state.exam;
+    const beforeTimeout = { total: t.total, wrong: t.wrong, score: t.score };
+    ok('LIM9 przed timeoutem na ostatnim pytaniu', beforeTimeout.total === 2, JSON.stringify(beforeTimeout));
+
+    await new Promise(r => setTimeout(r, 6000));
+
+    ok('LIM10 timeout policzył pytanie jako błędne dokładnie raz',
+       t.total === 3 && t.wrong === 1,
+       'total ' + t.total + ', wrong ' + t.wrong);
+    ok('LIM11 timeout nie dodał punktów', t.score === 2, 'score ' + t.score);
+    ok('LIM12 stan oczekiwania na „Dalej" ustawiony', t.waiting === true, String(t.waiting));
+    ok('LIM13 timeout NIE kończy egzaminu sam z siebie', t.finished === false, String(t.finished));
+    ok('LIM14 czasu nie ma — sterowanie zablokowane',
+       [...document.querySelectorAll('[data-answer]')].every(b => b.disabled),
+       [...document.querySelectorAll('[data-answer]')].filter(b => !b.disabled).length + ' aktywnych');
+
+    nextExamQuestion();
+
+    ok('LIM15 „Dalej" kończy egzamin', t.finished === true, String(t.finished));
+    ok('LIM16 zakończenie nie przelicza odpowiedzi',
+       t.total === 3 && t.wrong === 1 && t.score === 2,
+       'total ' + t.total + ', wrong ' + t.wrong + ', score ' + t.score);
+
+    // --- #16: błędna odpowiedź a automatyczne zakończenie ---------
+    startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 0 });
+    await new Promise(r => setTimeout(r, 200));
+    clickAnswer(true); await settle();
+    clickAnswer(true); await settle();
+
+    const w = state.exam;
+    clickAnswer(false);
+    await new Promise(r => setTimeout(r, 200));
+
+    ok('LIM17 błędna odpowiedź na ostatnim pytaniu policzona',
+       w.total === 3 && w.wrong === 1,
+       'total ' + w.total + ', wrong ' + w.wrong);
+    ok('LIM18 błędna odpowiedź otwiera przegląd odpowiedzi', w.waiting === true, String(w.waiting));
+    ok('LIM19 przycisk „Dalej" jest dostępny', !!document.getElementById('nextQuestion'),
+       document.getElementById('nextQuestion') ? 'jest' : 'brak');
+
+    await new Promise(r => setTimeout(r, 1600));
+
+    ok('LIM20 błędna odpowiedź NIE kończy egzaminu automatycznie',
+       w.finished === false, String(w.finished));
+    ok('LIM21 przegląd odpowiedzi nie zniknął po oknie auto-przejścia',
+       w.waiting === true && !!document.getElementById('nextQuestion'),
+       'waiting ' + w.waiting);
+
+    nextExamQuestion();
+    ok('LIM22 „Dalej" po błędnej odpowiedzi kończy egzamin', w.finished === true, String(w.finished));
+    ok('LIM23 zakończenie po błędnej odpowiedzi nie przelicza wyniku',
+       w.total === 3 && w.wrong === 1 && w.score === 2,
+       'total ' + w.total + ', wrong ' + w.wrong + ', score ' + w.score);
+
+    stopExam();
+    clearProgress();
+    localStorage.removeItem(DAILY_STATS_KEY);
+    setScreen('menu');
+  } catch (e) { ok('granica limitu i zakończenie', false, e.message); }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();
