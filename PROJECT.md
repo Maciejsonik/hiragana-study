@@ -1852,7 +1852,20 @@ Resolved in the 2026-10 audit-fix round:
 - **4. Hard-practice settings preservation — RESOLVED.** The practice-hard button saved only `{groups, options, outside}`, and `saveExamSettings()` overwrites wholesale, so `limit`, `modes` and `timer` were lost on every use — four question modes collapsed to one, timer and limit reset to 0. `readSetup()` already returned every field; the caller now passes the full set to both `saveExamSettings()` and `startExam()`. Covered by the CFG assertions in `tests.js`.
 - **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
 
-Still open:
+Resolved in the 2026-10 audit round:
+
+- **9. Unused CSS/JS hooks — RESOLVED, no test added.** Two dead rules removed: `.sound` and `.stroke-title`. Verified by literal search across `app.js`, `index.html`, all three harnesses and `sw.js`, by checking class attributes and `classList` use, and by confirming no concatenation can produce either name. Of the six `stroke-*` classes, the other five are in use. **Not covered by a test** — a CSS-scanner test would have to reimplement the detection and would break on any new dynamic class name. An earlier count of six unused classes was wrong: it missed the `mastery-*` classes, which are built at runtime as `mastery-${masteryLevel(kana)}`.
+- **11. Confetti hardcoded colors — RESOLVED, was a real bug.** `spawnConfetti()` set inline colors from six literals. Four matched theme tokens but only their light-theme values, so in dark mode the result screen threw light-theme confetti; two more had no token at all. Now references `--accent`, `--good`, `--warn`, `--bad`, `--mastered` — five colors instead of six, accepted rather than worked around. `var()` resolves in an inline style, so no `getComputedStyle` and no new variable. Covered by CF1–CF6 in `tests.js`; four of them fail against the old palette.
+- **13. Question-limit off-by-one — VERIFIED CORRECT, now covered.** The limit is checked at the top of `nextExamQuestion()`, so after the Nth answer the exam finishes with `total === N` and never renders an extra question. Covered by LIM1–LIM8; verified by mutating `>=` to `>`.
+- **14. Automatic completion after a timed-out final question — VERIFIED CORRECT, now covered.** The timeout counts once as wrong, sets `waiting`, and does **not** finish by itself; the exam completes when the user advances. Covered by LIM9–LIM16; verified by mutating the `waiting` flag and by making `finishExam()` recount.
+- **16. Interaction with the wrong-answer feedback flow — VERIFIED CORRECT, now covered.** This is the asymmetry, and it is distinct from 13 and 14: a correct answer schedules `nextExamQuestion` after 850 ms and therefore completes the exam with no user action, while a wrong answer and a timeout both show the answer card with no auto-advance. Covered by LIM17–LIM23. Verified by mutating the wrong-answer path to auto-advance — detected **only** by LIM20 and LIM21, which confirms this is tested on its own terms.
+
+Deliberate decisions, not bugs:
+
+- **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
+- **12. KanjiVG loaded from a CDN — ACCEPTED.** The app needs one online load before it is fully offline. Vendoring all 148 stroke SVGs would remove that dependency at the cost of a much larger repository, and KanjiVG data changes rarely. `SVG_SOURCES` tries three locations in order, and Google Fonts are cached by the service worker with a system-font stack in `style.css` as the fallback, so a single failed host does not break the app.
+
+Still open, **not evaluated in this round**:
 
 1. `masteryLevel()` ordering of `hard` vs `mastered`.
 2. Manual stroke counts vs KanjiVG actual counts.
@@ -1860,13 +1873,9 @@ Still open:
 6. `mountKana().finish()` behavior.
 7. Global keyboard listener interaction with text inputs.
 8. Four exam modes vs original T7 specification.
-9. Potential unused CSS/JS hooks.
-10. Browser support of newer CSS features such as `color-mix()`.
-11. Confetti currently uses hardcoded colors in JavaScript.
-12. KanjiVG remote dependency means the application is not currently fully offline.
-13. Question-limit off-by-one behavior when the final question is answered.
-14. Automatic exam completion after a timed-out final question.
-16. Interaction between automatic exam completion and the existing wrong-answer feedback flow.
+
+Open, forward-looking:
+
 17. Future multi-character kana representation for yōon.
 18. KanjiVG compatibility for combined kana and future kanji data.
 19. Separation of music/SFX/master volume when advanced audio is implemented.
@@ -1919,9 +1928,10 @@ Advanced audio / lo-fi: NOT implemented
 ```
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
-documented, as are the two audit fixes in this round: preserving exam
-settings after "Ćwicz trudne znaki", and disabling typed-mode controls when
-the clock runs out. T13 is the next planned item but has not been started.
+documented. For what has been fixed, verified or deliberately accepted so
+far, see §41 rather than a list here — an enumeration in this section would
+go stale on the next round. T13 is the next planned item but has not been
+started.
 
 ### Current recommended roadmap
 
@@ -2411,11 +2421,16 @@ from the real `index.html` and load the real `app.js`, so they cannot drift
 from the app.
 
 ```text
-tests.html       + tests.js        SRS / migration / queue,
-                                   exam settings, typed-mode timeout (216 assertions)
+tests.html       + tests.js        SRS / migration / queue, exam settings,
+                                   typed-mode timeout, confetti, exam
+                                   completion (245 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion       ( 75 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
+
+The counts are a snapshot, not a contract — read the total from the run
+output rather than expecting these numbers. Sections 17 and 18 wait on
+real timers, so `tests.html` takes noticeably longer than the other two.
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and
 `fetch('style.css')`:
