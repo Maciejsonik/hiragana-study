@@ -1846,41 +1846,49 @@ before finishing.
 
 These are not necessarily bugs; they are items to verify.
 
-Resolved in the 2026-10 audit-fix round:
+Status of each item: **fixed** — behaviour or markup changed; **covered** —
+correct already, now protected by tests; **no defect** — checked, nothing to
+change; **known issue** — real, deliberately left alone; **accepted** — a
+decision, not a bug.
+
+## Fixed in the 2026-10 audit round
 
 - **3. Timer timeout in typed modes — RESOLVED.** The timeout disabled only `.answer` buttons, which typed modes do not have, so the text field and "Sprawdź" stayed enabled after time expired. Both pairs are now disabled. Grading was never at risk: the timeout sets `exam.answered`, and `submitTypedAnswer()` returns early on it, so a late submission could not affect the score or daily stats. Covered by the TYP assertions in `tests.js`.
 - **4. Hard-practice settings preservation — RESOLVED.** The practice-hard button saved only `{groups, options, outside}`, and `saveExamSettings()` overwrites wholesale, so `limit`, `modes` and `timer` were lost on every use — four question modes collapsed to one, timer and limit reset to 0. `readSetup()` already returned every field; the caller now passes the full set to both `saveExamSettings()` and `startExam()`. Covered by the CFG assertions in `tests.js`.
-- **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
-
-Resolved in the 2026-10 audit round:
-
 - **9. Unused CSS/JS hooks — RESOLVED, no test added.** Two dead rules removed: `.sound` and `.stroke-title`. Verified by literal search across `app.js`, `index.html`, all three harnesses and `sw.js`, by checking class attributes and `classList` use, and by confirming no concatenation can produce either name. Of the six `stroke-*` classes, the other five are in use. **Not covered by a test** — a CSS-scanner test would have to reimplement the detection and would break on any new dynamic class name. An earlier count of six unused classes was wrong: it missed the `mastery-*` classes, which are built at runtime as `mastery-${masteryLevel(kana)}`.
 - **11. Confetti hardcoded colors — RESOLVED, was a real bug.** `spawnConfetti()` set inline colors from six literals. Four matched theme tokens but only their light-theme values, so in dark mode the result screen threw light-theme confetti; two more had no token at all. Now references `--accent`, `--good`, `--warn`, `--bad`, `--mastered` — five colors instead of six, accepted rather than worked around. `var()` resolves in an inline style, so no `getComputedStyle` and no new variable. Covered by CF1–CF6 in `tests.js`; four of them fail against the old palette.
+## Verified correct, now covered by tests
+
 - **13. Question-limit off-by-one — VERIFIED CORRECT, now covered.** The limit is checked at the top of `nextExamQuestion()`, so after the Nth answer the exam finishes with `total === N` and never renders an extra question. Covered by LIM1–LIM8; verified by mutating `>=` to `>`.
 - **14. Automatic completion after a timed-out final question — VERIFIED CORRECT, now covered.** The timeout counts once as wrong, sets `waiting`, and does **not** finish by itself; the exam completes when the user advances. Covered by LIM9–LIM16; verified by mutating the `waiting` flag and by making `finishExam()` recount.
 - **16. Interaction with the wrong-answer feedback flow — VERIFIED CORRECT, now covered.** This is the asymmetry, and it is distinct from 13 and 14: a correct answer schedules `nextExamQuestion` after 850 ms and therefore completes the exam with no user action, while a wrong answer and a timeout both show the answer card with no auto-advance. Covered by LIM17–LIM23. Verified by mutating the wrong-answer path to auto-advance — detected **only** by LIM20 and LIM21, which confirms this is tested on its own terms.
+## Checked, no change needed
 
-Deliberate decisions, not bugs:
+- **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
+- **1. `masteryLevel()` ordering of `hard` vs `mastered` — CORRECT, no bug.** The branches are mutually exclusive given the size of `recent`. `hard` needs `errorRate >= 0.5` over the whole window; `mastered` needs the last five entries to all be correct. With `recent` capped at 6, five correct entries in the last five give a rate of 0.167, so both cannot hold. The cap is only enforced on write, never on read — nothing trims a longer array — but `git log -S` shows `entry.recent.length > 6` has existed since the initial commit, which is the same commit that introduced `recent`. A window longer than 6 is therefore unreachable except by hand-editing `localStorage` or importing data.
+- **5. Theme system branch — MINOR GAP, not a defect.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render and there is no `change` listener. With the theme set to `system`, switching the OS appearance while the app is open does not re-theme it until the next render or reload. Nothing is wrong with the branch itself.
+- **6. `mountKana().finish()` — NOT A BUG, the item rests on a wrong premise.** `mountKana()` returns `{ play, step, showAll, count }`. There is no `finish` on the returned object; `finish` is a local function inside `mountKana`, called by `step()` and `play()` when the last stroke completes, and never exposed. `player.finish` is not referenced anywhere in the app or the harnesses.
+- **7. Global keyboard listener vs text inputs — NO DEFECT FOUND.** Typed inputs attach their own `keydown` handler that calls `e.stopPropagation()` for Enter, so the global listener never sees it. Digit shortcuts are additionally guarded by `exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type'`, so typing digits into the field selects nothing. Escape reaches the global handler and returns to the menu, which is intended. Worth remembering: that guard is positional — any input added to Learn mode later will need its own handling.
+## Known issue, deliberately left as-is
+
+- **2. Manual stroke counts vs KanjiVG — KNOWN CONTENT DRIFT, 32 of 208 disagree.** All 148 KanjiVG parts were fetched and compared against `hiraganaStrokeText` and `katakanaStrokeText`. 176 match. Two distinct causes: 21 hiragana are off by +1, all dakuten or handakuten characters, because KanjiVG draws the mark as three strokes where the conventional count is two — `ぎ ぐ げ ご じゃ じゅ じょ だ ぢ づ で ど びゃ びゅ びょ ぶ べ ぼ ぎゃ ぎゅ ぎょ`; and 11 katakana are simply wrong in the manual data — `フ 4→1`, `ブ 6→3`, `プ 5→2`, `セ 3→2`, `ゼ 5→4`, `ヤ 3→2`, `レ 2→1`, `ン 1→2`, `テ 2→3`, `デ 4→5`, `ヂ 4→5`. `mountKana` reconciles the count badge and the order line at runtime (`if (player.count !== count)`), but **not** the description list, so the panel can show "1 kreska" above four descriptions for `フ`, or "2 kreski" above a description that says *jeden ruch* for `ン`. This is educational content, not code: the descriptions are individually written (104 unique sets in hiragana, 103 in katakana — `マ` and `メ` share one legitimately), so it is drift rather than copy-paste. **Left as-is deliberately** — correcting it means rewriting 32 descriptions, which is a content decision, not a mechanical fix.
+
+## Accepted — deliberate decisions, not bugs
 
 - **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
 - **12. KanjiVG loaded from a CDN — ACCEPTED.** The app needs one online load before it is fully offline. Vendoring all 148 stroke SVGs would remove that dependency at the cost of a much larger repository, and KanjiVG data changes rarely. `SVG_SOURCES` tries three locations in order, and Google Fonts are cached by the service worker with a system-font stack in `style.css` as the fallback, so a single failed host does not break the app.
+## Still open, **not evaluated in this round**
 
-Still open, **not evaluated in this round**:
-
-1. `masteryLevel()` ordering of `hard` vs `mastered`.
-2. Manual stroke counts vs KanjiVG actual counts.
-5. Theme system branch.
-6. `mountKana().finish()` behavior.
-7. Global keyboard listener interaction with text inputs.
 8. Four exam modes vs original T7 specification.
 
-Open, forward-looking:
+## Open, forward-looking
 
 17. Future multi-character kana representation for yōon.
 18. KanjiVG compatibility for combined kana and future kanji data.
 19. Separation of music/SFX/master volume when advanced audio is implemented.
 
 ---
+
 
 # 42. Current Project State
 
