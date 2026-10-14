@@ -913,13 +913,6 @@ footer {
   white-space: nowrap;
 }
 
-.sound {
-  font-size: 1.05rem;
-  color: var(--muted);
-  margin-top: 3px;
-}
-
-
 /* =========================================================
    CHARACTER AREA
 ========================================================= */
@@ -1087,11 +1080,6 @@ footer {
   );
   border-radius: 18px;
   border: 1px solid var(--line);
-}
-
-.stroke-title {
-  font-weight: 800;
-  margin-bottom: 9px;
 }
 
 .order-line {
