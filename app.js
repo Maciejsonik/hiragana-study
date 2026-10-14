@@ -658,6 +658,11 @@ const homeBtn = document.getElementById('homeBtn');
    POMOCNICZE
 ========================================================= */
 
+/* Nazwa skryptu w widoku użytkownika — jedno miejsce, bez duplikacji. */
+function scriptName(script = state.script) {
+  return script === 'katakana' ? 'Katakana' : 'Hiragana';
+}
+
 function updateScriptHeader() {
   const eyebrow = document.getElementById('scriptEyebrow');
   const title = document.getElementById('appTitle');
@@ -666,11 +671,10 @@ function updateScriptHeader() {
 
   if (state.script === 'katakana') {
     eyebrow.textContent = 'JAPOŃSKI • KATAKANA';
-    title.textContent = 'Katakana';
   } else {
     eyebrow.textContent = 'JAPOŃSKI • HIRAGANA';
-    title.textContent = 'Hiragana';
   }
+  title.textContent = scriptName();
 }
 
 function item(kana) {
@@ -1854,19 +1858,15 @@ function renderLearn() {
   document.getElementById('prevKana').onclick = () => { Audio.click(); navigateKana(-1); };
   document.getElementById('nextKana').onclick = () => { Audio.click(); navigateKana(1); };
 
-  /* Quiz-me: ukryj/pokaż znak */
+  /*
+    „Sprawdź się" prowadzi do konfiguracji egzaminu. `setScreen('exam')`
+    korzysta z istniejącej ścieżki: ustawia ekran i woła `render()`, który
+    przez `renderExam()` trafia do `showExamSetup()`. Nie uruchamiamy egzaminu
+    i nie dotykamy `state.script`, więc wybrany alfabet zostaje ten sam.
+  */
   document.getElementById('quizMe').onclick = () => {
     Audio.click();
-    const wrap = document.getElementById('svgWrap');
-    const quizBtn = document.getElementById('quizMe');
-
-    if (wrap.classList.contains('quiz-hidden')) {
-      wrap.classList.remove('quiz-hidden');
-      quizBtn.textContent = '🧠 Sprawdź się';
-    } else {
-      wrap.classList.add('quiz-hidden');
-      quizBtn.textContent = '👁 Pokaż znak';
-    }
+    setScreen('exam');
   };
 
   /* animacja kresek */
@@ -3187,7 +3187,6 @@ function progressPanelHTML() {
         <button class="btn btn-primary" id="practiceHardSetup" ${practiceCount < 2 ? 'disabled' : ''}>
           🎯 Ćwicz trudne znaki
         </button>
-        <button class="btn btn-secondary" id="resetProgress">Wyczyść postępy</button>
       </div>
     </div>
   `;
@@ -3335,18 +3334,10 @@ function showExamSetup() {
     };
   }
 
-  const resetButton = document.getElementById('resetProgress');
-  if (resetButton) {
-    resetButton.onclick = () => {
-      // Tekst tylko — `resetProgressData()` nadal czyści postęp i zostawia
-      // historię. Zgodne z tym samym komunikatem co w Ustawieniach (linia ~1619).
-      if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
-                  'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.')) {
-        resetProgressData();
-        showExamSetup();
-      }
-    };
-  }
+  // Reset postępu i kasowanie statystyk są dostępne WYŁĄCZNIE w Ustawieniach
+  // (`#resetProgressBtn` / `#clearDailyStatsBtn`). Powtórzenie tego przycisku
+  // tutaj było drugim miejscem kasującym te same dane — usuwamy, żeby reset
+  // miał jeden, jasno opisany punkt wejścia.
 }
 
 function setExamGroups(groupIds) {
@@ -4097,7 +4088,7 @@ function renderExamResult() {
       ${exam.xp > 0 ? `<div class="xp-result">⭐ ${exam.xp} XP zdobytych</div>` : ''}
       ${exam.bestStreak >= 3 ? `<div class="result-streak">🔥 Najlepsza seria: ${exam.bestStreak} z rzędu</div>` : ''}
 
-      <p style="color:var(--muted)">${resultText(exam.score, exam.total)}</p>
+      <p style="color:var(--muted)">${resultText(exam.score, exam.total, state.script, exam.kind)}</p>
 
       ${mistakes.length ? `
         <div class="mistakes">
@@ -4146,12 +4137,22 @@ function renderExamResult() {
   };
 }
 
-function resultText(score, total) {
+/*
+   `kind` rozróżnia sesje, bo `finishExam()` jest wspólny dla egzaminu,
+   powtórek i „ćwicz trudne". Tylko zwykły egzamin dotyczy całego skryptu,
+   więc tylko on może mówić o jego opanowaniu — powtórki dotyczą pojedynczych
+   znaków i takiej deklaracji by nie uzasadniały.
+*/
+function resultText(score, total, script = state.script, kind = 'exam') {
   if (total === 0) return 'Nie udzielono żadnej odpowiedzi.';
 
   const ratio = score / total;
 
-  if (ratio === 1) return 'Perfekcyjnie. Hiragana opanowana!';
+  if (ratio === 1) {
+    return kind === 'exam'
+      ? 'Perfekcyjnie. ' + scriptName(script) + ' opanowana!'
+      : 'Perfekcyjnie!';
+  }
   if (ratio >= 0.8) return 'Bardzo dobrze — jeszcze trochę praktyki i będzie super.';
   if (ratio >= 0.6) return 'Dobry wynik. Warto powtórzyć trudniejsze znaki.';
   return 'Warto wrócić do trybu nauki i zrobić jeszcze kilka powtórek.';

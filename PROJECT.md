@@ -353,7 +353,13 @@ Learning mode contains:
 - replay,
 - step-through-strokes,
 - show-all,
-- self-test/hide character.
+- self-test (leads to the exam setup).
+
+"Sprrawdź się" navigates to the existing exam setup through
+`setScreen('exam')`. It does not start an exam and does not change
+`state.script`, so the selected alphabet carries over. It previously toggled a
+blurred "hide character" view instead; that toggle and its `.quiz-hidden` CSS
+were removed, and no keyboard shortcut referenced them.
 
 Keyboard shortcuts:
 
@@ -882,6 +888,14 @@ The result screen displays:
 - practice hard characters,
 - return to menu.
 
+`resultText()` takes the score, the total, the script and the session kind.
+Only a perfect score in a regular exam names the script as mastered
+("Perfekcyjnie. Katakana opanowana!"), because only then is the statement
+about the whole alphabet true. Reviews and "practice hard" run through the same
+`finishExam()`, so they get the neutral "Perfekcyjnie!" instead. The remaining
+messages do not depend on the script. `scriptName()` is the single source for
+the display name and is also used by the header.
+
 The result system uses:
 
 ```text
@@ -932,13 +946,16 @@ This should be audited later.
 
 Exam setup contains a progress panel showing:
 
+- daily statistics (T15),
 - overall statistics,
 - mastery map,
 - hard characters,
-- practice-hard action,
-- reset progress action.
+- practice-hard action.
 
-Progress can be completely reset through the UI.
+Progress can be completely reset through the UI — but only from Settings.
+The panel used to carry a second "Wyczyść postępy" button, so the same data
+could be wiped from two places. It was removed; Settings keeps "Zresetuj postęp"
+and the separate "Wyczyść statystyki", each with its own confirmation.
 
 ---
 

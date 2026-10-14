@@ -561,9 +561,15 @@
          barsHtml.indexOf('role="img" aria-label="Ostatnie 14 dni') > 0);
 
       const src = await (await fetch('app.js')).text();
-      ok('R22 dwa resety z ta sama informacja o historii',
-         (src.match(/Historia dzienna pozostanie bez zmian/g) || []).length === 2,
+      // Reset postępu i kasowanie statystyk są TERAZ tylko w Ustawieniach,
+      // więc komunikat o zachowaniu historii występuje w kodzie raz.
+      ok('R22 reset w Ustawieniach informuje o zachowaniu historii',
+         (src.match(/Historia dzienna pozostanie bez zmian/g) || []).length === 1,
          String((src.match(/Historia dzienna pozostanie bez zmian/g) || []).length));
+      ok('R22b przycisk resetu nie istnieje juz w panelu egzaminu',
+         src.indexOf('id=\"resetProgress\"') < 0);
+      ok('R22c Ustawienia nadal maja oba przyciski',
+         src.indexOf('id=\"resetProgressBtn\"') > 0 && src.indexOf('id=\"clearDailyStatsBtn\"') > 0);
       // resetProgressData() czyści TYLKO progress — nie może dotykać historii.
       const resetBody = (src.match(/function resetProgressData\(\)[\s\S]*?\n\}/) || [''])[0];
       ok('R23 resetProgressData nie odwoluje sie do historii',
@@ -579,6 +585,69 @@
       ok('R25 reset: historia zachowana', !!store());
       clearDailyStats();
       reset();
+
+      /* =====================================================
+         12. KOMUNIKAT WYNIKU (UX fixes phase 3)
+         ===================================================== */
+
+      // nazwa skryptu
+      ok('X1 scriptName katakana', scriptName('katakana') === 'Katakana', scriptName('katakana'));
+      ok('X2 scriptName hiragana', scriptName('hiragana') === 'Hiragana', scriptName('hiragana'));
+      ok('X3 scriptName bierze state.script gdy brak argumentu',
+         scriptName() === scriptName(state.script), scriptName());
+
+      // perfekcyjny wynik zwykłego egzaminu — nazwa właściwego skryptu
+      ok('X4 egzamin hiragana 100% mowi o hiragana',
+         resultText(10, 10, 'hiragana', 'exam') === 'Perfekcyjnie. Hiragana opanowana!',
+         resultText(10, 10, 'hiragana', 'exam'));
+      ok('X5 egzamin katakana 100% mowi o katakana',
+         resultText(10, 10, 'katakana', 'exam') === 'Perfekcyjnie. Katakana opanowana!',
+         resultText(10, 10, 'katakana', 'exam'));
+      ok('X6 to NIE jest juz na sztywno "Hiragana"',
+         resultText(10, 10, 'katakana', 'exam').indexOf('Hiragana') < 0,
+         resultText(10, 10, 'katakana', 'exam'));
+
+      // powtórki i „ćwicz trudne" nie deklarują opanowania skryptu
+      ['review', 'practice'].forEach(function (kind) {
+        ok('X7 ' + kind + ': neutralny komunikat',
+           resultText(10, 10, 'katakana', kind) === 'Perfekcyjnie!',
+           resultText(10, 10, 'katakana', kind));
+        ok('X8 ' + kind + ': brak slowa "opanowana"',
+           resultText(10, 10, 'katakana', kind).toLowerCase().indexOf('opanowana') < 0,
+           resultText(10, 10, 'katakana', kind));
+      });
+
+      // domyślne argumenty: script = state.script, kind = 'exam'
+      const prevScript = state.script;
+      state.script = 'katakana';
+      ok('X9 domyślny script to state.script',
+         resultText(4, 4) === 'Perfekcyjnie. Katakana opanowana!', resultText(4, 4));
+      ok('X10 domyślny kind to exam', resultText(4, 4).indexOf('opanowana') > 0);
+      ok('X11 domyślny kind NIE jest review',
+         resultText(4, 4, 'katakana', 'review') === 'Perfekcyjnie!');
+      state.script = prevScript;
+
+      // pozostałe komunikaty bez zmian dla obu skryptów i wszystkich kindów
+      const partial = [
+        [0, 0], [8, 10], [6, 10], [3, 10]
+      ];
+      let partialOk = true;
+      ['hiragana', 'katakana'].forEach(function (sc) {
+        ['exam', 'review', 'practice'].forEach(function (k) {
+          partial.forEach(function (pair) {
+            if (resultText(pair[0], pair[1], sc, k) !== resultText(pair[0], pair[1])) partialOk = false;
+          });
+        });
+      });
+      ok('X12 cztery pozostale komunikaty identyczne dla obu skryptow i wszystkich kindow',
+         partialOk);
+      ok('X13 brak odpowiedzi — komunikat bez zmian',
+         resultText(0, 0, 'katakana', 'exam') === 'Nie udzielono żadnej odpowiedzi.',
+         resultText(0, 0, 'katakana', 'exam'));
+
+      // nagłówek korzysta z tego samego helpera
+      ok('X14 nagłówek używa scriptName',
+         /title\.textContent = scriptName\(\)/.test(src));
 
       report();
     } catch (e) {

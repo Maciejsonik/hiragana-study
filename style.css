@@ -994,13 +994,6 @@ footer {
   display: block;
 }
 
-/* Quiz-me: blur the character */
-.svg-wrap.quiz-hidden {
-  filter: blur(20px);
-  opacity: 0.3;
-  cursor: pointer;
-}
-
 .loading {
   color: var(--muted);
   font-size: .9rem;

@@ -282,6 +282,91 @@
       info('ANM.11 wysokości ::details-content', 'pomiar pominięty — getComputedStyle ' +
            'na pseudoelemencie podczas przejścia zwraca stan sprzed zmiany');
 
+      /* =====================================================
+         G. UX FIXES PHASE 3 — reset i „Sprawdź się"
+         ===================================================== */
+
+      /*
+        Pełny panel (z „ćwicz trudne") renderuje się TYLKO przy istniejącym
+        postępie — przy pustym `progressSummary().seen` panel pokazuje sam
+        stub. Żeby sprawdzać właściwy wariant, najpierw dajemy jeden rekord.
+      */
+      progress = { version: PROGRESS_VERSION, chars: {
+        'あ': { seen: 4, correct: 3, wrong: 1, recent: [1, 1, 1, 1],
+                confused: {}, last: 1, stage: 1, reps: 0, due: 0, lapses: 0 }
+      } };
+      saveProgress();
+
+      /* --- martwy kod po toggle'u: sprawdzamy NA EKRANIE NAUKI --- */
+      setScreen('learn'); await wait(900);
+      ok('UX19 klasa quiz-hidden zniknęła z DOM',
+         document.querySelectorAll('.quiz-hidden').length === 0);
+      ok('UX20 znak nie jest ukryty na starcie nauki',
+         !document.querySelector('#svgWrap').classList.contains('quiz-hidden'));
+      ok('UX22 nawigacja znaków nadal działa w trybie nauki',
+         !!document.getElementById('nextKana') && !!document.getElementById('prevKana'));
+
+      /* --- reset postępu: tylko w Ustawieniach --- */
+      setScreen('exam'); await wait(800);
+      ok('UX1 panel egzaminu NIE ma już #resetProgress',
+         !document.getElementById('resetProgress'));
+      ok('UX2 przycisk „ćwicz trudne" został',
+         !!document.getElementById('practiceHardSetup'));
+      ok('UX3 kontrole zakresu egzaminu nietknięte',
+         document.querySelectorAll('#examGroups input').length === getGroups().length,
+         String(document.querySelectorAll('#examGroups input').length));
+      ok('UX4 skróty zakresu nietknięte',
+         !!document.getElementById('onlyA') && !!document.getElementById('allGroups'));
+
+      setScreen('settings'); await wait(600);
+      ok('UX5 Ustawienia nadal mają reset postępu',
+         !!document.getElementById('resetProgressBtn'));
+      ok('UX6 Ustawienia nadal mają osobne kasowanie statystyk',
+         !!document.getElementById('clearDailyStatsBtn'));
+      ok('UX7 oba przyciski są osobne (reset nie kasuje historii)',
+         document.getElementById('resetProgressBtn').id !== document.getElementById('clearDailyStatsBtn').id);
+
+      /* --- „Sprawdź się" → konfiguracja egzaminu --- */
+      setScript('hiragana');
+      setScreen('learn'); await wait(900);
+      const quizBtn = document.getElementById('quizMe');
+      ok('UX8 przycisk „Sprawdź się" istnieje', !!quizBtn);
+      ok('UX9 etykieta przycisku bez zmian',
+         quizBtn && quizBtn.textContent.indexOf('Sprawdź się') > 0,
+         quizBtn && quizBtn.textContent.trim());
+
+      quizBtn.click(); await wait(600);
+      ok('UX10 klik prowadzi na ekran egzaminu', state.screen === 'exam', state.screen);
+      ok('UX11 dociera do konfiguracji (showExamSetup)',
+         !!document.getElementById('examGroups')
+         && document.querySelectorAll('#examGroups input').length === getGroups().length);
+      ok('UX12 NIE uruchamia egzaminu automatycznie', state.exam === null,
+         state.exam === null ? 'null' : 'egzamin uruchomiony');
+      ok('UX13 ekran to setup, nie pytanie', !document.getElementById('svgWrap'));
+
+      /* --- zachowanie alfabetu --- */
+      setScript('katakana');
+      setScreen('learn'); await wait(900);
+      ok('UX14 Learn w katanace', state.script === 'katakana');
+      document.getElementById('quizMe').click(); await wait(600);
+      ok('UX15 alfabet zachowany po przejściu do egzaminu',
+         state.script === 'katakana', state.script);
+      const labels = document.getElementById('examGroups').textContent;
+      ok('UX16 konfiguracja pokazuje katakany',
+         /カ/.test(labels) && /ア/.test(labels) && !/あ/.test(labels));
+      ok('UX17 nagłówek nadal katakana',
+         document.getElementById('appTitle').textContent === 'Katakana',
+         document.getElementById('appTitle').textContent);
+
+      setScript('hiragana');
+      setScreen('learn'); await wait(900);
+      document.getElementById('quizMe').click(); await wait(600);
+      ok('UX18 powrót do hiragany też zachowany',
+         state.script === 'hiragana' && /あ/.test(document.getElementById('examGroups').textContent));
+
+      const cssText = await (await fetch('style.css')).text();
+      ok('UX21 CSS nie zawiera już .quiz-hidden', cssText.indexOf('quiz-hidden') < 0);
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));
