@@ -175,6 +175,17 @@ automatic reload.
 changes — not only when a feature is added. A stale record is worse than an
 absent one, because it is trusted.
 
+### 2.7 Formatting
+
+Edited `.js`, `.html`, `.css` and `.webmanifest` files are auto-formatted with
+Prettier, configured in `opencode.jsonc` and `.prettierrc`. The CLI is installed
+globally and runs from `PATH`: the project still has **no `package.json`**, no
+dependency and no build step — do not add Prettier to the project as one.
+
+The large data tables in `app.js` and `KANJIVG_HEX` in `sw.js` carry
+`// prettier-ignore` markers so they stay compact. Leave the markers in place;
+if you add another compact data table, mark it the same way.
+
 ---
 
 ## 3. Working practice
