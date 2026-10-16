@@ -2,6 +2,7 @@
    DANE: SKRYPTY (Hiragana / Katakana)
    ========================================================= */
 
+// prettier-ignore
 const scriptData = {
   hiragana: {
     groups: [
@@ -117,15 +118,12 @@ function getStrokeText() {
 
 function getStrokeCounts() {
   const strokeText = getStrokeText();
-  return Object.fromEntries(
-    Object.entries(strokeText).map(([kana, strokes]) => [kana, strokes.length])
-  );
+  return Object.fromEntries(Object.entries(strokeText).map(([kana, strokes]) => [kana, strokes.length]));
 }
 
 function getLookalikes() {
   return scriptData[state.script].lookalikes;
 }
-
 
 /* =========================================================
    USTAWIENIA — jedyne źródło prawdy dla preferencji
@@ -157,7 +155,7 @@ const SCRIPT_VALUES = ['hiragana', 'katakana'];
  * Nieznane pola są odrzucane. Nie zależy od `state` ani `scriptData`.
  */
 function validateSettings(raw) {
-  const src = (raw && typeof raw === 'object') ? raw : {};
+  const src = raw && typeof raw === 'object' ? raw : {};
 
   return {
     theme: THEME_VALUES.includes(src.theme) ? src.theme : null,
@@ -169,7 +167,7 @@ function validateSettings(raw) {
 function readLegacyTheme() {
   try {
     const value = localStorage.getItem(LEGACY_THEME_KEY);
-    return (value === 'light' || value === 'dark') ? value : null;
+    return value === 'light' || value === 'dark' ? value : null;
   } catch (error) {
     return null;
   }
@@ -200,7 +198,7 @@ function loadSettings() {
       raw = JSON.parse(value);
     }
   } catch (error) {
-    raw = null;   // uszkodzony JSON — traktujemy jak brak danych
+    raw = null; // uszkodzony JSON — traktujemy jak brak danych
   }
 
   const valid = validateSettings(raw);
@@ -235,7 +233,6 @@ function saveSettings(settings) {
 
 let settings = loadSettings();
 
-
 /* =========================================================
    DANE: KRESKI (Hiragana)
    Każdy element tablicy = JEDNA osobna kreska, w kolejności
@@ -244,6 +241,7 @@ let settings = loadSettings();
    ========================================================= */
 
 // Hiragana strokeText - moved to scriptData.hiragana.strokeText below
+// prettier-ignore
 const hiraganaStrokeText = {
   // Samogłoski
   'あ': ['pozioma kreska u góry', 'pionowa kreska w dół, lekko wygięta, przecina poziomą', 'duży łuk z pętlą: od lewej, przez prawą stronę, kończy się na dole'],
@@ -404,6 +402,7 @@ const hiraganaStrokeText = {
 
 scriptData.hiragana.strokeText = hiraganaStrokeText;
 
+// prettier-ignore
 const katakanaStrokeText = {
   // Samogłoski
   'ア': ['ukośna kreska w dół w lewo', 'ukośna kreska w dół w prawo z zakrętem na dole'],
@@ -617,14 +616,15 @@ const Audio = (() => {
       tone(783.99, 0.15, 'sine', 0.18, 0.24);
       tone(1046.5, 0.25, 'sine', 0.22, 0.36);
     },
-    get muted() { return muted; },
+    get muted() {
+      return muted;
+    },
     setMuted(value) {
       muted = !!value;
       return muted;
     }
   };
 })();
-
 
 /* =========================================================
    STAN
@@ -652,7 +652,6 @@ const state = {
 
 const app = document.getElementById('app');
 const homeBtn = document.getElementById('homeBtn');
-
 
 /* =========================================================
    POMOCNICZE
@@ -713,12 +712,16 @@ function getSelectedExamCharacters() {
 }
 
 function strokeListHTML(kana, tag = 'div') {
-  return (getStrokeText()[kana] || []).map((description, index) => `
+  return (getStrokeText()[kana] || [])
+    .map(
+      (description, index) => `
     <${tag} class="stroke-step">
       <span class="number">${index + 1}</span>
       <span>${description}</span>
     </${tag}>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 /**
@@ -757,7 +760,9 @@ function navigateKana(delta) {
  */
 function masteryDonutHTML() {
   const counts = { mastered: 0, good: 0, learning: 0, hard: 0, new: 0 };
-  getAll().forEach(c => { counts[masteryLevel(c.kana)]++; });
+  getAll().forEach(c => {
+    counts[masteryLevel(c.kana)]++;
+  });
   const total = getAll().length;
 
   const radius = 48;
@@ -785,16 +790,18 @@ function masteryDonutHTML() {
     { color: 'var(--good)', count: counts.good },
     { color: 'var(--warn)', count: counts.learning },
     { color: 'var(--bad)', count: counts.hard },
-    { color: 'var(--line)', count: counts.new },
+    { color: 'var(--line)', count: counts.new }
   ].filter(s => s.count > 0);
 
   let offset = 0;
-  const circles = segments.map(s => {
-    const length = (s.count / total) * circumference;
-    const html = `<circle cx="60" cy="60" r="${radius}" fill="none" stroke="${s.color}" stroke-width="10" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" stroke-linecap="round" />`;
-    offset += length;
-    return html;
-  }).join('');
+  const circles = segments
+    .map(s => {
+      const length = (s.count / total) * circumference;
+      const html = `<circle cx="60" cy="60" r="${radius}" fill="none" stroke="${s.color}" stroke-width="10" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" stroke-linecap="round" />`;
+      offset += length;
+      return html;
+    })
+    .join('');
 
   return `
     <div class="mastery-overview">
@@ -818,7 +825,6 @@ function masteryDonutHTML() {
   `;
 }
 
-
 /* =========================================================
    SVG + ANIMACJA KOLEJNOŚCI KRESEK
    Każda kreska w pliku SVG (źródło: KanjiVG) to osobny <path>,
@@ -830,7 +836,7 @@ function masteryDonutHTML() {
 const SVG_SOURCES = [
   hex => `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${hex}.svg`,
   hex => `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${hex}.svg`,
-  hex => `svg/${hex}.svg`   // opcjonalnie: ręcznie pobrane pliki do pracy offline
+  hex => `svg/${hex}.svg` // opcjonalnie: ręcznie pobrane pliki do pracy offline
 ];
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -851,10 +857,13 @@ function resolveKanaParts(kana) {
 }
 
 function orderLineHTML(n) {
-  return Array.from({ length: n }, (_, i) => `
+  return Array.from(
+    { length: n },
+    (_, i) => `
     <span class="order-number">${i + 1}</span>
     ${i < n - 1 ? '<span class="order-arrow">→</span>' : ''}
-  `).join('');
+  `
+  ).join('');
 }
 
 async function loadKanji(kana) {
@@ -873,19 +882,14 @@ async function loadKanji(kana) {
           const response = await fetch(build(hex));
           if (!response.ok) continue;
 
-          const doc = new DOMParser().parseFromString(
-            await response.text(),
-            'image/svg+xml'
-          );
+          const doc = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
 
-          const paths = [...doc.querySelectorAll('[id^="kvg:StrokePaths"] path')]
-            .map(path => path.getAttribute('d'));
+          const paths = [...doc.querySelectorAll('[id^="kvg:StrokePaths"] path')].map(path => path.getAttribute('d'));
 
-          const numbers = [...doc.querySelectorAll('[id^="kvg:StrokeNumbers"] text')]
-            .map(text => ({
-              transform: text.getAttribute('transform'),
-              label: text.textContent.trim()
-            }));
+          const numbers = [...doc.querySelectorAll('[id^="kvg:StrokeNumbers"] text')].map(text => ({
+            transform: text.getAttribute('transform'),
+            label: text.textContent.trim()
+          }));
 
           if (paths.length) {
             data = { paths, numbers };
@@ -921,8 +925,7 @@ function buildKanjiSvg(parts) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 109 109');
 
-  const strokeStyle = color =>
-    `fill:none;stroke:${color};stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round`;
+  const strokeStyle = color => `fill:none;stroke:${color};stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round`;
 
   const ghost = document.createElementNS(SVG_NS, 'g');
   const drawn = document.createElementNS(SVG_NS, 'g');
@@ -969,16 +972,10 @@ function buildKanjiSvg(parts) {
       const text = document.createElementNS(SVG_NS, 'text');
 
       if (n.transform) {
-        text.setAttribute(
-          'transform',
-          transform ? `${transform} ${n.transform}` : n.transform
-        );
+        text.setAttribute('transform', transform ? `${transform} ${n.transform}` : n.transform);
       }
 
-      text.setAttribute(
-        'style',
-        'font-size:8px;font-weight:700;fill:var(--accent);transition:opacity .2s'
-      );
+      text.setAttribute('style', 'font-size:8px;font-weight:700;fill:var(--accent);transition:opacity .2s');
 
       const previousStrokes = parts
         .slice(0, partIndex)
@@ -1002,7 +999,7 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
   wrap.innerHTML = '<div class="loading">Ładowanie znaku…</div>';
 
   const data = await loadKanji(kana);
-  if (!wrap.isConnected) return null;   // użytkownik zdążył zmienić ekran
+  if (!wrap.isConnected) return null; // użytkownik zdążył zmienić ekran
 
   if (!data) {
     wrap.innerHTML = '';
@@ -1031,18 +1028,19 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
   const labels = [...svg.querySelectorAll('.kvg-numbers text')];
   const lengths = strokes.map(path => path.getTotalLength());
 
-  let token = 0;          // zmiana tokenu przerywa trwające odtwarzanie
-  let running = null;     // aktualnie trwająca animacja
+  let token = 0; // zmiana tokenu przerywa trwające odtwarzanie
+  let running = null; // aktualnie trwająca animacja
   let runningIndex = -1;
-  let drawn = 0;          // ile kresek jest już w pełni narysowanych
+  let drawn = 0; // ile kresek jest już w pełni narysowanych
 
-  const emit = (done, active) => { if (onProgress) onProgress(done, active); };
+  const emit = (done, active) => {
+    if (onProgress) onProgress(done, active);
+  };
 
   function showIndicator(i) {
     indicator.className = 'stroke-indicator';
     indicator.style.visibility = 'visible';
-    indicator.innerHTML =
-      `<span class="stroke-indicator-number">${i}</span><span>Kreska ${i} z ${strokes.length}</span>`;
+    indicator.innerHTML = `<span class="stroke-indicator-number">${i}</span><span>Kreska ${i} z ${strokes.length}</span>`;
   }
 
   function finish() {
@@ -1067,7 +1065,9 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
       path.style.strokeDasharray = String(lengths[i] + 1);
       path.style.strokeDashoffset = String(lengths[i] + 2);
     });
-    labels.forEach(label => { label.style.opacity = '0'; });
+    labels.forEach(label => {
+      label.style.opacity = '0';
+    });
     drawn = 0;
     indicator.style.visibility = 'hidden';
     emit(0, -1);
@@ -1079,7 +1079,9 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
       path.style.strokeDasharray = String(lengths[i] + 1);
       path.style.strokeDashoffset = '0';
     });
-    labels.forEach(label => { label.style.opacity = '1'; });
+    labels.forEach(label => {
+      label.style.opacity = '1';
+    });
     drawn = strokes.length;
     indicator.style.visibility = 'hidden';
     emit(0, -1);
@@ -1091,24 +1093,21 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
     if (labels[i]) labels[i].style.opacity = '1';
 
     runningIndex = i;
-    running = strokes[i].animate(
-      [{ strokeDashoffset: lengths[i] + 2 }, { strokeDashoffset: 0 }],
-      {
-        duration: Math.min(1000, Math.max(380, lengths[i] * 16)),
-        easing: 'ease-in-out',
-        fill: 'forwards'
-      }
-    );
+    running = strokes[i].animate([{ strokeDashoffset: lengths[i] + 2 }, { strokeDashoffset: 0 }], {
+      duration: Math.min(1000, Math.max(380, lengths[i] * 16)),
+      easing: 'ease-in-out',
+      fill: 'forwards'
+    });
 
     try {
       await running.finished;
     } catch (error) {
-      return false;                       // animacja anulowana
+      return false; // animacja anulowana
     }
 
     if (my !== token) return false;
 
-    strokes[i].style.strokeDashoffset = '0';   // zatwierdzamy stan końcowy
+    strokes[i].style.strokeDashoffset = '0'; // zatwierdzamy stan końcowy
     running.cancel();
     running = null;
     drawn = i + 1;
@@ -1147,7 +1146,6 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
 
   return { play, step, showAll, count: strokes.length };
 }
-
 
 /* =========================================================
    MOTYW + DŹWIĘK
@@ -1254,7 +1252,6 @@ function setupMuteToggle() {
   updateMuteButton();
 }
 
-
 /* =========================================================
    EKRANY
 ========================================================= */
@@ -1308,7 +1305,6 @@ function renderExam() {
   showExamSetup();
 }
 
-
 /* =========================================================
    MENU
 ========================================================= */
@@ -1349,15 +1345,24 @@ function renderMenu() {
     </section>
   `;
 
-  document.getElementById('learnCard').onclick = () => { Audio.click(); setScreen('learn'); };
+  document.getElementById('learnCard').onclick = () => {
+    Audio.click();
+    setScreen('learn');
+  };
   document.getElementById('examCard').onclick = () => {
     Audio.click();
     state.screen = 'exam';
     homeBtn.classList.remove('hidden');
     showExamSetup();
   };
-  document.getElementById('reviewCard').onclick = () => { Audio.click(); setScreen('review'); };
-  document.getElementById('settingsCard').onclick = () => { Audio.click(); setScreen('settings'); };
+  document.getElementById('reviewCard').onclick = () => {
+    Audio.click();
+    setScreen('review');
+  };
+  document.getElementById('settingsCard').onclick = () => {
+    Audio.click();
+    setScreen('settings');
+  };
 
   document.querySelectorAll('[data-script]').forEach(btn => {
     btn.onclick = () => {
@@ -1367,7 +1372,6 @@ function renderMenu() {
     };
   });
 }
-
 
 /* =========================================================
    PRZEGLĄD — KOLEJKA SRS (T21)
@@ -1381,9 +1385,9 @@ function renderMenu() {
    mówi wyłącznie o terminach powtórki.
 */
 const REVIEW_STATUS_LABEL = {
-  unseen:   'Nowy',
+  unseen: 'Nowy',
   learning: 'W trakcie nauki',
-  review:   'Do powtórki',
+  review: 'Do powtórki',
   mastered: 'Długi odstęp'
 };
 
@@ -1404,35 +1408,46 @@ function renderReview() {
       <div class="eyebrow">PRZEGLĄD</div>
       <h2>Powtórki</h2>
 
-      ${due.length === 0 ? `
+      ${
+        due.length === 0
+          ? `
         <div class="review-empty card">
           <p class="review-empty-title">Wszystko na czas</p>
           <p>Nie ma tu żadnego znaku zaplanowanego na dziś. Nowe znaki dodasz, ćwicząc w trybie nauki.</p>
           <button class="btn btn-primary" id="reviewGoLearn">Przejdź do nauki</button>
         </div>
-      ` : `
+      `
+          : `
         <p class="review-summary">
-          Do powtórki: <strong>${due.length}</strong>${due.length > MAX_REVIEW_PER_SESSION
-            ? ` &nbsp;·&nbsp; dziś: ${MAX_REVIEW_PER_SESSION}` : ''}
+          Do powtórki: <strong>${due.length}</strong>${
+            due.length > MAX_REVIEW_PER_SESSION ? ` &nbsp;·&nbsp; dziś: ${MAX_REVIEW_PER_SESSION}` : ''
+          }
         </p>
 
         <ul class="review-list">
-          ${session.map(item => `
+          ${session
+            .map(
+              item => `
             <li class="review-row">
               <button class="review-kana ${masteryLevel(item.kana) === 'new' ? '' : `mastery-${masteryLevel(item.kana)}`}" data-review-kana="${item.kana}">${item.kana}</button>
               <span class="review-meta">
                 <span class="review-tag">${REVIEW_STATUS_LABEL[deriveStatus(progress.chars[item.kana])]}</span>
-                ${progress.chars[item.kana].lapses > 0
-                  ? `<span class="review-tag review-tag-warn">Potknięcia: ${progress.chars[item.kana].lapses}</span>`
-                  : ''}
+                ${
+                  progress.chars[item.kana].lapses > 0
+                    ? `<span class="review-tag review-tag-warn">Potknięcia: ${progress.chars[item.kana].lapses}</span>`
+                    : ''
+                }
                 <span class="review-tag review-tag-quiet">${reviewIntervalText(progress.chars[item.kana])}</span>
               </span>
             </li>
-          `).join('')}
+          `
+            )
+            .join('')}
         </ul>
 
         <button class="btn btn-primary review-start" id="reviewStartBtn">Rozpocznij powtórki</button>
-      `}
+      `
+      }
     </section>
   `;
 
@@ -1462,9 +1477,12 @@ function renderReview() {
   });
 
   const goLearn = document.getElementById('reviewGoLearn');
-  if (goLearn) goLearn.onclick = () => { Audio.click(); setScreen('learn'); };
+  if (goLearn)
+    goLearn.onclick = () => {
+      Audio.click();
+      setScreen('learn');
+    };
 }
-
 
 /* =========================================================
    USTAWIENIA
@@ -1476,20 +1494,13 @@ function renderReview() {
  * w pliku, więc lista musi być budowana dopiero w chwili użycia.
  */
 function appStorageKeys() {
-  return [
-    SETTINGS_STORE_KEY,
-    SETTINGS_KEY,
-    PROGRESS_KEY,
-    DAILY_STATS_KEY,
-    LEGACY_THEME_KEY,
-    LEGACY_MUTED_KEY
-  ];
+  return [SETTINGS_STORE_KEY, SETTINGS_KEY, PROGRESS_KEY, DAILY_STATS_KEY, LEGACY_THEME_KEY, LEGACY_MUTED_KEY];
 }
 
 /*
-   * `data-focus-key` służy do przywracania fokusu po przerysowaniu
-   * (patrz renderSettingsFocused) — dzięki niemu nie trzeba szukać po labelu.
-   */
+ * `data-focus-key` służy do przywracania fokusu po przerysowaniu
+ * (patrz renderSettingsFocused) — dzięki niemu nie trzeba szukać po labelu.
+ */
 function settingsPill(value, current, label, attr, focusKey) {
   const active = value === current;
   return `<button class="script-btn ${active ? 'active' : ''}" ${attr}="${value}" data-focus-key="${focusKey}" aria-pressed="${active}">${label}</button>`;
@@ -1528,7 +1539,7 @@ function clearAllData() {
   progress = loadProgress();
 
   state.script = settings.script;
-  state.theme = settings.theme;   // surowa preferencja, tak jak przy starcie
+  state.theme = settings.theme; // surowa preferencja, tak jak przy starcie
   Audio.setMuted(settings.muted);
 
   const firstGroup = getGroups()[0];
@@ -1620,8 +1631,12 @@ function renderSettings() {
   };
 
   document.getElementById('resetProgressBtn').onclick = () => {
-    if (confirm('Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
-                'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.')) {
+    if (
+      confirm(
+        'Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
+          'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.'
+      )
+    ) {
       resetProgressData();
       renderSettingsFocused('reset-progress');
     }
@@ -1631,17 +1646,26 @@ function renderSettings() {
   // Świadomie NIE wchodzi w "Zresetuj postęp" — tam użytkownik kasuje
   // stan znaków, a nie dziennik tego, co robił.
   document.getElementById('clearDailyStatsBtn').onclick = () => {
-    if (confirm('Na pewno wyczyścić całą historię nauki?\n\n' +
-                'Znikną dzienniki odpowiedzi, sesji, XP i czasu nauki.\n' +
-                'Tej operacji nie da się cofnąć — statystyk nie da się odtworzyć.\n\n' +
-                'Postęp znaków pozostanie bez zmian.')) {
+    if (
+      confirm(
+        'Na pewno wyczyścić całą historię nauki?\n\n' +
+          'Znikną dzienniki odpowiedzi, sesji, XP i czasu nauki.\n' +
+          'Tej operacji nie da się cofnąć — statystyk nie da się odtworzyć.\n\n' +
+          'Postęp znaków pozostanie bez zmian.'
+      )
+    ) {
       clearDailyStats();
       renderSettingsFocused('clear-stats');
     }
   };
 
   document.getElementById('clearAllDataBtn').onclick = () => {
-    if (!confirm('Wyczyść WSZYSTKIE dane aplikacji? Ustawienia, postępy i ustawienia egzaminu zostaną usunięte. Tej operacji nie można cofnąć.')) return;
+    if (
+      !confirm(
+        'Wyczyść WSZYSTKIE dane aplikacji? Ustawienia, postępy i ustawienia egzaminu zostaną usunięte. Tej operacji nie można cofnąć.'
+      )
+    )
+      return;
     if (!confirm('Na pewno? Zostaniesz z aplikacją jak po świeżej instalacji.')) return;
 
     clearAllData();
@@ -1650,18 +1674,17 @@ function renderSettings() {
 }
 
 /*
-   * Każde ustawienie zapisuje się natychmiast i przerysowuje ekran, a `render()`
-   * podmienia cały `innerHTML` — fokus przepadłby wtedy na `<body>` i osoba
-   * obsługująca klawiaturę musiałaby zaczynać Tab od nowa. Dlatego po
-   * przerysowaniu przywracamy fokus na tym samym kontrolu.
-   */
+ * Każde ustawienie zapisuje się natychmiast i przerysowuje ekran, a `render()`
+ * podmienia cały `innerHTML` — fokus przepadłby wtedy na `<body>` i osoba
+ * obsługująca klawiaturę musiałaby zaczynać Tab od nowa. Dlatego po
+ * przerysowaniu przywracamy fokus na tym samym kontrolu.
+ */
 function renderSettingsFocused(focusKey) {
   render();
 
   const target = app.querySelector(`[data-focus-key="${focusKey}"]`);
   if (target) target.focus();
 }
-
 
 /* =========================================================
    TRYB NAUKI
@@ -1722,11 +1745,19 @@ function learnSidebarHTML() {
             <span class="learn-section-count">${count}</span>
           </summary>
           <div class="learn-section-body">
-            ${groups.map(group => group.chars.map(([kana, romaji]) => `
+            ${groups
+              .map(group =>
+                group.chars
+                  .map(
+                    ([kana, romaji]) => `
               <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.id}" title="${romaji}">
                 ${kana}
               </button>
-            `).join('')).join('')}
+            `
+                  )
+                  .join('')
+              )
+              .join('')}
           </div>
         </details>
       `;
@@ -1855,8 +1886,14 @@ function renderLearn() {
   `;
 
   /* nawigacja ← → */
-  document.getElementById('prevKana').onclick = () => { Audio.click(); navigateKana(-1); };
-  document.getElementById('nextKana').onclick = () => { Audio.click(); navigateKana(1); };
+  document.getElementById('prevKana').onclick = () => {
+    Audio.click();
+    navigateKana(-1);
+  };
+  document.getElementById('nextKana').onclick = () => {
+    Audio.click();
+    navigateKana(1);
+  };
 
   /*
     „Sprawdź się" prowadzi do konfiguracji egzaminu. `setScreen('exam')`
@@ -1888,8 +1925,7 @@ function renderLearn() {
 
     // SVG jest źródłem prawdy dla liczby kresek — zawsze aktualizuj
     if (player.count !== count) {
-      document.getElementById('strokeBadge').textContent =
-        `${player.count} ${strokeWord(player.count)}`;
+      document.getElementById('strokeBadge').textContent = `${player.count} ${strokeWord(player.count)}`;
       document.getElementById('orderLine').innerHTML = orderLineHTML(player.count);
       // opisy tekstowe zostawiamy jako materiał edukacyjny
     }
@@ -1926,14 +1962,14 @@ function renderLearn() {
 // Drabinka odstępów. `requiredReps` to liczba poprawnych odpowiedzi
 // potrzebna, aby OPUŚCIĆ dany etap (etapy 4-6 wymagają dwóch).
 const REVIEW_STAGES = [
-  { intervalDays: 0,   requiredReps: 1 },   // 0 — powtórka w tej samej sesji
-  { intervalDays: 1,   requiredReps: 1 },   // 1
-  { intervalDays: 3,   requiredReps: 1 },   // 2
-  { intervalDays: 7,   requiredReps: 1 },   // 3
-  { intervalDays: 14,  requiredReps: 2 },   // 4
-  { intervalDays: 30,  requiredReps: 2 },   // 5
-  { intervalDays: 60,  requiredReps: 2 },   // 6
-  { intervalDays: 120, requiredReps: 3 }    // 7 — MAX_STAGE
+  { intervalDays: 0, requiredReps: 1 }, // 0 — powtórka w tej samej sesji
+  { intervalDays: 1, requiredReps: 1 }, // 1
+  { intervalDays: 3, requiredReps: 1 }, // 2
+  { intervalDays: 7, requiredReps: 1 }, // 3
+  { intervalDays: 14, requiredReps: 2 }, // 4
+  { intervalDays: 30, requiredReps: 2 }, // 5
+  { intervalDays: 60, requiredReps: 2 }, // 6
+  { intervalDays: 120, requiredReps: 3 } // 7 — MAX_STAGE
 ];
 
 const MAX_STAGE = REVIEW_STAGES.length - 1;
@@ -2057,9 +2093,14 @@ function localDayKey(timestamp = Date.now()) {
 /* Pusty, poprawny dzień — wszystkie liczniki zerowe. */
 function emptyDailyStats() {
   return {
-    answers: 0, correct: 0,
-    examAnswers: 0, reviewAnswers: 0,
-    exams: 0, reviews: 0, xp: 0, seconds: 0
+    answers: 0,
+    correct: 0,
+    examAnswers: 0,
+    reviewAnswers: 0,
+    exams: 0,
+    reviews: 0,
+    xp: 0,
+    seconds: 0
   };
 }
 
@@ -2110,7 +2151,9 @@ function pruneDailyStats(stats, now = Date.now()) {
     // KLUCZE ROSNĄ z czasem, więc granica to >= (dzień wczoraj ma mniejszy
     // klucz niż dzisiaj i zniknąłby przy odwrotnym porównaniu)
     .filter(key => key >= limit)
-    .forEach(key => { kept[key] = stats.days[key]; });
+    .forEach(key => {
+      kept[key] = stats.days[key];
+    });
 
   stats.days = kept;
   return stats;
@@ -2171,9 +2214,8 @@ function recordSessionStats(exam, now = Date.now()) {
   exam.recorded = true;
 
   const startedAt = exam.startedAt;
-  const seconds = Number.isFinite(startedAt) && startedAt > 0 && now >= startedAt
-    ? Math.round((now - startedAt) / 1000)
-    : 0;
+  const seconds =
+    Number.isFinite(startedAt) && startedAt > 0 && now >= startedAt ? Math.round((now - startedAt) / 1000) : 0;
 
   const stats = loadDailyStats();
   const bucket = dailyBucket(stats, localDayKey(now));
@@ -2249,7 +2291,7 @@ function dailyWindow(now, days = DAILY_WINDOW_DAYS) {
   for (let offset = days - 1; offset >= 0; offset--) {
     const timestamp = shiftDay(now, -offset);
     const key = localDayKey(timestamp);
-    const bucket = extent.count ? (stats.days[key] || null) : null;
+    const bucket = extent.count ? stats.days[key] || null : null;
     const answers = bucket && Number.isFinite(bucket.answers) ? bucket.answers : 0;
 
     let state = 'idle';
@@ -2296,7 +2338,11 @@ function dailyStreaks(now, stats = loadDailyStats()) {
   let daysAgo = null;
   for (let back = 0; back <= DAILY_STATS_MAX_DAYS; back++) {
     const key = localDayKey(shiftDay(now, -back));
-    if (hasAnswers(key)) { anchorKey = key; daysAgo = back; break; }
+    if (hasAnswers(key)) {
+      anchorKey = key;
+      daysAgo = back;
+      break;
+    }
   }
 
   /*
@@ -2317,8 +2363,8 @@ function dailyStreaks(now, stats = loadDailyStats()) {
   let run = 0;
   let previousKey = null;
   keys.forEach(key => {
-    const contiguous = previousKey !== null
-      && localDayKey(shiftDay(new Date(previousKey + 'T00:00:00').getTime(), 1)) === key;
+    const contiguous =
+      previousKey !== null && localDayKey(shiftDay(new Date(previousKey + 'T00:00:00').getTime(), 1)) === key;
     run = hasAnswers(key) ? (contiguous ? run + 1 : 1) : 0;
     if (run > best) best = run;
     previousKey = key;
@@ -2397,8 +2443,7 @@ function formatDuration(totalSeconds) {
 
   const hoursLabel = hours + ' ' + (hours === 1 ? 'godzina' : hours < 5 ? 'godziny' : 'godzin');
   // 0 i 5+ -> "minut"; 1 -> "minuta"; 2-4 -> "minuty"
-  const minutesWord = restMinutes === 1 ? 'minuta'
-    : (restMinutes >= 2 && restMinutes <= 4) ? 'minuty' : 'minut';
+  const minutesWord = restMinutes === 1 ? 'minuta' : restMinutes >= 2 && restMinutes <= 4 ? 'minuty' : 'minut';
   const minutesLabel = restMinutes + ' ' + minutesWord;
   return hours > 0 ? hoursLabel + ' ' + minutesLabel : minutesLabel;
 }
@@ -2427,11 +2472,7 @@ function formatDuration(totalSeconds) {
 ========================================================= */
 
 function isProgressRecord(entry) {
-  return !!entry
-    && typeof entry === 'object'
-    && !Array.isArray(entry)
-    && Number.isFinite(entry.seen)
-    && entry.seen > 0;
+  return !!entry && typeof entry === 'object' && !Array.isArray(entry) && Number.isFinite(entry.seen) && entry.seen > 0;
 }
 
 // Używane też przez progressSummary() — nieobiektowy rekord daje 0,
@@ -2442,8 +2483,7 @@ function progressStat(entry, field) {
   return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
-const isPlainInt = value =>
-  Number.isFinite(value) && Number.isInteger(value);
+const isPlainInt = value => Number.isFinite(value) && Number.isInteger(value);
 
 /*
    Nadpisuje wyłącznie pola SRS w rekordzie, który przeszedł
@@ -2457,13 +2497,9 @@ function normalizeSrs(entry, seededStage) {
   // Dodatnia wartość PONAD zakresem (np. 99) wygląda jak zbyt zachłanne
   // przejście, więc ją przycinamy zamiast odrzucać — rekord wskazuje
   // realnie ćwiczony znak i nie chcemy go użytkownikowi ukrywać.
-  entry.stage = isPlainInt(entry.stage) && entry.stage >= 0
-    ? Math.min(entry.stage, MAX_STAGE)
-    : seededStage;
+  entry.stage = isPlainInt(entry.stage) && entry.stage >= 0 ? Math.min(entry.stage, MAX_STAGE) : seededStage;
 
-  entry.reps = isPlainInt(entry.reps) && entry.reps >= 0
-    ? Math.min(entry.reps, MASTERED_REPS)
-    : 0;
+  entry.reps = isPlainInt(entry.reps) && entry.reps >= 0 ? Math.min(entry.reps, MASTERED_REPS) : 0;
 
   entry.due = Number.isFinite(entry.due) && entry.due >= 0 ? entry.due : 0;
 
@@ -2474,16 +2510,18 @@ function normalizeSrs(entry, seededStage) {
 
 // Defensive check przy budowaniu kolejki: nie ufamy pamięci w trakcie sesji.
 function hasUsableSrs(entry) {
-  return isProgressRecord(entry)
-    && isPlainInt(entry.stage)
-    && entry.stage >= 0
-    && entry.stage <= MAX_STAGE
-    && isPlainInt(entry.reps)
-    && entry.reps >= 0
-    && Number.isFinite(entry.due)
-    && entry.due >= 0
-    && isPlainInt(entry.lapses)
-    && entry.lapses >= 0;
+  return (
+    isProgressRecord(entry) &&
+    isPlainInt(entry.stage) &&
+    entry.stage >= 0 &&
+    entry.stage <= MAX_STAGE &&
+    isPlainInt(entry.reps) &&
+    entry.reps >= 0 &&
+    Number.isFinite(entry.due) &&
+    entry.due >= 0 &&
+    isPlainInt(entry.lapses) &&
+    entry.lapses >= 0
+  );
 }
 
 /*
@@ -2494,11 +2532,16 @@ function hasUsableSrs(entry) {
 */
 function legacyStageSeed(kana) {
   switch (masteryLevel(kana)) {
-    case 'mastered': return 3;
-    case 'good':     return 2;
-    case 'learning': return 1;
-    case 'hard':     return 0;
-    default:         return 0;
+    case 'mastered':
+      return 3;
+    case 'good':
+      return 2;
+    case 'learning':
+      return 1;
+    case 'hard':
+      return 0;
+    default:
+      return 0;
   }
 }
 
@@ -2555,8 +2598,8 @@ function saveProgress() {
 */
 function recordAnswer(kana, correct, chosenKana, source) {
   const existing = progress.chars[kana];
-  const entry = existing ||
-    (progress.chars[kana] = { seen: 0, correct: 0, wrong: 0, recent: [], confused: {}, last: 0 });
+  const entry =
+    existing || (progress.chars[kana] = { seen: 0, correct: 0, wrong: 0, recent: [], confused: {}, last: 0 });
 
   entry.seen++;
   if (correct) entry.correct++;
@@ -2611,7 +2654,8 @@ function masteryLevel(kana) {
   const overall = entry.correct / entry.seen;
 
   if (entry.recent.length >= 4 && rate >= 0.5) return 'hard';
-  if (entry.seen >= 10 && overall >= 0.9 && entry.recent.length >= 5 && entry.recent.slice(-5).every(r => r === 1)) return 'mastered';
+  if (entry.seen >= 10 && overall >= 0.9 && entry.recent.length >= 5 && entry.recent.slice(-5).every(r => r === 1))
+    return 'mastered';
   if (entry.recent.length >= 4 && rate === 0) return 'good';
   return 'learning';
 }
@@ -2636,12 +2680,13 @@ function dueList(now = Date.now()) {
   return getAll()
     .map(character => ({ kana: character.kana, entry: progress.chars[character.kana] }))
     .filter(item => hasUsableSrs(item.entry) && item.entry.due <= now)
-    .sort((a, b) => (
-      (a.entry.due - b.entry.due)
-      || (b.entry.lapses - a.entry.lapses)
-      || (a.entry.stage - b.entry.stage)
-      || (a.kana.codePointAt(0) - b.kana.codePointAt(0))
-    ))
+    .sort(
+      (a, b) =>
+        a.entry.due - b.entry.due ||
+        b.entry.lapses - a.entry.lapses ||
+        a.entry.stage - b.entry.stage ||
+        a.kana.codePointAt(0) - b.kana.codePointAt(0)
+    )
     .map(item => ({
       kana: item.kana,
       stage: item.entry.stage,
@@ -2657,7 +2702,9 @@ function dueCount(now = Date.now()) {
 
 // Znaków w jednej sesji nie przycinamy do „dueList().length", tylko do limitu.
 function reviewSession(now = Date.now()) {
-  return dueList(now).slice(0, MAX_REVIEW_PER_SESSION).map(item => item.kana);
+  return dueList(now)
+    .slice(0, MAX_REVIEW_PER_SESSION)
+    .map(item => item.kana);
 }
 
 function topConfusion(kana) {
@@ -2676,7 +2723,9 @@ function statsText(kana) {
 function practiceList(limit = 12) {
   const byDifficulty = kana => errorRate(kana) * 100 + progress.chars[kana].wrong;
 
-  const known = getAll().map(c => c.kana).filter(kana => progress.chars[kana] && progress.chars[kana].seen);
+  const known = getAll()
+    .map(c => c.kana)
+    .filter(kana => progress.chars[kana] && progress.chars[kana].seen);
 
   const hard = known.filter(kana => masteryLevel(kana) === 'hard').sort((a, b) => byDifficulty(b) - byDifficulty(a));
 
@@ -2712,7 +2761,7 @@ function loadExamSettings() {
       romajiKanaType: false,
       kanaRomajiType: false
     },
-    timer: 0   // 0 = wyłączony, 5/10/15 = sekundy na pytanie
+    timer: 0 // 0 = wyłączony, 5/10/15 = sekundy na pytanie
   };
 
   try {
@@ -2763,7 +2812,6 @@ function saveExamSettings(settings) {
   }
 }
 
-
 /* =========================================================
    LOSOWANIE WAŻONE + ROZPRASZACZE
 ========================================================= */
@@ -2787,7 +2835,10 @@ function weightedSample(list, n) {
   while (result.length < n && rest.length) {
     const picked = weightedPick(rest);
     result.push(picked);
-    rest.splice(rest.findIndex(x => x.item === picked), 1);
+    rest.splice(
+      rest.findIndex(x => x.item === picked),
+      1
+    );
   }
 
   return result;
@@ -2825,6 +2876,7 @@ function pickQuestion(pool, exam) {
 }
 
 // znaki podobne wizualnie - dobre "pułapki" w odpowiedziach
+// prettier-ignore
 const LOOKALIKES = [
   // podstawowe hiragana
   ['ぬ', 'め', 'ね', 'れ', 'わ'],
@@ -2896,6 +2948,7 @@ const LOOKALIKES = [
 
 scriptData.hiragana.lookalikes = LOOKALIKES;
 
+// prettier-ignore
 const katakanaLookalikes = [
   // podstawowe katakana
   ['シ', 'ツ'],
@@ -2934,7 +2987,10 @@ scriptData.katakana.lookalikes = katakanaLookalikes;
 function similarTo(kana) {
   const result = new Set();
   getLookalikes().forEach(group => {
-    if (group.includes(kana)) group.forEach(k => { if (k !== kana) result.add(k); });
+    if (group.includes(kana))
+      group.forEach(k => {
+        if (k !== kana) result.add(k);
+      });
   });
   return result;
 }
@@ -2956,9 +3012,7 @@ function kanaCategory(c) {
 function pickDistractors(question, count, pool, outside) {
   const inPool = new Set(pool.map(c => c.kana));
   const similar = similarTo(question.kana);
-  const confused =
-    (progress.chars[question.kana] &&
-      progress.chars[question.kana].confused) || {};
+  const confused = (progress.chars[question.kana] && progress.chars[question.kana].confused) || {};
 
   const questionCategory = kanaCategory(question);
 
@@ -2993,7 +3047,6 @@ function pickDistractors(question, count, pool, outside) {
 
   return weightedSample(weighted, count);
 }
-
 
 /* =========================================================
    EGZAMIN: WYBÓR ZAKRESU
@@ -3045,9 +3098,7 @@ function dailyStatsHTML(now = Date.now()) {
       • !live → seria przeniesiona z poprzedniego aktywnego dnia
       • 0 z kotwicą → seria przerwana
   */
-  const daysAgoText = streaks.lastActiveDaysAgo === 1
-    ? 'wczoraj'
-    : streaks.lastActiveDaysAgo + ' dni temu';
+  const daysAgoText = streaks.lastActiveDaysAgo === 1 ? 'wczoraj' : streaks.lastActiveDaysAgo + ' dni temu';
 
   let streakLabel;
   if (streaks.current > 0 && streaks.live) {
@@ -3062,24 +3113,30 @@ function dailyStatsHTML(now = Date.now()) {
 
   // UWAGA: `accuracy.answers` to liczba z OKNA, nie suma z całej historii.
   // Podanie `totals.answers` kłamałoby ("ostatnie 14 dni: 512 odpowiedzi").
-  const summaryText = 'Ostatnie ' + DAILY_WINDOW_DAYS + ' dni: ' + accuracy.answers +
-    ' odpowiedzi' + (bestActive
+  const summaryText =
+    'Ostatnie ' +
+    DAILY_WINDOW_DAYS +
+    ' dni: ' +
+    accuracy.answers +
+    ' odpowiedzi' +
+    (bestActive
       ? ', najwięcej ' + bestActive.answers + ' w dniu ' + formatDayLabel(bestActive.key)
       : ', bez aktywności');
 
-  const bars = rows.map(row => {
-    const height = row.state === 'active' && maxAnswers > 0
-      ? Math.max(6, Math.round((row.answers / maxAnswers) * 100))
-      : 0;
-    const described = describeDay(row);
-    return `
+  const bars = rows
+    .map(row => {
+      const height =
+        row.state === 'active' && maxAnswers > 0 ? Math.max(6, Math.round((row.answers / maxAnswers) * 100)) : 0;
+      const described = describeDay(row);
+      return `
       <div class="daily-bar-slot ${row.state}" title="${described}" aria-label="${described}">
         <div class="daily-bar-track">
           <div class="daily-bar" style="height:${height}%"></div>
         </div>
         <span class="daily-bar-label">${formatDayLabel(row.key).slice(0, 5)}</span>
       </div>`;
-  }).join('');
+    })
+    .join('');
 
   return `
     <div class="daily-block">
@@ -3155,33 +3212,43 @@ function progressPanelHTML() {
       </div>
 
       <div class="progress-map">
-        ${getAll().map(c => `
+        ${getAll()
+          .map(
+            c => `
           <span class="map-cell ${masteryLevel(c.kana)}" title="${c.romaji}">
             ${c.kana}<small>${c.romaji}</small>
           </span>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <div style="color:var(--muted);font-size:.8rem">
         ⬜ nowe &nbsp; 🟥 trudne &nbsp; 🟨 w trakcie &nbsp; 🟩 dobre &nbsp; ⭐ opanowane
       </div>
 
-      ${hard.length ? `
+      ${
+        hard.length
+          ? `
         <h3 style="margin-top:18px">Sprawiają Ci trudność</h3>
         <div class="mistakes-list" style="justify-content:flex-start">
-          ${hard.map(c => {
-            const entry = progress.chars[c.kana];
-            const confusion = topConfusion(c.kana);
-            return `
+          ${hard
+            .map(c => {
+              const entry = progress.chars[c.kana];
+              const confusion = topConfusion(c.kana);
+              return `
               <div class="mistake-chip">
                 <span class="mistake-kana">${c.kana}</span>
                 <span>${c.romaji}</span>
                 <small>${entry.wrong}/${entry.seen} błędów${confusion ? ` • myli z ${confusion}` : ''}</small>
               </div>
             `;
-          }).join('')}
+            })
+            .join('')}
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="exam-quick" style="margin-top:16px">
         <button class="btn btn-primary" id="practiceHardSetup" ${practiceCount < 2 ? 'disabled' : ''}>
@@ -3224,7 +3291,9 @@ function showExamSetup() {
       </p>
 
       <div class="exam-groups" id="examGroups">
-        ${getGroups().map(group => `
+        ${getGroups()
+          .map(
+            group => `
           <label class="exam-group-option">
             <input type="checkbox" value="${group.id}" ${settings.groups.includes(group.id) ? 'checked' : ''}>
             <span>
@@ -3232,7 +3301,9 @@ function showExamSetup() {
               <small>${group.chars.map(char => char[0]).join(' ')}</small>
             </span>
           </label>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <div class="exam-quick">
@@ -3253,8 +3324,14 @@ function showExamSetup() {
         <label>
           Liczba pytań:
           <select id="questionLimit">
-            ${[[0,'Bez limitu'],[5,'5'],[10,'10'],[20,'20'],[30,'30']]
-              .map(([v,l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
+            ${[
+              [0, 'Bez limitu'],
+              [5, '5'],
+              [10, '10'],
+              [20, '20'],
+              [30, '30']
+            ]
+              .map(([v, l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
               .join('')}
           </select>
         </label>
@@ -3262,7 +3339,14 @@ function showExamSetup() {
         <label>
           Timer:
           <select id="timerOpt">
-            ${[[0,'Wyłączony'],[5,'5s'],[10,'10s'],[15,'15s']].map(([v,l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`).join('')}
+            ${[
+              [0, 'Wyłączony'],
+              [5, '5s'],
+              [10, '10s'],
+              [15, '15s']
+            ]
+              .map(([v, l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`)
+              .join('')}
           </select>
         </label>
 
@@ -3301,10 +3385,22 @@ function showExamSetup() {
     </section>
   `;
 
-  document.getElementById('onlyA').onclick = () => { Audio.click(); setExamGroups(['a']); };
-  document.getElementById('aPlusK').onclick = () => { Audio.click(); setExamGroups(['a', 'k']); };
-  document.getElementById('allGroups').onclick = () => { Audio.click(); setExamGroups(getGroups().map(g => g.id)); };
-  document.getElementById('noGroups').onclick = () => { Audio.click(); setExamGroups([]); };
+  document.getElementById('onlyA').onclick = () => {
+    Audio.click();
+    setExamGroups(['a']);
+  };
+  document.getElementById('aPlusK').onclick = () => {
+    Audio.click();
+    setExamGroups(['a', 'k']);
+  };
+  document.getElementById('allGroups').onclick = () => {
+    Audio.click();
+    setExamGroups(getGroups().map(g => g.id));
+  };
+  document.getElementById('noGroups').onclick = () => {
+    Audio.click();
+    setExamGroups([]);
+  };
 
   document.getElementById('startSelectedExam').onclick = () => {
     const { selected, options, limit, outside, modes, timer } = readSetup();
@@ -3331,10 +3427,20 @@ function showExamSetup() {
       const { selected, options, limit, outside, modes, timer } = readSetup();
       saveExamSettings({
         groups: selected.length ? selected : settings.groups,
-        options, limit, outside, modes, timer
+        options,
+        limit,
+        outside,
+        modes,
+        timer
       });
       startExam([], {
-        kanaList: practiceList(), options, limit, outside, modes, timer, kind: 'practice'
+        kanaList: practiceList(),
+        options,
+        limit,
+        outside,
+        modes,
+        timer,
+        kind: 'practice'
       });
     };
   }
@@ -3351,13 +3457,11 @@ function setExamGroups(groupIds) {
   });
 }
 
-
 /* =========================================================
    EGZAMIN: PRZEBIEG
 ========================================================= */
 
-function startExam(groupIds, { kanaList = null, options, limit, outside, modes, timer: timerSec,
-                               kind = 'exam' } = {}) {
+function startExam(groupIds, { kanaList = null, options, limit, outside, modes, timer: timerSec, kind = 'exam' } = {}) {
   stopExam();
 
   const settings = loadExamSettings();
@@ -3380,7 +3484,7 @@ function startExam(groupIds, { kanaList = null, options, limit, outside, modes, 
     enabledModes,
     currentMode: null,
     timerSec: timerSec !== undefined ? timerSec : settings.timer,
-    timerCountdown: null,     // interwał odliczania
+    timerCountdown: null, // interwał odliczania
     timerRemaining: 0,
     current: null,
     score: 0,
@@ -3395,12 +3499,12 @@ function startExam(groupIds, { kanaList = null, options, limit, outside, modes, 
     mistakes: {},
     streak: 0,
     bestStreak: 0,
-    xp: 0,                    // punkty doświadczenia w tej sesji
+    xp: 0, // punkty doświadczenia w tej sesji
     // T15: start sesji liczony RAZ. Czas na ekranie wyniku oraz poza
     // sesją nie wchodzi do `seconds` — domykamy go w finishExam/stopExam.
     startedAt: Date.now(),
-    kind,                     // 'exam' | 'review' | 'practice'
-    recorded: false           // zabezpieczenie przed podwójnym zapisem
+    kind, // 'exam' | 'review' | 'practice'
+    recorded: false // zabezpieczenie przed podwójnym zapisem
   };
 
   state.screen = 'exam';
@@ -3477,7 +3581,9 @@ function startQuestionTimer(exam) {
         }
 
         // wyłącz przyciski odpowiedzi
-        document.querySelectorAll('.answer').forEach(a => { a.disabled = true; });
+        document.querySelectorAll('.answer').forEach(a => {
+          a.disabled = true;
+        });
         ['kanaInput', 'checkKana', 'romajiInput', 'checkRomaji'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.disabled = true;
@@ -3520,12 +3626,16 @@ function examChromeHTML(exam, contentHTML) {
 
       <div class="progress"><div style="width:${percentage}%"></div></div>
 
-      ${exam.timerSec > 0 ? `
+      ${
+        exam.timerSec > 0
+          ? `
         <div class="timer-bar-wrap">
           <div class="timer-bar" id="timerBar"></div>
           <span class="timer-label" id="timerLabel">${exam.timerSec}s</span>
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div style="text-align:center;color:var(--muted);margin:10px 0 28px;">
         ${exam.total === 0 ? 'Zaczynamy!' : `${exam.score}/${exam.total} poprawnych`}
@@ -3580,12 +3690,16 @@ function renderRomajiToKanaPick(question) {
       <div class="question">${question.romaji}</div>
 
       <div class="answers" data-n="${options.length}">
-        ${options.map((option, i) => `
+        ${options
+          .map(
+            (option, i) => `
           <button class="answer" data-answer="${option.kana}">
             <span class="answer-key">${i + 1}</span>
             ${option.kana}
           </button>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <div class="feedback" id="feedback"></div>
@@ -3602,7 +3716,10 @@ function renderRomajiToKanaPick(question) {
     button.onclick = () => answerExam(button, question);
   });
 
-  document.getElementById('endExam').onclick = () => { Audio.click(); finishExam(); };
+  document.getElementById('endExam').onclick = () => {
+    Audio.click();
+    finishExam();
+  };
 }
 
 /* Tryb B: kana → wybierz romaji */
@@ -3621,12 +3738,16 @@ function renderKanaToRomajiPick(question) {
       <div class="question question-kana">${question.kana}</div>
 
       <div class="answers" data-n="${options.length}">
-        ${options.map((option, i) => `
+        ${options
+          .map(
+            (option, i) => `
           <button class="answer answer-romaji" data-answer="${option.kana}">
             <span class="answer-key">${i + 1}</span>
             ${option.romaji}
           </button>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <div class="feedback" id="feedback"></div>
@@ -3643,7 +3764,10 @@ function renderKanaToRomajiPick(question) {
     button.onclick = () => answerExam(button, question);
   });
 
-  document.getElementById('endExam').onclick = () => { Audio.click(); finishExam(); };
+  document.getElementById('endExam').onclick = () => {
+    Audio.click();
+    finishExam();
+  };
 }
 
 /* Tryb C: romaji → wpisz kana */
@@ -3737,9 +3861,11 @@ function renderRomajiToKanaType(question) {
 
   setTimeout(() => input.focus(), 50);
 
-  document.getElementById('endExam').onclick = () => { Audio.click(); finishExam(); };
+  document.getElementById('endExam').onclick = () => {
+    Audio.click();
+    finishExam();
+  };
 }
-
 
 /* =========================================================
    EGZAMIN: ODPOWIEDŹ + FISZKA
@@ -3756,11 +3882,15 @@ function flashcardHTML(question, chosen) {
       <div class="flash-meta">Rząd: ${question.group} • ${count} ${strokeWord(count)}</div>
       <div class="flash-meta">${statsText(question.kana)}</div>
 
-      ${chosen ? `
+      ${
+        chosen
+          ? `
         <div class="flash-chosen">
           Kliknięto: <b>${chosen.kana}</b> — to jest „${chosen.romaji}"
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="stroke-list">${strokeListHTML(question.kana)}</div>
 
@@ -3835,7 +3965,9 @@ function renderKanaToRomajiType(question) {
 
       Audio.wrong();
       input.classList.add('input-wrong');
-      feedback.innerHTML = `<div style="margin:10px 0;font-weight:700;color:var(--bad)">Poprawna odpowiedź: <span style="font-size:1.4rem">${question.romaji}</span></div>` + flashcardHTML(question, null);
+      feedback.innerHTML =
+        `<div style="margin:10px 0;font-weight:700;color:var(--bad)">Poprawna odpowiedź: <span style="font-size:1.4rem">${question.romaji}</span></div>` +
+        flashcardHTML(question, null);
       document.getElementById('nextQuestion').onclick = nextExamQuestion;
 
       const flashWrap = document.getElementById('flashSvg');
@@ -3859,7 +3991,10 @@ function renderKanaToRomajiType(question) {
 
   setTimeout(() => input.focus(), 50);
 
-  document.getElementById('endExam').onclick = () => { Audio.click(); finishExam(); };
+  document.getElementById('endExam').onclick = () => {
+    Audio.click();
+    finishExam();
+  };
 }
 
 /* Punkty doświadczenia za poprawną odpowiedź */
@@ -3867,46 +4002,40 @@ function calcXP(exam) {
   const baseXP = 10;
 
   // Liczba odpowiedzi
-  const optionsMultiplier = {
-    4: 1.00,
-    6: 1.15,
-    8: 1.30
-  }[exam.options] || 1.00;
+  const optionsMultiplier =
+    {
+      4: 1.0,
+      6: 1.15,
+      8: 1.3
+    }[exam.options] || 1.0;
 
   // Timer
-  const timerMultiplier = {
-    0: 1.00,
-    15: 1.10,
-    10: 1.20,
-    5: 1.35
-  }[exam.timerSec] || 1.00;
+  const timerMultiplier =
+    {
+      0: 1.0,
+      15: 1.1,
+      10: 1.2,
+      5: 1.35
+    }[exam.timerSec] || 1.0;
 
   // Wpisywanie zamiast wyboru
   const typingMultiplier =
-    exam.currentMode === 'romaji-kana-type' ||
-    exam.currentMode === 'kana-romaji-type'
-      ? 1.5
-      : 1.00;
+    exam.currentMode === 'romaji-kana-type' || exam.currentMode === 'kana-romaji-type' ? 1.5 : 1.0;
 
   // Streak
-  let streakMultiplier = 1.00;
+  let streakMultiplier = 1.0;
 
   if (exam.streak >= 12) {
-    streakMultiplier = 1.50;
+    streakMultiplier = 1.5;
   } else if (exam.streak >= 8) {
     streakMultiplier = 1.35;
   } else if (exam.streak >= 5) {
-    streakMultiplier = 1.20;
+    streakMultiplier = 1.2;
   } else if (exam.streak >= 3) {
-    streakMultiplier = 1.10;
+    streakMultiplier = 1.1;
   }
 
-  const xp =
-    baseXP *
-    optionsMultiplier *
-    timerMultiplier *
-    typingMultiplier *
-    streakMultiplier;
+  const xp = baseXP * optionsMultiplier * timerMultiplier * typingMultiplier * streakMultiplier;
 
   return Math.round(xp);
 }
@@ -3925,7 +4054,7 @@ function spawnConfetti() {
     piece.style.left = Math.random() * 100 + '%';
     piece.style.background = colors[Math.floor(Math.random() * colors.length)];
     piece.style.animationDelay = Math.random() * 1.5 + 's';
-    piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    piece.style.animationDuration = 1.5 + Math.random() * 2 + 's';
     container.appendChild(piece);
   }
 
@@ -3994,7 +4123,6 @@ function answerExam(button, question) {
   });
 }
 
-
 /* =========================================================
    KLAWIATURA
 ========================================================= */
@@ -4017,7 +4145,14 @@ document.addEventListener('keydown', event => {
   }
 
   // Klawisze 1-9 → wybór odpowiedzi w egzaminie (ale nie w trybie wpisywania)
-  if (exam && !exam.answered && !exam.finished && state.screen === 'exam' && exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type') {
+  if (
+    exam &&
+    !exam.answered &&
+    !exam.finished &&
+    state.screen === 'exam' &&
+    exam.currentMode !== 'romaji-kana-type' &&
+    exam.currentMode !== 'kana-romaji-type'
+  ) {
     const num = parseInt(event.key);
     if (num >= 1 && num <= 9) {
       const buttons = [...document.querySelectorAll('[data-answer]')];
@@ -4051,7 +4186,6 @@ document.addEventListener('keydown', event => {
     }
   }
 });
-
 
 /* =========================================================
    EGZAMIN: KONIEC
@@ -4100,20 +4234,28 @@ function renderExamResult() {
 
       <p style="color:var(--muted)">${resultText(exam.score, exam.total, state.script, exam.kind)}</p>
 
-      ${mistakes.length ? `
+      ${
+        mistakes.length
+          ? `
         <div class="mistakes">
           <h3>Do powtórki</h3>
           <div class="mistakes-list">
-            ${mistakes.map(m => `
+            ${mistakes
+              .map(
+                m => `
               <div class="mistake-chip">
                 <span class="mistake-kana">${m.kana}</span>
                 <span>${m.romaji}</span>
                 <small>×${m.times}</small>
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:25px;">
         <button class="btn btn-primary" id="again">Spróbuj jeszcze raz</button>
@@ -4136,7 +4278,12 @@ function renderExamResult() {
       Audio.click();
       const settings = loadExamSettings();
       stopExam();
-      startExam([], { kanaList: practiceList(), options: settings.options, outside: settings.outside, kind: 'practice' });
+      startExam([], {
+        kanaList: practiceList(),
+        options: settings.options,
+        outside: settings.outside,
+        kind: 'practice'
+      });
     };
   }
 
@@ -4159,15 +4306,12 @@ function resultText(score, total, script = state.script, kind = 'exam') {
   const ratio = score / total;
 
   if (ratio === 1) {
-    return kind === 'exam'
-      ? 'Perfekcyjnie. ' + scriptName(script) + ' opanowana!'
-      : 'Perfekcyjnie!';
+    return kind === 'exam' ? 'Perfekcyjnie. ' + scriptName(script) + ' opanowana!' : 'Perfekcyjnie!';
   }
   if (ratio >= 0.8) return 'Bardzo dobrze — jeszcze trochę praktyki i będzie super.';
   if (ratio >= 0.6) return 'Dobry wynik. Warto powtórzyć trudniejsze znaki.';
   return 'Warto wrócić do trybu nauki i zrobić jeszcze kilka powtórek.';
 }
-
 
 /* =========================================================
    TOUCH: SWIPE W TRYBIE NAUKI
@@ -4178,32 +4322,39 @@ function resultText(score, total, script = state.script, kind = 'exam') {
   let startY = 0;
   const MIN_SWIPE = 50;
 
-  document.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
+  document.addEventListener(
+    'touchstart',
+    e => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    },
+    { passive: true }
+  );
 
-  document.addEventListener('touchend', e => {
-    if (state.screen !== 'learn') return;
+  document.addEventListener(
+    'touchend',
+    e => {
+      if (state.screen !== 'learn') return;
 
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
 
-    // tylko poziome swipe'y (i wystarczająco duże)
-    if (Math.abs(dx) < MIN_SWIPE || Math.abs(dy) > Math.abs(dx)) return;
+      // tylko poziome swipe'y (i wystarczająco duże)
+      if (Math.abs(dx) < MIN_SWIPE || Math.abs(dy) > Math.abs(dx)) return;
 
-    if (dx > 0) navigateKana(-1);  // swipe right = poprzedni
-    else navigateKana(1);          // swipe left = następny
-  }, { passive: true });
+      if (dx > 0)
+        navigateKana(-1); // swipe right = poprzedni
+      else navigateKana(1); // swipe left = następny
+    },
+    { passive: true }
+  );
 })();
-
 
 /* =========================================================
    START
 ========================================================= */
 
 render();
-
 
 /* =========================================================
    T14 — OFFLINE PWA
@@ -4222,12 +4373,25 @@ function showUpdateBanner(registration) {
 
   // style inline, żeby style.css pozostał nietknięty (T14)
   banner.style.cssText = [
-    'position:fixed', 'left:12px', 'right:12px', 'bottom:12px', 'z-index:9999',
-    'display:flex', 'align-items:center', 'gap:12px', 'flex-wrap:wrap',
-    'padding:12px 14px', 'border-radius:16px',
-    'border:1px solid var(--line)', 'background:var(--card-solid)',
-    'color:var(--ink)', 'box-shadow:var(--shadow)',
-    'font-size:.9rem', 'font-weight:600', 'max-width:520px', 'margin:0 auto'
+    'position:fixed',
+    'left:12px',
+    'right:12px',
+    'bottom:12px',
+    'z-index:9999',
+    'display:flex',
+    'align-items:center',
+    'gap:12px',
+    'flex-wrap:wrap',
+    'padding:12px 14px',
+    'border-radius:16px',
+    'border:1px solid var(--line)',
+    'background:var(--card-solid)',
+    'color:var(--ink)',
+    'box-shadow:var(--shadow)',
+    'font-size:.9rem',
+    'font-weight:600',
+    'max-width:520px',
+    'margin:0 auto'
   ].join(';');
 
   const text = document.createElement('span');
@@ -4238,9 +4402,14 @@ function showUpdateBanner(registration) {
   reloadBtn.type = 'button';
   reloadBtn.textContent = 'Odśwież';
   reloadBtn.style.cssText = [
-    'font:inherit', 'font-weight:700', 'cursor:pointer',
-    'padding:8px 18px', 'border-radius:999px',
-    'border:2px solid var(--accent)', 'background:var(--accent)', 'color:#fff'
+    'font:inherit',
+    'font-weight:700',
+    'cursor:pointer',
+    'padding:8px 18px',
+    'border-radius:999px',
+    'border:2px solid var(--accent)',
+    'background:var(--accent)',
+    'color:#fff'
   ].join(';');
 
   // Reload TYLKO na świadome kliknięcie — nigdy automatycznie.
@@ -4265,22 +4434,25 @@ function registerServiceWorker() {
 
   // `sw.js` leży obok index.html, więc scope = katalog aplikacji
   // (/hiragana-study/ na GitHub Pages, / na localhost).
-  navigator.serviceWorker.register('sw.js').then(registration => {
-    registration.addEventListener('updatefound', () => {
-      const installing = registration.installing;
-      if (!installing) return;
+  navigator.serviceWorker
+    .register('sw.js')
+    .then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing;
+        if (!installing) return;
 
-      installing.addEventListener('statechange', () => {
-        // `controller` istnieje = to nie pierwsza instalacja,
-        // więc nowy SW przejmuje kontrolę dopiero po reloadzie.
-        if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-          showUpdateBanner(registration);
-        }
+        installing.addEventListener('statechange', () => {
+          // `controller` istnieje = to nie pierwsza instalacja,
+          // więc nowy SW przejmuje kontrolę dopiero po reloadzie.
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(registration);
+          }
+        });
       });
+    })
+    .catch(() => {
+      /* np. brak secure context — aplikacja działa jak dotąd */
     });
-  }).catch(() => {
-    /* np. brak secure context — aplikacja działa jak dotąd */
-  });
 }
 
 if (document.readyState === 'complete') {

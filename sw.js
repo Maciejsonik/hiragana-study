@@ -51,6 +51,7 @@ const KANJIVG_BASE = 'https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/'
    rozwiązuje `resolveKanaParts()` w app.js. Wyprowadzone z danych
    `scriptData`, nie wpisane z ręki.
 */
+// prettier-ignore
 const KANJIVG_HEX = [
   '03042', '03044', '03046', '03048', '0304a', '0304b', '0304c', '0304d', '0304e', '0304f', '03050', '03051',
   '03052', '03053', '03054', '03055', '03056', '03057', '03058', '03059', '0305a', '0305b', '0305c', '0305d',
@@ -67,7 +68,8 @@ const KANJIVG_HEX = [
   '030ed', '030ef', '030f2', '030f3'
 ];
 
-const GOOGLE_FONTS_CSS = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;900&display=swap';
+const GOOGLE_FONTS_CSS =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;900&display=swap';
 
 const kanjivgUrls = KANJIVG_HEX.map(hex => `${KANJIVG_BASE}${hex}.svg`);
 
@@ -92,79 +94,74 @@ async function mapWithConcurrency(items, limit, worker) {
   await Promise.all(workers);
 }
 
-
 /* =========================================================
    INSTALL
    ========================================================= */
 
 self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const shell = await caches.open(SHELL_CACHE);
+  event.waitUntil(
+    (async () => {
+      const shell = await caches.open(SHELL_CACHE);
 
-    // Shell: addAll jest atomowy, ale liczba plików jest mała i wszystkie
-    // są w tym samym origin — bezpiecznie.
-    await shell.addAll(SHELL_ASSETS.map(scopeUrl));
+      // Shell: addAll jest atomowy, ale liczba plików jest mała i wszystkie
+      // są w tym samym origin — bezpiecznie.
+      await shell.addAll(SHELL_ASSETS.map(scopeUrl));
 
-    // KanjiVG: tolerant fill. Jeden nieudany request NIE może anulować
-    // całej instalacji, bo wtedy użytkownik zostałby bez offline.
-    // Brakujące SVG obsługi istniejący fallback `mountKana()`.
-    //
-    // Robimy to w dwóch przebiegach: pierwszy normalny, drugi tylko dla
-    // tego, co jeszcze zabrakło. Bez tego pojedynczy chwilowy błąd CDN
-    // (albo limit requestów przy 148 plikach) zostawiałby kana bez
-    // kolejności kresek na zawsze w danej instalacji.
-    const kanjivg = await caches.open(KANJIVG_CACHE);
+      // KanjiVG: tolerant fill. Jeden nieudany request NIE może anulować
+      // całej instalacji, bo wtedy użytkownik zostałby bez offline.
+      // Brakujące SVG obsługi istniejący fallback `mountKana()`.
+      //
+      // Robimy to w dwóch przebiegach: pierwszy normalny, drugi tylko dla
+      // tego, co jeszcze zabrakło. Bez tego pojedynczy chwilowy błąd CDN
+      // (albo limit requestów przy 148 plikach) zostawiałby kana bez
+      // kolejności kresek na zawsze w danej instalacji.
+      const kanjivg = await caches.open(KANJIVG_CACHE);
 
-    const cacheOne = async url => {
-      const response = await fetch(url, { mode: 'cors', credentials: 'omit' });
-      if (response && response.ok) await kanjivg.put(url, response);
-    };
+      const cacheOne = async url => {
+        const response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+        if (response && response.ok) await kanjivg.put(url, response);
+      };
 
-    await mapWithConcurrency(kanjivgUrls, FETCH_CONCURRENCY, cacheOne);
+      await mapWithConcurrency(kanjivgUrls, FETCH_CONCURRENCY, cacheOne);
 
-    const missing = (await kanjivg.keys())
-      .map(entry => entry.url)
-      .filter(url => kanjivgUrls.indexOf(url) === -1);
+      const missing = (await kanjivg.keys()).map(entry => entry.url).filter(url => kanjivgUrls.indexOf(url) === -1);
 
-    if (missing.length) {
-      await mapWithConcurrency(missing, 4, cacheOne);
-    }
+      if (missing.length) {
+        await mapWithConcurrency(missing, 4, cacheOne);
+      }
 
-    // Google Fonts CSS: cacheujemy od razu, żeby pierwsza wizyta
-    // wystarczała do pracy offline (sama strona nie jest kontrolowana
-    // przez SW podczas instalacji, więc bez tego fontów nie ma w cache).
-    const fonts = await caches.open(FONTS_CACHE);
-    try {
-      const fontCss = await fetch(GOOGLE_FONTS_CSS, { mode: 'cors', credentials: 'omit' });
-      if (fontCss && fontCss.ok) await fonts.put(GOOGLE_FONTS_CSS, fontCss);
-    } catch (error) {
-      /* kosmetyka — aplikacja ma fallback font-stack */
-    }
+      // Google Fonts CSS: cacheujemy od razu, żeby pierwsza wizyta
+      // wystarczała do pracy offline (sama strona nie jest kontrolowana
+      // przez SW podczas instalacji, więc bez tego fontów nie ma w cache).
+      const fonts = await caches.open(FONTS_CACHE);
+      try {
+        const fontCss = await fetch(GOOGLE_FONTS_CSS, { mode: 'cors', credentials: 'omit' });
+        if (fontCss && fontCss.ok) await fonts.put(GOOGLE_FONTS_CSS, fontCss);
+      } catch (error) {
+        /* kosmetyka — aplikacja ma fallback font-stack */
+      }
 
-    await self.skipWaiting();
-  })());
+      await self.skipWaiting();
+    })()
+  );
 });
-
 
 /* =========================================================
    ACTIVATE — usuń wszystkie nieaktualne wersje cache
    ========================================================= */
 
 self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    const keep = new Set([SHELL_CACHE, KANJIVG_CACHE, FONTS_CACHE]);
-    const names = await caches.keys();
+  event.waitUntil(
+    (async () => {
+      const keep = new Set([SHELL_CACHE, KANJIVG_CACHE, FONTS_CACHE]);
+      const names = await caches.keys();
 
-    await Promise.all(
-      names
-        .filter(name => !keep.has(name))
-        .map(name => caches.delete(name))
-    );
+      await Promise.all(names.filter(name => !keep.has(name)).map(name => caches.delete(name)));
 
-    await self.clients.claim();
-  })());
+      await self.clients.claim();
+    })()
+  );
 });
-
 
 /* =========================================================
    FETCH
@@ -257,7 +254,6 @@ self.addEventListener('fetch', event => {
     event.respondWith(staleWhileRevalidate(request));
   }
 });
-
 
 /* =========================================================
    MESSAGE — pozwól stronie wymusić update (przycisk "Odśwież")

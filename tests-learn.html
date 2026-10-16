@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="pl">
-<head>
-  <meta charset="utf-8">
-  <title>Learn panel — tests</title>
-  <!--
+  <head>
+    <meta charset="utf-8" />
+    <title>Learn panel — tests</title>
+    <!--
     Runner testów panelu nauki: accordion (stan sekcji), układ (łamanie się
     dwuznakowych kana yōon) oraz okablowanie animacji.
 
@@ -17,37 +17,43 @@
     Pliki tests-learn.html / tests-learn.js są NARZĄDZIEM deweloperskim:
     nie wchodzą do SHELL_ASSETS i nie są precache'owane przez Service Worker.
   -->
-  <link rel="stylesheet" href="style.css">
-  <pre id="testOut">uruchamianie…</pre>
-  <script>
-    (function () {
-      function out(text) { document.getElementById('testOut').textContent = text; }
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <pre id="testOut">uruchamianie…</pre>
+    <script>
+      (function () {
+        function out(text) {
+          document.getElementById('testOut').textContent = text;
+        }
 
-      fetch('index.html')
-        .then(function (r) { return r.text(); })
-        .then(function (html) {
-          var parsed = new DOMParser().parseFromString(html, 'text/html');
-          var body = document.createElement('div');
-          body.innerHTML = parsed.body.innerHTML;
+        fetch('index.html')
+          .then(function (r) {
+            return r.text();
+          })
+          .then(function (html) {
+            var parsed = new DOMParser().parseFromString(html, 'text/html');
+            var body = document.createElement('div');
+            body.innerHTML = parsed.body.innerHTML;
 
-          // usuwamy istniejący runner, wstawiamy markup aplikacji
-          document.getElementById('testOut').remove();
-          while (body.firstChild) document.body.appendChild(body.firstChild);
+            // usuwamy istniejący runner, wstawiamy markup aplikacji
+            document.getElementById('testOut').remove();
+            while (body.firstChild) document.body.appendChild(body.firstChild);
 
-          var app = document.createElement('script');
-          app.src = 'app.js';
-          document.body.appendChild(app);
+            var app = document.createElement('script');
+            app.src = 'app.js';
+            document.body.appendChild(app);
 
-          app.onload = function () {
-            var tests = document.createElement('script');
-            tests.src = 'tests-learn.js';
-            document.body.appendChild(tests);
-          };
-        })
-        .catch(function (error) {
-          out('Nie udało się wczytać index.html: ' + error.message);
-        });
-    })();
-  </script>
-</body>
+            app.onload = function () {
+              var tests = document.createElement('script');
+              tests.src = 'tests-learn.js';
+              document.body.appendChild(tests);
+            };
+          })
+          .catch(function (error) {
+            out('Nie udało się wczytać index.html: ' + error.message);
+          });
+      })();
+    </script>
+  </body>
 </html>

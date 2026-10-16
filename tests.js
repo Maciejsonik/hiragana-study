@@ -19,24 +19,35 @@
   const DAY = 86400000;
 
   function ok(name, condition, detail) {
-    results.push((condition ? 'PASS ' : 'FAIL ') + name +
-      (detail !== undefined ? ' :: ' + detail : ''));
+    results.push((condition ? 'PASS ' : 'FAIL ') + name + (detail !== undefined ? ' :: ' + detail : ''));
   }
-  function info(message) { results.push('INFO ' + message); }
+  function info(message) {
+    results.push('INFO ' + message);
+  }
   function eq(name, actual, expected) {
-    ok(name, actual === expected, 'actual=' + JSON.stringify(actual) +
-      ' expected=' + JSON.stringify(expected));
+    ok(name, actual === expected, 'actual=' + JSON.stringify(actual) + ' expected=' + JSON.stringify(expected));
   }
   function deepEq(name, actual, expected) {
-    const a = JSON.stringify(actual), b = JSON.stringify(expected);
+    const a = JSON.stringify(actual),
+      b = JSON.stringify(expected);
     ok(name, a === b, a === b ? '' : a + ' != ' + b);
   }
 
   // stan SRS: kana ćwiczona (seen>0), etap `stage`, `reps` poprawnych na tym etapie
   function entry(over) {
     return Object.assign(
-      { seen: 5, correct: 4, wrong: 1, recent: [1, 1, 1, 0], confused: {}, last: 1,
-        stage: 0, reps: 0, due: 0, lapses: 0 },
+      {
+        seen: 5,
+        correct: 4,
+        wrong: 1,
+        recent: [1, 1, 1, 0],
+        confused: {},
+        last: 1,
+        stage: 0,
+        reps: 0,
+        due: 0,
+        lapses: 0
+      },
       over || {}
     );
   }
@@ -44,9 +55,13 @@
   // reset izolowany między testami: nadpisujemy postęp w pamięci i w localStorage
   function setProgress(chars, version) {
     progress = { version: version === undefined ? PROGRESS_VERSION : version, chars: chars || {} };
-    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (e) {}
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    } catch (e) {}
   }
-  function clearProgress() { setProgress({}, 1); }
+  function clearProgress() {
+    setProgress({}, 1);
+  }
 
   /* =====================================================
      1. DRABINKA I STAŁE
@@ -56,9 +71,19 @@
     eq('MAX_STAGE', MAX_STAGE, 7);
     eq('MASTERED_REPS', MASTERED_REPS, 3);
     eq('MAX_REVIEW_PER_SESSION', MAX_REVIEW_PER_SESSION, 20);
-    deepEq('ladder intervals', REVIEW_STAGES.map(s => s.intervalDays), [0, 1, 3, 7, 14, 30, 60, 120]);
-    deepEq('ladder requiredReps', REVIEW_STAGES.map(s => s.requiredReps), [1, 1, 1, 1, 2, 2, 2, 3]);
-  } catch (e) { ok('ladder constants', false, e.message); }
+    deepEq(
+      'ladder intervals',
+      REVIEW_STAGES.map(s => s.intervalDays),
+      [0, 1, 3, 7, 14, 30, 60, 120]
+    );
+    deepEq(
+      'ladder requiredReps',
+      REVIEW_STAGES.map(s => s.requiredReps),
+      [1, 1, 1, 1, 2, 2, 2, 3]
+    );
+  } catch (e) {
+    ok('ladder constants', false, e.message);
+  }
 
   /* =====================================================
      2. WSTRZYKIWANIE CZASU
@@ -73,7 +98,9 @@
 
     const z = scheduleAnswer(entry({ stage: 1 }), { correct: true, source: 'exam', now: 0 });
     eq('now=0 edge works', z.due, 3 * DAY);
-  } catch (e) { ok('time injection', false, e.message); }
+  } catch (e) {
+    ok('time injection', false, e.message);
+  }
 
   /* =====================================================
      3. PRZEJŚCIA POPRAWNE
@@ -147,28 +174,39 @@
     ok('due moved forward', m.due > dueBefore, dueBefore + ' -> ' + m.due);
 
     // błędna odpowiedź na MAX_STAGE gubi opanowanie
-    const lost = scheduleAnswer(entry({ stage: MAX_STAGE, reps: MASTERED_REPS, lapses: 1 }),
-      { correct: false, source: 'exam', now: 0 });
+    const lost = scheduleAnswer(entry({ stage: MAX_STAGE, reps: MASTERED_REPS, lapses: 1 }), {
+      correct: false,
+      source: 'exam',
+      now: 0
+    });
     eq('wrong at MAX drops a stage', lost.stage, MAX_STAGE - 1);
     eq('wrong at MAX resets reps', lost.reps, 0);
     eq('wrong at MAX -> review again', deriveStatus(lost), 'review');
     eq('wrong at MAX counts a lapse', lost.lapses, 2);
 
     // migracja nie może wygenerować reps powyżej progu
-    eq('normalizeSrs caps reps at MASTERED_REPS',
-       normalizeSrs(entry({ reps: 50 }), 0).reps, MASTERED_REPS);
-    eq('clamped stage 99 + max reps normalises to mastered',
-       deriveStatus(normalizeSrs(entry({ reps: MASTERED_REPS, stage: 99 }), 0)), 'mastered');
+    eq('normalizeSrs caps reps at MASTERED_REPS', normalizeSrs(entry({ reps: 50 }), 0).reps, MASTERED_REPS);
+    eq(
+      'clamped stage 99 + max reps normalises to mastered',
+      deriveStatus(normalizeSrs(entry({ reps: MASTERED_REPS, stage: 99 }), 0)),
+      'mastered'
+    );
 
     // etykieta statusu: świadomie BEZ słowa „Opanowane/mastered"
     eq('label for mastered SRS status', REVIEW_STATUS_LABEL.mastered, 'Długi odstęp');
-    ok('no label leaks the word "mastered"',
-       Object.values(REVIEW_STATUS_LABEL).every(v => v.toLowerCase().indexOf('mastered') < 0),
-       Object.values(REVIEW_STATUS_LABEL).join(' / '));
-    ok('no label says "Opanowane"',
-       Object.values(REVIEW_STATUS_LABEL).every(v => v.toLowerCase().indexOf('opanowane') < 0),
-       Object.values(REVIEW_STATUS_LABEL).join(' / '));
-  } catch (e) { ok('correct transitions', false, e.message); }
+    ok(
+      'no label leaks the word "mastered"',
+      Object.values(REVIEW_STATUS_LABEL).every(v => v.toLowerCase().indexOf('mastered') < 0),
+      Object.values(REVIEW_STATUS_LABEL).join(' / ')
+    );
+    ok(
+      'no label says "Opanowane"',
+      Object.values(REVIEW_STATUS_LABEL).every(v => v.toLowerCase().indexOf('opanowane') < 0),
+      Object.values(REVIEW_STATUS_LABEL).join(' / ')
+    );
+  } catch (e) {
+    ok('correct transitions', false, e.message);
+  }
 
   /* =====================================================
      4. PRZEJŚCIA BŁĘDNE + LAPSE
@@ -200,7 +238,9 @@
     eq('stage0 wrong keeps stage 0', e.stage, 0);
     e = scheduleAnswer(e, { correct: false, source: 'exam', now: 0 });
     eq('stage0 lapse count still frozen', e.lapses, 3);
-  } catch (e) { ok('wrong transitions', false, e.message); }
+  } catch (e) {
+    ok('wrong transitions', false, e.message);
+  }
 
   /* =====================================================
      5. TIMEOUT NIE RUSZA SRS
@@ -208,14 +248,18 @@
   try {
     const before = entry({ stage: 4, reps: 1, due: 999, lapses: 2 });
     const after = scheduleAnswer(JSON.parse(JSON.stringify(before)), {
-      correct: false, source: 'exam-timeout', now: 123456
+      correct: false,
+      source: 'exam-timeout',
+      now: 123456
     });
     eq('timeout: stage unchanged', after.stage, before.stage);
     eq('timeout: reps unchanged', after.reps, before.reps);
     eq('timeout: due unchanged', after.due, before.due);
     eq('timeout: lapses unchanged', after.lapses, before.lapses);
     deepEq('timeout: whole entry unchanged', after, before);
-  } catch (e) { ok('timeout exclusion', false, e.message); }
+  } catch (e) {
+    ok('timeout exclusion', false, e.message);
+  }
 
   /* =====================================================
      6. WALIDACJA REKORDÓW
@@ -238,7 +282,9 @@
     eq('progressStat on valid entry', progressStat(entry({ seen: 7 }), 'seen'), 7);
     eq('progressStat on bad type', progressStat(entry({ seen: '7' }), 'seen'), 0);
     eq('progressStat negative', progressStat(entry({ seen: -7 }), 'seen'), 0);
-  } catch (e) { ok('record validation', false, e.message); }
+  } catch (e) {
+    ok('record validation', false, e.message);
+  }
 
   /* =====================================================
      7. NORMALIZACJA pól SRS
@@ -247,7 +293,10 @@
     // `entry()` dostarcza stage:0 domyślnie, więc pola MUSIMY naprawdę usunąć,
     // żeby test „brakujące pole" coś testował.
     const bare = entry({});
-    delete bare.stage; delete bare.reps; delete bare.due; delete bare.lapses;
+    delete bare.stage;
+    delete bare.reps;
+    delete bare.due;
+    delete bare.lapses;
     let e = normalizeSrs(bare, 3);
     eq('missing stage -> seed', e.stage, 3);
     eq('missing reps -> 0', e.reps, 0);
@@ -275,7 +324,9 @@
 
     ok('normalized entry passes hasUsableSrs', hasUsableSrs(normalizeSrs(entry({}), 0)));
     ok('raw garbage entry fails hasUsableSrs', !hasUsableSrs({ seen: 5, stage: 'x', due: null }));
-  } catch (e) { ok('srs normalization', false, e.message); }
+  } catch (e) {
+    ok('srs normalization', false, e.message);
+  }
 
   /* =====================================================
      8. MIGRACJA v1 -> v2
@@ -283,51 +334,77 @@
   try {
     // --- ważne: prawidłowy rekord bez pól SRS MUSI trafić do kolejki ---
     const rich = {
-      seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1],
-      confused: { い: 2 }, last: 1700000000000
+      seen: 12,
+      correct: 11,
+      wrong: 1,
+      recent: [1, 1, 1, 1, 1],
+      confused: { い: 2 },
+      last: 1700000000000
     };
     clearProgress();
-    progress = { version: 1, chars: { 'あ': JSON.parse(JSON.stringify(rich)) } };
+    progress = { version: 1, chars: { あ: JSON.parse(JSON.stringify(rich)) } };
     const migrated = migrateProgress(progress);
     eq('migration sets version 2', migrated.version, 2);
     eq('valid record got a stage', typeof migrated.chars['あ'].stage, 'number');
     eq('valid record due immediately', migrated.chars['あ'].due, 0);
-    deepEq('all legacy fields preserved',
+    deepEq(
+      'all legacy fields preserved',
       {
-        seen: migrated.chars['あ'].seen, correct: migrated.chars['あ'].correct,
-        wrong: migrated.chars['あ'].wrong, recent: migrated.chars['あ'].recent,
-        confused: migrated.chars['あ'].confused, last: migrated.chars['あ'].last
-      }, rich);
+        seen: migrated.chars['あ'].seen,
+        correct: migrated.chars['あ'].correct,
+        wrong: migrated.chars['あ'].wrong,
+        recent: migrated.chars['あ'].recent,
+        confused: migrated.chars['あ'].confused,
+        last: migrated.chars['あ'].last
+      },
+      rich
+    );
 
     // seedowanie zgadza się z masteryLevel()
-    ok('mastered seeds stage 3', (function () {
-      const chars = { 'あ': { seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1], confused: {}, last: 1 } };
-      setProgress(chars, 1);
-      const m = migrateProgress(progress);
-      return m.chars['あ'].stage === 3;
-    })(), '');
-    ok('good seeds stage 2', (function () {
-      setProgress({ 'あ': { seen: 6, correct: 6, wrong: 0, recent: [1, 1, 1, 1], confused: {}, last: 1 } }, 1);
-      return migrateProgress(progress).chars['あ'].stage === 2;
-    })(), '');
-    ok('hard seeds stage 0', (function () {
-      setProgress({ 'あ': { seen: 6, correct: 3, wrong: 3, recent: [1, 0, 0, 0], confused: {}, last: 1 } }, 1);
-      return migrateProgress(progress).chars['あ'].stage === 0;
-    })(), '');
-    ok('learning seeds stage 1', (function () {
-      setProgress({ 'あ': { seen: 1, correct: 1, wrong: 0, recent: [1], confused: {}, last: 1 } }, 1);
-      return migrateProgress(progress).chars['あ'].stage === 1;
-    })(), '');
+    ok(
+      'mastered seeds stage 3',
+      (function () {
+        const chars = { あ: { seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1], confused: {}, last: 1 } };
+        setProgress(chars, 1);
+        const m = migrateProgress(progress);
+        return m.chars['あ'].stage === 3;
+      })(),
+      ''
+    );
+    ok(
+      'good seeds stage 2',
+      (function () {
+        setProgress({ あ: { seen: 6, correct: 6, wrong: 0, recent: [1, 1, 1, 1], confused: {}, last: 1 } }, 1);
+        return migrateProgress(progress).chars['あ'].stage === 2;
+      })(),
+      ''
+    );
+    ok(
+      'hard seeds stage 0',
+      (function () {
+        setProgress({ あ: { seen: 6, correct: 3, wrong: 3, recent: [1, 0, 0, 0], confused: {}, last: 1 } }, 1);
+        return migrateProgress(progress).chars['あ'].stage === 0;
+      })(),
+      ''
+    );
+    ok(
+      'learning seeds stage 1',
+      (function () {
+        setProgress({ あ: { seen: 1, correct: 1, wrong: 0, recent: [1], confused: {}, last: 1 } }, 1);
+        return migrateProgress(progress).chars['あ'].stage === 1;
+      })(),
+      ''
+    );
 
     // --- idempotencja ---
-    setProgress({ 'あ': JSON.parse(JSON.stringify(rich)) }, 1);
+    setProgress({ あ: JSON.parse(JSON.stringify(rich)) }, 1);
     migrateProgress(progress);
     const once = JSON.stringify(progress);
     migrateProgress(progress);
     ok('migration is idempotent', JSON.stringify(progress) === once, '');
 
     // --- rekordy nie-obiektowe są ZACHOWANE, nie usunięte ---
-    setProgress({ 'あ': JSON.parse(JSON.stringify(rich)), 'い': 5, 'う': null, 'え': 'x', 'お': [] }, 1);
+    setProgress({ あ: JSON.parse(JSON.stringify(rich)), い: 5, う: null, え: 'x', お: [] }, 1);
     const kept = migrateProgress(progress);
     eq('non-object entries kept (count)', Object.keys(kept.chars).length, 5);
     ok('numeric entry preserved', kept.chars['い'] === 5, JSON.stringify(kept.chars['い']));
@@ -337,7 +414,7 @@
     ok('non-object entry got NO srs fields', kept.chars['い'].stage === undefined, '');
 
     // --- seen poza zakresem -> 0, rekord zachowany, bez pól SRS ---
-    setProgress({ 'か': { seen: 'nope', correct: 3, recent: [1, 1], confused: {}, last: 1 } }, 1);
+    setProgress({ か: { seen: 'nope', correct: 3, recent: [1, 1], confused: {}, last: 1 } }, 1);
     const fixed = migrateProgress(progress);
     eq('invalid seen coerced to 0', fixed.chars['か'].seen, 0);
     eq('record kept despite bad seen', fixed.chars['か'].correct, 3);
@@ -348,15 +425,25 @@
     try {
       localStorage.setItem(PROGRESS_KEY, '{to nie jest json');
       const loaded = loadProgress();
-      eq('corrupt JSON -> empty v2 store', JSON.stringify(loaded), JSON.stringify({ version: PROGRESS_VERSION, chars: {} }));
-    } catch (e) { ok('corrupt JSON', false, e.message); }
+      eq(
+        'corrupt JSON -> empty v2 store',
+        JSON.stringify(loaded),
+        JSON.stringify({ version: PROGRESS_VERSION, chars: {} })
+      );
+    } catch (e) {
+      ok('corrupt JSON', false, e.message);
+    }
 
     // --- brak version (stary zapis) ---
     try {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chars: { 'あ': rich } }));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chars: { あ: rich } }));
       eq('missing version migrated', loadProgress().version, 2);
-    } catch (e) { ok('missing version', false, e.message); }
-  } catch (e) { ok('migration', false, e.message); }
+    } catch (e) {
+      ok('missing version', false, e.message);
+    }
+  } catch (e) {
+    ok('migration', false, e.message);
+  }
 
   /* =====================================================
      9. KOLEJKA: granica, kolejność, limit
@@ -366,24 +453,29 @@
     const NOW = 1700000000000;
 
     // granica: due === now wchodzi, due === now+1 nie
-    setProgress({ 'あ': entry({ due: NOW }), 'い': entry({ due: NOW + 1 }) });
+    setProgress({ あ: entry({ due: NOW }), い: entry({ due: NOW + 1 }) });
     eq('due === now is included', dueList(NOW).length, 1);
     eq('due === now included kana', dueList(NOW)[0].kana, 'あ');
     eq('due === now+1 excluded', dueList(NOW + 1).length, 2);
 
     // kolejność: overdue najpierw, potem lapses malejąco, potem stage rosnąco
     setProgress({
-      'あ': entry({ due: NOW - 3000, lapses: 0, stage: 5 }),
-      'い': entry({ due: NOW - 2000, lapses: 3, stage: 2 }),
-      'う': entry({ due: NOW - 2000, lapses: 1, stage: 4 }),
-      'え': entry({ due: NOW - 1000, lapses: 9, stage: 1 })
+      あ: entry({ due: NOW - 3000, lapses: 0, stage: 5 }),
+      い: entry({ due: NOW - 2000, lapses: 3, stage: 2 }),
+      う: entry({ due: NOW - 2000, lapses: 1, stage: 4 }),
+      え: entry({ due: NOW - 1000, lapses: 9, stage: 1 })
     });
-    deepEq('ordering: due asc, lapses desc, stage asc',
-      dueList(NOW).map(x => x.kana), ['あ', 'い', 'う', 'え']);
+    deepEq(
+      'ordering: due asc, lapses desc, stage asc',
+      dueList(NOW).map(x => x.kana),
+      ['あ', 'い', 'う', 'え']
+    );
 
     // limit sesji
     const many = {};
-    getAll().forEach(c => { many[c.kana] = entry({ due: 0 }); });
+    getAll().forEach(c => {
+      many[c.kana] = entry({ due: 0 });
+    });
     setProgress(many);
     eq('all 104 due', dueCount(NOW), 104);
     eq('session capped at 20', reviewSession(NOW).length, MAX_REVIEW_PER_SESSION);
@@ -391,21 +483,37 @@
 
     // nieznane/śmieciowe rekordy NIE trafiają do kolejki
     setProgress({
-      'あ': entry({ due: 0 }),
-      'い': 5, 'う': null, 'え': 'x', 'お': [],
-      'か': { seen: 5, stage: 'x', due: null, reps: undefined, lapses: null },
-      'き': { seen: 5, stage: 2, due: -5 },
-      'く': { seen: 'x', stage: 1, due: 0 }
+      あ: entry({ due: 0 }),
+      い: 5,
+      う: null,
+      え: 'x',
+      お: [],
+      か: { seen: 5, stage: 'x', due: null, reps: undefined, lapses: null },
+      き: { seen: 5, stage: 2, due: -5 },
+      く: { seen: 'x', stage: 1, due: 0 }
     });
     const q = dueList(NOW).map(x => x.kana);
     deepEq('only the valid record is queued', q, ['あ']);
     ok('garbage never fabricated into stage 0', q.indexOf('い') < 0, '');
 
     // niewidziane: kana z poprawnym SRS, ale ukryte przed regresją?
-    setProgress({ 'あ': JSON.parse(JSON.stringify({ seen: 12, correct: 11, wrong: 1, recent: [1,1,1,1,1], confused: {}, last: 1 })) }, 1);
+    setProgress(
+      {
+        あ: JSON.parse(
+          JSON.stringify({ seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1], confused: {}, last: 1 })
+        )
+      },
+      1
+    );
     migrateProgress(progress);
-    deepEq('valid migrated kana is NOT hidden', dueList(NOW).map(x => x.kana), ['あ']);
-  } catch (e) { ok('review queue', false, e.message); }
+    deepEq(
+      'valid migrated kana is NOT hidden',
+      dueList(NOW).map(x => x.kana),
+      ['あ']
+    );
+  } catch (e) {
+    ok('review queue', false, e.message);
+  }
 
   /* =====================================================
      10. SEPARACJA HIRAGANA / KATAKANA
@@ -413,14 +521,22 @@
   try {
     const NOW = 1700000000000;
     const mixed = {};
-    mixed['あ'] = entry({ due: 0 });   // hiragana
-    mixed['ア'] = entry({ due: 0 });   // katakana
+    mixed['あ'] = entry({ due: 0 }); // hiragana
+    mixed['ア'] = entry({ due: 0 }); // katakana
     setProgress(mixed);
 
     setScript('hiragana');
-    deepEq('hiragana queue only hiragana', dueList(NOW).map(x => x.kana), ['あ']);
+    deepEq(
+      'hiragana queue only hiragana',
+      dueList(NOW).map(x => x.kana),
+      ['あ']
+    );
     setScript('katakana');
-    deepEq('katakana queue only katakana', dueList(NOW).map(x => x.kana), ['ア']);
+    deepEq(
+      'katakana queue only katakana',
+      dueList(NOW).map(x => x.kana),
+      ['ア']
+    );
 
     // brak kolizji kodepointów — listy zbieramy jawnie z danych,
     // bo getAll() zależy od AKTYWNEGO skryptu
@@ -430,17 +546,22 @@
     eq('katakana dataset size', kata.length, 104);
     eq('no kana shared between scripts', hira.filter(k => kata.includes(k)).length, 0);
     setScript('hiragana');
-  } catch (e) { ok('script separation', false, e.message); }
+  } catch (e) {
+    ok('script separation', false, e.message);
+  }
 
   /* =====================================================
      11. progressSummary NIGDY NIE ZWRACA NaN/Infinity
      ===================================================== */
   try {
     setProgress({
-      'あ': { seen: 10, correct: 9, wrong: 1, recent: [1, 1, 1, 1, 1], confused: {}, last: 1 },
-      'い': 5, 'う': null, 'え': 'x', 'お': [],
-      'か': { seen: 'nope', correct: 3, recent: [1], confused: {}, last: 1 },
-      'き': { seen: NaN, correct: 2, recent: [], confused: {}, last: 1 }
+      あ: { seen: 10, correct: 9, wrong: 1, recent: [1, 1, 1, 1, 1], confused: {}, last: 1 },
+      い: 5,
+      う: null,
+      え: 'x',
+      お: [],
+      か: { seen: 'nope', correct: 3, recent: [1], confused: {}, last: 1 },
+      き: { seen: NaN, correct: 2, recent: [], confused: {}, last: 1 }
     });
     const sum = progressSummary();
     ok('summary seen is finite', Number.isFinite(sum.seen), String(sum.seen));
@@ -456,18 +577,20 @@
     // pusty / uszkodzony store
     setProgress({});
     eq('empty summary', JSON.stringify(progressSummary()), JSON.stringify({ seen: 0, correct: 0, percent: 0 }));
-  } catch (e) { ok('progressSummary guard', false, e.message); }
+  } catch (e) {
+    ok('progressSummary guard', false, e.message);
+  }
 
   /* =====================================================
      12. BRAK REGRESJI W LEGACYCH
      ===================================================== */
   try {
     const fixture = {
-      'あ': { seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1], confused: { い: 2 }, last: 5 },
-      'い': { seen: 6, correct: 3, wrong: 3, recent: [1, 0, 0, 0], confused: {}, last: 5 },
-      'う': { seen: 6, correct: 6, wrong: 0, recent: [1, 1, 1, 1], confused: {}, last: 5 },
-      'え': { seen: 1, correct: 1, wrong: 0, recent: [1], confused: {}, last: 5 },
-      'お': { seen: 11, correct: 10, wrong: 1, recent: [1, 1, 1, 1, 1, 0], confused: {}, last: 5 }
+      あ: { seen: 12, correct: 11, wrong: 1, recent: [1, 1, 1, 1, 1], confused: { い: 2 }, last: 5 },
+      い: { seen: 6, correct: 3, wrong: 3, recent: [1, 0, 0, 0], confused: {}, last: 5 },
+      う: { seen: 6, correct: 6, wrong: 0, recent: [1, 1, 1, 1], confused: {}, last: 5 },
+      え: { seen: 1, correct: 1, wrong: 0, recent: [1], confused: {}, last: 5 },
+      お: { seen: 11, correct: 10, wrong: 1, recent: [1, 1, 1, 1, 1, 0], confused: {}, last: 5 }
     };
     const clone = o => JSON.parse(JSON.stringify(o));
 
@@ -506,20 +629,24 @@
     // 1 błąd na 6 -> rate ≈ 0.17: ani 'hard' (wymaga rate >= 0.5),
     // ani 'good' (wymaga rate === 0), więc 'learning'
     eq('fixture: お is learning (1 error in last 6)', after.levels['お'], 'learning');
-  } catch (e) { ok('legacy regression', false, e.message); }
+  } catch (e) {
+    ok('legacy regression', false, e.message);
+  }
 
   /* =====================================================
      13. RESET
      ===================================================== */
   try {
-    setProgress({ 'あ': entry() }, PROGRESS_VERSION);
+    setProgress({ あ: entry() }, PROGRESS_VERSION);
     window.confirm = () => true;
     resetProgressData();
     eq('reset -> empty chars', Object.keys(progress.chars).length, 0);
     eq('reset -> version 2', progress.version, PROGRESS_VERSION);
     eq('reset persisted', JSON.parse(localStorage.getItem(PROGRESS_KEY)).chars !== undefined, true);
     eq('queue empty after reset', dueList(Date.now()).length, 0);
-  } catch (e) { ok('reset', false, e.message); }
+  } catch (e) {
+    ok('reset', false, e.message);
+  }
 
   /* =====================================================
      14. SERVICE WORKER
@@ -534,23 +661,27 @@
     */
     const version = (swSrc.match(/const VERSION = '(v\d+)'/) || [])[1];
     ok('sw.js declares VERSION as vN', !!version, version || 'brak');
-    ok('cache names derive from VERSION',
-       /const SHELL_CACHE\s*=\s*`shell-\$\{VERSION\}`/.test(swSrc)
-       && /const KANJIVG_CACHE\s*=\s*`kanjivg-\$\{VERSION\}`/.test(swSrc));
+    ok(
+      'cache names derive from VERSION',
+      /const SHELL_CACHE\s*=\s*`shell-\$\{VERSION\}`/.test(swSrc) &&
+        /const KANJIVG_CACHE\s*=\s*`kanjivg-\$\{VERSION\}`/.test(swSrc)
+    );
     ok('activate removes old cache versions', /activate/.test(swSrc) && /delete/.test(swSrc));
 
     // pliki testowe to narzędzia deweloperskie — nigdy nie w precache
     ok('tests not precached', swSrc.indexOf('tests.js') < 0 && swSrc.indexOf('tests.html') < 0, '');
-    ok('learn-panel tests not precached',
-       swSrc.indexOf('tests-learn.js') < 0 && swSrc.indexOf('tests-learn.html') < 0);
-  } catch (e) { ok('service worker version', false, e.message); }
+    ok('learn-panel tests not precached', swSrc.indexOf('tests-learn.js') < 0 && swSrc.indexOf('tests-learn.html') < 0);
+  } catch (e) {
+    ok('service worker version', false, e.message);
+  }
 
   /* =====================================================
      15. WIDOCZNOŚĆ EKRANU PRZEGLĄDU
      ===================================================== */
   try {
     clearProgress();
-    setScreen('menu'); await new Promise(r => setTimeout(r, 60));
+    setScreen('menu');
+    await new Promise(r => setTimeout(r, 60));
     document.getElementById('reviewCard').click();
     await new Promise(r => setTimeout(r, 60));
     ok('review screen renders', state.screen === 'review' && !!document.querySelector('.review'), state.screen);
@@ -563,9 +694,14 @@
 
     // z tekstem w kolejce
     const many = {};
-    getAll().slice(0, 25).forEach(c => { many[c.kana] = entry({ due: 0, stage: 2, lapses: 1 }); });
+    getAll()
+      .slice(0, 25)
+      .forEach(c => {
+        many[c.kana] = entry({ due: 0, stage: 2, lapses: 1 });
+      });
     setProgress(many);
-    setScreen('review'); await new Promise(r => setTimeout(r, 60));
+    setScreen('review');
+    await new Promise(r => setTimeout(r, 60));
     ok('due count rendered', document.body.textContent.indexOf('Do powtórki: 25') >= 0, '');
     ok('session cap shown', document.body.textContent.indexOf('dziś: 20') >= 0, '');
     eq('20 rows rendered', document.querySelectorAll('.review-row').length, 20);
@@ -575,39 +711,56 @@
 
     document.getElementById('reviewStartBtn').click();
     await new Promise(r => setTimeout(r, 80));
-    ok('start reuses existing exam engine', !!state.exam && state.exam.kanaList.length === 20,
-       state.exam ? state.exam.kanaList.length : 'no exam');
+    ok(
+      'start reuses existing exam engine',
+      !!state.exam && state.exam.kanaList.length === 20,
+      state.exam ? state.exam.kanaList.length : 'no exam'
+    );
     stopExam();
 
     // powrót do menu
-    setScreen('menu'); await new Promise(r => setTimeout(r, 60));
-    ok('menu still has all cards', !!document.getElementById('learnCard') &&
-      !!document.getElementById('examCard') && !!document.getElementById('reviewCard') &&
-      !!document.getElementById('settingsCard'), '');
-    ok('chart still above cards', (function () {
-      return document.querySelector('#app').firstElementChild.classList.contains('script-switcher');
-    })(), '');
+    setScreen('menu');
+    await new Promise(r => setTimeout(r, 60));
+    ok(
+      'menu still has all cards',
+      !!document.getElementById('learnCard') &&
+        !!document.getElementById('examCard') &&
+        !!document.getElementById('reviewCard') &&
+        !!document.getElementById('settingsCard'),
+      ''
+    );
+    ok(
+      'chart still above cards',
+      (function () {
+        return document.querySelector('#app').firstElementChild.classList.contains('script-switcher');
+      })(),
+      ''
+    );
 
     // klasa modyfikatora karty pełnoszerokiej: `.menu-card.full`.
     // Dawniej było to osobna klasa `.menu-card-full` — pilnujemy, żeby
     // nie wróciła i żeby obie karty (Przegląd i Ustawienia) ją miały.
     ['reviewCard', 'settingsCard'].forEach(function (id) {
       const el = document.getElementById(id);
-      ok(id + ' uses .menu-card.full',
-         el.classList.contains('menu-card') && el.classList.contains('full'),
-         el.className);
+      ok(
+        id + ' uses .menu-card.full',
+        el.classList.contains('menu-card') && el.classList.contains('full'),
+        el.className
+      );
       ok(id + ' has no stale .menu-card-full', !el.classList.contains('menu-card-full'), el.className);
     });
-    ok('no element carries the legacy full-width class',
-       document.querySelectorAll('.menu-card-full').length === 0,
-       String(document.querySelectorAll('.menu-card-full').length));
+    ok(
+      'no element carries the legacy full-width class',
+      document.querySelectorAll('.menu-card-full').length === 0,
+      String(document.querySelectorAll('.menu-card-full').length)
+    );
 
     const cssText = await (await fetch('style.css')).text();
-    ok('style.css defines .menu-card.full',
-       /\.menu-card\.full\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/.test(cssText));
-    ok('style.css has no stale .menu-card-full selector',
-       cssText.indexOf('.menu-card-full') < 0);
-  } catch (e) { ok('review UI', false, e.message); }
+    ok('style.css defines .menu-card.full', /\.menu-card\.full\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/.test(cssText));
+    ok('style.css has no stale .menu-card-full selector', cssText.indexOf('.menu-card-full') < 0);
+  } catch (e) {
+    ok('review UI', false, e.message);
+  }
 
   /* =====================================================
      16. USTAWIENIA EGZAMINU — „ćwicz trudne" nie może ich gubić
@@ -629,16 +782,17 @@
 
     // dwa znaki „hard", żeby przycisk „ćwicz trudne" był aktywny
     const hard = { seen: 8, correct: 3, wrong: 5, recent: [0, 0, 0, 1, 1, 0], confused: {}, last: 1 };
-    progress = { version: PROGRESS_VERSION, chars: { 'あ': { ...hard }, 'い': { ...hard } } };
+    progress = { version: PROGRESS_VERSION, chars: { あ: { ...hard }, い: { ...hard } } };
     saveProgress();
 
     saveExamSettings(JSON.parse(JSON.stringify(full)));
     showExamSetup();
     await new Promise(r => setTimeout(r, 120));
 
-    ok('CFG1 przycisk „ćwicz trudne" aktywny przy 2 trudnych znakach',
-       !!document.getElementById('practiceHardSetup')
-       && !document.getElementById('practiceHardSetup').disabled);
+    ok(
+      'CFG1 przycisk „ćwicz trudne" aktywny przy 2 trudnych znakach',
+      !!document.getElementById('practiceHardSetup') && !document.getElementById('practiceHardSetup').disabled
+    );
 
     document.getElementById('practiceHardSetup').click();
     await new Promise(r => setTimeout(r, 120));
@@ -646,10 +800,15 @@
     const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 
     // to jest właśnie regresja: wcześniej zapisywano tylko {groups, options, outside}
-    ok('CFG2 tryby pytań przetrwały „ćwicz trudne"',
-       stored.modes && stored.modes.romajiKanaPick && stored.modes.kanaRomajiPick
-       && stored.modes.romajiKanaType && stored.modes.kanaRomajiType,
-       JSON.stringify(stored.modes));
+    ok(
+      'CFG2 tryby pytań przetrwały „ćwicz trudne"',
+      stored.modes &&
+        stored.modes.romajiKanaPick &&
+        stored.modes.kanaRomajiPick &&
+        stored.modes.romajiKanaType &&
+        stored.modes.kanaRomajiType,
+      JSON.stringify(stored.modes)
+    );
     ok('CFG3 limit pytań przetrwał', stored.limit === 10, String(stored.limit));
     ok('CFG4 timer przetrwał', stored.timer === 15, String(stored.timer));
     ok('CFG5 liczba odpowiedzi przetrwała', stored.options === 4, String(stored.options));
@@ -658,26 +817,37 @@
     const reloaded = loadExamSettings();
     ok('CFG7 loadExamSettings odtwarza limit', reloaded.limit === 10, String(reloaded.limit));
     ok('CFG8 loadExamSettings odtwarza timer', reloaded.timer === 15, String(reloaded.timer));
-    ok('CFG9 loadExamSettings odtwarza wszystkie tryby',
-       reloaded.modes.romajiKanaPick && reloaded.modes.kanaRomajiPick
-       && reloaded.modes.romajiKanaType && reloaded.modes.kanaRomajiType);
+    ok(
+      'CFG9 loadExamSettings odtwarza wszystkie tryby',
+      reloaded.modes.romajiKanaPick &&
+        reloaded.modes.kanaRomajiPick &&
+        reloaded.modes.romajiKanaType &&
+        reloaded.modes.kanaRomajiType
+    );
 
     // sesja „ćwicz trudne" ma używać tych samych ustawień
     const ex = state.exam;
     ok('CFG10 sesja dostała timer', ex && ex.timerSec === 15, ex && String(ex.timerSec));
     ok('CFG11 sesja dostała limit', ex && ex.limit === 10, ex && String(ex.limit));
     ok('CFG12 sesja dostała liczbę odpowiedzi', ex && ex.options === 4, ex && String(ex.options));
-    ok('CFG13 sesja dostała 4 tryby',
-       ex && Object.values(ex.enabledModes).filter(Boolean).length === 4,
-       ex && JSON.stringify(ex.enabledModes));
+    ok(
+      'CFG13 sesja dostała 4 tryby',
+      ex && Object.values(ex.enabledModes).filter(Boolean).length === 4,
+      ex && JSON.stringify(ex.enabledModes)
+    );
     ok('CFG14 sesja jest typu practice', ex && ex.kind === 'practice', ex && ex.kind);
-    ok('CFG15 sesja ma listę znaków do ćwiczenia', ex && Array.isArray(ex.kanaList) && ex.kanaList.length === 2,
-       ex && ex.kanaList && String(ex.kanaList.length));
+    ok(
+      'CFG15 sesja ma listę znaków do ćwiczenia',
+      ex && Array.isArray(ex.kanaList) && ex.kanaList.length === 2,
+      ex && ex.kanaList && String(ex.kanaList.length)
+    );
 
     stopExam();
     progress = { version: PROGRESS_VERSION, chars: {} };
     saveProgress();
-  } catch (e) { ok('ustawienia egzaminu', false, e.message); }
+  } catch (e) {
+    ok('ustawienia egzaminu', false, e.message);
+  }
 
   /* =====================================================
      17. TIMEOUT W TRYBACH TEKSTOWYCH
@@ -690,72 +860,88 @@
 
     // --- tryb: widzisz romaji, wpisujesz kana
     startExam(groups, {
-      options: 4, limit: 0, outside: false,
+      options: 4,
+      limit: 0,
+      outside: false,
       modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: true, kanaRomajiType: false },
       timer: 5
     });
     await new Promise(r => setTimeout(r, 200));
 
     const ex = state.exam;
-    ok('TYP1 tryb romaji->kana wystartował', !!ex && ex.currentMode === 'romaji-kana-type',
-       ex && ex.currentMode);
-    ok('TYP2 #kanaInput istnieje i jest aktywny',
-       !!document.getElementById('kanaInput') && !document.getElementById('kanaInput').disabled);
-    ok('TYP3 #checkKana istnieje i jest aktywny',
-       !!document.getElementById('checkKana') && !document.getElementById('checkKana').disabled);
+    ok('TYP1 tryb romaji->kana wystartował', !!ex && ex.currentMode === 'romaji-kana-type', ex && ex.currentMode);
+    ok(
+      'TYP2 #kanaInput istnieje i jest aktywny',
+      !!document.getElementById('kanaInput') && !document.getElementById('kanaInput').disabled
+    );
+    ok(
+      'TYP3 #checkKana istnieje i jest aktywny',
+      !!document.getElementById('checkKana') && !document.getElementById('checkKana').disabled
+    );
 
-    const totalBefore = ex.total, wrongBefore = ex.wrong, scoreBefore = ex.score;
+    const totalBefore = ex.total,
+      wrongBefore = ex.wrong,
+      scoreBefore = ex.score;
     await new Promise(r => setTimeout(r, 6000));
 
-    ok('TYP4 timeout zaliczył pytanie jako błędne',
-       ex.total === totalBefore + 1 && ex.wrong === wrongBefore + 1,
-       'total ' + totalBefore + '->' + ex.total + ', wrong ' + wrongBefore + '->' + ex.wrong);
+    ok(
+      'TYP4 timeout zaliczył pytanie jako błędne',
+      ex.total === totalBefore + 1 && ex.wrong === wrongBefore + 1,
+      'total ' + totalBefore + '->' + ex.total + ', wrong ' + wrongBefore + '->' + ex.wrong
+    );
     ok('TYP5 timeout NIE dodał punktów', ex.score === scoreBefore, String(ex.score));
-    ok('TYP6 #kanaInput zablokowany po timeoutie',
-       document.getElementById('kanaInput').disabled === true);
-    ok('TYP7 #checkKana zablokowany po timeoutie',
-       document.getElementById('checkKana').disabled === true);
+    ok('TYP6 #kanaInput zablokowany po timeoutie', document.getElementById('kanaInput').disabled === true);
+    ok('TYP7 #checkKana zablokowany po timeoutie', document.getElementById('checkKana').disabled === true);
 
     // ponowne wysłanie odpowiedzi nie może nic dodać
     const wrongNow = ex.wrong;
     document.getElementById('checkKana').click();
-    ok('TYP8 ponowne wysłanie po timeoutie nie zmienia wyniku',
-       ex.wrong === wrongNow && ex.score === scoreBefore,
-       'wrong ' + wrongNow + ', score ' + ex.score);
+    ok(
+      'TYP8 ponowne wysłanie po timeoutie nie zmienia wyniku',
+      ex.wrong === wrongNow && ex.score === scoreBefore,
+      'wrong ' + wrongNow + ', score ' + ex.score
+    );
     stopExam();
 
     // --- tryb: widzisz kana, wpisujesz romaji
     startExam(groups, {
-      options: 4, limit: 0, outside: false,
+      options: 4,
+      limit: 0,
+      outside: false,
       modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: true },
       timer: 5
     });
     await new Promise(r => setTimeout(r, 200));
-    ok('TYP9 tryb kana->romaji wystartował',
-       !!state.exam && state.exam.currentMode === 'kana-romaji-type',
-       state.exam && state.exam.currentMode);
+    ok(
+      'TYP9 tryb kana->romaji wystartował',
+      !!state.exam && state.exam.currentMode === 'kana-romaji-type',
+      state.exam && state.exam.currentMode
+    );
     await new Promise(r => setTimeout(r, 6000));
-    ok('TYP10 #romajiInput zablokowany po timeoutie',
-       document.getElementById('romajiInput').disabled === true);
-    ok('TYP11 #checkRomaji zablokowany po timeoutie',
-       document.getElementById('checkRomaji').disabled === true);
+    ok('TYP10 #romajiInput zablokowany po timeoutie', document.getElementById('romajiInput').disabled === true);
+    ok('TYP11 #checkRomaji zablokowany po timeoutie', document.getElementById('checkRomaji').disabled === true);
     stopExam();
 
     // --- tryb wyboru nadal blokuje .answer (regresja w obie strony)
     startExam(groups, {
-      options: 4, limit: 0, outside: false,
+      options: 4,
+      limit: 0,
+      outside: false,
       modes: { romajiKanaPick: true, kanaRomajiPick: true, romajiKanaType: false, kanaRomajiType: false },
       timer: 5
     });
     await new Promise(r => setTimeout(r, 200));
-    ok('TYP12 tryb wyboru pokazuje przyciski .answer',
-       document.querySelectorAll('.answer').length > 0);
+    ok('TYP12 tryb wyboru pokazuje przyciski .answer', document.querySelectorAll('.answer').length > 0);
     await new Promise(r => setTimeout(r, 6000));
-    ok('TYP13 przyciski .answer zablokowane po timeoutie',
-       [...document.querySelectorAll('.answer')].every(a => a.disabled));
+    ok(
+      'TYP13 przyciski .answer zablokowane po timeoutie',
+      [...document.querySelectorAll('.answer')].every(a => a.disabled)
+    );
     stopExam();
     setScreen('menu');
-  } catch (e) { ok('timeout w trybach tekstowych', false, e.message); }
+  } catch (e) {
+    ok('timeout w trybach tekstowych', false, e.message);
+  }
 
   /* =====================================================
      18. KONFETTI PODĄŻA ZA MOTYWEM (#11)
@@ -788,12 +974,16 @@
     const light = collectConfettiColors();
 
     ok('CF1 konfetti tworzy 60 elementów', light.count === 60, String(light.count));
-    ok('CF2 każdy kolor to referencja do tokenu, nie literał',
-       light.inline.every(c => c.indexOf('var(--') === 0),
-       [...new Set(light.inline)].slice(0, 3).join(' '));
-    ok('CF3 użyte wyłącznie dozwolone tokeny',
-       light.inline.every(c => TOKENS.indexOf(c) !== -1),
-       [...new Set(light.inline)].filter(c => TOKENS.indexOf(c) === -1).join(',') || 'brak obcych');
+    ok(
+      'CF2 każdy kolor to referencja do tokenu, nie literał',
+      light.inline.every(c => c.indexOf('var(--') === 0),
+      [...new Set(light.inline)].slice(0, 3).join(' ')
+    );
+    ok(
+      'CF3 użyte wyłącznie dozwolone tokeny',
+      light.inline.every(c => TOKENS.indexOf(c) !== -1),
+      [...new Set(light.inline)].filter(c => TOKENS.indexOf(c) === -1).join(',') || 'brak obcych'
+    );
 
     document.documentElement.dataset.theme = 'dark';
     const dark = collectConfettiColors();
@@ -801,19 +991,24 @@
     // właściwa regresja: przy zakodowanych hexach obie wartości byłyby
     // identyczne, bo paleta nie zależała od motywu
     const shared = light.computed.filter(c => dark.computed.indexOf(c) !== -1);
-    ok('CF4 ciemny motyw daje inne kolory niż jasny', shared.length === 0,
-       'wspólne: ' + (shared.join(', ') || 'brak'));
-    ok('CF5 kolory faktycznie się rozwiązują',
-       light.computed.length === 5 && dark.computed.length === 5,
-       'jasny ' + light.computed.length + ' [' + light.computed.join(' ') + ']');
-    ok('CF6 każdy kolor jest nieprzezroczysty',
-       [...light.computed, ...dark.computed].every(c => c && c !== 'rgba(0, 0, 0, 0)'),
-       (light.computed.concat(dark.computed)).join(' '));
+    ok('CF4 ciemny motyw daje inne kolory niż jasny', shared.length === 0, 'wspólne: ' + (shared.join(', ') || 'brak'));
+    ok(
+      'CF5 kolory faktycznie się rozwiązują',
+      light.computed.length === 5 && dark.computed.length === 5,
+      'jasny ' + light.computed.length + ' [' + light.computed.join(' ') + ']'
+    );
+    ok(
+      'CF6 każdy kolor jest nieprzezroczysty',
+      [...light.computed, ...dark.computed].every(c => c && c !== 'rgba(0, 0, 0, 0)'),
+      light.computed.concat(dark.computed).join(' ')
+    );
 
     if (prevTheme) document.documentElement.dataset.theme = prevTheme;
     else delete document.documentElement.dataset.theme;
     styleEl.remove();
-  } catch (e) { ok('konfetti', false, e.message); }
+  } catch (e) {
+    ok('konfetti', false, e.message);
+  }
 
   /* =====================================================
      19. GRANICA LIMITU I ZAKOŃCZENIE EGZAMINU (#13, #14, #16)
@@ -836,36 +1031,57 @@
     startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 0 });
     await new Promise(r => setTimeout(r, 200));
 
-    ok('LIM1 pierwsze pytanie wyświetlone',
-       !!state.exam.current && document.querySelectorAll('[data-answer]').length === 4,
-       String(document.querySelectorAll('[data-answer]').length));
+    ok(
+      'LIM1 pierwsze pytanie wyświetlone',
+      !!state.exam.current && document.querySelectorAll('[data-answer]').length === 4,
+      String(document.querySelectorAll('[data-answer]').length)
+    );
 
-    clickAnswer(true); await settle();
-    clickAnswer(true); await settle();
+    clickAnswer(true);
+    await settle();
+    clickAnswer(true);
+    await settle();
 
     const ex = state.exam;
-    ok('LIM2 po 2 odpowiedziach egzamin trwa', ex.finished === false && ex.total === 2,
-       'total ' + ex.total + ', finished ' + ex.finished);
-    ok('LIM3 trzecie pytanie jest dostępne', !!ex.current && document.querySelectorAll('[data-answer]').length > 0,
-       ex.current && ex.current.kana);
-    ok('LIM4 wynik zgadza się z liczbą odpowiedzi', ex.score === 2 && ex.wrong === 0,
-       'score ' + ex.score + ', wrong ' + ex.wrong);
+    ok(
+      'LIM2 po 2 odpowiedziach egzamin trwa',
+      ex.finished === false && ex.total === 2,
+      'total ' + ex.total + ', finished ' + ex.finished
+    );
+    ok(
+      'LIM3 trzecie pytanie jest dostępne',
+      !!ex.current && document.querySelectorAll('[data-answer]').length > 0,
+      ex.current && ex.current.kana
+    );
+    ok(
+      'LIM4 wynik zgadza się z liczbą odpowiedzi',
+      ex.score === 2 && ex.wrong === 0,
+      'score ' + ex.score + ', wrong ' + ex.wrong
+    );
 
-    clickAnswer(true); await settle();
+    clickAnswer(true);
+    await settle();
 
     ok('LIM5 egzamin zakończył się dokładnie po N odpowiedziach', ex.total === 3, 'total ' + ex.total);
     ok('LIM6 egzamin jest zakończony', ex.finished === true, String(ex.finished));
-    ok('LIM7 nie ma dodatkowego pytania po limicie',
-       !ex.current || document.querySelectorAll('[data-answer]').length === 0,
-       String(document.querySelectorAll('[data-answer]').length));
-    ok('LIM8 wynik policzony dokładnie raz', ex.score === 3 && ex.wrong === 0,
-       'score ' + ex.score + ', wrong ' + ex.wrong);
+    ok(
+      'LIM7 nie ma dodatkowego pytania po limicie',
+      !ex.current || document.querySelectorAll('[data-answer]').length === 0,
+      String(document.querySelectorAll('[data-answer]').length)
+    );
+    ok(
+      'LIM8 wynik policzony dokładnie raz',
+      ex.score === 3 && ex.wrong === 0,
+      'score ' + ex.score + ', wrong ' + ex.wrong
+    );
 
     // --- #14: timeout na pytaniu ostatnim -------------------------
     startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 5 });
     await new Promise(r => setTimeout(r, 200));
-    clickAnswer(true); await settle();
-    clickAnswer(true); await settle();
+    clickAnswer(true);
+    await settle();
+    clickAnswer(true);
+    await settle();
 
     const t = state.exam;
     const beforeTimeout = { total: t.total, wrong: t.wrong, score: t.score };
@@ -873,59 +1089,77 @@
 
     await new Promise(r => setTimeout(r, 6000));
 
-    ok('LIM10 timeout policzył pytanie jako błędne dokładnie raz',
-       t.total === 3 && t.wrong === 1,
-       'total ' + t.total + ', wrong ' + t.wrong);
+    ok(
+      'LIM10 timeout policzył pytanie jako błędne dokładnie raz',
+      t.total === 3 && t.wrong === 1,
+      'total ' + t.total + ', wrong ' + t.wrong
+    );
     ok('LIM11 timeout nie dodał punktów', t.score === 2, 'score ' + t.score);
     ok('LIM12 stan oczekiwania na „Dalej" ustawiony', t.waiting === true, String(t.waiting));
     ok('LIM13 timeout NIE kończy egzaminu sam z siebie', t.finished === false, String(t.finished));
-    ok('LIM14 czasu nie ma — sterowanie zablokowane',
-       [...document.querySelectorAll('[data-answer]')].every(b => b.disabled),
-       [...document.querySelectorAll('[data-answer]')].filter(b => !b.disabled).length + ' aktywnych');
+    ok(
+      'LIM14 czasu nie ma — sterowanie zablokowane',
+      [...document.querySelectorAll('[data-answer]')].every(b => b.disabled),
+      [...document.querySelectorAll('[data-answer]')].filter(b => !b.disabled).length + ' aktywnych'
+    );
 
     nextExamQuestion();
 
     ok('LIM15 „Dalej" kończy egzamin', t.finished === true, String(t.finished));
-    ok('LIM16 zakończenie nie przelicza odpowiedzi',
-       t.total === 3 && t.wrong === 1 && t.score === 2,
-       'total ' + t.total + ', wrong ' + t.wrong + ', score ' + t.score);
+    ok(
+      'LIM16 zakończenie nie przelicza odpowiedzi',
+      t.total === 3 && t.wrong === 1 && t.score === 2,
+      'total ' + t.total + ', wrong ' + t.wrong + ', score ' + t.score
+    );
 
     // --- #16: błędna odpowiedź a automatyczne zakończenie ---------
     startExam(bGroups, { options: 4, limit: 3, outside: false, modes: PICK, timer: 0 });
     await new Promise(r => setTimeout(r, 200));
-    clickAnswer(true); await settle();
-    clickAnswer(true); await settle();
+    clickAnswer(true);
+    await settle();
+    clickAnswer(true);
+    await settle();
 
     const w = state.exam;
     clickAnswer(false);
     await new Promise(r => setTimeout(r, 200));
 
-    ok('LIM17 błędna odpowiedź na ostatnim pytaniu policzona',
-       w.total === 3 && w.wrong === 1,
-       'total ' + w.total + ', wrong ' + w.wrong);
+    ok(
+      'LIM17 błędna odpowiedź na ostatnim pytaniu policzona',
+      w.total === 3 && w.wrong === 1,
+      'total ' + w.total + ', wrong ' + w.wrong
+    );
     ok('LIM18 błędna odpowiedź otwiera przegląd odpowiedzi', w.waiting === true, String(w.waiting));
-    ok('LIM19 przycisk „Dalej" jest dostępny', !!document.getElementById('nextQuestion'),
-       document.getElementById('nextQuestion') ? 'jest' : 'brak');
+    ok(
+      'LIM19 przycisk „Dalej" jest dostępny',
+      !!document.getElementById('nextQuestion'),
+      document.getElementById('nextQuestion') ? 'jest' : 'brak'
+    );
 
     await new Promise(r => setTimeout(r, 1600));
 
-    ok('LIM20 błędna odpowiedź NIE kończy egzaminu automatycznie',
-       w.finished === false, String(w.finished));
-    ok('LIM21 przegląd odpowiedzi nie zniknął po oknie auto-przejścia',
-       w.waiting === true && !!document.getElementById('nextQuestion'),
-       'waiting ' + w.waiting);
+    ok('LIM20 błędna odpowiedź NIE kończy egzaminu automatycznie', w.finished === false, String(w.finished));
+    ok(
+      'LIM21 przegląd odpowiedzi nie zniknął po oknie auto-przejścia',
+      w.waiting === true && !!document.getElementById('nextQuestion'),
+      'waiting ' + w.waiting
+    );
 
     nextExamQuestion();
     ok('LIM22 „Dalej" po błędnej odpowiedzi kończy egzamin', w.finished === true, String(w.finished));
-    ok('LIM23 zakończenie po błędnej odpowiedzi nie przelicza wyniku',
-       w.total === 3 && w.wrong === 1 && w.score === 2,
-       'total ' + w.total + ', wrong ' + w.wrong + ', score ' + w.score);
+    ok(
+      'LIM23 zakończenie po błędnej odpowiedzi nie przelicza wyniku',
+      w.total === 3 && w.wrong === 1 && w.score === 2,
+      'total ' + w.total + ', wrong ' + w.wrong + ', score ' + w.score
+    );
 
     stopExam();
     clearProgress();
     localStorage.removeItem(DAILY_STATS_KEY);
     setScreen('menu');
-  } catch (e) { ok('granica limitu i zakończenie', false, e.message); }
+  } catch (e) {
+    ok('granica limitu i zakończenie', false, e.message);
+  }
 
   /* =====================================================
      PODSUMOWANIE

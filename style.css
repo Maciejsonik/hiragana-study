@@ -25,7 +25,7 @@
   --bad: #d95c67;
   --mastered: #1f74c4;
 
-  --shadow: 0 18px 50px rgba(52, 41, 67, .10);
+  --shadow: 0 18px 50px rgba(52, 41, 67, 0.1);
 
   --btn-secondary-bg: #eee9e2;
   --btn-secondary-ink: #25232a;
@@ -33,7 +33,6 @@
 
   color-scheme: light;
 }
-
 
 /* =========================================================
    DARK MODE
@@ -56,13 +55,12 @@
   --warn: #f0b24a;
   --bad: #e16b77;
   --mastered: #4aa8f0;
-  --shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
   --btn-secondary-bg: #302c35;
   --btn-secondary-ink: #f3eff8;
   --progress-bg: #332f38;
   color-scheme: dark;
 }
-
 
 /* =========================================================
    RESET / GLOBAL
@@ -76,18 +74,12 @@ body {
   margin: 0;
   min-height: 100vh;
 
-  background:
-    radial-gradient(
-      circle at top left,
-      var(--bg-gradient-1) 0,
-      var(--bg) 48%,
-      var(--bg-gradient-2) 100%
-    );
+  background: radial-gradient(circle at top left, var(--bg-gradient-1) 0, var(--bg) 48%, var(--bg-gradient-2) 100%);
 
   color: var(--ink);
 
   font-family:
-    'Inter',
+    "Inter",
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -95,17 +87,16 @@ body {
     "Segoe UI",
     sans-serif;
 
-  font-feature-settings: 'liga', 'kern';
+  font-feature-settings: "liga", "kern";
 
   transition:
-    background .25s ease,
-    color .25s ease;
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
 button {
   font: inherit;
 }
-
 
 /* =========================================================
    APP SHELL
@@ -119,7 +110,6 @@ button {
   display: flex;
   flex-direction: column;
 }
-
 
 /* =========================================================
    HEADER
@@ -139,8 +129,8 @@ button {
 }
 
 .eyebrow {
-  font-size: .75rem;
-  letter-spacing: .16em;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
   font-weight: 800;
   color: var(--accent-dark);
 }
@@ -148,9 +138,8 @@ button {
 h1 {
   margin: 3px 0 0;
   font-size: 2rem;
-  letter-spacing: -.04em;
+  letter-spacing: -0.04em;
 }
-
 
 /* =========================================================
    FOOTER
@@ -160,13 +149,12 @@ footer {
   margin-top: auto;
   padding-top: 28px;
   color: var(--muted);
-  font-size: .85rem;
+  font-size: 0.85rem;
   display: flex;
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
 }
-
 
 /* =========================================================
    ICON BUTTONS (theme toggle, mute toggle)
@@ -181,7 +169,7 @@ footer {
   color: var(--ink);
   font-size: 1.1rem;
   cursor: pointer;
-  transition: .15s ease;
+  transition: 0.15s ease;
   display: grid;
   place-items: center;
 }
@@ -196,26 +184,20 @@ footer {
   outline-offset: 2px;
 }
 
-
 /* =========================================================
    CARDS
 ========================================================= */
 
 .card {
-  background: color-mix(
-    in srgb,
-    var(--card) 92%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--card) 92%, transparent);
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: var(--shadow);
   transition:
-    background .25s ease,
-    border-color .25s ease,
-    box-shadow .25s ease;
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
-
 
 /* =========================================================
    BUTTONS
@@ -232,13 +214,13 @@ footer {
 .controls button {
   white-space: nowrap;
   padding: 10px 12px;
-  font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 .controls .btn:disabled {
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-ink);
-  opacity: .65;
+  opacity: 0.65;
   cursor: default;
 }
 
@@ -249,9 +231,9 @@ footer {
   cursor: pointer;
   font-weight: 750;
   transition:
-    transform .15s ease,
-    background .15s ease,
-    opacity .15s ease;
+    transform 0.15s ease,
+    background 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .btn:hover {
@@ -282,10 +264,9 @@ footer {
 }
 
 .btn:disabled {
-  opacity: .45;
+  opacity: 0.45;
   cursor: not-allowed;
 }
-
 
 /* =========================================================
    GHOST BUTTON (home/back)
@@ -298,7 +279,7 @@ footer {
   border-radius: 12px;
   padding: 9px 14px;
   cursor: pointer;
-  transition: .15s ease;
+  transition: 0.15s ease;
 }
 
 .ghost:hover {
@@ -310,7 +291,6 @@ footer {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-
 
 /* =========================================================
    MENU
@@ -329,7 +309,7 @@ footer {
 .menu-card {
   padding: 34px;
   cursor: pointer;
-  transition: .18s ease;
+  transition: 0.18s ease;
   border: 1px solid var(--line);
   background: var(--card);
   border-radius: 24px;
@@ -373,7 +353,6 @@ footer {
   grid-column: 1 / -1;
 }
 
-
 /* =========================================================
    USTAWIENIA
  ========================================================= */
@@ -394,8 +373,8 @@ footer {
 
 .settings-group h3 {
   margin: 0 0 14px;
-  font-size: .95rem;
-  letter-spacing: -.01em;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
 .settings-row {
@@ -408,7 +387,7 @@ footer {
 
 .settings-label {
   color: var(--muted);
-  font-size: .9rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
@@ -420,7 +399,7 @@ footer {
 
 .settings-pills .script-btn {
   padding: 9px 18px;
-  font-size: .85rem;
+  font-size: 0.85rem;
 }
 
 .settings-actions {
@@ -444,7 +423,7 @@ footer {
 
 .review-summary {
   color: var(--muted);
-  font-size: .95rem;
+  font-size: 0.95rem;
   margin: 0 0 14px;
 }
 
@@ -494,9 +473,11 @@ footer {
   border-radius: 12px;
   padding: 8px 12px;
   font-size: 1.1rem;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   cursor: pointer;
-  transition: border-color .15s ease, transform .15s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .review-kana:hover {
@@ -518,7 +499,7 @@ footer {
 }
 
 .review-tag {
-  font-size: .72rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--ink);
   background: var(--progress-bg);
@@ -573,7 +554,7 @@ footer {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: .15s ease;
+  transition: 0.15s ease;
 }
 
 .script-btn:hover {
@@ -592,8 +573,7 @@ footer {
   outline-offset: 2px;
 }
 
-
- /* =========================================================
+/* =========================================================
    MASTERY DONUT (menu)
  ========================================================= */
 
@@ -635,7 +615,7 @@ footer {
 }
 
 .donut-label {
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--muted);
   font-weight: 600;
 }
@@ -645,7 +625,7 @@ footer {
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--muted);
 }
 
@@ -664,10 +644,9 @@ footer {
 
 .mastery-hint {
   color: var(--muted);
-  font-size: .9rem;
+  font-size: 0.9rem;
   margin: 10px 0 0;
 }
-
 
 /* =========================================================
    LEARNER
@@ -678,7 +657,6 @@ footer {
   grid-template-columns: 280px 1fr;
   gap: 20px;
 }
-
 
 /* =========================================================
    SIDEBAR
@@ -700,10 +678,10 @@ footer {
   padding: 10px 7px;
   cursor: pointer;
   transition:
-    background .15s ease,
-    border-color .15s ease,
-    color .15s ease,
-    transform .15s ease;
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .kana-btn:hover {
@@ -744,8 +722,8 @@ footer {
   height: 0;
   overflow: hidden;
   transition:
-    height .2s ease,
-    content-visibility .2s allow-discrete;
+    height 0.2s ease,
+    content-visibility 0.2s allow-discrete;
 }
 
 .learn-section[open]::details-content {
@@ -776,7 +754,7 @@ footer {
   font-weight: 700;
   list-style: none;
   user-select: none;
-  transition: background .15s ease;
+  transition: background 0.15s ease;
 }
 
 .learn-section-head::-webkit-details-marker {
@@ -785,10 +763,10 @@ footer {
 
 /* własna strzałka — nie zależna od domyślnego markera przeglądarki */
 .learn-section-head::before {
-  content: '▶';
-  font-size: .7rem;
+  content: "▶";
+  font-size: 0.7rem;
   color: var(--accent);
-  transition: transform .15s ease;
+  transition: transform 0.15s ease;
   flex: 0 0 auto;
 }
 
@@ -811,7 +789,7 @@ footer {
 
 .learn-section-count {
   flex: 0 0 auto;
-  font-size: .72rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--muted);
   background: var(--progress-bg);
@@ -851,7 +829,7 @@ footer {
   display: grid;
   place-items: center;
   padding: 4px;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
 
 .kana-btn.active {
@@ -884,9 +862,8 @@ footer {
   margin-top: 18px;
   text-align: center;
   color: var(--muted);
-  font-size: .78rem;
+  font-size: 0.78rem;
 }
-
 
 /* =========================================================
    STUDY CARD
@@ -908,7 +885,7 @@ footer {
   color: var(--accent-dark);
   border-radius: 999px;
   padding: 7px 11px;
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -935,14 +912,14 @@ footer {
   justify-content: center;
   padding: 20px;
   transition:
-    background .25s ease,
-    border-color .25s ease;
+    background 0.25s ease,
+    border-color 0.25s ease;
 }
 
 .char-panel h3 {
   align-self: flex-start;
   margin: 0 0 12px;
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--muted);
 }
 
@@ -959,13 +936,8 @@ footer {
 .char {
   font-size: 220px;
   line-height: 1;
-  font-family:
-    'Noto Sans JP',
-    "Hiragino Kaku Gothic ProN",
-    "Yu Gothic",
-    sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
-
 
 /* =========================================================
    SVG ANIMATION
@@ -978,7 +950,9 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: filter 0.3s ease, opacity 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .svg-wrap svg {
@@ -989,7 +963,7 @@ footer {
 
 .loading {
   color: var(--muted);
-  font-size: .9rem;
+  font-size: 0.9rem;
   text-align: center;
   line-height: 1.5;
 }
@@ -999,16 +973,15 @@ footer {
 }
 
 .kana-fallback {
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
 
 .kana-note {
   margin-top: 10px;
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--bad);
   text-align: center;
 }
-
 
 /* =========================================================
    STROKE INDICATOR
@@ -1026,13 +999,13 @@ footer {
   border-radius: 999px;
   background: var(--card-solid);
   border: 1px solid var(--line);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
-  font-size: .75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-size: 0.75rem;
   font-weight: 800;
   white-space: nowrap;
   transition:
-    opacity .3s ease,
-    transform .3s ease;
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .stroke-indicator-number {
@@ -1043,14 +1016,13 @@ footer {
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: .7rem;
+  font-size: 0.7rem;
 }
 
 .stroke-indicator.finished {
-  opacity: .65;
+  opacity: 0.65;
   transform: translateX(-50%) translateY(4px);
 }
-
 
 /* =========================================================
    LEARN NAVIGATION
@@ -1065,7 +1037,6 @@ footer {
   border-top: 1px solid var(--line);
 }
 
-
 /* =========================================================
    STROKE INFORMATION
 ========================================================= */
@@ -1073,11 +1044,7 @@ footer {
 .stroke-box {
   margin-top: 20px;
   padding: 17px;
-  background: color-mix(
-    in srgb,
-    var(--soft) 35%,
-    var(--card)
-  );
+  background: color-mix(in srgb, var(--soft) 35%, var(--card));
   border-radius: 18px;
   border: 1px solid var(--line);
 }
@@ -1099,7 +1066,7 @@ footer {
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 900;
 }
 
@@ -1119,11 +1086,14 @@ footer {
   border: 1px solid var(--line);
   padding: 8px 10px;
   border-radius: 10px;
-  font-size: .85rem;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   gap: 3px;
-  transition: background .2s ease, border-color .2s ease, opacity .2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .stroke-step.active {
@@ -1132,7 +1102,7 @@ footer {
 }
 
 .stroke-step.completed {
-  opacity: .55;
+  opacity: 0.55;
 }
 
 .number {
@@ -1143,12 +1113,11 @@ footer {
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: .72rem;
+  font-size: 0.72rem;
   font-weight: 800;
   margin-right: 5px;
   flex-shrink: 0;
 }
-
 
 /* =========================================================
    EXAM
@@ -1177,7 +1146,7 @@ footer {
 .progress > div {
   height: 100%;
   background: var(--accent);
-  transition: width .4s ease;
+  transition: width 0.4s ease;
 }
 
 .exam-progress {
@@ -1189,9 +1158,9 @@ footer {
   background: var(--soft);
   border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line));
   color: var(--accent-dark);
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
 }
 
 .prompt {
@@ -1222,16 +1191,16 @@ footer {
   border-radius: 18px;
   padding: 22px;
   font-size: 2.7rem;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   cursor: pointer;
-  transition: .15s ease;
+  transition: 0.15s ease;
   position: relative;
 }
 
 .answer:hover:not(:disabled) {
   border-color: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .answer:focus-visible {
@@ -1243,29 +1212,21 @@ footer {
   position: absolute;
   top: 8px;
   left: 10px;
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   opacity: 0.45;
 }
 
 .answer.correct {
   border-color: var(--good);
-  background: color-mix(
-    in srgb,
-    var(--good) 12%,
-    var(--card-solid)
-  );
+  background: color-mix(in srgb, var(--good) 12%, var(--card-solid));
 }
 
 .answer.wrong {
   border-color: var(--bad);
-  background: color-mix(
-    in srgb,
-    var(--bad) 12%,
-    var(--card-solid)
-  );
+  background: color-mix(in srgb, var(--bad) 12%, var(--card-solid));
 }
 
 .answer-correct-anim {
@@ -1283,7 +1244,6 @@ footer {
   font-weight: 800;
 }
 
-
 /* =========================================================
    STREAK BADGE
 ========================================================= */
@@ -1293,7 +1253,7 @@ footer {
   color: #fff;
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 800;
   animation: pulse 1s ease infinite;
 }
@@ -1304,7 +1264,6 @@ footer {
   color: var(--accent-dark);
   margin: 6px 0;
 }
-
 
 /* =========================================================
    FLASHCARD
@@ -1328,7 +1287,7 @@ footer {
 .flash-kana {
   font-size: 6rem;
   line-height: 1.1;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
 
 .flash-romaji {
@@ -1355,7 +1314,6 @@ footer {
   margin: 0 auto;
 }
 
-
 /* =========================================================
    RESULT
 ========================================================= */
@@ -1370,7 +1328,6 @@ footer {
   font-weight: 900;
   color: var(--accent-dark);
 }
-
 
 /* =========================================================
    EXAM SETUP
@@ -1391,7 +1348,7 @@ footer {
   border: 1px solid var(--line);
   border-radius: 12px;
   cursor: pointer;
-  transition: .15s ease;
+  transition: 0.15s ease;
 }
 
 .exam-group-option:hover {
@@ -1412,7 +1369,7 @@ footer {
 
 .exam-group-option small {
   color: var(--muted);
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
 .exam-quick {
@@ -1447,7 +1404,6 @@ footer {
   cursor: pointer;
 }
 
-
 /* =========================================================
    PROGRESS PANEL
 ========================================================= */
@@ -1468,7 +1424,7 @@ footer {
 
 .daily-hint {
   color: var(--muted);
-  font-size: .8rem;
+  font-size: 0.8rem;
   margin: 10px 0 0;
 }
 
@@ -1510,7 +1466,7 @@ footer {
 
 .daily-streak-label {
   color: var(--muted);
-  font-size: .8rem;
+  font-size: 0.8rem;
 }
 
 /* --- wykres słupkowy --- */
@@ -1548,7 +1504,7 @@ footer {
   max-width: 18px;
   border-radius: 3px 3px 0 0;
   background: var(--accent);
-  transition: height .2s ease;
+  transition: height 0.2s ease;
 }
 
 /* dzień bez aktywności — płaska, ale jawna podstawa zamiast pustki */
@@ -1559,18 +1515,12 @@ footer {
 
 /* dzień sprzed rozpoczęcia zbierania — brak słupka w ogóle */
 .daily-bar-slot.before .daily-bar {
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 3px,
-    var(--line) 3px,
-    var(--line) 6px
-  );
-  opacity: .6;
+  background: repeating-linear-gradient(45deg, transparent, transparent 3px, var(--line) 3px, var(--line) 6px);
+  opacity: 0.6;
 }
 
 .daily-bar-label {
-  font-size: .55rem;
+  font-size: 0.55rem;
   color: var(--muted);
   margin-top: 4px;
   white-space: nowrap;
@@ -1599,7 +1549,7 @@ footer {
 }
 
 .daily-stat span {
-  font-size: .68rem;
+  font-size: 0.68rem;
   color: var(--muted);
 }
 
@@ -1646,15 +1596,15 @@ footer {
   padding: 4px 6px;
   border-radius: 6px;
   font-size: 1.1rem;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
   border: 1px solid transparent;
-  transition: .15s ease;
+  transition: 0.15s ease;
 }
 
 .map-cell small {
-  font-size: .6rem;
+  font-size: 0.6rem;
   color: var(--muted);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 .map-cell.new {
@@ -1697,7 +1647,7 @@ footer {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--card-solid);
-  transition: .15s ease;
+  transition: 0.15s ease;
 }
 
 .mistake-chip:hover {
@@ -1706,9 +1656,8 @@ footer {
 
 .mistake-kana {
   font-size: 1.8rem;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: "Noto Sans JP", sans-serif;
 }
-
 
 /* =========================================================
    ANIMATIONS
@@ -1737,25 +1686,48 @@ footer {
 }
 
 @keyframes answerPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes answerShake {
-  0%, 100% { transform: translateX(0); }
-  15% { transform: translateX(-6px); }
-  30% { transform: translateX(5px); }
-  45% { transform: translateX(-4px); }
-  60% { transform: translateX(3px); }
-  75% { transform: translateX(-2px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-6px);
+  }
+  30% {
+    transform: translateX(5px);
+  }
+  45% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
-
 
 /* =========================================================
    TIMER BAR
@@ -1786,11 +1758,10 @@ footer {
   position: absolute;
   right: 4px;
   top: -18px;
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
 }
-
 
 /* =========================================================
    TYPING MODE (Mode C)
@@ -1805,7 +1776,7 @@ footer {
 }
 
 .kana-input {
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   font-size: 2.5rem;
   text-align: center;
   width: 140px;
@@ -1815,7 +1786,9 @@ footer {
   background: var(--card-solid);
   color: var(--ink);
   outline: none;
-  transition: border-color .2s ease, background .2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .kana-input:focus {
@@ -1833,7 +1806,7 @@ footer {
 }
 
 .romaji-input {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   text-align: center;
@@ -1844,7 +1817,9 @@ footer {
   background: var(--card-solid);
   color: var(--ink);
   outline: none;
-  transition: border-color .2s ease, background .2s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .romaji-input:focus {
@@ -1861,21 +1836,19 @@ footer {
   background: color-mix(in srgb, var(--bad) 8%, var(--card-solid));
 }
 
-
 /* =========================================================
    MODE B: ROMAJI ANSWER BUTTONS
 ========================================================= */
 
 .answer-romaji {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
 }
 
 .question-kana {
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
-
 
 /* =========================================================
    XP BADGE
@@ -1886,7 +1859,7 @@ footer {
   color: #1a1400;
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1897,7 +1870,6 @@ footer {
   color: var(--mastered);
   margin: 6px 0;
 }
-
 
 /* =========================================================
    CONFETTI
@@ -1934,7 +1906,6 @@ footer {
   }
 }
 
-
 /* =========================================================
    UTILITY
 ========================================================= */
@@ -1942,7 +1913,6 @@ footer {
 .hidden {
   display: none !important;
 }
-
 
 /* =========================================================
    RESPONSIVE: TABLET
@@ -1984,7 +1954,6 @@ footer {
     grid-template-columns: 1fr 1fr;
   }
 }
-
 
 /* =========================================================
    RESPONSIVE: MOBILE
@@ -2044,7 +2013,7 @@ footer {
 
   .mastery-legend {
     gap: 10px;
-    font-size: .78rem;
+    font-size: 0.78rem;
   }
 
   .flash-svg {
