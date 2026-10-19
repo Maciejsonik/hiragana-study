@@ -1202,6 +1202,29 @@ learning navigation becomes vertical
 typing controls become vertical
 ```
 
+Fluid layout contract:
+
+`.learner` and `.character-area` use `minmax(0, 1fr)` tracks and every panel
+sets `min-width: 0`, so the grid can shrink below the content's min-content
+width instead of pushing the page wider than the viewport. The glyph
+(`.svg-wrap`) is fluid — `width: 100%` capped at `max-width: 250px`, square —
+and `.controls` uses `repeat(auto-fit, minmax(80px, 1fr))` with wrapping
+labels, so three buttons share a row only when they actually fit.
+
+Measured at 15 widths from 320 to 1920 px, with no horizontal overflow:
+
+```text
+≤480 px      glyph fixed at 210px by the `max-width: 480px` block, so the
+             phone glyph is wider than the tablet one
+481–800 px   single-column learner, glyph fluid up to 250px
+801–946 px   two equal, shrinkable panels; single-column controls;
+             glyph 148–220 px
+1000 px+     glyph caps at 250px
+```
+
+The narrowest panel content box is 148 px (at 801 px). The 120 px content floor
+and the absence of overflow are asserted by LAY.0–LAY.8 in `tests-learn.html`.
+
 Touch support:
 
 ```text

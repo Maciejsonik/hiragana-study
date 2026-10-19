@@ -8,6 +8,10 @@
      3. Najechanie strzałkami zostawiało sekcję rozwiniętą na stałe.
      4. Dwuznakowe kana yōon (きゃ, しゅ, ちょ…) łamały się na dwa wiersze
         w przycisku 37px i wyglądały jak kolumna zamiast wiersza.
+     5. Poziomy overflow w oknie 801–946 px i na telefonach (320–414 px):
+        siatki `.learner`, `.character-area` i `.controls` nie dawały się
+        skurczyć poniżej min-content karty (403 px), a `.svg-wrap` miał
+        sztywne 250×250.
 
    Uruchomienie: tests-learn.html (patrz tests-learn.js w tym samym katalogu).
 
@@ -476,6 +480,233 @@
 
       const cssText = await (await fetch('style.css')).text();
       ok('UX21 CSS nie zawiera już .quiz-hidden', cssText.indexOf('quiz-hidden') < 0);
+
+      /* =====================================================
+         F. REGRESJA 5 — układ nauki nie wystaje poza okno
+            Siatki `.learner`, `.character-area` i `.controls`
+            miały domyślne minimum `auto`, więc nie dawały się
+            skurczyć poniżej min-content karty (403 px). Skutek:
+            poziomy overflow w oknie 801–946 px i na telefonach
+            (320–414 px), ucięty „Następny” i glif wychodzący
+            poza panel.
+
+            Test ładuje PRAWDZIWE `index.html` w iframe i mierzy
+            układ przy kolejnych szerokościach — media queries,
+            breakpointy i realne `app.js` działają jak w aplikacji.
+            Sama zmiana szerokości iframe jest tańsza i wierniejsza
+            niż podstawianie `grid-template-columns` na sztywno.
+
+            Wysokość iframe (5000 px) jest większa niż najwyższa
+            strona (~3450 px), więc w środku nie ma pionowego paska
+            przewijania. Pasek zwężałby viewport o ~15 px i przy
+            801 px media query przełączyłoby układ na mobilny —
+            test mierzyłby wtedy coś innego, niż deklaruje. `LAY.0`
+            pilnuje, że viewport iframe równa się zadanej szerokości.
+         ===================================================== */
+      const holder = document.createElement('div');
+      holder.style.cssText =
+        'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+      const frame = document.createElement('iframe');
+      frame.style.cssText = 'border:0;display:block;width:820px;height:5000px;';
+      frame.src = 'index.html';
+      holder.appendChild(frame);
+      document.body.appendChild(holder);
+
+      try {
+        const appReady = () => !!(frame.contentWindow && typeof frame.contentWindow.setScreen === 'function');
+        for (let i = 0; i < 200 && !appReady(); i++) await wait(100);
+        if (!appReady()) throw new Error('iframe: index.html nie wczytał się w 20 s');
+
+        frame.contentWindow.setScreen('learn');
+
+        const required = [
+          '.learn-nav',
+          '.char-panel',
+          '.char-panel.stroke-box',
+          '.controls',
+          '.svg-wrap',
+          '.learn-section-body .kana-btn'
+        ];
+        let missing = required.slice();
+        for (let i = 0; i < 100 && missing.length; i++) {
+          missing = required.filter(sel => !frame.contentDocument.querySelector(sel));
+          if (missing.length) await wait(100);
+        }
+        if (missing.length) throw new Error('iframe: brak elementów ekranu nauki: ' + missing.join(', '));
+
+        // Glif to albo <svg> z KanjiVG, albo tekstowy `.kana-fallback`.
+        // Stan „Ładowanie znaku…” nie jest fixture'em: test ma wtedy
+        // zgłosić, że nie mógł zweryfikować układu, a nie zaliczyć go.
+        const glyphOf = () => {
+          const wrap = frame.contentDocument.querySelector('.svg-wrap');
+          return wrap ? wrap.querySelector('svg') || wrap.querySelector('.kana-fallback') : null;
+        };
+        for (let i = 0; i < 100 && !glyphOf(); i++) await wait(100);
+        if (!glyphOf()) {
+          const loading = frame.contentDocument.querySelector('.svg-wrap .loading');
+          throw new Error(
+            loading
+              ? 'iframe: glif wciąż w stanie ładowania po 10 s — nie da się zweryfikować układu'
+              : 'iframe: brak <svg> i .kana-fallback w .svg-wrap — nieprawidłowy fixture'
+          );
+        }
+        const glyphSource = frame.contentDocument.querySelector('.svg-wrap svg') ? 'svg' : 'fallback';
+        await wait(400);
+
+        const widths = [320, 360, 390, 414, 768, 801, 810, 820, 834, 900, 946, 1000, 1280, 1440, 1920];
+        const viewportAt = [];
+        const overflowAt = [];
+        const glyphAt = [];
+        const panelAt = [];
+        const strokeAt = [];
+        const ctrlAt = [];
+        const navAt = [];
+        const flashAt = [];
+        let minKana = Infinity;
+        let kanaSamples = 0;
+        let minGlyph = Infinity;
+        let minContent = Infinity;
+        let minStroke = Infinity;
+
+        for (const w of widths) {
+          frame.style.width = w + 'px';
+          await wait(220);
+          const d = frame.contentDocument;
+          const win = frame.contentWindow;
+          const de = d.documentElement;
+
+          if (de.clientWidth !== w) viewportAt.push(w + ':' + de.clientWidth);
+          const over = de.scrollWidth - de.clientWidth;
+          if (over > 0) overflowAt.push(w + ':' + over);
+
+          const panel = d.querySelector('.char-panel');
+          const stroke = d.querySelector('.char-panel.stroke-box');
+          const wrap = d.querySelector('.svg-wrap');
+          const controls = d.querySelector('.controls');
+          const nav = d.querySelector('.learn-nav');
+          if (!panel || !stroke || !wrap || !controls || !nav) {
+            throw new Error('iframe: elementy ekranu nauki zniknęły przy ' + w + 'px');
+          }
+
+          // Content box: rect minus border i padding. Mierzenie border boxu
+          // przepuściłoby glif wchodzący w padding panelu.
+          const contentBox = el => {
+            const r = el.getBoundingClientRect();
+            const s = win.getComputedStyle(el);
+            const bl = parseFloat(s.borderLeftWidth);
+            const br = parseFloat(s.borderRightWidth);
+            const pl = parseFloat(s.paddingLeft);
+            const pr = parseFloat(s.paddingRight);
+            return {
+              left: r.left + bl + pl,
+              right: r.right - br - pr,
+              width: r.width - bl - br - pl - pr
+            };
+          };
+
+          const glyph = wrap.querySelector('svg') || wrap.querySelector('.kana-fallback');
+          if (!glyph) throw new Error('iframe: brak glifu przy ' + w + 'px');
+
+          const pc = contentBox(panel);
+          const sc = contentBox(stroke);
+          const wr = wrap.getBoundingClientRect();
+          const gr = glyph.getBoundingClientRect();
+          if (!(
+            gr.width > 0 &&
+            gr.height > 0 &&
+            wr.left >= pc.left - 0.5 &&
+            wr.right <= pc.right + 0.5 &&
+            gr.left >= pc.left - 0.5 &&
+            gr.right <= pc.right + 0.5
+          )) {
+            glyphAt.push(w + ':' + Math.round(wr.width) + '/' + Math.round(pc.width));
+          }
+          if (gr.width < minGlyph) minGlyph = gr.width;
+
+          // Minimum treści: panel kresek musi zmieścić numer kreski (21 px),
+          // odstęp (3 px) i najdłuższe słowo opisu (~70 px przy 0.85 rem)
+          // plus padding 20 px — razem ~114 px. 120 px to zaokrąglony zapas;
+          // dokładne dopasowanie sprawdza LAY.4 na realnych krokach.
+          if (!(pc.width > 0 && sc.width > 0 && pc.width >= 120 && sc.width >= 120)) {
+            panelAt.push(w + ':' + Math.round(pc.width) + '/' + Math.round(sc.width));
+          }
+          if (pc.width < minContent) minContent = pc.width;
+          if (sc.width < minContent) minContent = sc.width;
+          if (sc.width < minStroke) minStroke = sc.width;
+
+          for (const step of stroke.querySelectorAll('.stroke-step')) {
+            const sr = step.getBoundingClientRect();
+            if (step.scrollWidth - step.clientWidth > 1 || sr.right > sc.right + 0.5) {
+              strokeAt.push(w + ':' + step.textContent.trim().slice(0, 24));
+              break;
+            }
+          }
+
+          for (const b of controls.querySelectorAll('button')) {
+            const br = b.getBoundingClientRect();
+            if (b.scrollWidth - b.clientWidth > 1 || br.right > pc.right + 0.5) {
+              ctrlAt.push(w + ':' + b.textContent.trim());
+              break;
+            }
+          }
+
+          for (const b of nav.querySelectorAll('button')) {
+            if (b.getBoundingClientRect().right > de.clientWidth + 0.5) {
+              navAt.push(w + ':' + b.textContent.trim());
+              break;
+            }
+          }
+
+          for (const b of d.querySelectorAll('.learn-section-body .kana-btn')) {
+            const r = b.getBoundingClientRect();
+            if (r.width <= 0 || r.height <= 0) continue;
+            kanaSamples++;
+            const m = Math.min(r.width, r.height);
+            if (m < minKana) minKana = m;
+          }
+
+          // Fiszka egzaminacyjna używa tych samych klas co panel nauki.
+          // `.flash-svg` ma nadpisać bazowy `.svg-wrap`; gdyby przegrał,
+          // szerokość dobiłaby do limitu 250 px.
+          if (w === 390 || w === 1920) {
+            const probe = d.createElement('div');
+            probe.className = 'svg-wrap flash-svg';
+            probe.style.cssText = 'position:absolute;left:-9999px;top:0;';
+            d.body.appendChild(probe);
+            const pr = probe.getBoundingClientRect();
+            probe.remove();
+            if (!(pr.width > 0 && pr.width < 250 && Math.abs(pr.width - pr.height) < 1)) {
+              flashAt.push(w + ':' + Math.round(pr.width) + 'x' + Math.round(pr.height));
+            }
+          }
+        }
+
+        if (!kanaSamples) throw new Error('iframe: nie zmierzono żadnego przycisku kana');
+
+        ok('LAY.0 viewport iframe równy szerokości testowej', viewportAt.length === 0, viewportAt.join(' '));
+        ok('LAY.1 brak poziomego overflow 320–1920', overflowAt.length === 0, overflowAt.join(' '));
+        ok(
+          'LAY.2 glif mieści się w treści panelu',
+          glyphAt.length === 0,
+          glyphAt.length ? glyphAt.join(' ') : 'źródło=' + glyphSource + ', min=' + Math.round(minGlyph) + 'px'
+        );
+        ok(
+          'LAY.3 oba panele mają co najmniej 120 px treści',
+          panelAt.length === 0,
+          panelAt.length ? panelAt.join(' ') : 'min=' + Math.round(minContent) + 'px'
+        );
+        ok(
+          'LAY.4 opisy kresek mieszczą się bez przycinania',
+          strokeAt.length === 0,
+          strokeAt.length ? strokeAt.join(' ') : 'min treści=' + Math.round(minStroke) + 'px'
+        );
+        ok('LAY.5 przyciski sterujące bez przepełnienia', ctrlAt.length === 0, ctrlAt.join(' '));
+        ok('LAY.6 nawigacja mieści się w oknie', navAt.length === 0, navAt.join(' '));
+        ok('LAY.7 przyciski kana >= 44px', minKana >= 44, 'min=' + minKana.toFixed(1));
+        ok('LAY.8 fiszka zachowuje własny rozmiar glifu', flashAt.length === 0, flashAt.join(' '));
+      } finally {
+        holder.remove();
+      }
 
       report();
     } catch (e) {
