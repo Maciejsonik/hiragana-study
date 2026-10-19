@@ -12,3 +12,8 @@ svg/
 
 # Logi
 *.log
+
+# Artefakty narzędzi deweloperskich — zrzuty ekranu i pomiary z Playwright MCP
+# (patrz .opencode/commands/verify.md). Powstają przy każdym uruchomieniu
+# harnessów i nie są częścią aplikacji.
+.playwright-mcp/
