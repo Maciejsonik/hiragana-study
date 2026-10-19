@@ -248,6 +248,11 @@ However:
 
 When KanjiVG loads successfully, the application updates the displayed stroke count/badge using the actual SVG data.
 
+The description lists are kept in sync with that count: **one entry is one stroke**, so
+`strokeCounts`, the badge and the list always agree. The 32 characters that disagreed
+are fixed — see §41 item 2 — and STR1–STR3 in `tests-learn.html` guard the invariant
+offline.
+
 This behavior was introduced in T6.
 
 ---
@@ -1871,8 +1876,7 @@ These are not necessarily bugs; they are items to verify.
 
 Status of each item: **fixed** — behaviour or markup changed; **covered** —
 correct already, now protected by tests; **no defect** — checked, nothing to
-change; **known issue** — real, deliberately left alone; **accepted** — a
-decision, not a bug.
+change; **accepted** — a decision, not a bug.
 
 ## Fixed in the 2026-10 audit round
 
@@ -1880,6 +1884,7 @@ decision, not a bug.
 - **4. Hard-practice settings preservation — RESOLVED.** The practice-hard button saved only `{groups, options, outside}`, and `saveExamSettings()` overwrites wholesale, so `limit`, `modes` and `timer` were lost on every use — four question modes collapsed to one, timer and limit reset to 0. `readSetup()` already returned every field; the caller now passes the full set to both `saveExamSettings()` and `startExam()`. Covered by the CFG assertions in `tests.js`.
 - **9. Unused CSS/JS hooks — RESOLVED, no test added.** Two dead rules removed: `.sound` and `.stroke-title`. Verified by literal search across `app.js`, `index.html`, all three harnesses and `sw.js`, by checking class attributes and `classList` use, and by confirming no concatenation can produce either name. Of the six `stroke-*` classes, the other five are in use. **Not covered by a test** — a CSS-scanner test would have to reimplement the detection and would break on any new dynamic class name. An earlier count of six unused classes was wrong: it missed the `mastery-*` classes, which are built at runtime as `mastery-${masteryLevel(kana)}`.
 - **11. Confetti hardcoded colors — RESOLVED, was a real bug.** `spawnConfetti()` set inline colors from six literals. Four matched theme tokens but only their light-theme values, so in dark mode the result screen threw light-theme confetti; two more had no token at all. Now references `--accent`, `--good`, `--warn`, `--bad`, `--mastered` — five colors instead of six, accepted rather than worked around. `var()` resolves in an inline style, so no `getComputedStyle` and no new variable. Covered by CF1–CF6 in `tests.js`; four of them fail against the old palette.
+- **2. Manual stroke counts vs KanjiVG — RESOLVED, 32 of 208 were wrong, and the manual data was the wrong side in every one.** All 148 KanjiVG parts were fetched through `loadKanji()`; 176 characters agreed. **21 hiragana** — `ぎ ぐ げ ご じゃ じゅ じょ だ ぢ づ で ど びゃ びゅ びょ ぶ べ ぼ ぎゃ ぎゅ ぎょ` — were short by exactly one, because their dakuten was written as a single entry covering both marks (`dwie ukośne kreski dakuten…`), while the count is `strokes.length`. The earlier note blamed KanjiVG for drawing the mark with three strokes; **that was wrong**. Measured: `き` is 4 and `ぎ` is 6, `く` is 1 and `ぐ` is 3 — the dakuten contributes two, which is the conventional count. **11 katakana were wrong in both directions**: `フ 4→1`, `ブ 6→3`, `プ 5→2`, `セ 3→2`, `ゼ 5→4`, `ヤ 3→2`, `レ 2→1`, `ン 1→2`, `テ 2→3`, `デ 4→5`, `ヂ 4→5`. The affected lists were regrouped onto the real stroke boundaries — for katakana against the measured KanjiVG geometry (`getPointAtLength`, including each stroke's direction), not by guesswork. `チ`'s third description was a placeholder (`trzecia kreska チ`) and is now the real stroke; its count was already correct. The runtime reconciliation in `mountKana` (`if (player.count !== count)`) is unchanged and is now a no-op for all 208 characters. Covered by STR1–STR4 in `tests-learn.js`; STR1, STR2 and STR4 fail against the old data.
 ## Verified correct, now covered by tests
 
 - **13. Question-limit off-by-one — VERIFIED CORRECT, now covered.** The limit is checked at the top of `nextExamQuestion()`, so after the Nth answer the exam finishes with `total === N` and never renders an extra question. Covered by LIM1–LIM8; verified by mutating `>=` to `>`.
@@ -1892,10 +1897,6 @@ decision, not a bug.
 - **5. Theme system branch — MINOR GAP, not a defect.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render and there is no `change` listener. With the theme set to `system`, switching the OS appearance while the app is open does not re-theme it until the next render or reload. Nothing is wrong with the branch itself.
 - **6. `mountKana().finish()` — NOT A BUG, the item rests on a wrong premise.** `mountKana()` returns `{ play, step, showAll, count }`. There is no `finish` on the returned object; `finish` is a local function inside `mountKana`, called by `step()` and `play()` when the last stroke completes, and never exposed. `player.finish` is not referenced anywhere in the app or the harnesses.
 - **7. Global keyboard listener vs text inputs — NO DEFECT FOUND.** Typed inputs attach their own `keydown` handler that calls `e.stopPropagation()` for Enter, so the global listener never sees it. Digit shortcuts are additionally guarded by `exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type'`, so typing digits into the field selects nothing. Escape reaches the global handler and returns to the menu, which is intended. Worth remembering: that guard is positional — any input added to Learn mode later will need its own handling.
-## Known issue, deliberately left as-is
-
-- **2. Manual stroke counts vs KanjiVG — KNOWN CONTENT DRIFT, 32 of 208 disagree.** All 148 KanjiVG parts were fetched and compared against `hiraganaStrokeText` and `katakanaStrokeText`. 176 match. Two distinct causes: 21 hiragana are off by +1, all dakuten or handakuten characters, because KanjiVG draws the mark as three strokes where the conventional count is two — `ぎ ぐ げ ご じゃ じゅ じょ だ ぢ づ で ど びゃ びゅ びょ ぶ べ ぼ ぎゃ ぎゅ ぎょ`; and 11 katakana are simply wrong in the manual data — `フ 4→1`, `ブ 6→3`, `プ 5→2`, `セ 3→2`, `ゼ 5→4`, `ヤ 3→2`, `レ 2→1`, `ン 1→2`, `テ 2→3`, `デ 4→5`, `ヂ 4→5`. `mountKana` reconciles the count badge and the order line at runtime (`if (player.count !== count)`), but **not** the description list, so the panel can show "1 kreska" above four descriptions for `フ`, or "2 kreski" above a description that says *jeden ruch* for `ン`. This is educational content, not code: the descriptions are individually written (104 unique sets in hiragana, 103 in katakana — `マ` and `メ` share one legitimately), so it is drift rather than copy-paste. **Left as-is deliberately** — correcting it means rewriting 32 descriptions, which is a content decision, not a mechanical fix.
-
 ## Accepted — deliberate decisions, not bugs
 
 - **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
@@ -2455,7 +2456,8 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion (245 assertions)
-tests-learn.html + tests-learn.js  learn panel / layout / motion       ( 75 assertions)
+tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
+                                   descriptions vs KanjiVG             ( 88 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 
@@ -2489,5 +2491,11 @@ check that the animation is **wired** (CSS, `::details-content`, `allow-discrete
 `prefers-reduced-motion`) and that `<details>` survives a kana switch — without
 which a transition could not replay at all. Smoothness and appearance still need
 a human eye in a real browser.
+
+The stroke-description checks (`STR1`–`STR3`) compare `strokeText` against a
+frozen table of the 32 characters that disagreed with KanjiVG, not against
+KanjiVG live — the harness stays offline. Drift in a character outside that set
+would not be caught, and re-counting all 208 means re-running the comparison
+described in §41 item 2.
 
 ---

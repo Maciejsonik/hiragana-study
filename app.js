@@ -311,10 +311,10 @@ const hiraganaStrokeText = {
 
   // Dakuten K
   'が': ['pozioma kreska zagięta w dół z hakiem', 'długa kreska ukośnie w dół w lewo', 'krótka kreska po prawej', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'ぎ': ['górna pozioma kreska', 'druga pozioma kreska, dłuższa', 'pionowa kreska w dół przecinająca obie poziome', 'łuk na dole', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'ぐ': ['ukośna kreska w dół w lewo, potem ukośnie w dół w prawo', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'げ': ['pionowa kreska po lewej', 'krótka pozioma kreska po prawej', 'długa pionowa kreska po prawej z hakiem', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'ご': ['górna kreska, lekko wygięta', 'dolna kreska, dłuższa, wygięta', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
+  'ぎ': ['górna pozioma kreska', 'druga pozioma kreska, dłuższa', 'pionowa kreska w dół przecinająca obie poziome', 'łuk na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ぐ': ['ukośna kreska w dół w lewo, potem ukośnie w dół w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'げ': ['pionowa kreska po lewej', 'krótka pozioma kreska po prawej', 'długa pionowa kreska po prawej z hakiem', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ご': ['górna kreska, lekko wygięta', 'dolna kreska, dłuższa, wygięta', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Dakuten S
   'ざ': ['pozioma kreska', 'ukośna kreska w dół z zakrętem', 'łuk na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
@@ -324,18 +324,18 @@ const hiraganaStrokeText = {
   'ぞ': ['ukośna kreska w prawo, zygzak w lewo, na dole długi łuk w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Dakuten T
-  'だ': ['pozioma kreska', 'ukośna kreska w dół w lewo', 'krótka pozioma kreska po prawej', 'łuk na dole po prawej', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'ぢ': ['krótka pozioma kreska', 'kreska w dół z łukiem w prawo na dole', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'づ': ['jeden łuk: w prawo, potem w dół i w lewo', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'で': ['pozioma kreska w prawo, potem łuk w dół w lewo', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'ど': ['krótka kreska ukośna w dół', 'długa kreska w dół z łukiem w prawo na dole', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
+  'だ': ['pozioma kreska', 'ukośna kreska w dół w lewo', 'krótka pozioma kreska po prawej', 'łuk na dole po prawej', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ぢ': ['krótka pozioma kreska', 'kreska w dół z łukiem w prawo na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'づ': ['jeden łuk: w prawo, potem w dół i w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'で': ['pozioma kreska w prawo, potem łuk w dół w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ど': ['krótka kreska ukośna w dół', 'długa kreska w dół z łukiem w prawo na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Dakuten H
   'ば': ['pionowa kreska po lewej', 'krótka pozioma kreska po prawej', 'pionowa kreska z pętlą na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'び': ['krótka kreska w prawo, potem duży łuk w dół i w górę', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'ぶ': ['krótka kreska u góry', 'mała kreska po lewej', 'mała kreska po prawej', 'kreska po prawej na dole', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'べ': ['łagodna kreska w górę w prawo, potem w dół w prawo', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
-  'ぼ': ['pionowa kreska po lewej', 'pozioma kreska', 'druga pozioma kreska', 'pionowa kreska z pętlą na dole', 'dwie ukośne kreski dakuten w prawym górnym rogu'],
+  'ぶ': ['krótka kreska u góry', 'mała kreska po lewej', 'mała kreska po prawej', 'kreska po prawej na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'べ': ['łagodna kreska w górę w prawo, potem w dół w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ぼ': ['pionowa kreska po lewej', 'pozioma kreska', 'druga pozioma kreska', 'pionowa kreska z pętlą na dole', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Handakuten H
   'ぱ': ['pionowa kreska po lewej', 'krótka pozioma kreska po prawej', 'pionowa kreska z pętlą na dole', 'kółko handakuten w prawym górnym rogu'],
@@ -380,19 +380,19 @@ const hiraganaStrokeText = {
   'りょ': ['pierwsza kreska り', 'druga kreska り', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
 
   // Yōon G
-  'ぎゃ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'dwie kreski dakuten ぎ', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
-  'ぎゅ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'dwie kreski dakuten ぎ', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
-  'ぎょ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'dwie kreski dakuten ぎ', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
+  'ぎゃ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'pierwsza kreska dakuten ぎ', 'druga kreska dakuten ぎ', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
+  'ぎゅ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'pierwsza kreska dakuten ぎ', 'druga kreska dakuten ぎ', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
+  'ぎょ': ['górna pozioma kreska ぎ', 'druga pozioma kreska ぎ', 'pionowa kreska ぎ', 'łuk na dole ぎ', 'pierwsza kreska dakuten ぎ', 'druga kreska dakuten ぎ', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
 
   // Yōon J
-  'じゃ': ['główna kreska じ', 'dwie kreski dakuten じ', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
-  'じゅ': ['główna kreska じ', 'dwie kreski dakuten じ', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
-  'じょ': ['główna kreska じ', 'dwie kreski dakuten じ', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
+  'じゃ': ['główna kreska じ', 'pierwsza kreska dakuten じ', 'druga kreska dakuten じ', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
+  'じゅ': ['główna kreska じ', 'pierwsza kreska dakuten じ', 'druga kreska dakuten じ', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
+  'じょ': ['główna kreska じ', 'pierwsza kreska dakuten じ', 'druga kreska dakuten じ', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
 
   // Yōon B
-  'びゃ': ['główna kreska び', 'dwie kreski dakuten び', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
-  'びゅ': ['główna kreska び', 'dwie kreski dakuten び', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
-  'びょ': ['główna kreska び', 'dwie kreski dakuten び', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
+  'びゃ': ['główna kreska び', 'pierwsza kreska dakuten び', 'druga kreska dakuten び', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
+  'びゅ': ['główna kreska び', 'pierwsza kreska dakuten び', 'druga kreska dakuten び', 'pierwsza kreska małego ゅ', 'druga kreska małego ゅ'],
+  'びょ': ['główna kreska び', 'pierwsza kreska dakuten び', 'druga kreska dakuten び', 'pierwsza kreska małego ょ', 'druga kreska małego ょ'],
 
   // Yōon P
   'ぴゃ': ['główna kreska ぱ', 'kółko handakuten ぱ', 'pierwsza kreska małego ゃ', 'druga kreska małego ゃ', 'trzecia kreska małego ゃ'],
@@ -422,14 +422,14 @@ const katakanaStrokeText = {
   'サ': ['krótka kreska ukośna w dół', 'pionowa kreska w dół', 'długa pozioma kreska z zakrętem na końcu'],
   'シ': ['krótka kreska ukośna u góry', 'krótka kreska ukośna pośrodku', 'długa kreska od lewej w dół i w prawo'],
   'ス': ['ukośna kreska w dół w lewo', 'długa kreska od góry w prawo, potem łuk w dół w lewo'],
-  'セ': ['pozioma kreska', 'pionowa kreska w dół', 'długa pozioma kreska z zakrętem w dół'],
+  'セ': ['długa pozioma kreska w prawo z zakrętem w dół', 'pionowa kreska w dół, potem pozioma kreska w prawo'],
   'ソ': ['krótka kreska ukośna w dół', 'długa kreska ukośna w dół w lewo z łukiem na końcu'],
 
   // T
   'タ': ['krótka kreska ukośna w dół', 'ukośna kreska w dół w lewo', 'długa kreska od góry w prawo, potem w dół'],
-  'チ': ['krótka pozioma kreska', 'długa pozioma kreska z pionową kreską w dół', 'trzecia kreska チ'],
+  'チ': ['krótka pozioma kreska', 'długa pozioma kreska', 'pionowa kreska w dół'],
   'ツ': ['krótka kreska ukośna w dół', 'krótka kreska ukośna w dół', 'długa kreska od lewej w dół i w prawo'],
-  'テ': ['górna pozioma kreska', 'długa dolna pozioma kreska z pionowym zakrętem w dół'],
+  'テ': ['górna pozioma kreska', 'długa dolna pozioma kreska', 'kreska ukośna w dół w lewo'],
   'ト': ['pionowa kreska w dół', 'krótka kreska ukośna w prawo'],
 
   // N
@@ -442,7 +442,7 @@ const katakanaStrokeText = {
   // H
   'ハ': ['krótka kreska ukośna w dół w lewo', 'długa kreska ukośna w dół w prawo'],
   'ヒ': ['pozioma kreska z zakrętem w dół', 'długa pionowa kreska w dół z zakrętem w lewo'],
-  'フ': ['krótka pozioma kreska', 'długa kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo', 'łuk od góry w lewo i w dół'],
+  'フ': ['jeden ruch: pozioma kreska w prawo, potem długa kreska ukośna w dół w lewo'],
   'ヘ': ['jeden ruch: łagodna kreska w górę w prawo, potem w dół w prawo'],
   'ホ': ['pionowa kreska', 'pozioma kreska', 'krótka kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo'],
 
@@ -454,7 +454,7 @@ const katakanaStrokeText = {
   'モ': ['górna pozioma kreska', 'środkowa pozioma kreska', 'pionowa kreska w dół z zakrętem'],
 
   // Y
-  'ヤ': ['ukośna kreska w dół w lewo', 'krótka pozioma kreska', 'długa kreska ukośna w dół w lewo'],
+  'ヤ': ['krótka pozioma kreska w prawo, potem ukośna kreska w dół w lewo', 'długa kreska ukośna w dół w lewo'],
   'ユ': ['pionowa kreska w dół', 'długa pozioma kreska z zakrętem po prawej'],
   'ヨ': ['górna pozioma kreska', 'środkowa pozioma kreska', 'pionowa kreska z dolną poziomą kreską'],
 
@@ -462,13 +462,13 @@ const katakanaStrokeText = {
   'ラ': ['krótka kreska u góry', 'długa kreska od lewej w dół i w prawo z zakrętem'],
   'リ': ['krótka kreska ukośna w dół', 'długa pionowa kreska w dół z zakrętem w lewo'],
   'ル': ['pionowa kreska w dół', 'ukośna kreska w dół w prawo z zakrętem'],
-  'レ': ['pionowa kreska w dół', 'długa kreska od góry w lewo, potem łuk w prawo'],
+  'レ': ['jeden ruch: pionowa kreska w dół, potem kreska w prawo w górę'],
   'ロ': ['górna kreska z pionowym zakrętem w dół', 'prawa pionowa kreska', 'dolna pozioma kreska'],
 
   // W
   'ワ': ['krótka kreska ukośna w dół', 'długa kreska od góry w lewo, potem w dół i w prawo'],
   'ヲ': ['pozioma kreska', 'ukośna kreska w dół w lewo', 'długa kreska od góry w prawo, potem w dół'],
-  'ン': ['jeden ruch: kreska ukośna w dół w lewo z zakrętem w prawo'],
+  'ン': ['krótka kreska ukośna w dół w prawo', 'długa kreska ukośna w dół w lewo z zakrętem w prawo'],
 
   // Dakuten K
   'ガ': ['pionowa kreska z lekkim zakrętem na dole', 'ukośna kreska w dół w lewo z łukiem na końcu', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
@@ -481,27 +481,27 @@ const katakanaStrokeText = {
   'ザ': ['pozioma kreska', 'pionowa kreska w dół', 'długa pozioma kreska z zakrętem na końcu', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ジ': ['krótka kreska ukośna u góry', 'krótka kreska ukośna pośrodku', 'długa kreska od lewej w dół i w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ズ': ['ukośna kreska w dół w lewo', 'długa kreska od góry w prawo, potem łuk w dół w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'ゼ': ['pozioma kreska', 'pionowa kreska w dół', 'długa pozioma kreska z zakrętem w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ゼ': ['długa pozioma kreska w prawo z zakrętem w dół', 'pionowa kreska w dół, potem pozioma kreska w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ゾ': ['krótka kreska ukośna w dół', 'długa kreska ukośna w dół w lewo z łukiem na końcu', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Dakuten T
   'ダ': ['krótka kreska ukośna w dół', 'ukośna kreska w dół w lewo', 'długa kreska od góry w prawo, potem w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'ヂ': ['krótka pozioma kreska', 'długa pozioma kreska z pionową kreską w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ヂ': ['krótka pozioma kreska', 'długa pozioma kreska', 'pionowa kreska w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ヅ': ['krótka kreska ukośna w dół', 'krótka kreska ukośna w dół', 'długa kreska od lewej w dół i w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'デ': ['górna pozioma kreska', 'długa dolna pozioma kreska z pionowym zakrętem w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'デ': ['górna pozioma kreska', 'długa dolna pozioma kreska', 'kreska ukośna w dół w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ド': ['pionowa kreska w dół', 'krótka kreska ukośna w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Dakuten H
   'バ': ['krótka kreska ukośna w dół w lewo', 'długa kreska ukośna w dół w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ビ': ['pozioma kreska z zakrętem w dół', 'długa pionowa kreska w dół z zakrętem w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
-  'ブ': ['krótka pozioma kreska', 'długa kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo', 'łuk od góry w lewo i w dół', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
+  'ブ': ['jeden ruch: pozioma kreska w prawo, potem długa kreska ukośna w dół w lewo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ベ': ['łagodna kreska w górę w prawo, potem w dół w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
   'ボ': ['pionowa kreska', 'pozioma kreska', 'krótka kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo', 'ukośna kreska dakuten w prawym górnym rogu', 'druga ukośna kreska dakuten'],
 
   // Handakuten H
   'パ': ['krótka kreska ukośna w dół w lewo', 'długa kreska ukośna w dół w prawo', 'kółko handakuten w prawym górnym rogu'],
   'ピ': ['pozioma kreska z zakrętem w dół', 'długa pionowa kreska w dół z zakrętem w lewo', 'kółko handakuten w prawym górnym rogu'],
-  'プ': ['krótka pozioma kreska', 'długa kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo', 'łuk od góry w lewo i w dół', 'kółko handakuten w prawym górnym rogu'],
+  'プ': ['jeden ruch: pozioma kreska w prawo, potem długa kreska ukośna w dół w lewo', 'kółko handakuten w prawym górnym rogu'],
   'ペ': ['łagodna kreska w górę w prawo, potem w dół w prawo', 'kółko handakuten w prawym górnym rogu'],
   'ポ': ['pionowa kreska', 'pozioma kreska', 'krótka kreska ukośna w dół w lewo', 'krótka kreska ukośna w dół w prawo', 'kółko handakuten w prawym górnym rogu'],
 

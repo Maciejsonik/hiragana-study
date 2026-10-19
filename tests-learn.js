@@ -12,6 +12,10 @@
         siatki `.learner`, `.character-area` i `.controls` nie dawały się
         skurczyć poniżej min-content karty (403 px), a `.svg-wrap` miał
         sztywne 250×250.
+     6. Opisy kresek rozjeżdżały się z liczbą kresek z KanjiVG w 32 z 208
+        znaków: 21 hiragana miało scalony opis dakuten (jedna pozycja na
+        dwie kreski), a 11 katakana miało błędną liczbę opisów. Plakietka
+        pokazywała liczbę z SVG, lista opisów — inną.
 
    Uruchomienie: tests-learn.html (patrz tests-learn.js w tym samym katalogu).
 
@@ -706,6 +710,108 @@
         ok('LAY.8 fiszka zachowuje własny rozmiar glifu', flashAt.length === 0, flashAt.join(' '));
       } finally {
         holder.remove();
+      }
+
+      /* =====================================================
+         G. DANE KRESEK — opisy zgodne z liczbą kresek (#2, §41)
+            Liczba opisów w `strokeText` JEST liczbą kresek, bo
+            `getStrokeCounts()` bierze `strokes.length`. Gdy opisy
+            się rozjeżdżały, panel pokazywał plakietkę z SVG nad
+            listą o innej długości.
+
+            Zbiór i liczby poniżej pochodzą z pomiaru wszystkich
+            148 części KanjiVG przez `loadKanji()` — 208 znaków,
+            z czego 32 się rozjeżdżało. Test jest offline: nie
+            sięga do sieci, żeby nie wymagał internetu.
+            ===================================================== */
+      try {
+        const EXPECTED = {
+          hiragana: {
+            ぎ: 6,
+            ぐ: 3,
+            げ: 5,
+            ご: 4,
+            だ: 6,
+            ぢ: 4,
+            づ: 3,
+            で: 3,
+            ど: 4,
+            ぶ: 6,
+            べ: 3,
+            ぼ: 6,
+            じゃ: 6,
+            じゅ: 5,
+            じょ: 5,
+            びゃ: 6,
+            びゅ: 5,
+            びょ: 5,
+            ぎゃ: 9,
+            ぎゅ: 8,
+            ぎょ: 8
+          },
+          katakana: {
+            セ: 2,
+            テ: 3,
+            フ: 1,
+            ヤ: 2,
+            レ: 1,
+            ン: 2,
+            ゼ: 4,
+            ヂ: 5,
+            デ: 5,
+            ブ: 3,
+            プ: 2
+          }
+        };
+
+        const wrong = [];
+        for (const script of ['hiragana', 'katakana']) {
+          const text = scriptData[script].strokeText;
+          for (const [kana, expected] of Object.entries(EXPECTED[script])) {
+            const list = text[kana];
+            const actual = Array.isArray(list) ? list.length : -1;
+            if (actual !== expected) wrong.push(kana + '=' + actual + '(ma być ' + expected + ')');
+          }
+        }
+        ok('STR1 liczby kresek zgadzają się z KanjiVG', wrong.length === 0, wrong.join(' '));
+
+        // Jedna pozycja = jedna kreska. Wcześniej 21 hiragana miało
+        // jedną pozycję opisującą dwie kreski dakuten naraz.
+        const merged = [];
+        const empty = [];
+        for (const script of ['hiragana', 'katakana']) {
+          for (const [kana, list] of Object.entries(scriptData[script].strokeText)) {
+            if (!Array.isArray(list) || list.length === 0) {
+              empty.push(kana);
+              continue;
+            }
+            list.forEach((desc, i) => {
+              if (/dwie|dwa|dwóch/.test(desc)) merged.push(kana + '#' + (i + 1) + ': ' + desc);
+            });
+          }
+        }
+        ok('STR2 żaden opis nie łączy dwóch kresek', merged.length === 0, merged.slice(0, 4).join(' | '));
+        ok('STR3 każdy znak ma co najmniej jeden opis', empty.length === 0, empty.join(' '));
+
+        // Liczba opisów jest tym, co widzi użytkownik w plakietce i na
+        // liście — dla dwóch znaków sprawdzamy to także przez DOM.
+        const dom = [];
+        for (const [script, kana] of [
+          ['hiragana', 'ぎ'],
+          ['katakana', 'フ']
+        ]) {
+          state.script = script;
+          state.kana = kana;
+          setScreen('learn');
+          const badge = document.getElementById('strokeBadge').textContent;
+          const n = document.querySelectorAll('#strokeList .stroke-step').length;
+          const expected = EXPECTED[script][kana];
+          if (n !== expected) dom.push(kana + ': lista=' + n);
+          if (badge.indexOf(String(expected)) !== 0) dom.push(kana + ': plakietka=' + badge);
+        }
+        ok('STR4 plakietka i lista opisów pokazują tę samą liczbę', dom.length === 0, dom.join(' | '));
+      } catch (e) {
+        ok('STR dane kresek', false, e.message);
       }
 
       report();
