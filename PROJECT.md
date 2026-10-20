@@ -1493,7 +1493,8 @@ The existing localStorage data should be reused where possible.
 
 # 35. T13 — Canvas Drawing Mode
 
-T13 remains planned, but is no longer the immediate next task.
+T13 is being built in layers. **Layer 1 — the drawing surface — is shipped;
+scoring is not.**
 
 Goal:
 
@@ -1514,6 +1515,33 @@ Requirements:
 - work with existing learning mode,
 - preserve existing KanjiVG animation,
 - do not break exam/progress systems.
+
+## Shipped so far
+
+**Layer 1 — drawing surface — SHIPPED.**
+
+A canvas sits inside `.svg-wrap` as a sibling of the KanjiVG `<svg>`, not in a
+container of its own, so the field's geometry is unchanged and the fluid-layout
+contract (§28) still holds. It is created by `mountDrawing(wrap)`, which owns
+the pointer handlers (mouse, touch and pen via Pointer Events), device-pixel
+scaling and a `ResizeObserver`, and returns
+`{ canvas, enabled, strokes, setEnabled, clear, destroy }`. Strokes are kept as
+data, not only as pixels, so scoring can be added without changing that API.
+
+"✍️ Rysuj" toggles the mode and dims the character into a tracing guide;
+"Wyczyść" clears the drawing. `mountKana()` now takes an optional `overlay` and
+re-appends it at each of the three points where it rewrites the container, so
+the drawing surface does not depend on the KanjiVG fetch succeeding. Covered by
+D1–D10 in `tests-learn.js`.
+
+**Layers 2–3 — scoring and polish — NOT STARTED.**
+
+Stroke count, order, direction and approximate shape comparison, plus the
+finish/check action. Scoring should follow §36: a simple threshold model, not a
+recognizer.
+
+Not verified: real touch hardware. The harness synthesises Pointer Events and
+asserts the wiring, not how drawing with a finger feels.
 
 Important:
 
@@ -1956,14 +1984,14 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-(none in progress)
+T13 Canvas drawing mode — layer 1 shipped, scoring next
 ```
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
 far, see §41 rather than a list here — an enumeration in this section would
-go stale on the next round. T13 is the next planned item but has not been
-started.
+go stale on the next round. T13 is in progress: layer 1, the drawing surface,
+is shipped and scoring is not (§35).
 
 ### Current recommended roadmap
 
@@ -2457,7 +2485,8 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion (245 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
-                                   descriptions vs KanjiVG             ( 88 assertions)
+                                   descriptions vs KanjiVG, drawing
+                                   surface (T13 layer 1)                ( 98 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

@@ -994,9 +994,16 @@ function buildKanjiSvg(parts) {
  * Wstawia znak do kontenera `wrap` i zwraca kontroler
  * { play, step, showAll, count } albo null (brak SVG / zmieniono ekran).
  * onProgress(drawn, active): ile kresek jest gotowych i która jest rysowana (-1 = żadna).
+ * overlay: element nakładany (np. canvas rysowania), który ma przetrwać
+ *   podmianę zawartości `wrap` — trafia pod wskaźnik kreski.
  */
-async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = {}) {
+async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail, overlay } = {}) {
   wrap.innerHTML = '<div class="loading">Ładowanie znaku…</div>';
+
+  // `overlay` należy do wołającego (T13: canvas rysowania). Kontener jest
+  // czyszczony w trzech miejscach i w każdym musi on wrócić na miejsce —
+  // inaczej tryb rysowania znikałby na czas wczytywania znaku.
+  if (overlay) wrap.appendChild(overlay);
 
   const data = await loadKanji(kana);
   if (!wrap.isConnected) return null; // użytkownik zdążył zmienić ekran
@@ -1012,6 +1019,9 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
       'font-family:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
     wrap.appendChild(glyph);
 
+    // element nakładany musi przetrwać podmianę zawartości kontenera
+    if (overlay) wrap.appendChild(overlay);
+
     if (onFail) onFail();
     return null;
   }
@@ -1022,7 +1032,8 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
   indicator.className = 'stroke-indicator';
   indicator.style.visibility = 'hidden';
 
-  wrap.replaceChildren(svg, indicator);
+  // overlay trafia pod wskaźnikiem, żeby numer kreski został czytelny nad rysunkiem
+  wrap.replaceChildren(svg, ...(overlay ? [overlay] : []), indicator);
 
   const strokes = [...svg.querySelectorAll('.kvg-drawn path')];
   const labels = [...svg.querySelectorAll('.kvg-numbers text')];
@@ -1145,6 +1156,151 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail } = 
   if (autoplay) play();
 
   return { play, step, showAll, count: strokes.length };
+}
+
+/* =========================================================
+   T13 — RYSOWANIE ZNAKU (warstwa 1: rysowanie i czyszczenie)
+   ------------------------------------------------------------
+   Samodzielny blok: dostaje kontener, zwraca kontroler. Ocena
+   rysunku (warstwa 2) dołoży się obok i nie zmieni tego API —
+   dlatego już teraz trzymamy kreski jako dane, a nie tylko jako
+   piksele. Bez tego blok nie dałby się wynieść do modułu w T16.
+========================================================= */
+function mountDrawing(wrap) {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'draw-canvas';
+  canvas.id = 'drawCanvas';
+
+  // Wstawiamy od razu, jeszcze przed wczytaniem SVG — rysowanie nie zależy od
+  // KanjiVG i musi działać także na awaryjnej ścieżce (brak internetu).
+  // `mountKana` dokłada go ponownie po każdej podmianie zawartości kontenera.
+  wrap.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  let strokes = []; // [[{x,y}, …], …] w px CSS — zmiana rozmiaru nie gubi rysunku
+  let active = null; // kreska rysowana w tej chwili
+  let enabled = false;
+
+  // Grubość rośnie z polem, więc rysunek wygląda tak samo na 210 px i 250 px.
+  const lineWidth = () => Math.max(4, Math.round(wrap.clientWidth * 0.03));
+
+  // Kolor bierzemy z motywu, żeby rysunek był widoczny w obu.
+  const ink = () => getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#8d5cf6';
+
+  function paint() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = ink();
+    ctx.lineWidth = lineWidth();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    strokes.forEach(stroke => {
+      if (stroke.length === 1) {
+        // jedno dotknięcie bez ruchu — kropka
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+        ctx.lineTo(stroke[0].x + 0.01, stroke[0].y);
+        return;
+      }
+      stroke.forEach((point, index) => {
+        if (index) ctx.lineTo(point.x, point.y);
+        else ctx.moveTo(point.x, point.y);
+      });
+    });
+    ctx.stroke();
+  }
+
+  /*
+   * Canvas ma własną rozdzielczość (px urządzenia), a rysujemy w px CSS.
+   * Bez przeliczenia linia byłaby rozmyta na ekranach o wysokiej gęstości.
+   */
+  function resize() {
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight;
+    if (!width || !height) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paint();
+  }
+
+  const pointOf = event => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  };
+
+  function start(event) {
+    if (!enabled || !event.isPrimary) return;
+    event.preventDefault();
+
+    // Przechwycenie bywa odrzucane (np. dla zdarzeń syntetycznych) — jego
+    // brak nie może przerwać rysowania.
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch (e) {
+      /* bez przechwycenia też działa */
+    }
+
+    active = [pointOf(event)];
+    strokes.push(active);
+    paint();
+  }
+
+  function extend(event) {
+    if (!active || !enabled || !event.isPrimary) return;
+
+    // przycisk puszczony poza polem (przechwycenie mogło się nie udać)
+    if (event.buttons === 0) {
+      active = null;
+      return;
+    }
+
+    event.preventDefault();
+    active.push(pointOf(event));
+    paint();
+  }
+
+  function stop(event) {
+    if (!active) return;
+    if (event) event.preventDefault();
+    active = null;
+  }
+
+  canvas.addEventListener('pointerdown', start);
+  canvas.addEventListener('pointermove', extend);
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+
+  const observer = new ResizeObserver(resize);
+  observer.observe(wrap);
+  resize();
+
+  return {
+    canvas,
+    get enabled() {
+      return enabled;
+    },
+    get strokes() {
+      return strokes;
+    },
+    setEnabled(value) {
+      enabled = !!value;
+      if (!enabled) active = null;
+      wrap.classList.toggle('drawing', enabled);
+      if (enabled) resize();
+    },
+    clear() {
+      strokes = [];
+      active = null;
+      paint();
+    },
+    destroy() {
+      observer.disconnect();
+    }
+  };
 }
 
 /* =========================================================
@@ -1707,6 +1863,11 @@ function renderSettingsFocused(focusKey) {
 const learnSectionOpen = {};
 let learnSectionStarted = false;
 
+// T13 warstwa 1 — kontroler rysowania bieżącej karty nauki. Trzymamy go, żeby
+// przy przebudowie karty rozłączyć obserwator rozmiaru i nie zostawiać go
+// przywiązanego do odłączonego elementu.
+let learnDrawing = null;
+
 function learnSectionIsOpen(category, activeCategory) {
   // Sekcja z aktywnym znakiem jest otwarta ZAWSZE — inaczej strzałki gnałyby
   // po niewidocznych znakach. To nie koliduje z trwałym zwinięciem: dotyczy
@@ -1861,6 +2022,8 @@ function renderLearn() {
           <button class="btn btn-primary" id="playStrokes" disabled>▶ Odtwórz</button>
           <button class="btn btn-secondary" id="stepStroke" disabled>Kreska po kresce</button>
           <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
+          <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">✍️ Rysuj</button>
+          <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
         </div>
 
         <div class="kana-note" id="kanaNote"></div>
@@ -1910,7 +2073,36 @@ function renderLearn() {
   const wrap = document.getElementById('svgWrap');
   const note = document.getElementById('kanaNote');
 
+  /*
+    Rysowanie (T13, warstwa 1). Canvas jest rodzeństwem SVG wewnątrz
+    #svgWrap, a nie osobnym kontenerem — dzięki temu geometria pola znaku
+    zostaje bez zmian, więc kontrakt płynnego układu (§28) nadal obowiązuje.
+  */
+  if (learnDrawing) learnDrawing.destroy();
+  learnDrawing = mountDrawing(wrap);
+
+  const drawToggle = document.getElementById('drawToggle');
+  const clearDrawing = document.getElementById('clearDrawing');
+
+  const setDrawing = on => {
+    learnDrawing.setEnabled(on);
+    drawToggle.setAttribute('aria-pressed', String(on));
+    drawToggle.textContent = on ? '✍️ Koniec rysowania' : '✍️ Rysuj';
+    clearDrawing.disabled = !on;
+  };
+
+  drawToggle.onclick = () => {
+    Audio.click();
+    setDrawing(!learnDrawing.enabled);
+  };
+
+  clearDrawing.onclick = () => {
+    Audio.click();
+    learnDrawing.clear();
+  };
+
   mountKana(wrap, state.kana, {
+    overlay: learnDrawing.canvas,
     onProgress: (done, active) => {
       document.querySelectorAll('#strokeList .stroke-step').forEach((el, i) => {
         el.classList.toggle('completed', i < done);

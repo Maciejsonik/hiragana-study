@@ -1004,6 +1004,32 @@ footer {
 }
 
 /* =========================================================
+   DRAWING CANVAS (T13, warstwa 1)
+========================================================= */
+
+.draw-canvas {
+  /* Rodzeństwo SVG wewnątrz `.svg-wrap`, nie osobny kontener — dzięki temu
+     geometria pola znaku zostaje bez zmian (patrz §28). */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  cursor: crosshair;
+  /* Palec rysuje, a nie przewija strony. */
+  touch-action: none;
+}
+
+.svg-wrap.drawing .draw-canvas {
+  display: block;
+}
+
+/* W trybie rysowania znak zostaje jako blada podkładka do obrysowania. */
+.svg-wrap.drawing svg {
+  opacity: 0.16;
+}
+
+/* =========================================================
    STROKE INDICATOR
 ========================================================= */
 

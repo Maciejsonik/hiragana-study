@@ -814,6 +814,137 @@
         ok('STR dane kresek', false, e.message);
       }
 
+      /* =====================================================
+         H. T13 WARSTWA 1 — rysowanie znaku i czyszczenie.
+            Sprawdzamy stan początkowy, przełącznik, ślad po
+            zdarzeniach wskaźnika, czyszczenie oraz to, że
+            podmiana zawartości kontenera przez `mountKana` nie
+            zjada canvasa. To warstwa RYSOWANIA — ocena rysunku
+            (warstwa 2) jeszcze nie istnieje i tu jej nie ma.
+         ===================================================== */
+      try {
+        state.script = 'hiragana';
+        state.kana = 'あ';
+        setScreen('learn');
+
+        const wrap = document.getElementById('svgWrap');
+        const canvas = document.getElementById('drawCanvas');
+        const toggle = document.getElementById('drawToggle');
+        const clear = document.getElementById('clearDrawing');
+
+        const pixels = () => {
+          const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+          let count = 0;
+          for (let i = 3; i < data.length; i += 4) if (data[i] > 0) count++;
+          return count;
+        };
+
+        // `buttons: 1`, bo podmowa kreski kończy rysowanie, gdy przycisk
+        // nie jest wciśnięty (puszczenie poza polem).
+        const fire = (type, fx, fy) => {
+          const box = canvas.getBoundingClientRect();
+          canvas.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              pointerId: 1,
+              pointerType: 'mouse',
+              isPrimary: true,
+              buttons: 1,
+              clientX: box.left + box.width * fx,
+              clientY: box.top + box.height * fy
+            })
+          );
+        };
+
+        ok(
+          'D1 canvas rysowania jest w kontenerze znaku',
+          !!canvas && wrap.contains(canvas),
+          canvas ? 'ok' : 'brak canvasa'
+        );
+        ok(
+          'D2 rysowanie jest domyślnie wyłączone',
+          !wrap.classList.contains('drawing') && toggle.getAttribute('aria-pressed') === 'false',
+          'klasa="' + wrap.className + '" aria-pressed=' + toggle.getAttribute('aria-pressed')
+        );
+        ok('D3 „Wyczyść" jest zablokowane poza trybem rysowania', clear.disabled === true, String(clear.disabled));
+
+        toggle.click();
+        ok(
+          'D4 włączenie rysowania oznacza kontener i odblokowuje „Wyczyść"',
+          wrap.classList.contains('drawing') &&
+            toggle.getAttribute('aria-pressed') === 'true' &&
+            clear.disabled === false,
+          'klasa="' +
+            wrap.className +
+            '" aria-pressed=' +
+            toggle.getAttribute('aria-pressed') +
+            ' disabled=' +
+            clear.disabled
+        );
+        ok(
+          'D5 canvas przechwytuje dotyk (touch-action: none)',
+          getComputedStyle(canvas).touchAction === 'none',
+          getComputedStyle(canvas).touchAction
+        );
+
+        const before = pixels();
+        fire('pointerdown', 0.3, 0.3);
+        fire('pointermove', 0.5, 0.5);
+        fire('pointermove', 0.7, 0.7);
+        fire('pointerup', 0.7, 0.7);
+        ok('D6 rysowanie zostawia ślad na canvasie', pixels() > before, 'pikseli: ' + before + ' → ' + pixels());
+
+        clear.click();
+        ok('D7 „Wyczyść" usuwa ślad', pixels() === 0, 'pikseli: ' + pixels());
+
+        const placeholder = wrap.querySelector('.loading');
+        toggle.click();
+        ok(
+          'D8 wyłączenie rysowania zdejmuje tryb i blokuje „Wyczyść"',
+          !wrap.classList.contains('drawing') &&
+            toggle.getAttribute('aria-pressed') === 'false' &&
+            clear.disabled === true,
+          'klasa="' +
+            wrap.className +
+            '" aria-pressed=' +
+            toggle.getAttribute('aria-pressed') +
+            ' disabled=' +
+            clear.disabled
+        );
+        ok(
+          'D9 przełączenie trybu nie rusza zawartości kontenera znaku',
+          wrap.querySelector('.loading') === placeholder,
+          placeholder ? 'element zachowany' : 'brak placeholdera'
+        );
+
+        // Ścieżka awaryjna: bez KanjiVG `mountKana` podmienia zawartość
+        // kontenera, a canvas musi to przetrwać — inaczej tryb rysowania
+        // znikałby dokładnie użytkownikowi bez internetu.
+        const holder = document.createElement('div');
+        holder.className = 'svg-wrap';
+        holder.style.cssText = 'position:relative;width:200px;height:200px';
+        document.body.appendChild(holder);
+        const probe = document.createElement('canvas');
+        probe.id = 'drawProbe';
+
+        const realLoadKanji = loadKanji;
+        try {
+          loadKanji = async () => null; // symulacja braku dostępu do KanjiVG
+          await mountKana(holder, 'あ', { overlay: probe });
+          ok(
+            'D10 canvas przetrwał awaryjną ścieżkę mountKana',
+            holder.contains(probe) && !!holder.querySelector('.kana-fallback'),
+            'canvas=' + holder.contains(probe) + ' fallback=' + !!holder.querySelector('.kana-fallback')
+          );
+        } finally {
+          loadKanji = realLoadKanji;
+          holder.remove();
+        }
+      } catch (e) {
+        ok('D rysowanie', false, e.message);
+      }
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));
