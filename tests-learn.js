@@ -1113,6 +1113,56 @@
             /Jeszcze nie to/.test(verdict.textContent) && !verdict.classList.contains('passed'),
             verdict.textContent
           );
+
+          /* --- ustawienie: wzór ukrywany przy rysowaniu --- */
+          const guideOpacity = () => getComputedStyle(wrap.querySelector('svg')).opacity;
+
+          setHideGuide(SETTINGS_DEFAULTS.hideGuide);
+          ok(
+            'S17 domyślnie wzór przy rysowaniu jest widoczny',
+            SETTINGS_DEFAULTS.hideGuide === false && !wrap.classList.contains('hide-guide') && guideOpacity() !== '0',
+            'domyślna=' + SETTINGS_DEFAULTS.hideGuide + ' opacity=' + guideOpacity()
+          );
+
+          setHideGuide(true);
+          ok(
+            'S18 „Ukryty" usuwa wzór w trybie rysowania',
+            wrap.classList.contains('hide-guide') && guideOpacity() === '0',
+            'klasa=' + wrap.classList.contains('hide-guide') + ' opacity=' + guideOpacity()
+          );
+          ok(
+            'S19 wybór przeżywa ponowne wczytanie ustawień',
+            loadSettings().hideGuide === true,
+            String(loadSettings().hideGuide)
+          );
+
+          setHideGuide(false);
+          ok(
+            'S20 „Widoczny" przywraca bladą podkładkę',
+            !wrap.classList.contains('hide-guide') && Number(guideOpacity()) > 0,
+            'opacity=' + guideOpacity()
+          );
+
+          setScreen('settings');
+          await wait(400);
+          const guideBtn = document.querySelector('[data-hide-guide-set="true"]');
+          const guideCard = guideBtn ? guideBtn.closest('.settings-group') : null;
+          ok(
+            'S21 Ustawienia mają przełącznik wzoru w karcie „Rysowanie"',
+            !!guideBtn &&
+              guideBtn.getAttribute('aria-pressed') === 'false' &&
+              !!guideCard &&
+              guideCard.querySelector('h3').textContent === 'Rysowanie',
+            guideBtn ? 'aria-pressed=' + guideBtn.getAttribute('aria-pressed') : 'brak przycisku'
+          );
+
+          if (guideBtn) guideBtn.click();
+          ok(
+            'S22 kliknięcie w „Ukryty" zapisuje wybór',
+            settings.hideGuide === true && loadSettings().hideGuide === true,
+            'hideGuide=' + settings.hideGuide
+          );
+          setHideGuide(false);
         } finally {
           loadKanji = realLoadKanji;
         }

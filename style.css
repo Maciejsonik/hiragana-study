@@ -1032,6 +1032,14 @@ footer {
   opacity: 0.16;
 }
 
+/* Ustawienie „Znak wzorcowy" → Ukryty: w trybie rysowania znak znika
+   całkiem, razem z numerami kresek (to <text> w tym samym SVG). Poza trybem
+   rysowania ustawienie nic nie zmienia, więc podgląd znaku zostaje. */
+.svg-wrap.drawing.hide-guide svg,
+.svg-wrap.drawing.hide-guide .kana-fallback {
+  opacity: 0;
+}
+
 /* Werdykt oceny (warstwa 2). Pusty element nie zajmuje miejsca, więc nie
    wpływa na układ karty, dopóki nie ma czego pokazać. */
 .draw-result {

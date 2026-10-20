@@ -969,7 +969,7 @@ and the separate "Wyczyść statystyki", each with its own confirmation.
 Theme is stored in the centralized settings store (see section 45):
 
 ```text
-hiragana-settings = { theme, muted, script }
+hiragana-settings = { theme, muted, script, hideGuide }
 ```
 
 Supported themes:
@@ -1591,6 +1591,22 @@ functions, S9–S14 and S16 run the whole path in the DOM against a stubbed
   `strokeNumbers()` inflects the list in Polish.
 - S15 and S16 guard both, and S15 fails without the gate: with the direction
   check removed, a reversed stroke reports `passed: true`.
+
+**Setting: hiding the reference character.**
+
+"Znak wzorcowy" in Settings → Rysowanie (`hideGuide`, default "Widoczny")
+removes the character while drawing, for practising from memory. It is a
+preference, not a mode: it survives a reload and applies to the next character
+too. `applyHideGuide()` puts the class on `#svgWrap` and the CSS rule is scoped
+to `.svg-wrap.drawing`, so outside drawing mode the preview is untouched. The
+stroke numbers are `<text>` inside the same SVG, so they disappear with it.
+
+One consequence worth knowing: with the guide hidden, "Odtwórz", "Kreska po
+kresce" and "Cały znak" animate something invisible. That is the point of
+drawing from memory, and turning drawing off brings the character back.
+
+Covered by S17–S22; S18 measures the computed opacity (0.16 → 0) and fails
+when the CSS rule is removed.
 
 Not verified: real touch hardware. The harness synthesises Pointer Events and
 asserts the wiring, not how drawing with a finger feels. The field was measured
@@ -2226,21 +2242,28 @@ Status: **SHIPPED** (T26).
 ## Store
 
 There is no settings framework, store library or event bus. Settings are a
-single plain object plus three setter functions.
+single plain object plus four setter functions.
 
 ```text
-hiragana-settings = { theme, muted, script }
+hiragana-settings = { theme, muted, script, hideGuide }
 ```
 
 - `theme`  — `light` | `dark` | `system`
 - `muted`  — boolean
 - `script` — `hiragana` | `katakana`
+- `hideGuide` — boolean; hides the reference character while drawing (see §35)
 
 ## Centralized setters
 
-`setTheme()`, `setMuted()` and `setScript()` are the only write paths. Each
-updates the `settings` object, synchronizes the matching runtime mirror
-(`state.theme`, `Audio.muted`, `state.script`), persists, and refreshes the UI.
+`setTheme()`, `setMuted()`, `setScript()` and `setHideGuide()` are the only
+write paths. Each updates the `settings` object, synchronizes the matching
+runtime mirror (`state.theme`, `Audio.muted`, `state.script`) and persists.
+
+`setHideGuide()` has no mirror to update: it toggles the `hide-guide` class on
+`#svgWrap` through `applyHideGuide()`, which tolerates the element being absent
+(the setting can be changed from another screen). The CSS rule is scoped to
+`.svg-wrap.drawing`, so the character is hidden only while drawing mode is
+active — outside it the setting changes nothing.
 
 `setScript()` additionally resets `state.group` / `state.kana` to the first
 group of the newly active script, so script-dependent state can never leak
@@ -2273,12 +2296,13 @@ prevents a light/dark flash. It performs **no writes**; migration belongs to
 
 ## Screens
 
-`renderSettings()` renders four sections:
+`renderSettings()` renders five sections:
 
 ```text
 Wygląd     theme: light / dark / system
 Dźwięk     sound effects: on / off
 Nauka      default script: hiragana / katakana
+Rysowanie  reference character while drawing: visible / hidden
 Dane       Reset Settings / Reset Progress / Clear All Data
 ```
 
@@ -2564,7 +2588,7 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion, vocabulary data (252 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
-                                   surface and scoring (T13)            (114 assertions)
+                                   surface and scoring (T13)            (120 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

@@ -143,14 +143,15 @@ const LEGACY_MUTED_KEY = 'hiragana-muted';
 const SETTINGS_DEFAULTS = {
   theme: 'system',
   muted: false,
-  script: 'hiragana'
+  script: 'hiragana',
+  hideGuide: false
 };
 
 const THEME_VALUES = ['light', 'dark', 'system'];
 const SCRIPT_VALUES = ['hiragana', 'katakana'];
 
 /*
- * Zwraca `{ theme, muted, script }`, gdzie każde pole to poprawna
+ * Zwraca `{ theme, muted, script, hideGuide }`, gdzie każde pole to poprawna
  * wartość albo `null`, gdy w źródle jest brak lub błędna wartość.
  * Nieznane pola są odrzucane. Nie zależy od `state` ani `scriptData`.
  */
@@ -160,7 +161,8 @@ function validateSettings(raw) {
   return {
     theme: THEME_VALUES.includes(src.theme) ? src.theme : null,
     muted: typeof src.muted === 'boolean' ? src.muted : null,
-    script: SCRIPT_VALUES.includes(src.script) ? src.script : null
+    script: SCRIPT_VALUES.includes(src.script) ? src.script : null,
+    hideGuide: typeof src.hideGuide === 'boolean' ? src.hideGuide : null
   };
 }
 
@@ -206,7 +208,8 @@ function loadSettings() {
   const normalized = {
     theme: valid.theme || readLegacyTheme() || SETTINGS_DEFAULTS.theme,
     muted: valid.muted !== null ? valid.muted : readLegacyMuted(),
-    script: valid.script || SETTINGS_DEFAULTS.script
+    script: valid.script || SETTINGS_DEFAULTS.script,
+    hideGuide: valid.hideGuide !== null ? valid.hideGuide : SETTINGS_DEFAULTS.hideGuide
   };
 
   let rewrite = !stored;
@@ -1634,6 +1637,23 @@ function setMuted(value) {
   updateMuteButton();
 }
 
+/*
+  Ukrywanie wzoru przy rysowaniu jest ustawieniem, nie stanem trybu:
+  wybór ma obowiązywać przy kolejnym znaku i po przeładowaniu.
+  Klasa ląduje na `#svgWrap`, więc zmiana działa też w otwartym panelu,
+  a CSS zdejmuje znak tylko wtedy, gdy tryb rysowania jest włączony.
+*/
+function applyHideGuide() {
+  const wrap = document.getElementById('svgWrap');
+  if (wrap) wrap.classList.toggle('hide-guide', !!settings.hideGuide);
+}
+
+function setHideGuide(value) {
+  settings.hideGuide = !!value;
+  saveSettings(settings);
+  applyHideGuide();
+}
+
 function setScript(script) {
   if (!SCRIPT_VALUES.includes(script)) return;
 
@@ -1971,6 +1991,7 @@ function resetSettings() {
   setTheme(SETTINGS_DEFAULTS.theme);
   setMuted(SETTINGS_DEFAULTS.muted);
   setScript(SETTINGS_DEFAULTS.script);
+  setHideGuide(SETTINGS_DEFAULTS.hideGuide);
 }
 
 function clearAllData() {
@@ -2038,6 +2059,17 @@ function renderSettings() {
       </div>
 
       <div class="settings-group card">
+        <h3>Rysowanie</h3>
+        <div class="settings-row">
+          <span class="settings-label" id="guideLabel">Znak wzorcowy</span>
+          <div class="settings-pills" role="group" aria-labelledby="guideLabel">
+            ${settingsPill('false', String(settings.hideGuide), 'Widoczny', 'data-hide-guide-set', 'hide-guide-false')}
+            ${settingsPill('true', String(settings.hideGuide), 'Ukryty', 'data-hide-guide-set', 'hide-guide-true')}
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group card">
         <h3>Dane</h3>
         <div class="settings-actions">
           <button class="btn btn-secondary" id="resetSettingsBtn" data-focus-key="reset-settings">Przywróć ustawienia domyślne</button>
@@ -2070,6 +2102,14 @@ function renderSettings() {
       Audio.click();
       setScript(btn.dataset.scriptSet);
       renderSettingsFocused('script-' + btn.dataset.scriptSet);
+    };
+  });
+
+  document.querySelectorAll('[data-hide-guide-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setHideGuide(btn.dataset.hideGuideSet === 'true');
+      renderSettingsFocused('hide-guide-' + btn.dataset.hideGuideSet);
     };
   });
 
@@ -2369,6 +2409,9 @@ function renderLearn() {
   /* animacja kresek */
   const wrap = document.getElementById('svgWrap');
   const note = document.getElementById('kanaNote');
+
+  // ustawienie „Znak wzorcowy" musi wejść w życie od razu po wejściu na ekran
+  applyHideGuide();
 
   const drawToggle = document.getElementById('drawToggle');
   const clearDrawing = document.getElementById('clearDrawing');
