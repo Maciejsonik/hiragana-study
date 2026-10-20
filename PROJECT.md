@@ -1534,11 +1534,41 @@ re-appends it at each of the three points where it rewrites the container, so
 the drawing surface does not depend on the KanjiVG fetch succeeding. Covered by
 D1–D10 in `tests-learn.js`.
 
-**Layers 2–3 — scoring and polish — NOT STARTED.**
+**Layer 2 — scoring — SHIPPED.**
 
-Stroke count, order, direction and approximate shape comparison, plus the
-finish/check action. Scoring should follow §36: a simple threshold model, not a
-recognizer.
+`scoreDrawing(drawn, reference, box)` returns numbers, not a verdict, and weighs
+four components into one score:
+
+| component | question | weight |
+| --- | --- | --- |
+| count | were as many strokes drawn as the pattern needs | 0.35 |
+| direction | does stroke *n* point where stroke *n* of the pattern points | 0.25 |
+| coverage | how much of the **pattern** lies near the drawing | 0.40 |
+| precision | how much of the **drawing** lies near the pattern | — |
+
+Coverage and precision are kept apart on purpose: the first punishes missing
+strokes, the second punishes scribbling beside the character, and their mean is
+the "shape" term. The pass mark is one number, `DRAW_PASS_SCORE = 0.7`. A
+faithful reproduction scores 1, a duplicated stroke 0.65, a correct stroke drawn
+in the wrong place 0.6.
+
+The pattern is the KanjiVG geometry `mountKana` already animates — `mountKana`
+now returns `paths`, and `referenceOnCanvas()` maps the viewBox into the canvas
+through the SVG's screen matrix, so scoring does not depend on how wide the card
+is. The reference is computed when "Sprawdź" is pressed rather than when the
+character loads, because `resize()` rescales stored strokes along with the
+field.
+
+The canvas is hidden with `visibility`, not `display`: a `display: none` element
+reports a zero rectangle, and the pattern silently landed in screen coordinates
+instead of the canvas ones.
+
+`drawVerdict()` names the weakest component rather than saying only "no".
+Covered by S1–S14 in `tests-learn.js`: S1–S8 exercise the pure functions,
+S9–S14 run the whole path in the DOM against a stubbed `loadKanji`, so they need
+no network.
+
+**Layer 3 — polish — NOT STARTED.**
 
 Not verified: real touch hardware. The harness synthesises Pointer Events and
 asserts the wiring, not how drawing with a finger feels.
@@ -1984,14 +2014,14 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-T13 Canvas drawing mode — layer 1 shipped, scoring next
+T13 Canvas drawing mode — layers 1–2 shipped, polish next
 ```
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
 far, see §41 rather than a list here — an enumeration in this section would
-go stale on the next round. T13 is in progress: layer 1, the drawing surface,
-is shipped and scoring is not (§35).
+go stale on the next round. T13 is in progress: layers 1 and 2 — the drawing
+surface and its scoring — are shipped and polish is not (§35).
 
 ### Current recommended roadmap
 
@@ -2486,7 +2516,7 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion (245 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
-                                   surface (T13 layer 1)                ( 98 assertions)
+                                   surface and scoring (T13)            (112 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

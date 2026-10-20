@@ -1014,19 +1014,40 @@ footer {
   inset: 0;
   width: 100%;
   height: 100%;
-  display: none;
+  /* `visibility`, nie `display` — canvas musi mieć wymiar także poza trybem
+     rysowania, bo ocena przelicza wzór przez jego pole (getBoundingClientRect
+     dla elementu `display:none` zwraca zera i wzór wychodzi w złym układzie). */
+  visibility: hidden;
   cursor: crosshair;
   /* Palec rysuje, a nie przewija strony. */
   touch-action: none;
 }
 
 .svg-wrap.drawing .draw-canvas {
-  display: block;
+  visibility: visible;
 }
 
 /* W trybie rysowania znak zostaje jako blada podkładka do obrysowania. */
 .svg-wrap.drawing svg {
   opacity: 0.16;
+}
+
+/* Werdykt oceny (warstwa 2). Pusty element nie zajmuje miejsca, więc nie
+   wpływa na układ karty, dopóki nie ma czego pokazać. */
+.draw-result {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+
+.draw-result:empty {
+  display: none;
+}
+
+.draw-result.passed {
+  color: var(--good);
 }
 
 /* =========================================================

@@ -945,6 +945,166 @@
         ok('D rysowanie', false, e.message);
       }
 
+      /* =====================================================
+         I. T13 WARSTWA 2 — ocena rysunku.
+            Funkcje oceny są czyste, więc liczymy je na
+            syntetycznych łamanych (S1–S8). Potem cała ścieżka w
+            DOM na podstawionym `loadKanji` (S9–S12) — test nie
+            zależy od sieci, a to jedyny sposób, żeby „Sprawdź"
+            miało wzór kresek.
+         ===================================================== */
+      try {
+        const horizontal = [
+          { x: 10, y: 50 },
+          { x: 50, y: 50 },
+          { x: 90, y: 50 }
+        ];
+        const referenceLine = resample(horizontal, 24);
+
+        const thinned = resample(horizontal, 4);
+        ok(
+          'S1 resample zwraca zadaną liczbę punktów i zachowuje końce',
+          thinned.length === 5 && thinned[0].x === 10 && thinned[4].x === 90 && thinned[4].y === 50,
+          'punktów=' + thinned.length + ' koniec=' + JSON.stringify(thinned[4])
+        );
+
+        const above = distanceToSegment({ x: 50, y: 55 }, { x: 0, y: 50 }, { x: 100, y: 50 });
+        ok(
+          'S2 odległość punktu od odcinka to rzut, nie odległość od wierzchołka',
+          Math.abs(above - 5) < 1e-9,
+          String(above)
+        );
+
+        const same = scoreDrawing([referenceLine], [referenceLine], 200);
+        ok('S3 identyczna kreska przechodzi próg', same.score >= 0.85 && same.count === 1, JSON.stringify(same));
+
+        const backwards = resample(
+          [
+            { x: 90, y: 50 },
+            { x: 50, y: 50 },
+            { x: 10, y: 50 }
+          ],
+          24
+        );
+        const reversed = scoreDrawing([backwards], [referenceLine], 200);
+        ok(
+          'S4 kreska odwrócona traci na kierunku',
+          reversed.direction < 0.1 && reversed.score < same.score,
+          'kierunek=' + reversed.direction + ' ocena=' + reversed.score
+        );
+
+        const doubled = scoreDrawing([referenceLine, referenceLine], [referenceLine], 200);
+        ok(
+          'S5 nadmiarowa kreska obniża ocenę i nie przechodzi progu',
+          doubled.count === 0 && doubled.made === 2 && doubled.expected === 1 && doubled.score < 0.7,
+          JSON.stringify(doubled)
+        );
+
+        const blank = scoreDrawing([], [referenceLine], 200);
+        ok('S6 pusty rysunek nie przechodzi', blank.score === 0 && blank.made === 0, JSON.stringify(blank));
+
+        const offLine = resample(
+          [
+            { x: 10, y: 150 },
+            { x: 90, y: 150 }
+          ],
+          24
+        );
+        const scribble = scoreDrawing([offLine], [referenceLine], 200);
+        ok(
+          'S7 bazgroły poza znakiem nie dają ani pokrycia, ani precyzji',
+          scribble.coverage === 0 && scribble.precision === 0 && scribble.score < 0.7,
+          JSON.stringify(scribble)
+        );
+
+        ok(
+          'S8 werdykt mówi, co poprawić, zamiast samego „nie"',
+          /inna liczba kresek/.test(drawVerdict(doubled)) && /kształt znaku/.test(drawVerdict(scribble)),
+          drawVerdict(doubled) + ' | ' + drawVerdict(scribble)
+        );
+
+        /* --- cała ścieżka w DOM, bez sieci --- */
+        const realLoadKanji = loadKanji;
+        try {
+          loadKanji = async () => [
+            { kana: 'い', paths: ['M10 50 L90 50'], numbers: [{ transform: null, label: '1' }] }
+          ];
+
+          state.script = 'hiragana';
+          state.kana = 'い';
+          setScreen('learn');
+          await wait(120);
+
+          const wrap = document.getElementById('svgWrap');
+          const canvas = document.getElementById('drawCanvas');
+          const toggle = document.getElementById('drawToggle');
+          const clear = document.getElementById('clearDrawing');
+          const check = document.getElementById('checkDrawing');
+          const verdict = document.getElementById('drawResult');
+
+          ok(
+            'S9 „Sprawdź" czeka, aż będzie i wzór, i rysunek',
+            check.disabled === true && !!canvas && verdict.textContent === '',
+            'disabled=' + check.disabled + ' canvas=' + !!canvas
+          );
+
+          toggle.click();
+          const box = canvas.getBoundingClientRect();
+          const stroke = (x1, y1, x2, y2) => {
+            const fire = (type, fx, fy) =>
+              canvas.dispatchEvent(
+                new PointerEvent(type, {
+                  bubbles: true,
+                  cancelable: true,
+                  pointerId: 1,
+                  pointerType: 'mouse',
+                  isPrimary: true,
+                  buttons: 1,
+                  clientX: box.left + box.width * fx,
+                  clientY: box.top + box.height * fy
+                })
+              );
+
+            fire('pointerdown', x1, y1);
+            for (let i = 1; i <= 8; i++) {
+              fire('pointermove', x1 + ((x2 - x1) * i) / 8, y1 + ((y2 - y1) * i) / 8);
+            }
+            fire('pointerup', x2, y2);
+          };
+
+          // wzór to pozioma kreska w połowie wysokości (y = 50/109)
+          stroke(0.15, 0.46, 0.85, 0.46);
+          ok('S10 kreska zgodna ze wzorem odblokowuje „Sprawdź"', check.disabled === false, String(check.disabled));
+
+          check.click();
+          ok(
+            'S11 rysunek zgodny ze wzorem jest rozpoznany',
+            /Dobrze|Świetnie/.test(verdict.textContent),
+            verdict.textContent
+          );
+          ok('S12 werdykt pozytywny dostaje wyróżnienie', verdict.classList.contains('passed'), verdict.className);
+
+          clear.click();
+          ok(
+            'S13 czyszczenie cofa werdykt i blokuje „Sprawdź"',
+            verdict.textContent === '' && check.disabled === true,
+            'tekst="' + verdict.textContent + '" disabled=' + check.disabled
+          );
+
+          stroke(0.5, 0.15, 0.5, 0.85); // pion — zły zarówno kierunek, jak i kształt
+          check.click();
+          ok(
+            'S14 kreska o złym kierunku i kształcie nie przechodzi',
+            /Jeszcze nie to/.test(verdict.textContent) && !verdict.classList.contains('passed'),
+            verdict.textContent
+          );
+        } finally {
+          loadKanji = realLoadKanji;
+        }
+      } catch (e) {
+        ok('S ocena rysunku', false, e.message);
+      }
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));

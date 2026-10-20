@@ -1155,7 +1155,7 @@ async function mountKana(wrap, kana, { autoplay = false, onProgress, onFail, ove
   showAll();
   if (autoplay) play();
 
-  return { play, step, showAll, count: strokes.length };
+  return { play, step, showAll, count: strokes.length, paths: strokes };
 }
 
 /* =========================================================
@@ -1181,6 +1181,13 @@ function mountDrawing(wrap) {
   let strokes = []; // [[{x,y}, …], …] w px CSS — zmiana rozmiaru nie gubi rysunku
   let active = null; // kreska rysowana w tej chwili
   let enabled = false;
+
+  // Kontroler powstaje na końcu, ale uchwyty wołają `notify()` — dzięki temu
+  // `onChange` wolno przypisać zaraz po montażu, bez wchodzenia w konstruktor.
+  let api = null;
+  const notify = () => {
+    if (api) api.onChange();
+  };
 
   // Grubość rośnie z polem, więc rysunek wygląda tak samo na 210 px i 250 px.
   const lineWidth = () => Math.max(4, Math.round(wrap.clientWidth * 0.03));
@@ -1211,6 +1218,8 @@ function mountDrawing(wrap) {
     ctx.stroke();
   }
 
+  let lastBox = null; // poprzedni rozmiar pola — podstawa przeskalowania kresek
+
   /*
    * Canvas ma własną rozdzielczość (px urządzenia), a rysujemy w px CSS.
    * Bez przeliczenia linia byłaby rozmyta na ekranach o wysokiej gęstości.
@@ -1219,6 +1228,20 @@ function mountDrawing(wrap) {
     const width = wrap.clientWidth;
     const height = wrap.clientHeight;
     if (!width || !height) return;
+
+    // Kreski trzymamy w px, więc zmiana rozmiaru pola musi je przeskalować —
+    // inaczej po obrocie telefonu rysunek rozjechałby się ze znakiem.
+    if (lastBox && (lastBox.width !== width || lastBox.height !== height)) {
+      const scaleX = width / lastBox.width;
+      const scaleY = height / lastBox.height;
+      strokes.forEach(stroke =>
+        stroke.forEach(point => {
+          point.x *= scaleX;
+          point.y *= scaleY;
+        })
+      );
+    }
+    lastBox = { width, height };
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(width * dpr);
@@ -1247,6 +1270,7 @@ function mountDrawing(wrap) {
     active = [pointOf(event)];
     strokes.push(active);
     paint();
+    notify();
   }
 
   function extend(event) {
@@ -1255,6 +1279,7 @@ function mountDrawing(wrap) {
     // przycisk puszczony poza polem (przechwycenie mogło się nie udać)
     if (event.buttons === 0) {
       active = null;
+      notify();
       return;
     }
 
@@ -1267,6 +1292,7 @@ function mountDrawing(wrap) {
     if (!active) return;
     if (event) event.preventDefault();
     active = null;
+    notify();
   }
 
   canvas.addEventListener('pointerdown', start);
@@ -1278,8 +1304,9 @@ function mountDrawing(wrap) {
   observer.observe(wrap);
   resize();
 
-  return {
+  api = {
     canvas,
+    onChange: () => {},
     get enabled() {
       return enabled;
     },
@@ -1291,16 +1318,198 @@ function mountDrawing(wrap) {
       if (!enabled) active = null;
       wrap.classList.toggle('drawing', enabled);
       if (enabled) resize();
+      notify();
     },
     clear() {
       strokes = [];
       active = null;
       paint();
+      notify();
     },
     destroy() {
       observer.disconnect();
     }
   };
+
+  return api;
+}
+
+/* =========================================================
+   T13 — OCENA RYSUNKU (warstwa 2)
+   ------------------------------------------------------------
+   Prosty model, nie recognizer (patrz §35): cztery składniki
+   i jeden próg zbiorczy.
+
+     liczność  — czy narysowano tyle kresek, ile wymaga wzór
+     kierunek  — czy kreska n ma kierunek kreski n wzoru
+     pokrycie  — jaka część WZORU leży blisko rysunku
+     precyzja  — jaka część RYSUNKU leży blisko wzoru
+
+   „Pokrycie" i „precyzja" są rozdzielone celowo: pierwsze karze
+   pominięte kreski, drugie — bazgroły obok znaku. Wzorem jest
+   geometria KanjiVG z `mountKana`; drugiego zbioru danych nie ma
+   (§35). Wszystkie odległości liczymy w px pola, więc tolerancja
+   skaluje się razem z układem.
+   ========================================================= */
+
+const DRAW_PASS_SCORE = 0.7; // próg zbiorczy — poniżej: „jeszcze nie to"
+const DRAW_SAMPLES = 24; // punktów na kreskę; więcej nie zmienia werdyktu
+
+// Próbkowanie ścieżki SVG równomiernie po długości.
+function samplePath(path, count) {
+  const total = path.getTotalLength();
+  const points = [];
+  for (let i = 0; i <= count; i++) {
+    const point = path.getPointAtLength((total * i) / count);
+    points.push({ x: point.x, y: point.y });
+  }
+  return points;
+}
+
+/*
+ * Ponowne próbkowanie łamanej. Sprowadza ślad wskaźnika i ścieżkę wzoru do
+ * tej samej, ograniczonej liczby punktów — dzięki temu koszt oceny nie rośnie
+ * z tym, jak wolno ktoś rysował.
+ */
+function resample(polyline, count) {
+  const origin = polyline[0] || { x: 0, y: 0 };
+  if (polyline.length < 2) return Array.from({ length: count + 1 }, () => ({ ...origin }));
+
+  const lengths = [0];
+  let total = 0;
+  for (let i = 1; i < polyline.length; i++) {
+    total += Math.hypot(polyline[i].x - polyline[i - 1].x, polyline[i].y - polyline[i - 1].y);
+    lengths.push(total);
+  }
+  if (!total) return Array.from({ length: count + 1 }, () => ({ ...origin }));
+
+  const points = [];
+  let index = 0;
+  for (let i = 0; i <= count; i++) {
+    const target = (total * i) / count;
+    while (index < lengths.length - 2 && lengths[index + 1] < target) index++;
+
+    const span = lengths[index + 1] - lengths[index] || 1;
+    const t = Math.max(0, Math.min(1, (target - lengths[index]) / span));
+    const a = polyline[index];
+    const b = polyline[index + 1] || a;
+    points.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  }
+  return points;
+}
+
+// Odległość punktu od odcinka — podstawa porównania kształtu.
+function distanceToSegment(point, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const square = dx * dx + dy * dy;
+  if (!square) return Math.hypot(point.x - a.x, point.y - a.y);
+
+  let t = ((point.x - a.x) * dx + (point.y - a.y) * dy) / square;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
+}
+
+function distanceToStroke(point, stroke) {
+  if (stroke.length < 2) return Math.hypot(point.x - stroke[0].x, point.y - stroke[0].y);
+
+  let best = Infinity;
+  for (let i = 1; i < stroke.length; i++) {
+    best = Math.min(best, distanceToSegment(point, stroke[i - 1], stroke[i]));
+  }
+  return best;
+}
+
+// Wektor „od początku do końca" — kierunek kreski, odporny na drżenie palca.
+function strokeDirection(stroke) {
+  const first = stroke[0];
+  const last = stroke[stroke.length - 1];
+  const dx = last.x - first.x;
+  const dy = last.y - first.y;
+  const length = Math.hypot(dx, dy);
+  if (!length) return { x: 0, y: 0 };
+  return { x: dx / length, y: dy / length };
+}
+
+/*
+ * Zwraca liczby, nie werdykt — o pokazaniu wyniku decyduje UI.
+ * `drawn` i `reference` to listy łamanych w tym samym układzie, a `box` to
+ * rozmiar pola, z którego liczymy tolerancję.
+ */
+function scoreDrawing(drawn, reference, box) {
+  const expected = reference.length;
+  const made = drawn.length;
+  const tolerance = Math.max(5, box * 0.09);
+
+  if (!expected || !made) {
+    return { score: 0, count: 0, direction: 0, coverage: 0, precision: 0, made, expected };
+  }
+
+  const count = Math.max(0, 1 - Math.abs(made - expected) / expected);
+
+  let direction = 0;
+  const paired = Math.min(made, expected);
+  for (let i = 0; i < paired; i++) {
+    const a = strokeDirection(drawn[i]);
+    const b = strokeDirection(reference[i]);
+    direction += (a.x * b.x + a.y * b.y + 1) / 2; // cos kąta → 0..1
+  }
+  direction = paired ? direction / paired : 0;
+
+  const near = (point, strokes) => strokes.some(stroke => distanceToStroke(point, stroke) <= tolerance);
+
+  const referencePoints = reference.flat();
+  let covered = 0;
+  for (const point of referencePoints) if (near(point, drawn)) covered++;
+  const coverage = referencePoints.length ? covered / referencePoints.length : 0;
+
+  const drawnPoints = drawn.flat();
+  let precise = 0;
+  for (const point of drawnPoints) if (near(point, reference)) precise++;
+  const precision = drawnPoints.length ? precise / drawnPoints.length : 0;
+
+  const shape = (coverage + precision) / 2;
+  const score = 0.35 * count + 0.25 * direction + 0.4 * shape;
+
+  return { score, count, direction, coverage, precision, made, expected };
+}
+
+// Werdykt po polsku. Mówi, co zawiodło, zamiast samego „nie".
+function drawVerdict(result) {
+  if (!result.made) return 'Najpierw narysuj znak.';
+  if (!result.expected) return 'Nie mam wzoru kresek dla tego znaku.';
+
+  if (result.score >= 0.85) return 'Świetnie — bardzo blisko wzoru.';
+  if (result.score >= DRAW_PASS_SCORE) return 'Dobrze — znak rozpoznany.';
+
+  const weaknesses = [
+    { value: result.count, text: `inna liczba kresek (masz ${result.made}, wzór ma ${result.expected})` },
+    { value: result.direction, text: 'kolejność albo kierunek kresek' },
+    { value: (result.coverage + result.precision) / 2, text: 'kształt znaku' }
+  ];
+  weaknesses.sort((a, b) => a.value - b.value);
+  return `Jeszcze nie to — popraw: ${weaknesses[0].text}.`;
+}
+
+/*
+ * Wzór kresek w układzie canvasa. Ścieżki SVG mają własny viewBox, więc
+ * przeliczamy je przez macierz ekranu — dzięki temu ocena nie zależy od tego,
+ * jak szeroka jest karta ani ile ma akurat px pole znaku.
+ */
+function referenceOnCanvas(svg, canvas, paths, samples) {
+  const matrix = svg.getScreenCTM();
+  if (!matrix) return [];
+
+  const box = canvas.getBoundingClientRect();
+  return paths.map(path =>
+    samplePath(path, samples).map(point => {
+      const mapped = svg.createSVGPoint();
+      mapped.x = point.x;
+      mapped.y = point.y;
+      const screen = mapped.matrixTransform(matrix);
+      return { x: screen.x - box.left, y: screen.y - box.top };
+    })
+  );
 }
 
 /* =========================================================
@@ -2024,7 +2233,10 @@ function renderLearn() {
           <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
           <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">✍️ Rysuj</button>
           <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
+          <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź</button>
         </div>
+
+        <div class="draw-result" id="drawResult" aria-live="polite"></div>
 
         <div class="kana-note" id="kanaNote"></div>
       </div>
@@ -2073,19 +2285,37 @@ function renderLearn() {
   const wrap = document.getElementById('svgWrap');
   const note = document.getElementById('kanaNote');
 
-  /*
-    Rysowanie (T13, warstwa 1). Canvas jest rodzeństwem SVG wewnątrz
-    #svgWrap, a nie osobnym kontenerem — dzięki temu geometria pola znaku
-    zostaje bez zmian, więc kontrakt płynnego układu (§28) nadal obowiązuje.
-  */
-  if (learnDrawing) learnDrawing.destroy();
-  learnDrawing = mountDrawing(wrap);
-
   const drawToggle = document.getElementById('drawToggle');
   const clearDrawing = document.getElementById('clearDrawing');
+  const checkDrawing = document.getElementById('checkDrawing');
+  const drawResult = document.getElementById('drawResult');
+
+  /*
+    Rysowanie (T13). Canvas jest rodzeństwem SVG wewnątrz #svgWrap, a nie
+    osobnym kontenerem — dzięki temu geometria pola znaku zostaje bez zmian,
+    więc kontrakt płynnego układu (§28) nadal obowiązuje.
+  */
+  if (learnDrawing) learnDrawing.destroy();
+
+  const drawing = mountDrawing(wrap);
+  learnDrawing = drawing;
+
+  // Ocena (warstwa 2) potrzebuje wzoru kresek, a ten istnieje dopiero po
+  // wczytaniu SVG — dlatego „Sprawdź" jest zablokowane, dopóki wzoru nie ma.
+  let referencePaths = null;
+
+  const clearVerdict = () => {
+    drawResult.textContent = '';
+    drawResult.classList.remove('passed');
+  };
+
+  drawing.onChange = () => {
+    clearVerdict(); // każdy ruch unieważnia poprzedni werdykt
+    checkDrawing.disabled = !(referencePaths && drawing.strokes.length);
+  };
 
   const setDrawing = on => {
-    learnDrawing.setEnabled(on);
+    drawing.setEnabled(on);
     drawToggle.setAttribute('aria-pressed', String(on));
     drawToggle.textContent = on ? '✍️ Koniec rysowania' : '✍️ Rysuj';
     clearDrawing.disabled = !on;
@@ -2093,16 +2323,36 @@ function renderLearn() {
 
   drawToggle.onclick = () => {
     Audio.click();
-    setDrawing(!learnDrawing.enabled);
+    setDrawing(!drawing.enabled);
   };
 
   clearDrawing.onclick = () => {
     Audio.click();
-    learnDrawing.clear();
+    drawing.clear();
+  };
+
+  checkDrawing.onclick = () => {
+    Audio.click();
+    if (!referencePaths) return;
+
+    /*
+      Wzór liczymy TERAZ, a nie przy wczytaniu znaku: po zmianie rozmiaru pola
+      `resize()` przeskalowuje kreski, więc wzór musi powstać w tym samym
+      układzie współrzędnych, co one.
+    */
+    const reference = referenceOnCanvas(wrap.querySelector('svg'), drawing.canvas, referencePaths, DRAW_SAMPLES);
+    const result = scoreDrawing(
+      drawing.strokes.map(stroke => resample(stroke, DRAW_SAMPLES)),
+      reference,
+      wrap.clientWidth
+    );
+
+    drawResult.textContent = drawVerdict(result);
+    drawResult.classList.toggle('passed', result.score >= DRAW_PASS_SCORE);
   };
 
   mountKana(wrap, state.kana, {
-    overlay: learnDrawing.canvas,
+    overlay: drawing.canvas,
     onProgress: (done, active) => {
       document.querySelectorAll('#strokeList .stroke-step').forEach((el, i) => {
         el.classList.toggle('completed', i < done);
@@ -2114,6 +2364,12 @@ function renderLearn() {
     }
   }).then(player => {
     if (!player) return;
+
+    // Wzór dla oceny — ta sama geometria KanjiVG, którą animuje `mountKana`
+    // (§35: bez drugiego zbioru danych). Przeliczamy ją dopiero przy
+    // „Sprawdź", bo tylko wtedy znamy aktualny układ pola.
+    referencePaths = player.paths;
+    drawing.onChange();
 
     // SVG jest źródłem prawdy dla liczby kresek — zawsze aktualizuj
     if (player.count !== count) {
