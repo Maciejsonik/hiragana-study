@@ -1350,6 +1350,204 @@
   }
 
   /* =====================================================
+     20. TRYB „OBA" — HIRAGANA + KATAKANA
+     -----------------------------------------------------
+     `both` nie jest trzecim zestawem danych: to ten sam `scriptData`
+     czytany dwa razy. Dlatego tutaj pilnujemy trzech rzeczy:
+       • tożsamości grup (bazowe id dla egzaminu, unikalny key dla stanu),
+       • tego, że postęp zostaje per znak (あ i ア to osobne rekordy),
+       • rozstrzygania zduplikowanych czytanek (ji/zu) w pytaniach.
+     ===================================================== */
+  try {
+    ok('M1 SCRIPT_VALUES zawiera both', SCRIPT_VALUES.indexOf('both') >= 0, SCRIPT_VALUES.join(','));
+    ok('M2 domyślny skrypt to both', SETTINGS_DEFAULTS.script === 'both', SETTINGS_DEFAULTS.script);
+
+    setScript('both');
+    const groups = getGroups();
+    const all = getAll();
+
+    ok('M3 both daje 52 grupy', groups.length === 52, String(groups.length));
+    ok(
+      'M4 klucze grup są unikalne',
+      new Set(groups.map(group => group.key)).size === groups.length,
+      String(new Set(groups.map(group => group.key)).size)
+    );
+    ok(
+      'M5 klucze mają prefiks alfabetu',
+      groups[0].key === 'h:a' && groups[groups.length - 1].key === 'k:yoon-p',
+      groups[0].key + ' … ' + groups[groups.length - 1].key
+    );
+    ok(
+      'M6 both daje 208 unikalnych znaków',
+      all.length === 208 && new Set(all.map(character => character.kana)).size === 208,
+      String(all.length)
+    );
+    ok(
+      'M7 あ i ア mają wspólne bazowe id grupy',
+      item('あ').groupId === 'a' && item('ア').groupId === 'a',
+      item('あ').groupId + '/' + item('ア').groupId
+    );
+    ok(
+      'M8 あ i ア należą do różnych skryptów',
+      item('あ').script === 'hiragana' && item('ア').script === 'katakana',
+      item('あ').script + '/' + item('ア').script
+    );
+    ok(
+      'M9 kategoria wynika z bazowego id, nie z prefiksu',
+      learnCategoryOf('h:dakuten-k') === 'dakuten' &&
+        learnCategoryOf('k:yoon-p') === 'yoon' &&
+        learnCategoryOf('h:a') === 'basic',
+      learnCategoryOf('h:dakuten-k') + '/' + learnCategoryOf('k:yoon-p')
+    );
+    ok(
+      'M10 opisy kresek obejmują oba alfabety',
+      Object.keys(getStrokeText()).length === 208 && !!getStrokeText()['あ'] && !!getStrokeText()['ア'],
+      String(Object.keys(getStrokeText()).length)
+    );
+    ok('M11 stan startowy w both należy do hiragany', state.group === 'h:a' && state.kana === 'あ', state.group);
+
+    // egzamin: wybór rzędów jest wspólny, więc bazowe id obejmuje oba alfabety
+    const savedExam = state.exam;
+    state.exam = { groups: ['a'], kanaList: null };
+    const scope = getSelectedExamCharacters().map(character => character.kana);
+    state.exam = savedExam;
+    ok(
+      'M12 zakres „a" obejmuje oba alfabety',
+      scope.length === 10 && scope.indexOf('あ') >= 0 && scope.indexOf('ア') >= 0,
+      scope.join('')
+    );
+
+    // postęp: osobne rekordy dla あ i ア, bez migracji i bez scalania
+    setProgress({}, 1);
+    recordAnswer('あ', true, null, 'exam');
+    recordAnswer('ア', false, null, 'exam');
+    ok(
+      'M13 postęp liczy あ i ア osobno',
+      !!progress.chars['あ'] &&
+        !!progress.chars['ア'] &&
+        progress.chars['あ'].seen === 1 &&
+        progress.chars['ア'].seen === 1 &&
+        progress.chars['あ'] !== progress.chars['ア'],
+      String(Object.keys(progress.chars).length)
+    );
+    clearProgress();
+
+    /*
+       Rozpraszacze testujemy na małej, zamkniętej puli, nie na losowym
+       egzaminie. Przy 104 znakach losowanie mogłoby przypadkiem nie trafić
+       w duplikat i asercja przechodziłaby także z błędem — a test, który
+       przechodzi oba warianty, niczego nie pilnuje.
+    */
+    const readingPool = [item('じ'), item('ぢ'), item('ず'), item('づ')];
+    const readingPicks = pickDistractors(item('じ'), 10, readingPool, false);
+    const readingLabels = readingPicks.map(pick => pick.romaji);
+    ok(
+      'M14 rozpraszacze nie powtarzają czytanki',
+      readingLabels.length > 0 &&
+        readingLabels.indexOf('ji') < 0 &&
+        new Set(readingLabels).size === readingLabels.length,
+      readingLabels.join(',')
+    );
+
+    // tryb A: pytanie jest romaji, więc opcje muszą być z jednego alfabetu
+    const scriptPool = [item('あ'), item('ア'), item('い'), item('イ')];
+    const scriptPicks = pickDistractors(item('あ'), 10, scriptPool, false, { sameScript: true });
+    ok(
+      'M15 tryb A w both losuje opcje z jednego alfabetu',
+      scriptPicks.length > 0 && scriptPicks.every(pick => pick.script === 'hiragana'),
+      scriptPicks.map(pick => pick.kana).join('')
+    );
+
+    /*
+       Kontrola M15: ta sama pula, ale bez ograniczenia skryptu, przepuszcza
+       katakanę. Pula jest wyłącznie katakańska, więc wynik nie zależy od
+       losowania ani od tego, który wariant czytanki wygra wagą.
+    */
+    const katakanaPool = [item('ア'), item('イ'), item('ウ')];
+    const unconstrained = pickDistractors(item('あ'), 10, katakanaPool, false);
+    const constrained = pickDistractors(item('あ'), 10, katakanaPool, false, { sameScript: true });
+    ok(
+      'M16 bez ograniczenia skryptu opcje się mieszają, z ograniczeniem nie',
+      unconstrained.length > 0 && unconstrained.every(pick => pick.script === 'katakana') && constrained.length === 0,
+      unconstrained.map(pick => pick.kana).join('') + ' / ' + constrained.length
+    );
+
+    // tryb C (wpisz kana): ぢ jest tą samą odpowiedzią co じ, ず już nie
+    async function typeKana(typed) {
+      startExam([], {
+        kanaList: ['じ'],
+        options: 4,
+        limit: 0,
+        outside: false,
+        modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: true, kanaRomajiType: false },
+        timer: 0
+      });
+      await new Promise(r => setTimeout(r, 220));
+      state.exam.currentMode = 'romaji-kana-type';
+      state.exam.current = item('じ');
+      renderExamQuestion(state.exam.current);
+      await new Promise(r => setTimeout(r, 80));
+      document.getElementById('kanaInput').value = typed;
+      document.getElementById('checkKana').click();
+      await new Promise(r => setTimeout(r, 80));
+      const score = state.exam.score;
+      stopExam();
+      return score;
+    }
+
+    ok('M17 tryb C akceptuje ぢ za じ (ta sama czytanka)', (await typeKana('ぢ')) === 1);
+    ok('M18 tryb C odrzuca ず za じ (inna czytanka)', (await typeKana('ず')) === 0);
+
+    // tryb D (wpisz romaji): ぢ przyjmuje „ji" i „di"
+    async function typeRomaji(kana, typed) {
+      startExam([], {
+        kanaList: [kana],
+        options: 4,
+        limit: 0,
+        outside: false,
+        modes: { romajiKanaPick: false, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: true },
+        timer: 0
+      });
+      await new Promise(r => setTimeout(r, 220));
+      state.exam.currentMode = 'kana-romaji-type';
+      state.exam.current = item(kana);
+      renderExamQuestion(state.exam.current);
+      await new Promise(r => setTimeout(r, 80));
+      document.getElementById('romajiInput').value = typed;
+      document.getElementById('checkRomaji').click();
+      await new Promise(r => setTimeout(r, 80));
+      const score = state.exam.score;
+      stopExam();
+      return score;
+    }
+
+    ok('M19 tryb D akceptuje ji dla ぢ', (await typeRomaji('ぢ', 'ji')) === 1);
+    ok('M20 tryb D akceptuje di dla ぢ', (await typeRomaji('ぢ', 'di')) === 1);
+    ok('M21 tryb D akceptuje du dla づ', (await typeRomaji('づ', 'du')) === 1);
+    ok('M22 tryb D odrzuca zu dla ぢ', (await typeRomaji('ぢ', 'zu')) === 0);
+
+    // menu i ustawienia: trzy stany skryptu, nie dwa
+    setScript('both');
+    setScreen('menu');
+    await new Promise(r => setTimeout(r, 250));
+    ok(
+      'M23 menu ma trzy stany skryptu',
+      document.querySelectorAll('.script-switcher .script-btn').length === 3,
+      String(document.querySelectorAll('.script-switcher .script-btn').length)
+    );
+
+    setScreen('settings');
+    await new Promise(r => setTimeout(r, 200));
+    ok('M24 Ustawienia mają wybór „Oba"', !!document.querySelector('[data-script-set="both"]'), '');
+
+    setScript('hiragana');
+    clearProgress();
+    setScreen('menu');
+  } catch (e) {
+    ok('tryb both', false, e.message);
+  }
+
+  /* =====================================================
      CZYSZCZENIE DANYCH — komplet kluczy i komunikat
      ===================================================== */
   try {

@@ -617,6 +617,7 @@ footer {
 .script-switcher {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   max-width: 820px;
   margin: 50px auto 0;
@@ -877,6 +878,22 @@ footer {
 */
 .learn-section-body .kana-btn {
   min-width: 0;
+}
+
+/* W trybie „Oba" sekcja zawiera dwa alfabety — granica między nimi musi być
+   widoczna, bo 20 znaków hiragany i 20 katakany to nie jedna lista. */
+.kana-script-label {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kana-script-label:first-child {
+  margin-top: 0;
 }
 
 .kana-btn {
@@ -1560,6 +1577,41 @@ footer {
   font-family: "Noto Sans JP", sans-serif;
 }
 
+.exam-group-scripts {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Zaawansowane opcje egzaminu schowane, bo nie są częścią wyboru zakresu:
+   przy każdej sesji te same cztery selecty spychały listę rzędów w dół. */
+.exam-advanced {
+  margin: 16px 0;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.exam-advanced > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.exam-advanced > summary small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.exam-advanced[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+
 .exam-quick {
   display: flex;
   gap: 10px;
@@ -2170,6 +2222,18 @@ footer {
 
   h1 {
     font-size: 1.7rem;
+  }
+
+  /* trzy stany skryptu muszą zmieścić się na 320 px — bez tego trzeci
+     przycisk wypadał poza ekran */
+  .script-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .script-switcher {
+    gap: 8px;
+    margin-top: 34px;
   }
 
   .study-card {

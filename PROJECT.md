@@ -949,6 +949,12 @@ This should be audited later.
 
 # 23. Progress Panel
 
+The scope rows and the four quick buttons are the whole first screen. The
+numeric options (answers per question, question limit, timer, outside-scope
+distractors) and the four question modes live in a collapsed
+`<details class="exam-advanced">` whose summary shows the current values, so
+the same four selects no longer push the row list down on every visit.
+
 Exam setup contains a progress panel showing:
 
 - daily statistics (T15),
@@ -1448,13 +1454,70 @@ Katakana shares the existing learning/exam code — it is selected through
 
 The implementation avoided duplicating large amounts of existing learning/exam logic.
 
-Future combined-script practice can eventually allow:
+## Combined mode (T17 layer 2) — SHIPPED
+
+`state.script` accepts three values:
 
 ```text
-Hiragana
-Katakana
-Mixed
+hiragana
+katakana
+both        ← default for fresh installs
 ```
+
+`both` is **not** a third dataset. `getGroups()` reads `scriptData` twice and
+the rest of the app keeps working on the resulting list, so there is no second
+copy of characters, stroke descriptions or lookalikes. Vocabulary mixes both
+alphabets (katakana loanwords), which is why combined study is the default;
+the single-script modes remain first-class and are one click away.
+
+Three identities per group, each with a different job:
+
+```text
+id      base id ('a', 'dakuten-k'), shared by both scripts
+        → exam scope filtering
+key     unique in the session ('h:a' / 'k:a' in both, 'a' in single mode)
+        → state.group, sidebar buttons, arrow navigation
+script  'hiragana' | 'katakana'
+        → labels, per-question script in exams
+```
+
+Consequences worth keeping in mind:
+
+- **Exam scope needs no migration.** `hiragana-exam-settings.groups` stores
+  base ids, so a stored selection keeps meaning the same rows when the user
+  switches between single and combined mode. `getSelectedExamCharacters()`
+  matches `character.groupId`.
+- **Progress stays per character.** `hiragana-progress` is keyed by the kana
+  itself, and あ/ア are different keys, so both scripts coexist in one store
+  without a version bump or a merge step.
+- **`learnCategoryOf()` strips the `h:`/`k:` prefix** before comparing, because
+  `state.group` is a key, not a base id.
+- **The learn sidebar keeps four category sections.** In `both` each section
+  renders a "Hiragana" and a "Katakana" block (`.kana-script-label`) instead of
+  concatenating 20 + 20 buttons with no boundary.
+
+## Identical romaji
+
+Four characters share a romaji spelling but not a glyph:
+
+```text
+ji → じ ぢ ジ ヂ
+zu → ず づ ズ ヅ
+```
+
+This is real orthography, not a data error, and it existed before the merge.
+The rules that keep it from producing wrong answers:
+
+- `pickDistractors()` drops candidates with the same romaji as the question,
+  and keeps at most one candidate per romaji (`byReading`). Without it, mode B
+  showed two identical "zu" buttons and mode A showed two correct glyphs.
+- In `both`, romaji→kana questions draw options from the question's script
+  only; otherwise "ji" would have four correct glyphs at once.
+- Typing answers are judged by **reading**, not by one chosen glyph: mode C
+  accepts ぢ as an answer to "ji" for じ (same script, same reading), mode D
+  accepts `di`/`du` for ぢ/づ alongside `ji`/`zu`.
+- The prompt names the script in `both` ("Jaki znak hiragana oznacza:",
+  "Wpisz znak katakana dla:").
 
 ---
 
@@ -2327,7 +2390,7 @@ hiragana-settings = { theme, muted, script, hideGuide }
 
 - `theme`  — `light` | `dark` | `system`
 - `muted`  — boolean
-- `script` — `hiragana` | `katakana`
+- `script` — `hiragana` | `katakana` | `both` (default)
 - `hideGuide` — boolean; hides the reference character while drawing (see §35)
 
 ## Centralized setters
@@ -2344,8 +2407,9 @@ active — outside it the setting changes nothing. The learn panel also carries 
 quick toggle for it, shown only in drawing mode (§35).
 
 `setScript()` additionally resets `state.group` / `state.kana` to the first
-group of the newly active script, so script-dependent state can never leak
-across scripts.
+group of the newly active selection, so script-dependent state can never leak
+across modes. It stores the group's `key` (`h:a` in `both`, `a` in single
+mode), not the base id — the same base id exists twice in `both`.
 
 ## Loading and migration
 
@@ -2377,7 +2441,7 @@ prevents a light/dark flash. It performs **no writes**; migration belongs to
 `renderMenu()` is deliberately short:
 
 ```text
-script switcher  hiragana / katakana
+script switcher  hiragana / katakana / both
 mastery strip    one bar + "Opanowane N z M"
 tiles (2×2)      Nauka · Egzamin · Powtórki · Fiszki
 toolbar          Ustawienia
@@ -2408,7 +2472,7 @@ the CSS hooks (`.menu-card.tile`, `.mastery-strip-bar`) still defined.
 ```text
 Wygląd     theme: light / dark / system
 Dźwięk     sound effects: on / off
-Nauka      default script: hiragana / katakana
+Nauka      default script: hiragana / katakana / both
 Rysowanie  reference character while drawing: visible / hidden
 Dane       Reset Settings / Reset Progress / Clear All Data
 ```
@@ -2695,11 +2759,12 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion, vocabulary data and progress
-                                   store (265 assertions)
+                                   store (289 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
-                                   flashcards (T19)                      (131 assertions)
+                                   flashcards (T19), combined-script panel
+                                   (138 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

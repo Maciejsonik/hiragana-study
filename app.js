@@ -76,8 +76,35 @@ const scriptData = {
   }
 };
 
+/*
+   Skrypty aktywne w danym trybie. `both` to nie trzeci zestaw danych —
+   to ten sam `scriptData` czytany dwa razy, więc nie duplikujemy znaków
+   ani kresek.
+*/
+function activeScripts() {
+  return state.script === 'both' ? ['hiragana', 'katakana'] : [state.script];
+}
+
+/*
+   Grupa ma trzy tożsamości i każda ma inne zadanie:
+     id     — bazowe (`a`, `dakuten-k`), wspólne dla obu skryptów; po nim
+              filtruje egzamin, więc wybór rzędów działa niezależnie
+              od tego, czy uczymy się jednego alfabetu, czy obu;
+     key    — unikalne w danej sesji (`h:a`, `k:a` przy `both`); po nim
+              chodzą `state.group` i panel znaków, bo samo `id` wskazywałoby
+              dwie grupy jednocześnie;
+     script — z którego alfabetu pochodzi grupa.
+   W trybie jednego skryptu `key` równa się `id`, więc stary stan i stare
+   asercje zachowują się bez zmian.
+*/
 function getGroups() {
-  return scriptData[state.script].groups;
+  return activeScripts().flatMap(script =>
+    scriptData[script].groups.map(group => ({
+      ...group,
+      script,
+      key: state.script === 'both' ? (script === 'hiragana' ? 'h:' : 'k:') + group.id : group.id
+    }))
+  );
 }
 
 function getAll() {
@@ -87,7 +114,9 @@ function getAll() {
       kana,
       romaji,
       group: group.name,
-      groupId: group.id
+      groupId: group.id,
+      key: group.key,
+      script: group.script
     }))
   );
 }
@@ -106,14 +135,21 @@ const LEARN_CATEGORIES = [
 ];
 
 function learnCategoryOf(groupId) {
-  if (groupId.startsWith('dakuten')) return 'dakuten';
-  if (groupId.startsWith('handakuten')) return 'handakuten';
-  if (groupId.startsWith('yoon')) return 'yoon';
+  // `state.group` to `key`, więc w trybie `both` przychodzi `h:dakuten-k`.
+  // Kategoria zawsze zależy od bazowego id.
+  const base = String(groupId).split(':').pop();
+
+  if (base.startsWith('dakuten')) return 'dakuten';
+  if (base.startsWith('handakuten')) return 'handakuten';
+  if (base.startsWith('yoon')) return 'yoon';
   return 'basic';
 }
 
 function getStrokeText() {
-  return scriptData[state.script].strokeText;
+  if (state.script !== 'both') return scriptData[state.script].strokeText;
+
+  // klucze to znaki (あ / ア), więc scalenie jest bezkolizyjne
+  return { ...scriptData.hiragana.strokeText, ...scriptData.katakana.strokeText };
 }
 
 function getStrokeCounts() {
@@ -122,7 +158,8 @@ function getStrokeCounts() {
 }
 
 function getLookalikes() {
-  return scriptData[state.script].lookalikes;
+  if (state.script !== 'both') return scriptData[state.script].lookalikes;
+  return [...scriptData.hiragana.lookalikes, ...scriptData.katakana.lookalikes];
 }
 
 /* =========================================================
@@ -143,12 +180,15 @@ const LEGACY_MUTED_KEY = 'hiragana-muted';
 const SETTINGS_DEFAULTS = {
   theme: 'system',
   muted: false,
-  script: 'hiragana',
+  // `both` jest domyślne: słownictwo miesza oba alfabety (katakana w
+  // zapożyczeniach), więc nauka od razu obejmuje oba. Wybór jednego
+  // alfabetu nadal jest w pełni wspierany.
+  script: 'both',
   hideGuide: false
 };
 
 const THEME_VALUES = ['light', 'dark', 'system'];
-const SCRIPT_VALUES = ['hiragana', 'katakana'];
+const SCRIPT_VALUES = ['hiragana', 'katakana', 'both'];
 
 /*
  * Zwraca `{ theme, muted, script, hideGuide }`, gdzie każde pole to poprawna
@@ -698,7 +738,7 @@ const state = {
 // (inaczej np. przy starcie w Katakanie `state.kana` wskazywałoby 'あ')
 {
   const firstGroup = getGroups()[0];
-  state.group = firstGroup.id;
+  state.group = firstGroup.key;
   state.kana = firstGroup.chars[0][0];
 }
 
@@ -711,7 +751,14 @@ const homeBtn = document.getElementById('homeBtn');
 
 /* Nazwa skryptu w widoku użytkownika — jedno miejsce, bez duplikacji. */
 function scriptName(script = state.script) {
-  return script === 'katakana' ? 'Katakana' : 'Hiragana';
+  if (script === 'katakana') return 'Katakana';
+  if (script === 'both') return 'Hiragana i katakana';
+  return 'Hiragana';
+}
+
+/* Czy w danym trybie trzeba pokazywać, z którego alfabetu jest znak. */
+function showsScriptLabels() {
+  return state.script === 'both';
 }
 
 function updateScriptHeader() {
@@ -720,11 +767,7 @@ function updateScriptHeader() {
 
   if (!eyebrow || !title) return;
 
-  if (state.script === 'katakana') {
-    eyebrow.textContent = 'JAPOŃSKI • KATAKANA';
-  } else {
-    eyebrow.textContent = 'JAPOŃSKI • HIRAGANA';
-  }
+  eyebrow.textContent = 'JAPOŃSKI • ' + scriptName().toUpperCase();
   title.textContent = scriptName();
 }
 
@@ -732,8 +775,8 @@ function item(kana) {
   return getAll().find(x => x.kana === kana);
 }
 
-function getGroup(groupId) {
-  return getGroups().find(group => group.id === groupId);
+function getGroup(groupKey) {
+  return getGroups().find(group => group.key === groupKey);
 }
 
 function shuffle(array) {
@@ -790,15 +833,15 @@ function navigateKana(delta) {
   const allGroups = getGroups();
 
   if (newIndex < 0) {
-    const groupIndex = allGroups.findIndex(g => g.id === state.group);
+    const groupIndex = allGroups.findIndex(g => g.key === state.group);
     const prevGroupIndex = (groupIndex - 1 + allGroups.length) % allGroups.length;
-    state.group = allGroups[prevGroupIndex].id;
+    state.group = allGroups[prevGroupIndex].key;
     const prevGroup = getGroup(state.group);
     state.kana = prevGroup.chars[prevGroup.chars.length - 1][0];
   } else if (newIndex >= kanaList.length) {
-    const groupIndex = allGroups.findIndex(g => g.id === state.group);
+    const groupIndex = allGroups.findIndex(g => g.key === state.group);
     const nextGroupIndex = (groupIndex + 1) % allGroups.length;
-    state.group = allGroups[nextGroupIndex].id;
+    state.group = allGroups[nextGroupIndex].key;
     state.kana = getGroup(state.group).chars[0][0];
   } else {
     state.kana = kanaList[newIndex];
@@ -1645,7 +1688,7 @@ function setScript(script) {
 
   // zależny stan grupy i znaku musi zawsze należeć do nowego skryptu
   const firstGroup = getGroups()[0];
-  state.group = firstGroup.id;
+  state.group = firstGroup.key;
   state.kana = firstGroup.chars[0][0];
 
   saveSettings(settings);
@@ -1770,6 +1813,7 @@ function renderMenu() {
     <div class="script-switcher">
       <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
       <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
+      <button class="script-btn ${state.script === 'both' ? 'active' : ''}" data-script="both">ひカ Oba</button>
     </div>
 
     ${masteryStripHTML()}
@@ -1932,7 +1976,7 @@ function renderReview() {
       Audio.click();
       const kana = button.dataset.reviewKana;
       const character = item(kana);
-      if (character) state.group = character.groupId;
+      if (character) state.group = character.key;
       state.kana = kana;
       setScreen('learn');
     };
@@ -2240,7 +2284,7 @@ function clearAllData() {
   Audio.setMuted(settings.muted);
 
   const firstGroup = getGroups()[0];
-  state.group = firstGroup.id;
+  state.group = firstGroup.key;
   state.kana = firstGroup.chars[0][0];
 }
 
@@ -2280,6 +2324,7 @@ function renderSettings() {
           <div class="settings-pills" role="group" aria-labelledby="scriptLabel">
             ${settingsPill('hiragana', settings.script, 'ひ Hiragana', 'data-script-set', 'script-hiragana')}
             ${settingsPill('katakana', settings.script, 'カ Katakana', 'data-script-set', 'script-katakana')}
+            ${settingsPill('both', settings.script, 'ひカ Oba', 'data-script-set', 'script-both')}
           </div>
         </div>
       </div>
@@ -2459,6 +2504,11 @@ function learnSidebarHTML() {
       const groups = getGroups().filter(group => learnCategoryOf(group.id) === category.id);
       const count = groups.reduce((sum, group) => sum + group.chars.length, 0);
 
+      // W trybie `both` ta sama sekcja zawiera dwa alfabety. Bez nagłówka
+      // 20 znaków hiragany przechodziłoby w 20 znaków katakany bez żadnej
+      // granicy, a to dwie różne listy, nie jedna dłuższa.
+      let lastScript = null;
+
       return `
         <details class="learn-section" data-category="${category.id}">
           <summary class="learn-section-head">
@@ -2467,17 +2517,26 @@ function learnSidebarHTML() {
           </summary>
           <div class="learn-section-body">
             ${groups
-              .map(group =>
-                group.chars
-                  .map(
-                    ([kana, romaji]) => `
-              <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.id}" title="${romaji}">
+              .map(group => {
+                const scriptHead =
+                  showsScriptLabels() && group.script !== lastScript
+                    ? `<span class="kana-script-label">${scriptName(group.script)}</span>`
+                    : '';
+                lastScript = group.script;
+
+                return (
+                  scriptHead +
+                  group.chars
+                    .map(
+                      ([kana, romaji]) => `
+              <button class="kana-btn ${kana === state.kana ? 'active' : ''} mastery-${masteryLevel(kana)}" data-kana="${kana}" data-group="${group.key}" title="${romaji}">
                 ${kana}
               </button>
             `
-                  )
-                  .join('')
-              )
+                    )
+                    .join('')
+                );
+              })
               .join('')}
           </div>
         </details>
@@ -3959,10 +4018,32 @@ function kanaCategory(c) {
 }
 
 /*
+   Cztery znaki mają ten sam zapis romaji, choć różne znaki:
+   ji → じ ぢ ジ ヂ, zu → ず づ ズ ヅ. Nie da się tego „naprawić" tabelą,
+   bo to prawdziwa ortografia. Reguła jest więc taka:
+     • pytanie o romaji (A/C) akceptuje każdy znak tego samego alfabetu
+       o tym samym romaji — inaczej poprawna odpowiedź byłaby oznaczana
+       jako błąd zależnie od tego, który wariant wypadł w losowaniu;
+     • rozpraszacze o tym samym romaji są wycinane, żeby w trybie B nie
+       stały obok siebie dwa identyczne przyciski „ji".
+*/
+function sameReading(a, b) {
+  return !!a && !!b && a.romaji === b.romaji;
+}
+
+// Dodatkowe zapisy akceptowane przy wpisywaniu romaji (Hepburn + Kunrei).
+const ROMAJI_ALTERNATES = {
+  ぢ: ['di'],
+  づ: ['du'],
+  ヂ: ['di'],
+  ヅ: ['du']
+};
+
+/*
  * Rozpraszacze: znaki z wybranego zakresu (waga 2), opcjonalnie spoza zakresu (0.6),
  * z premią za podobny wygląd i za znaki, z którymi już to pytanie pomyliłeś.
  */
-function pickDistractors(question, count, pool, outside) {
+function pickDistractors(question, count, pool, outside, { sameScript = false } = {}) {
   const inPool = new Set(pool.map(c => c.kana));
   const similar = similarTo(question.kana);
   const confused = (progress.chars[question.kana] && progress.chars[question.kana].confused) || {};
@@ -3971,6 +4052,11 @@ function pickDistractors(question, count, pool, outside) {
 
   const weighted = getAll()
     .filter(c => c.kana !== question.kana)
+    // ten sam romaji = dwa równie poprawne przyciski, więc nie jest to pułapka
+    .filter(c => !sameReading(c, question))
+    // w trybie `both` opcje trybu romaji→kana muszą być z jednego alfabetu,
+    // inaczej „ji" miałoby cztery poprawne znaki naraz
+    .filter(c => !sameScript || c.script === question.script)
     .map(c => {
       const isInPool = inPool.has(c.kana);
 
@@ -3998,7 +4084,20 @@ function pickDistractors(question, count, pool, outside) {
     })
     .filter(Boolean);
 
-  return weightedSample(weighted, count);
+  /*
+     Jedna czytanka = jedna odpowiedź. Bez tego ず i づ stawały obok siebie
+     jako dwa identyczne przyciski „zu" (a w trybie `both` także か i カ),
+     więc użytkownik wybierał między dwiema etykietami o tym samym tekście.
+     Zostawiamy wariant o wyższej wadze — reszta rozkładu się nie zmienia,
+     bo duplikaty czytanek dotyczą tylko nielicznych znaków.
+  */
+  const byReading = new Map();
+  weighted.forEach(entry => {
+    const previous = byReading.get(entry.item.romaji);
+    if (!previous || entry.w > previous.w) byReading.set(entry.item.romaji, entry);
+  });
+
+  return weightedSample([...byReading.values()], count);
 }
 
 /* =========================================================
@@ -4228,8 +4327,41 @@ function readSetup() {
   };
 }
 
+/*
+   Stan rozwinięcia „Opcji egzaminu" jest sesyjny, nie zapisany: to rzecz,
+   którą otwiera się na chwilę, a nie preferencja.
+*/
+let examAdvancedOpen = false;
+
+/*
+   Rzędy egzaminu to bazowe id grup — wspólne dla obu skryptów. Dzięki temu
+   wybór „Samogłoski" znaczy to samo w hiraganie, katakanie i w trybie `both`,
+   a zapisany wybór (`hiragana-exam-settings`) nie wymaga migracji.
+   W trybie `both` dochodzi podgląd obu alfabetów i znacznik „＋ カ".
+*/
+function examGroupRows() {
+  const rows = new Map();
+
+  getGroups().forEach(group => {
+    if (!rows.has(group.id)) {
+      rows.set(group.id, { id: group.id, name: group.name, previews: [] });
+    }
+    rows.get(group.id).previews.push(group.chars.map(char => char[0]).join(' '));
+  });
+
+  return [...rows.values()];
+}
+
 function showExamSetup() {
   const settings = loadExamSettings();
+  const rows = examGroupRows();
+  const scriptHint =
+    state.script === 'both'
+      ? 'Zaznacz rzędy — w trybie „Oba" każdy rząd obejmuje hiraganę i katakanę.'
+      : `Zaznacz rzędy ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, które chcesz ćwiczyć.`;
+
+  const limitLabel = settings.limit === 0 ? 'bez limitu' : settings.limit + ' pytań';
+  const timerLabel = settings.timer === 0 ? 'bez timera' : 'timer ' + settings.timer + ' s';
 
   app.innerHTML = `
     <section class="exam card">
@@ -4238,21 +4370,22 @@ function showExamSetup() {
       <h2>Wybierz zakres</h2>
 
       <p style="color:var(--muted)">
-        Zaznacz rzędy ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, które chcesz ćwiczyć.
+        ${scriptHint}
         Egzamin trwa tak długo, jak chcesz. Znaki, które sprawiają Ci trudność,
         będą wracały częściej.
       </p>
 
       <div class="exam-groups" id="examGroups">
-        ${getGroups()
+        ${rows
           .map(
-            group => `
+            row => `
           <label class="exam-group-option">
-            <input type="checkbox" value="${group.id}" ${settings.groups.includes(group.id) ? 'checked' : ''}>
+            <input type="checkbox" value="${row.id}" ${settings.groups.includes(row.id) ? 'checked' : ''}>
             <span>
-              <strong>${group.name}</strong>
-              <small>${group.chars.map(char => char[0]).join(' ')}</small>
+              <strong>${row.name}</strong>
+              <small>${row.previews[0]}</small>
             </span>
+            ${row.previews.length > 1 ? '<small class="exam-group-scripts" title="Oba alfabety">＋ カ</small>' : ''}
           </label>
         `
           )
@@ -4266,68 +4399,75 @@ function showExamSetup() {
         <button class="btn btn-secondary" id="noGroups">Wyczyść</button>
       </div>
 
-      <div class="exam-settings">
-        <label>
-          Liczba odpowiedzi:
-          <select id="optionsCount">
-            ${[4, 6, 8].map(n => `<option value="${n}" ${n === settings.options ? 'selected' : ''}>${n}</option>`).join('')}
-          </select>
-        </label>
+      <details class="exam-advanced" ${examAdvancedOpen ? 'open' : ''}>
+        <summary>
+          <span>Opcje egzaminu</span>
+          <small>${settings.options} odpowiedzi · ${limitLabel} · ${timerLabel}</small>
+        </summary>
 
-        <label>
-          Liczba pytań:
-          <select id="questionLimit">
-            ${[
-              [0, 'Bez limitu'],
-              [5, '5'],
-              [10, '10'],
-              [20, '20'],
-              [30, '30']
-            ]
-              .map(([v, l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
-              .join('')}
-          </select>
-        </label>
+        <div class="exam-settings">
+          <label>
+            Liczba odpowiedzi:
+            <select id="optionsCount">
+              ${[4, 6, 8].map(n => `<option value="${n}" ${n === settings.options ? 'selected' : ''}>${n}</option>`).join('')}
+            </select>
+          </label>
 
-        <label>
-          Timer:
-          <select id="timerOpt">
-            ${[
-              [0, 'Wyłączony'],
-              [5, '5s'],
-              [10, '10s'],
-              [15, '15s']
-            ]
-              .map(([v, l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`)
-              .join('')}
-          </select>
-        </label>
+          <label>
+            Liczba pytań:
+            <select id="questionLimit">
+              ${[
+                [0, 'Bez limitu'],
+                [5, '5'],
+                [10, '10'],
+                [20, '20'],
+                [30, '30']
+              ]
+                .map(([v, l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
+                .join('')}
+            </select>
+          </label>
 
-        <label class="exam-check">
-          <input type="checkbox" id="outsideOpt" ${settings.outside ? 'checked' : ''}>
-          Dodawaj mylące znaki spoza wybranego zakresu
-        </label>
-      </div>
+          <label>
+            Timer:
+            <select id="timerOpt">
+              ${[
+                [0, 'Wyłączony'],
+                [5, '5s'],
+                [10, '10s'],
+                [15, '15s']
+              ]
+                .map(([v, l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`)
+                .join('')}
+            </select>
+          </label>
 
-      <div class="exam-settings" style="margin-top:4px">
-        <strong style="font-size:.85rem">Tryby pytań:</strong>
-        <label class="exam-check">
-          <input type="checkbox" id="modeA" ${settings.modes.romajiKanaPick ? 'checked' : ''}>
-          Romaji → wybierz kana
-        </label>
-        <label class="exam-check">
-          <input type="checkbox" id="modeB" ${settings.modes.kanaRomajiPick ? 'checked' : ''}>
-          Kana → wybierz romaji
-        </label>
-        <label class="exam-check">
-          <input type="checkbox" id="modeC" ${settings.modes.romajiKanaType ? 'checked' : ''}>
-          Romaji → wpisz kana
-        </label>
-        <label class="exam-check">
-          <input type="checkbox" id="modeD" ${settings.modes.kanaRomajiType ? 'checked' : ''}>
-          Kana → wpisz romaji
-        </label>
-      </div>
+          <label class="exam-check">
+            <input type="checkbox" id="outsideOpt" ${settings.outside ? 'checked' : ''}>
+            Dodawaj mylące znaki spoza wybranego zakresu
+          </label>
+        </div>
+
+        <div class="exam-settings" style="margin-top:4px">
+          <strong style="font-size:.85rem">Tryby pytań:</strong>
+          <label class="exam-check">
+            <input type="checkbox" id="modeA" ${settings.modes.romajiKanaPick ? 'checked' : ''}>
+            Romaji → wybierz kana
+          </label>
+          <label class="exam-check">
+            <input type="checkbox" id="modeB" ${settings.modes.kanaRomajiPick ? 'checked' : ''}>
+            Kana → wybierz romaji
+          </label>
+          <label class="exam-check">
+            <input type="checkbox" id="modeC" ${settings.modes.romajiKanaType ? 'checked' : ''}>
+            Romaji → wpisz kana
+          </label>
+          <label class="exam-check">
+            <input type="checkbox" id="modeD" ${settings.modes.kanaRomajiType ? 'checked' : ''}>
+            Kana → wpisz romaji
+          </label>
+        </div>
+      </details>
 
       ${progressPanelHTML()}
 
@@ -4348,12 +4488,17 @@ function showExamSetup() {
   };
   document.getElementById('allGroups').onclick = () => {
     Audio.click();
-    setExamGroups(getGroups().map(g => g.id));
+    setExamGroups(examGroupRows().map(row => row.id));
   };
   document.getElementById('noGroups').onclick = () => {
     Audio.click();
     setExamGroups([]);
   };
+
+  const advanced = app.querySelector('.exam-advanced');
+  advanced.addEventListener('toggle', () => {
+    examAdvancedOpen = advanced.open;
+  });
 
   document.getElementById('startSelectedExam').onclick = () => {
     const { selected, options, limit, outside, modes, timer } = readSetup();
@@ -4632,14 +4777,17 @@ function renderRomajiToKanaPick(question) {
   const exam = state.exam;
   const available = getSelectedExamCharacters();
 
-  const wrongOptions = pickDistractors(question, exam.options - 1, available, exam.outside);
+  const wrongOptions = pickDistractors(question, exam.options - 1, available, exam.outside, { sameScript: true });
   const options = shuffle([question, ...wrongOptions]);
+
+  const scriptWord = question.script === 'katakana' ? 'katakana' : 'hiragana';
+  const promptText = showsScriptLabels() ? `Jaki znak ${scriptWord} oznacza:` : 'Jaki znak oznacza:';
 
   const content = `
     ${examProgressHTML()}
 
     <div class="prompt">
-      <div class="polish">Jaki znak oznacza:</div>
+      <div class="polish">${promptText}</div>
       <div class="question">${question.romaji}</div>
 
       <div class="answers" data-n="${options.length}">
@@ -4731,7 +4879,11 @@ function renderRomajiToKanaType(question) {
     ${examProgressHTML()}
 
     <div class="prompt">
-      <div class="polish">Wpisz znak kana dla:</div>
+      <div class="polish">${
+        showsScriptLabels()
+          ? `Wpisz znak ${question.script === 'katakana' ? 'katakana' : 'hiragana'} dla:`
+          : 'Wpisz znak kana dla:'
+      }</div>
       <div class="question">${question.romaji}</div>
 
       <div class="type-input-wrap">
@@ -4762,7 +4914,11 @@ function renderRomajiToKanaType(question) {
     exam.total++;
     clearInterval(exam.timerCountdown);
 
-    const correct = typed === question.kana;
+    // ten sam romaji w tym samym alfabecie to ta sama odpowiedź (じ / ぢ)
+    const typedItem = getAll().find(c => c.kana === typed);
+    const correct =
+      typed === question.kana ||
+      (typedItem && typedItem.script === question.script && sameReading(typedItem, question));
     recordAnswer(question.kana, correct, null, 'exam');
 
     input.disabled = true;
@@ -4890,7 +5046,8 @@ function renderKanaToRomajiType(question) {
     exam.total++;
     clearInterval(exam.timerCountdown);
 
-    const correct = typed === question.romaji;
+    const acceptedReadings = [question.romaji, ...(ROMAJI_ALTERNATES[question.kana] || [])];
+    const correct = acceptedReadings.includes(typed);
     recordAnswer(question.kana, correct, null, 'exam');
 
     input.disabled = true;
@@ -5023,7 +5180,9 @@ function answerExam(button, question) {
   clearInterval(exam.timerCountdown);
 
   const chosenKana = button.dataset.answer;
-  const correct = chosenKana === question.kana;
+  const chosen = item(chosenKana);
+  const correct =
+    chosenKana === question.kana || (chosen && chosen.script === question.script && sameReading(chosen, question));
 
   recordAnswer(question.kana, correct, chosenKana, 'exam');
 
@@ -5275,7 +5434,9 @@ function resultText(score, total, script = state.script, kind = 'exam') {
   const ratio = score / total;
 
   if (ratio === 1) {
-    return kind === 'exam' ? 'Perfekcyjnie. ' + scriptName(script) + ' opanowana!' : 'Perfekcyjnie!';
+    if (kind !== 'exam') return 'Perfekcyjnie!';
+    if (script === 'both') return 'Perfekcyjnie. Hiragana i katakana opanowane!';
+    return 'Perfekcyjnie. ' + scriptName(script) + ' opanowana!';
   }
   if (ratio >= 0.8) return 'Bardzo dobrze — jeszcze trochę praktyki i będzie super.';
   if (ratio >= 0.6) return 'Dobry wynik. Warto powtórzyć trudniejsze znaki.';

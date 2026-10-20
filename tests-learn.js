@@ -1307,6 +1307,64 @@
         ok('fiszki słownictwa', false, e.message);
       }
 
+      /* =====================================================
+         BOTH. PANEL ZNAKÓW W TRYBIE „OBA"
+         -----------------------------------------------------
+         Ta sama sekcja kategorii zawiera dwa alfabety, więc granica
+         między nimi musi być oznaczona, a klik w katakanę musi ustawić
+         klucz grupy z prefiksem `k:` — inaczej nawigacja strzałkami
+         chodziłaby po grupie hiragany o tym samym bazowym id.
+         ===================================================== */
+      try {
+        setScript('both');
+        setScreen('learn');
+        await wait(900);
+
+        const bothSec = id => document.querySelector('.learn-section[data-category="' + id + '"]');
+        const bothCounts = ['basic', 'dakuten', 'handakuten', 'yoon'].map(id =>
+          parseInt(bothSec(id).querySelector('.learn-section-count').textContent.trim(), 10)
+        );
+        const scriptLabels = [...document.querySelectorAll('.kana-script-label')].map(el => el.textContent.trim());
+
+        ok(
+          'BOTH1 panel pokazuje 208 znaków',
+          document.querySelectorAll('.sidebar [data-kana]').length === 208,
+          String(document.querySelectorAll('.sidebar [data-kana]').length)
+        );
+        ok('BOTH2 liczniki sekcji obejmują oba alfabety', bothCounts.join('/') === '92/40/10/66', bothCounts.join('/'));
+        ok('BOTH3 każda sekcja ma granicę alfabetów', scriptLabels.length === 8, String(scriptLabels.length));
+        ok(
+          'BOTH4 granice to Hiragana i Katakana na przemian',
+          scriptLabels.join(',') === 'Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana',
+          scriptLabels.join(',')
+        );
+
+        document.querySelector('[data-kana="ア"]').click();
+        await wait(400);
+
+        ok(
+          'BOTH5 klik w katakanę ustawia klucz grupy k:a',
+          state.group === 'k:a' && state.kana === 'ア',
+          state.group + '/' + state.kana
+        );
+        ok(
+          'BOTH6 aktywny przycisk to ア',
+          document.querySelector('.kana-btn.active').textContent.trim() === 'ア',
+          document.querySelector('.kana-btn.active').textContent.trim()
+        );
+        ok(
+          'BOTH7 karta pokazuje nazwę grupy, nie skryptu',
+          document.querySelector('.study-card .eyebrow').textContent.trim() === 'Samogłoski',
+          document.querySelector('.study-card .eyebrow').textContent.trim()
+        );
+
+        // powrót do stanu, na którym kończyły poprzednie sekcje
+        setScript('hiragana');
+        setScreen('menu');
+      } catch (e) {
+        ok('tryb both w panelu nauki', false, e.message);
+      }
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));
