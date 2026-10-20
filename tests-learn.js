@@ -1023,6 +1023,15 @@
           drawVerdict(doubled) + ' | ' + drawVerdict(scribble)
         );
 
+        const backwardsScore = scoreDrawing([backwards], [referenceLine], 200);
+        ok(
+          'S15 odwrócona kreska nie przechodzi i jest wskazana numerem',
+          backwardsScore.pairs[0].agreement < 0.25 &&
+            backwardsScore.passed === false &&
+            /odwrotnie: kreska 1/.test(drawVerdict(backwardsScore)),
+          drawVerdict(backwardsScore) + ' passed=' + backwardsScore.passed
+        );
+
         /* --- cała ścieżka w DOM, bez sieci --- */
         const realLoadKanji = loadKanji;
         try {
@@ -1046,6 +1055,12 @@
             'S9 „Sprawdź" czeka, aż będzie i wzór, i rysunek',
             check.disabled === true && !!canvas && verdict.textContent === '',
             'disabled=' + check.disabled + ' canvas=' + !!canvas
+          );
+
+          ok(
+            'S16 przycisk oceny nie myli się z egzaminacyjnym „Sprawdź się"',
+            /rysunek/.test(check.textContent) && check.id === 'checkDrawing',
+            check.textContent
           );
 
           toggle.click();

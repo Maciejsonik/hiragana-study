@@ -1442,17 +1442,31 @@ function scoreDrawing(drawn, reference, box) {
   const tolerance = Math.max(5, box * 0.09);
 
   if (!expected || !made) {
-    return { score: 0, count: 0, direction: 0, coverage: 0, precision: 0, made, expected };
+    return {
+      score: 0,
+      passed: false,
+      backwards: [],
+      count: 0,
+      direction: 0,
+      coverage: 0,
+      precision: 0,
+      made,
+      expected,
+      pairs: []
+    };
   }
 
   const count = Math.max(0, 1 - Math.abs(made - expected) / expected);
 
   let direction = 0;
   const paired = Math.min(made, expected);
+  const pairs = [];
   for (let i = 0; i < paired; i++) {
     const a = strokeDirection(drawn[i]);
     const b = strokeDirection(reference[i]);
-    direction += (a.x * b.x + a.y * b.y + 1) / 2; // cos kąta → 0..1
+    const agreement = (a.x * b.x + a.y * b.y + 1) / 2; // cos kąta → 0..1
+    direction += agreement;
+    pairs.push({ index: i + 1, agreement });
   }
   direction = paired ? direction / paired : 0;
 
@@ -1471,7 +1485,22 @@ function scoreDrawing(drawn, reference, box) {
   const shape = (coverage + precision) / 2;
   const score = 0.35 * count + 0.25 * direction + 0.4 * shape;
 
-  return { score, count, direction, coverage, precision, made, expected };
+  /*
+    Kierunek jest bramką, nie tylko składnikiem sumy. Kreska narysowana wspak
+    pokrywa dokładnie te same piksele, więc kształt i liczność jej nie widzą —
+    bez tej bramki odwrócona kreska zbierała 0,75 i przechodziła próg.
+  */
+  const backwards = pairs.filter(pair => pair.agreement < 0.25).map(pair => pair.index);
+  const passed = backwards.length === 0 && score >= DRAW_PASS_SCORE;
+
+  return { score, passed, backwards, count, direction, coverage, precision, made, expected, pairs };
+}
+
+// „kreska 2", „kreski 2 i 4", „kreski 2, 4 i 7"
+function strokeNumbers(numbers) {
+  if (numbers.length === 1) return `kreska ${numbers[0]}`;
+  if (numbers.length === 2) return `kreski ${numbers[0]} i ${numbers[1]}`;
+  return `kreski ${numbers.slice(0, -1).join(', ')} i ${numbers[numbers.length - 1]}`;
 }
 
 // Werdykt po polsku. Mówi, co zawiodło, zamiast samego „nie".
@@ -1479,12 +1508,20 @@ function drawVerdict(result) {
   if (!result.made) return 'Najpierw narysuj znak.';
   if (!result.expected) return 'Nie mam wzoru kresek dla tego znaku.';
 
-  if (result.score >= 0.85) return 'Świetnie — bardzo blisko wzoru.';
-  if (result.score >= DRAW_PASS_SCORE) return 'Dobrze — znak rozpoznany.';
+  if (result.passed && result.score >= 0.85) return 'Świetnie — bardzo blisko wzoru.';
+  if (result.passed) return 'Dobrze — znak rozpoznany.';
+
+  // Odwrócone kreski wskazujemy numerem — samo „kierunek" niczego nie uczy.
+  const backwards = result.backwards;
 
   const weaknesses = [
     { value: result.count, text: `inna liczba kresek (masz ${result.made}, wzór ma ${result.expected})` },
-    { value: result.direction, text: 'kolejność albo kierunek kresek' },
+    {
+      value: result.direction,
+      text: backwards.length
+        ? `kierunek kresek (odwrotnie: ${strokeNumbers(backwards)})`
+        : 'kolejność albo kierunek kresek'
+    },
     { value: (result.coverage + result.precision) / 2, text: 'kształt znaku' }
   ];
   weaknesses.sort((a, b) => a.value - b.value);
@@ -2233,7 +2270,7 @@ function renderLearn() {
           <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
           <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">✍️ Rysuj</button>
           <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
-          <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź</button>
+          <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź rysunek</button>
         </div>
 
         <div class="draw-result" id="drawResult" aria-live="polite"></div>
@@ -2348,7 +2385,7 @@ function renderLearn() {
     );
 
     drawResult.textContent = drawVerdict(result);
-    drawResult.classList.toggle('passed', result.score >= DRAW_PASS_SCORE);
+    drawResult.classList.toggle('passed', result.passed);
   };
 
   mountKana(wrap, state.kana, {

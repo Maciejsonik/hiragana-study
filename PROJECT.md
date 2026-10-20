@@ -1340,21 +1340,25 @@ store and its read-only aggregation are documented under
 ## Next major priorities
 
 ```text
-T13 Canvas drawing mode
+T19 Vocabulary
 T16 Code splitting
 ```
 
 Recommended order:
 
 ```text
-T13 → T16
+T19 → T16
 ```
 
 ### Rationale
 
-**T13 — Canvas drawing mode**
+**T19 — Vocabulary**
 
-Adds an interactive handwriting layer and makes use of the existing KanjiVG stroke data. It is the largest remaining item that adds value for the learner rather than maintenance.
+The next item that adds learner value rather than maintenance: it builds on the kana the learner already knows instead of adding plumbing. It goes before T16 for the same reason T13 did — feature decisions first.
+
+**T13 — Canvas drawing mode — SHIPPED**
+
+Shipped in three layers (§35). Listed above only while the roadmap is re-read.
 
 **T16 — Code splitting**
 
@@ -1493,8 +1497,8 @@ The existing localStorage data should be reused where possible.
 
 # 35. T13 — Canvas Drawing Mode
 
-T13 is being built in layers. **Layer 1 — the drawing surface — is shipped;
-scoring is not.**
+T13 was built in layers. **Layers 1–3 — the drawing surface, its scoring and
+the polish — are shipped.**
 
 Goal:
 
@@ -1552,11 +1556,19 @@ the "shape" term. The pass mark is one number, `DRAW_PASS_SCORE = 0.7`. A
 faithful reproduction scores 1, a duplicated stroke 0.65, a correct stroke drawn
 in the wrong place 0.6.
 
+**Direction is a gate, not only a term in the sum.** A stroke drawn backwards
+covers exactly the same pixels, so neither count nor shape can tell it apart
+from a correct one: it scored 0.75 and passed the threshold. `scoreDrawing()`
+therefore returns `passed` as `backwards.length === 0 && score >= DRAW_PASS_SCORE`,
+where `backwards` lists the numbers of paired strokes whose direction agreement
+fell below 0.25. The verdict and the highlight both read that one field, so the
+rule lives in a single place.
+
 The pattern is the KanjiVG geometry `mountKana` already animates — `mountKana`
 now returns `paths`, and `referenceOnCanvas()` maps the viewBox into the canvas
 through the SVG's screen matrix, so scoring does not depend on how wide the card
-is. The reference is computed when "Sprawdź" is pressed rather than when the
-character loads, because `resize()` rescales stored strokes along with the
+is. The reference is computed when "Sprawdź rysunek" is pressed rather than when
+the character loads, because `resize()` rescales stored strokes along with the
 field.
 
 The canvas is hidden with `visibility`, not `display`: a `display: none` element
@@ -1564,14 +1576,29 @@ reports a zero rectangle, and the pattern silently landed in screen coordinates
 instead of the canvas ones.
 
 `drawVerdict()` names the weakest component rather than saying only "no".
-Covered by S1–S14 in `tests-learn.js`: S1–S8 exercise the pure functions,
-S9–S14 run the whole path in the DOM against a stubbed `loadKanji`, so they need
-no network.
+Covered by S1–S16 in `tests-learn.js`: S1–S8 and S15 exercise the pure
+functions, S9–S14 and S16 run the whole path in the DOM against a stubbed
+`loadKanji`, so they need no network.
 
-**Layer 3 — polish — NOT STARTED.**
+**Layer 3 — polish — SHIPPED.**
+
+- The check button is "Sprawdź rysunek", not "Sprawdź": the learn panel also
+  has an exam button "🔍 Sprawdź się", and two buttons starting with the same
+  word in the same card read as the same action.
+- A failure caused by direction names the strokes: "kierunek kresek (odwrotnie:
+  kreska 2)" instead of only "kolejność albo kierunek kresek". `scoreDrawing()`
+  returns a `pairs` entry per matched stroke (`{ index, agreement }`) and
+  `strokeNumbers()` inflects the list in Polish.
+- S15 and S16 guard both, and S15 fails without the gate: with the direction
+  check removed, a reversed stroke reports `passed: true`.
 
 Not verified: real touch hardware. The harness synthesises Pointer Events and
-asserts the wiring, not how drawing with a finger feels.
+asserts the wiring, not how drawing with a finger feels. The field was measured
+in a real browser at 320 px — the six buttons keep three rows and the document
+has no horizontal overflow — but that is a measurement of one layout, not a
+promise about every width. The weights (0.35 / 0.25 / 0.40) and the 0.7 pass
+mark are a judgement call, not a calibrated result: nothing has measured how
+often they agree with a human judge.
 
 Important:
 
@@ -2014,19 +2041,19 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-T13 Canvas drawing mode — layers 1–2 shipped, polish next
+T19 Vocabulary — next
 ```
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
 far, see §41 rather than a list here — an enumeration in this section would
-go stale on the next round. T13 is in progress: layers 1 and 2 — the drawing
-surface and its scoring — are shipped and polish is not (§35).
+go stale on the next round. T13 is complete: the drawing surface, its scoring
+and the polish are shipped (§35).
 
 ### Current recommended roadmap
 
 ```text
-T13
+T19
 ↓
 T16
 ```
@@ -2516,7 +2543,7 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion (245 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
-                                   surface and scoring (T13)            (112 assertions)
+                                   surface and scoring (T13)            (114 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 
