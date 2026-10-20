@@ -2140,7 +2140,7 @@ Settings / personalization: implemented
 Offline support (PWA): implemented
 
 Long-term statistics: implemented
-Drawing mode: NOT implemented
+Drawing mode: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: data, progress store and flashcards; patterns pending
