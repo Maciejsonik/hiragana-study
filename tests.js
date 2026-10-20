@@ -1234,6 +1234,51 @@
       patterns.every(pattern => pattern.answers && pattern.answers.length) && patterns[0].variants.length === 1,
       patterns.map(pattern => pattern.id + ':' + pattern.answers.length).join(' ')
     );
+
+    /*
+       Karty czasowników są wyprowadzane, nie wpisane drugi raz. Test pilnuje
+       właśnie tego: 20 kart, stabilne id `<id>-verb`, unikalna kana i pola
+       przepisane z karty wyrażenia. Dopisanie czasownika do tabeli bez
+       uzupełnienia pól wyrażenia złamie VO10, a nie tylko UI.
+    */
+    ok(
+      'VO8 karty czasowników powstają z kart wyrażeń',
+      VOCAB_VERB_ITEMS.length === 20 &&
+        VOCAB_VERB_ITEMS.every(
+          item => item.type === 'verb' && item.id.endsWith('-verb') && item.source === item.id.replace('-verb', '')
+        ),
+      VOCAB_VERB_ITEMS.length + ' czasowników'
+    );
+
+    ok(
+      'VO9 wszystkie 40 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 40 &&
+        new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
+      new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
+    );
+
+    ok(
+      'VO10 czasownik powtarza formę, romaji i znaczenie z karty wyrażenia',
+      VOCAB_CARDS.every(card => {
+        const verb = VOCAB_VERB_ITEMS.find(entry => entry.source === card.id);
+        return (
+          !!verb &&
+          verb.kana === card.verb &&
+          verb.romaji === card.verbRomaji &&
+          verb.meaning === card.verbMeaning &&
+          kanaOnly.test(verb.kana)
+        );
+      }),
+      VOCAB_CARDS.filter(card => !VOCAB_VERB_ITEMS.some(entry => entry.source === card.id))
+        .map(card => card.id)
+        .join(',')
+    );
+
+    ok(
+      'VO11 vocabCard przyjmuje czasownik, a wzorzec nadal odrzuca',
+      !!vocabCard('v01-verb') && vocabCard('v01-verb').type === 'verb' && vocabCard('v21') === null,
+      String(vocabCard('v21'))
+    );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
   }

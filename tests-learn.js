@@ -1212,38 +1212,63 @@
         setScreen('vocab');
         await wait(400);
 
+        const scopeCount = scope => vocabPool(scope).length;
+
+        ok(
+          'F1 wejście w fiszki pokazuje wybór kierunku i zakresu',
+          !!document.getElementById('vocabStart') &&
+            document.querySelectorAll('[data-vocab-direction]').length === 2 &&
+            document.querySelectorAll('[data-vocab-scope]').length === 3,
+          document.querySelectorAll('[data-vocab-direction]').length +
+            ' kierunki / ' +
+            document.querySelectorAll('[data-vocab-scope]').length +
+            ' zakresy'
+        );
+
+        ok(
+          'F2 domyślny zakres to wszystko: 20 wyrażeń + 20 czasowników',
+          vocabSetup.scope === 'all' &&
+            scopeCount('cards') === 20 &&
+            scopeCount('verbs') === 20 &&
+            scopeCount('all') === 40,
+          scopeCount('cards') + '/' + scopeCount('verbs') + '/' + scopeCount('all')
+        );
+
+        document.getElementById('vocabStart').click();
+        await wait(250);
+
         const promptEl = document.querySelector('.question-vocab');
-        const optionButtons = [...document.querySelectorAll('[data-meaning]')];
+        const optionButtons = [...document.querySelectorAll('[data-vocab-choice]')];
         const firstItem = vocabItem(state.vocab.order[0]);
 
         ok(
-          'F1 fiszki startują od pierwszej karty z czterema odpowiedziami',
+          'F3 zestaw startuje od pierwszej karty z czterema odpowiedziami',
           !!promptEl && promptEl.textContent.trim() === firstItem.kana && optionButtons.length === 4,
           optionButtons.length + ' opcji, karta ' + (promptEl ? promptEl.textContent.trim() : 'brak')
         );
 
         ok(
-          'F2 dokładnie jedna odpowiedź jest poprawna',
-          optionButtons.filter(button => button.dataset.meaning === firstItem.meaning).length === 1,
-          optionButtons.map(button => button.dataset.meaning).join(' | ')
+          'F4 dokładnie jedna odpowiedź jest poprawna',
+          optionButtons.filter(button => button.dataset.vocabChoice === firstItem.meaning).length === 1,
+          optionButtons.map(button => button.dataset.vocabChoice).join(' | ')
         );
 
-        optionButtons.find(button => button.dataset.meaning === firstItem.meaning).click();
+        optionButtons.find(button => button.dataset.vocabChoice === firstItem.meaning).click();
         await wait(150);
 
         const firstStat = vocabStat(firstItem.id);
         ok(
-          'F3 poprawna odpowiedź zapisuje się w magazynie słownictwa',
+          'F5 poprawna odpowiedź zapisuje się w magazynie słownictwa',
           firstStat.seen === 1 && firstStat.correct === 1 && state.vocab.correct === 1,
           JSON.stringify(firstStat)
         );
 
         ok(
-          'F4 po odpowiedzi widać fiszkę z romaji, a opcje są zablokowane',
+          'F6 po odpowiedzi widać fiszkę z romaji, a opcje są zablokowane',
           !!document.querySelector('.flashcard') &&
             document.querySelector('.flashcard').textContent.includes(firstItem.romaji) &&
-            !!document.querySelector('[data-meaning].correct') &&
-            [...document.querySelectorAll('[data-meaning]')].every(button => button.disabled),
+            !!document.querySelector('[data-vocab-choice].correct') &&
+            [...document.querySelectorAll('[data-vocab-choice]')].every(button => button.disabled),
           document.querySelector('.flashcard') ? 'fiszka jest' : 'brak fiszki'
         );
 
@@ -1251,28 +1276,28 @@
         await wait(150);
 
         const secondItem = vocabItem(state.vocab.order[1]);
-        const wrongButton = [...document.querySelectorAll('[data-meaning]')].find(
-          button => button.dataset.meaning !== secondItem.meaning
+        const wrongButton = [...document.querySelectorAll('[data-vocab-choice]')].find(
+          button => button.dataset.vocabChoice !== secondItem.meaning
         );
         wrongButton.click();
         await wait(150);
 
         const secondStat = vocabStat(secondItem.id);
         ok(
-          'F5 zła odpowiedź trafia do magazynu i jest oznaczona',
+          'F7 zła odpowiedź trafia do magazynu i jest oznaczona',
           secondStat.seen === 1 &&
             secondStat.wrong === 1 &&
-            !!document.querySelector('[data-meaning].wrong') &&
-            !!document.querySelector('[data-meaning].correct'),
+            !!document.querySelector('[data-vocab-choice].wrong') &&
+            !!document.querySelector('[data-vocab-choice].correct'),
           JSON.stringify(secondStat)
         );
 
         // Przechodzimy przez resztę zestawu, żeby zobaczyć ekran wyniku.
         let guard = 0;
-        while (state.vocab && !state.vocab.finished && guard++ < 40) {
+        while (state.vocab && !state.vocab.finished && guard++ < 80) {
           const item = vocabItem(state.vocab.order[state.vocab.index]);
-          const right = [...document.querySelectorAll('[data-meaning]')].find(
-            button => button.dataset.meaning === item.meaning
+          const right = [...document.querySelectorAll('[data-vocab-choice]')].find(
+            button => button.dataset.vocabChoice === item.meaning
           );
           if (right && !right.disabled) right.click();
           await wait(40);
@@ -1282,7 +1307,7 @@
         }
 
         ok(
-          'F6 po ostatniej karcie widać wynik zestawu',
+          'F8 po ostatniej karcie widać wynik zestawu',
           state.vocab.finished && /Koniec zestawu/.test(app.textContent) && !!document.getElementById('vocabAgain'),
           app.textContent.replace(/\s+/g, ' ').slice(0, 70)
         );
@@ -1291,7 +1316,7 @@
         document.getElementById('vocabAgain').click();
         await wait(250);
         ok(
-          'F7 „Jeszcze raz" zaczyna od nowa i nie kasuje zapisu',
+          'F9 „Jeszcze raz" zaczyna od nowa i nie kasuje zapisu',
           state.vocab.index === 0 && state.vocab.correct === 0 && Object.keys(vocab.cards).length === storedBefore,
           'karty=' + Object.keys(vocab.cards).length
         );
@@ -1299,10 +1324,80 @@
         document.getElementById('vocabBack').click();
         await wait(300);
         ok(
-          'F8 wyjście z fiszek wraca do menu',
+          'F10 wyjście z fiszek wraca do menu',
           state.screen === 'menu' && !!document.getElementById('vocabCard'),
           state.screen
         );
+
+        /* --- kierunek „znaczenie → wyrażenie" --- */
+        state.vocab = null;
+        vocabSetup.direction = 'meaning-kana';
+        vocabSetup.scope = 'cards';
+        setScreen('vocab');
+        await wait(300);
+        document.getElementById('vocabStart').click();
+        await wait(250);
+
+        const plPrompt = document.querySelector('.question-vocab-pl');
+        const kanaOptions = [...document.querySelectorAll('[data-vocab-choice]')];
+        const firstKanaItem = vocabItem(state.vocab.order[0]);
+        const kanaOnly = /^[ぁ-んァ-ヶー～（）。\s]+$/;
+
+        ok(
+          'F11 kierunek znaczenie → wyrażenie pyta po polsku i odpowiada kana',
+          !!plPrompt &&
+            plPrompt.textContent.trim() === firstKanaItem.meaning &&
+            kanaOptions.length === 4 &&
+            kanaOptions.every(button => kanaOnly.test(button.dataset.vocabChoice)),
+          (plPrompt ? plPrompt.textContent.trim() : 'brak pytania') +
+            ' / ' +
+            kanaOptions.map(button => button.dataset.vocabChoice).join(' | ')
+        );
+
+        kanaOptions.find(button => button.dataset.vocabChoice === firstKanaItem.kana).click();
+        await wait(150);
+        ok(
+          'F12 poprawna odpowiedź w drugim kierunku zapisuje się',
+          state.vocab.correct === 1 && vocabStat(firstKanaItem.id).correct === 1,
+          JSON.stringify(vocabStat(firstKanaItem.id))
+        );
+
+        /* --- karty czasowników --- */
+        state.vocab = null;
+        vocabSetup.direction = 'kana-meaning';
+        vocabSetup.scope = 'verbs';
+        setScreen('vocab');
+        await wait(300);
+        document.getElementById('vocabStart').click();
+        await wait(250);
+
+        const verbItem = vocabItem(state.vocab.order[0]);
+        const sourceItem = vocabItem(verbItem.source);
+        [...document.querySelectorAll('[data-vocab-choice]')]
+          .find(button => button.dataset.vocabChoice === verbItem.meaning)
+          .click();
+        await wait(200);
+
+        ok(
+          'F13 czasownik ma własną kartę i pokazuje wyrażenie źródłowe',
+          verbItem.type === 'verb' &&
+            verbItem.source === sourceItem.id &&
+            !!document.querySelector('.flashcard') &&
+            document.querySelector('.flashcard').textContent.includes(sourceItem.kana),
+          verbItem.kana + ' ← ' + sourceItem.kana
+        );
+
+        ok(
+          'F14 postęp czasownika zapisuje się pod id v01-verb',
+          recordVocabAnswer('v01-verb', true) === true && vocabStat('v01-verb').seen >= 1,
+          JSON.stringify(vocabStat('v01-verb'))
+        );
+
+        vocabSetup.direction = 'kana-meaning';
+        vocabSetup.scope = 'all';
+        state.vocab = null;
+        setScreen('menu');
+        await wait(200);
       } catch (e) {
         ok('fiszki słownictwa', false, e.message);
       }

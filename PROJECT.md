@@ -1838,12 +1838,35 @@ they have no counterpart in the progress store.
 
 Meanings are **Polish**; the source worksheet glosses in English, so the table
 is a translation, not a copy. Romaji follows `scriptData` and carries no
-macrons. The table is still not read by any screen — it is the first of four
-layers (data → progress store → cards → patterns).
+macrons.
 
 Covered by VO1–VO7 in `tests.js`: counts, id sequence, required fields, kana
 fields free of Latin text, romaji free of macrons, unique kana, and the shape
 of the two patterns. VO5 fails when a macron is introduced.
+
+### Verb cards
+
+The 20 expressions each carry the verb they come from (`verb`, `verbRomaji`,
+`verbMeaning`). `VOCAB_VERB_ITEMS` **derives** a second card from those fields:
+
+```text
+v01       きいてください   kiite kudasai     proszę słuchać
+v01-verb  ききます        kikimasu          słuchać
+```
+
+This is not a second table. Editing a verb in `VOCAB_ITEMS` changes both cards
+at once, so the two cannot drift apart. Ids are additive and stable
+(`<id>-verb`), and `hiragana-vocab` is keyed by id, so adding 20 more cards
+needs no migration and no `VOCAB_VERSION` bump. Patterns (`v21`, `v22`) have
+no verb card.
+
+`VOCAB_LEARN_ITEMS` is the 40-card list; `vocabCard()` accepts both kinds, so
+`recordVocabAnswer('v01-verb', …)` creates a real record while a pattern id
+still returns `false`.
+
+Covered by VO8–VO11: 20 derived cards, the `<id>-verb` / `source` link, 40
+unique kana across expressions and verbs, the fields copied from the source
+card, and `vocabCard()` accepting a verb while rejecting a pattern.
 
 Nothing has verified the translations against a Polish teacher; they are my
 own reading of the worksheet.
@@ -1889,32 +1912,49 @@ the version check or `resetVocabData()` turns the suite red.
 
 ### Flashcards (layer 3)
 
-"Słownictwo" in the menu opens `renderVocab()`: one card at a time, the
-expression in kana, four Polish meanings to choose from — the same answer
-rhythm as the exam, so the learner does not have to learn a second way of
-clicking. After the answer the options lock, the correct one is marked, and a
-`.flashcard` reveal adds romaji, the meaning and the source verb. A session is
-all 20 cards; the last screen shows the score, "Jeszcze raz" and a way back.
+"Słownictwo" in the menu opens a **setup screen** rather than a session. Two
+choices, both session-only (they are a decision for one session, like the exam
+scope, not a stored preference):
 
-The order is deterministic and derived from the store: untouched cards first,
-then the lowest accuracy, ties broken by table order. `vocabOptions()` draws
-three distractors from other cards and the options for a card are generated
-**once** and kept in the session — otherwise every re-render after an answer
-would reshuffle the buttons under the finger. Digits 1–4 answer and Enter
-advances, matching the exam's keyboard handling.
+```text
+Kierunek  Wyrażenie → znaczenie   |  Znaczenie → wyrażenie
+Zakres    Wyrażenia (20) | Czasowniki (20) | Wszystko (40, default)
+```
+
+The first direction shows the expression in kana and four Polish meanings —
+the same answer rhythm as the exam. The second shows the Polish meaning as a
+sentence and four kana expressions, so the kana must be recognized in the
+other direction rather than only distinguished. After the answer the options
+lock, the correct one is marked, and a `.flashcard` reveal adds romaji, the
+meaning and the related card: the source verb for an expression, the source
+expression for a verb. The last screen shows the score, "Jeszcze raz" (same
+setup) and a way back.
+
+Distractors come from the **same type** as the question: infinitives
+(„słuchać") never sit next to request forms („proszę słuchać"), because those
+differ by grammar, not by meaning. The order is deterministic and derived
+from the store: untouched cards first, then the lowest accuracy, ties broken
+by table order. `vocabOptions()` generates a card's options **once** and keeps
+them in the session — otherwise every re-render after an answer would reshuffle
+the buttons under the finger. Digits 1–4 answer and Enter advances, matching
+the exam's keyboard handling.
 
 The screen writes only through `recordVocabAnswer()`, so it changes
 `hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
 `hiragana-daily`, the exam settings or the SRS schedule.
 
-Covered by F1–F8 in `tests-learn.js`: a session starts on the first card with
-four options, exactly one of them correct, a correct answer is stored, the
-reveal locks the options, a wrong answer is stored and marked, the summary
-appears after the last card, "Jeszcze raz" restarts without erasing the store,
-and leaving returns to the menu. Removing the `recordVocabAnswer()` call or the
-disabled-state marking turns the suite red. Layout at 320 px was measured, not
-looked at: the longest expression wraps to two lines with no horizontal
-overflow.
+Covered by F1–F14 in `tests-learn.js`: the setup screen with two directions
+and three scopes, the default `all` scope (20 + 20), the first card with four
+options, exactly one correct, a correct answer stored, the reveal locking the
+options, a wrong answer stored and marked, the summary after the last card,
+"Jeszcze raz" restarting without erasing the store, leaving back to the menu,
+the meaning→kana direction (Polish prompt, kana answers), a stored answer in
+that direction, the verb card pointing at its source expression, and progress
+under `v01-verb`. Removing the `recordVocabAnswer()` call, the disabled-state
+marking, the derived verb pool or the direction branch turns the suite red.
+Layout at 320 px was measured, not looked at: the setup screen is 421 px tall,
+the longest expression wraps with no horizontal overflow, and the four kana
+answers stay in their grid.
 
 Not verified: the screen on a real touch device, and whether the Polish
 meanings are the ones a teacher would use.
@@ -2759,12 +2799,12 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion, vocabulary data and progress
-                                   store (289 assertions)
+                                   store (293 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
-                                   flashcards (T19), combined-script panel
-                                   (138 assertions)
+                                   flashcards (T19, verbs + direction),
+                                   combined-script panel                  (144 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

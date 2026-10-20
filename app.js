@@ -654,6 +654,29 @@ const VOCAB_ITEMS = [
   { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで（ポーランドごで）～です。', '~ wa nihongo de (poorandogo de) ~ desu', '～ po japońsku (po polsku) to ～']] }
 ];
 
+/*
+   Karty czasowników nie są drugą tabelą danych: powstają z pól
+   `verb` / `verbRomaji` / `verbMeaning` kart wyrażeń. Jedno źródło,
+   dwa zestawy do nauki — zmiana formy czasownika w tabeli zmienia
+   obie karty naraz i nie da się ich rozjechać.
+
+   Identyfikator `v01-verb` jest stabilny i addytywny: `hiragana-vocab`
+   kluczuje rekordy po id, więc nowy materiał nie wymaga migracji ani
+   podbicia `VOCAB_VERSION`. Wzorce (v21, v22) kart czasowników nie mają.
+*/
+const VOCAB_CARDS = VOCAB_ITEMS.filter(item => item.type === 'card');
+
+const VOCAB_VERB_ITEMS = VOCAB_CARDS.map(item => ({
+  id: item.id + '-verb',
+  type: 'verb',
+  kana: item.verb,
+  romaji: item.verbRomaji,
+  meaning: item.verbMeaning,
+  source: item.id
+}));
+
+const VOCAB_LEARN_ITEMS = [...VOCAB_CARDS, ...VOCAB_VERB_ITEMS];
+
 /* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
    ========================================================= */
@@ -2009,36 +2032,74 @@ function renderReview() {
 
 const VOCAB_OPTIONS = 4;
 
-function vocabPool() {
-  return VOCAB_ITEMS.filter(item => item.type === 'card');
+/*
+   Wybór zestawu (kierunek, zakres) jest sesyjny, nie zapisany: to decyzja
+   na jedną sesję, jak wybór zakresu egzaminu, a nie preferencja aplikacji.
+   Dzięki temu nie ruszamy formatu `hiragana-vocab`.
+*/
+const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
+const VOCAB_SCOPES = ['cards', 'verbs', 'all'];
+
+const VOCAB_DIRECTION_LABELS = {
+  'kana-meaning': 'Wyrażenie → znaczenie',
+  'meaning-kana': 'Znaczenie → wyrażenie'
+};
+
+const VOCAB_SCOPE_LABELS = {
+  cards: 'Wyrażenia',
+  verbs: 'Czasowniki',
+  all: 'Wszystko'
+};
+
+const vocabSetup = {
+  direction: 'kana-meaning',
+  scope: 'all'
+};
+
+function vocabPool(scope) {
+  if (scope === 'cards') return VOCAB_CARDS;
+  if (scope === 'verbs') return VOCAB_VERB_ITEMS;
+  return VOCAB_LEARN_ITEMS;
 }
 
 function vocabItem(cardId) {
-  return vocabPool().find(item => item.id === cardId) || null;
+  return VOCAB_LEARN_ITEMS.find(item => item.id === cardId) || null;
 }
 
-function vocabSessionOrder() {
-  return vocabPool()
+function vocabSessionOrder(scope) {
+  return vocabPool(scope)
     .map((item, index) => ({ id: item.id, index: index, stat: vocabStat(item.id) }))
     .sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index)
     .map(entry => entry.id);
 }
 
-function vocabOptions(item) {
-  const chosen = new Set([item.meaning]);
+/*
+   Rozpraszacze pochodzą z tego samego typu materiału co pytanie: przy
+   czasownikach polskie znaczenia to bezokoliczniki („słuchać"), a przy
+   wyrażeniach prośby („proszę słuchać"). Wymieszanie ich dawałoby odpowiedzi,
+   które różnią się tylko gramatyczną formą, a nie znaczeniem.
+*/
+function vocabOptions(item, direction) {
+  const field = direction === 'meaning-kana' ? 'kana' : 'meaning';
+  const pool = vocabPool(item.type === 'verb' ? 'verbs' : 'cards');
+  const chosen = new Set([item[field]]);
   const distractors = [];
-  for (const other of shuffle(vocabPool())) {
-    if (other.id === item.id || chosen.has(other.meaning)) continue;
-    chosen.add(other.meaning);
-    distractors.push(other.meaning);
+
+  for (const other of shuffle(pool)) {
+    if (other.id === item.id || chosen.has(other[field])) continue;
+    chosen.add(other[field]);
+    distractors.push(other[field]);
     if (distractors.length === VOCAB_OPTIONS - 1) break;
   }
-  return shuffle([item.meaning, ...distractors]);
+
+  return shuffle([item[field], ...distractors]);
 }
 
 function startVocabSession() {
   state.vocab = {
-    order: vocabSessionOrder(),
+    direction: vocabSetup.direction,
+    scope: vocabSetup.scope,
+    order: vocabSessionOrder(vocabSetup.scope),
     index: 0,
     correct: 0,
     answered: false,
@@ -2050,16 +2111,18 @@ function startVocabSession() {
   renderVocab();
 }
 
-function answerVocab(meaning) {
+function answerVocab(choice) {
   const session = state.vocab;
   if (!session || session.answered || session.finished) return;
 
   const item = vocabItem(session.order[session.index]);
   if (!item) return;
 
-  const correct = meaning === item.meaning;
+  const expected = session.direction === 'meaning-kana' ? item.kana : item.meaning;
+  const correct = choice === expected;
+
   session.answered = true;
-  session.chosen = meaning;
+  session.chosen = choice;
   session.lastCorrect = correct;
   if (correct) session.correct++;
 
@@ -2089,23 +2152,106 @@ function nextVocab() {
 }
 
 function vocabRevealHTML(item, correct) {
+  const source = item.type === 'verb' ? vocabItem(item.source) : null;
+
   return `
     <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
       <div class="flash-label">${correct ? '✓ Dobrze' : '✗ Poprawna odpowiedź'}</div>
       <div class="flash-kana vocab-kana">${item.kana}</div>
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
-      <div class="flash-meta">
-        Czasownik: <b>${item.verb}</b> (${item.verbRomaji}) — ${item.verbMeaning}
-      </div>
+      ${
+        source
+          ? `<div class="flash-meta">Wyrażenie: <b>${source.kana}</b> (${source.romaji}) — ${source.meaning}</div>`
+          : `<div class="flash-meta">Czasownik: <b>${item.verb}</b> (${item.verbRomaji}) — ${item.verbMeaning}</div>`
+      }
       <button class="btn btn-primary" id="vocabNext">Dalej → (Enter)</button>
     </div>
   `;
 }
 
+/* Ekran wyboru: kierunek i zakres. Wejście w „Fiszki" nie zaczyna już
+   zestawu od razu — bez tego wyboru istniał tylko jeden tryb. */
+function renderVocabSetup() {
+  const direction = vocabSetup.direction;
+  const scope = vocabSetup.scope;
+  const count = vocabPool(scope).length;
+
+  const directionHint =
+    direction === 'meaning-kana'
+      ? 'Widzisz polskie znaczenie, wybierasz japońskie wyrażenie.'
+      : 'Widzisz japońskie wyrażenie, wybierasz polskie znaczenie.';
+
+  app.innerHTML = `
+    <section class="vocab">
+      <div class="eyebrow">SŁOWNICTWO</div>
+      <h2>Fiszki</h2>
+
+      <div class="card vocab-setup">
+        <div class="vocab-setup-group">
+          <span class="settings-label" id="vocabDirectionLabel">Kierunek</span>
+          <div class="vocab-pills" role="group" aria-labelledby="vocabDirectionLabel">
+            ${VOCAB_DIRECTIONS.map(
+              id => `
+              <button class="vocab-pill ${id === direction ? 'active' : ''}" data-vocab-direction="${id}" aria-pressed="${id === direction}">
+                ${VOCAB_DIRECTION_LABELS[id]}
+              </button>`
+            ).join('')}
+          </div>
+          <small class="vocab-hint">${directionHint}</small>
+        </div>
+
+        <div class="vocab-setup-group">
+          <span class="settings-label" id="vocabScopeLabel">Zakres</span>
+          <div class="vocab-pills" role="group" aria-labelledby="vocabScopeLabel">
+            ${VOCAB_SCOPES.map(
+              id => `
+              <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" aria-pressed="${id === scope}">
+                ${VOCAB_SCOPE_LABELS[id]}
+              </button>`
+            ).join('')}
+          </div>
+          <small class="vocab-hint">${count} kart w tym zestawie</small>
+        </div>
+
+        <button class="btn btn-primary" id="vocabStart">Rozpocznij — ${count} kart</button>
+      </div>
+
+      <button class="btn btn-secondary vocab-back" id="vocabBack">Wróć do menu</button>
+    </section>
+  `;
+
+  document.querySelectorAll('[data-vocab-direction]').forEach(button => {
+    button.onclick = () => {
+      Audio.click();
+      vocabSetup.direction = button.dataset.vocabDirection;
+      renderVocab();
+    };
+  });
+
+  document.querySelectorAll('[data-vocab-scope]').forEach(button => {
+    button.onclick = () => {
+      Audio.click();
+      vocabSetup.scope = button.dataset.vocabScope;
+      renderVocab();
+    };
+  });
+
+  document.getElementById('vocabStart').onclick = () => {
+    Audio.click();
+    startVocabSession();
+  };
+
+  document.getElementById('vocabBack').onclick = () => {
+    Audio.click();
+    state.vocab = null;
+    setScreen('menu');
+  };
+}
+
 function renderVocab() {
   if (!state.vocab) {
-    startVocabSession();
+    renderVocabSetup();
     return;
   }
 
@@ -2148,7 +2294,10 @@ function renderVocab() {
 
   // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
   // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
-  if (!session.options) session.options = vocabOptions(item);
+  if (!session.options) session.options = vocabOptions(item, session.direction);
+
+  const asksKana = session.direction === 'meaning-kana';
+  const expected = asksKana ? item.kana : item.meaning;
 
   app.innerHTML = `
     <section class="vocab">
@@ -2161,16 +2310,20 @@ function renderVocab() {
       </p>
 
       <div class="prompt">
-        <div class="polish">Co znaczy:</div>
-        <div class="question question-vocab">${item.kana}</div>
+        <div class="polish">${asksKana ? 'Jak powiesz po japońsku:' : 'Co znaczy:'}</div>
+        ${
+          asksKana
+            ? `<div class="question question-vocab-pl">${item.meaning}</div>`
+            : `<div class="question question-vocab">${item.kana}</div>`
+        }
 
-        <div class="answers answers-text">
+        <div class="answers ${asksKana ? '' : 'answers-text'}">
           ${session.options
             .map(
-              (meaning, i) => `
-            <button class="answer answer-text" data-meaning="${meaning}">
+              (choice, i) => `
+            <button class="answer ${asksKana ? 'answer-kana' : 'answer-text'}" data-vocab-choice="${choice}">
               <span class="answer-key">${i + 1}</span>
-              ${meaning}
+              ${choice}
             </button>
           `
             )
@@ -2186,14 +2339,17 @@ function renderVocab() {
     </section>
   `;
 
-  document.querySelectorAll('[data-meaning]').forEach(button => {
+  document.querySelectorAll('[data-vocab-choice]').forEach(button => {
+    const choice = button.dataset.vocabChoice;
+
     if (session.answered) {
       button.disabled = true;
-      if (button.dataset.meaning === item.meaning) button.classList.add('correct');
-      else if (button.dataset.meaning === session.chosen) button.classList.add('wrong');
+      if (choice === expected) button.classList.add('correct');
+      else if (choice === session.chosen) button.classList.add('wrong');
       return;
     }
-    button.onclick = () => answerVocab(button.dataset.meaning);
+
+    button.onclick = () => answerVocab(choice);
   });
 
   const next = document.getElementById('vocabNext');
@@ -2211,15 +2367,6 @@ function renderVocab() {
   };
 }
 
-/* =========================================================
-   USTAWIENIA
-   ========================================================= */
-
-/*
- * Klucze localStorage należące do aplikacji — używane tylko przy "wyczyść wszystko".
- * Funkcja, a nie stała: `PROGRESS_KEY` i `SETTINGS_KEY` są deklarowane niżej
- * w pliku, więc lista musi być budowana dopiero w chwili użycia.
- */
 function appStorageKeys() {
   return [
     SETTINGS_STORE_KEY,
@@ -3575,10 +3722,14 @@ const VOCAB_KEY = 'hiragana-vocab';
 const VOCAB_VERSION = 1;
 const VOCAB_MAX_RECENT = 6;
 
-// Karta istnieje tylko wtedy, gdy jest w tabeli danych i nie jest wzorcem.
+/*
+   Karta istnieje wtedy, gdy jest materiałem do nauki: wyrażeniem z tabeli
+   albo czasownikiem z niego wyprowadzonym. Wzorce (v21, v22) nie są kartami,
+   więc literówka w id nie utworzy rekordu.
+*/
 function vocabCard(cardId) {
-  const item = VOCAB_ITEMS.find(entry => entry.id === cardId);
-  return item && item.type === 'card' ? item : null;
+  const item = VOCAB_LEARN_ITEMS.find(entry => entry.id === cardId);
+  return item && (item.type === 'card' || item.type === 'verb') ? item : null;
 }
 
 function isVocabRecord(entry) {
@@ -5284,7 +5435,7 @@ document.addEventListener('keydown', event => {
     if (!state.vocab.answered) {
       const num = parseInt(event.key);
       if (num >= 1 && num <= VOCAB_OPTIONS) {
-        const buttons = [...document.querySelectorAll('[data-meaning]')];
+        const buttons = [...document.querySelectorAll('[data-vocab-choice]')];
         if (buttons[num - 1]) buttons[num - 1].click();
         return;
       }
