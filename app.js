@@ -810,69 +810,51 @@ function navigateKana(delta) {
 /**
  * Wykres kołowy (donut) z postępami na ekranie menu.
  */
-function masteryDonutHTML() {
+/*
+   Pasek opanowania (zastąpił donut).
+   Ten sam `masteryLevel()` co lista znaków, więc liczby muszą się zgadzać
+   z kolorami w panelu nauki. Pasek pokazuje rozkład, a jedno zdanie —
+   tylko liczbę opanowanych, bo reszta jest w pasku i w dymkach segmentów.
+   Nowe znaki to tło paska, a nie osobny segment: puste miejsce czyta się
+   lepiej niż szary prostokąt.
+*/
+function masteryStripHTML() {
   const counts = { mastered: 0, good: 0, learning: 0, hard: 0, new: 0 };
-  getAll().forEach(c => {
-    counts[masteryLevel(c.kana)]++;
+  const all = getAll();
+  all.forEach(character => {
+    counts[masteryLevel(character.kana)]++;
   });
-  const total = getAll().length;
 
-  const radius = 48;
-  const circumference = 2 * Math.PI * radius;
-
-  if (counts.mastered === 0 && counts.good === 0 && counts.learning === 0 && counts.hard === 0) {
-    return `
-      <div class="mastery-overview">
-        <div class="mastery-donut">
-          <svg viewBox="0 0 120 120" class="donut-svg">
-            <circle cx="60" cy="60" r="${radius}" fill="none" stroke="var(--line)" stroke-width="10" opacity="0.3" />
-          </svg>
-          <div class="donut-center">
-            <div class="donut-number">0</div>
-            <div class="donut-label">/ ${total}</div>
-          </div>
-        </div>
-        <p class="mastery-hint">Rozpocznij egzamin, aby śledzić postępy</p>
-      </div>
-    `;
-  }
+  const total = all.length;
 
   const segments = [
-    { color: 'var(--mastered)', count: counts.mastered },
-    { color: 'var(--good)', count: counts.good },
-    { color: 'var(--warn)', count: counts.learning },
-    { color: 'var(--bad)', count: counts.hard },
-    { color: 'var(--line)', count: counts.new }
-  ].filter(s => s.count > 0);
+    { key: 'mastered', label: 'opanowane', count: counts.mastered },
+    { key: 'good', label: 'dobre', count: counts.good },
+    { key: 'learning', label: 'w trakcie', count: counts.learning },
+    { key: 'hard', label: 'trudne', count: counts.hard }
+  ].filter(segment => segment.count > 0);
 
-  let offset = 0;
-  const circles = segments
-    .map(s => {
-      const length = (s.count / total) * circumference;
-      const html = `<circle cx="60" cy="60" r="${radius}" fill="none" stroke="${s.color}" stroke-width="10" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" stroke-linecap="round" />`;
-      offset += length;
-      return html;
-    })
-    .join('');
+  const described = segments.length
+    ? segments.map(segment => segment.label + ': ' + segment.count).join(', ') + ', nowe: ' + counts.new
+    : 'brak odpowiedzi, nowe: ' + total;
 
   return `
-    <div class="mastery-overview">
-      <div class="mastery-donut">
-        <svg viewBox="0 0 120 120" class="donut-svg">
-          ${circles}
-        </svg>
-        <div class="donut-center">
-          <div class="donut-number">${counts.mastered + counts.good}</div>
-          <div class="donut-label">/ ${total}</div>
-        </div>
+    <div class="mastery-strip">
+      <div class="mastery-strip-bar" role="img" aria-label="Opanowanie znaków — ${described}">
+        ${segments
+          .map(
+            segment =>
+              `<span class="mastery-seg ${segment.key}" style="flex:${segment.count}" title="${segment.label}: ${segment.count}"></span>`
+          )
+          .join('')}
       </div>
-      <div class="mastery-legend">
-        <span class="legend-item"><span class="legend-dot" style="background:var(--mastered)"></span>Opanowane: ${counts.mastered}</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--good)"></span>Dobre: ${counts.good}</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--warn)"></span>W trakcie: ${counts.learning}</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--bad)"></span>Trudne: ${counts.hard}</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--line)"></span>Nowe: ${counts.new}</span>
-      </div>
+      <p class="mastery-strip-text">
+        ${
+          segments.length
+            ? `Opanowane <strong>${counts.mastered}</strong> z <strong>${total}</strong>`
+            : `Zacznij naukę albo egzamin — <strong>${total}</strong> znaków czeka`
+        }
+      </p>
     </div>
   `;
 }
@@ -1782,45 +1764,42 @@ function renderExam() {
 ========================================================= */
 
 function renderMenu() {
+  const dueCount = dueList(Date.now()).length;
+
   app.innerHTML = `
     <div class="script-switcher">
       <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
       <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
     </div>
 
-    ${masteryDonutHTML()}
+    ${masteryStripHTML()}
 
     <section class="menu">
-      <button class="menu-card" id="learnCard">
-        <div class="menu-icon">✍️</div>
-        <h2>Tryb nauki</h2>
-        <p>Wybierz rząd ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, zobacz znak, liczbę kresek i prawidłową kolejność ich rysowania.</p>
+      <button class="menu-card tile" id="learnCard">
+        <span class="menu-icon">✍️</span>
+        <span class="tile-title">Nauka</span>
       </button>
 
-      <button class="menu-card" id="examCard">
-        <div class="menu-icon">📝</div>
-        <h2>Tryb egzaminu</h2>
-        <p>Wybierz zakres znaków i ćwicz tak długo, jak chcesz. Błędy dostajesz w formie fiszki.</p>
+      <button class="menu-card tile" id="examCard">
+        <span class="menu-icon">📝</span>
+        <span class="tile-title">Egzamin</span>
       </button>
 
-      <button class="menu-card full" id="reviewCard">
-        <div class="menu-icon">🔄</div>
-        <h2>Powtórki</h2>
-        <p>Znaki zaplanowane na dziś — powtórki w rozstawie rosnącym co do dnia.</p>
+      <button class="menu-card tile" id="reviewCard">
+        <span class="menu-icon">🔄</span>
+        <span class="tile-title">Powtórki</span>
+        ${dueCount > 0 ? `<span class="tile-badge" aria-label="${dueCount} znaków do powtórki">${dueCount}</span>` : ''}
       </button>
 
-      <button class="menu-card full" id="vocabCard">
-        <div class="menu-icon">🎴</div>
-        <h2>Słownictwo</h2>
-        <p>Fiszki z wyrażeniami z lekcji — wybierz poprawne znaczenie.</p>
-      </button>
-
-      <button class="menu-card full" id="settingsCard">
-        <div class="menu-icon">⚙️</div>
-        <h2>Ustawienia</h2>
-        <p>Motyw, efekty dźwiękowe, domyślny skrypt i zarządzanie danymi.</p>
+      <button class="menu-card tile" id="vocabCard">
+        <span class="menu-icon">🎴</span>
+        <span class="tile-title">Fiszki</span>
       </button>
     </section>
+
+    <div class="menu-tools">
+      <button class="menu-tool" id="settingsCard">⚙️ Ustawienia</button>
+    </div>
   `;
 
   document.getElementById('learnCard').onclick = () => {

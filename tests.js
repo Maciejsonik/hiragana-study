@@ -722,11 +722,23 @@
     setScreen('menu');
     await new Promise(r => setTimeout(r, 60));
     ok(
-      'menu still has all cards',
-      !!document.getElementById('learnCard') &&
-        !!document.getElementById('examCard') &&
-        !!document.getElementById('reviewCard') &&
-        !!document.getElementById('settingsCard'),
+      'menu has the four study tiles',
+      ['learnCard', 'examCard', 'reviewCard', 'vocabCard'].every(function (id) {
+        const el = document.getElementById(id);
+        return !!el && el.classList.contains('menu-card') && el.classList.contains('tile');
+      }) && document.querySelectorAll('.menu .menu-card.tile').length === 4,
+      String(document.querySelectorAll('.menu .menu-card').length)
+    );
+    ok(
+      'settings live in the toolbar, not among the study modes',
+      !!document.querySelector('.menu-tools #settingsCard') && !document.querySelector('.menu #settingsCard'),
+      ''
+    );
+    ok(
+      'menu shows a mastery strip instead of the donut',
+      !!document.querySelector('.mastery-strip') &&
+        !document.querySelector('.mastery-donut') &&
+        !document.querySelector('.mastery-legend'),
       ''
     );
     ok(
@@ -737,18 +749,10 @@
       ''
     );
 
-    // klasa modyfikatora karty pełnoszerokiej: `.menu-card.full`.
+    // Klasa modyfikatora karty pełnoszerokiej: `.menu-card.full`.
     // Dawniej było to osobna klasa `.menu-card-full` — pilnujemy, żeby
-    // nie wróciła i żeby obie karty (Przegląd i Ustawienia) ją miały.
-    ['reviewCard', 'settingsCard'].forEach(function (id) {
-      const el = document.getElementById(id);
-      ok(
-        id + ' uses .menu-card.full',
-        el.classList.contains('menu-card') && el.classList.contains('full'),
-        el.className
-      );
-      ok(id + ' has no stale .menu-card-full', !el.classList.contains('menu-card-full'), el.className);
-    });
+    // nie wróciła. Żadna karta już jej nie używa (siatka 2×2), ale reguła
+    // zostaje jako gotowy modyfikator.
     ok(
       'no element carries the legacy full-width class',
       document.querySelectorAll('.menu-card-full').length === 0,
@@ -758,6 +762,11 @@
     const cssText = await (await fetch('style.css')).text();
     ok('style.css defines .menu-card.full', /\.menu-card\.full\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/.test(cssText));
     ok('style.css has no stale .menu-card-full selector', cssText.indexOf('.menu-card-full') < 0);
+    ok(
+      'style.css keeps .menu-card.tile and the mastery strip',
+      cssText.indexOf('.menu-card.tile') >= 0 && cssText.indexOf('.mastery-strip-bar') >= 0,
+      ''
+    );
   } catch (e) {
     ok('review UI', false, e.message);
   }

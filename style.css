@@ -358,6 +358,78 @@ footer {
   grid-column: 1 / -1;
 }
 
+/*
+   Kafelek menu: ikona i nazwa, bez akapitu opisu. Cztery kafelki w siatce
+   2×2 zastąpiły pięć kart z tekstem — opis trybu jest w środku, nie na
+   wejściu, bo przy pięciu kartach menu rosło do dwóch ekranów na telefonie.
+*/
+.menu-card.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  position: relative;
+  min-height: 118px;
+}
+
+.menu-card.tile .menu-icon {
+  font-size: 2rem;
+  margin: 0;
+  line-height: 1;
+}
+
+.tile-title {
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.tile-badge {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* cienki pasek narzędzi pod kafelkami — Ustawienia nie są trybem nauki */
+.menu-tools {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  max-width: 820px;
+  margin: 18px auto 0;
+  flex-wrap: wrap;
+}
+
+.menu-tool {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.menu-tool:hover {
+  border-color: var(--accent-hover);
+}
+
+.menu-tool:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* =========================================================
    USTAWIENIA
  ========================================================= */
@@ -579,78 +651,54 @@ footer {
 }
 
 /* =========================================================
-   MASTERY DONUT (menu)
- ========================================================= */
+   MASTERY STRIP (menu)
+   ---------------------------------------------------------
+   Pasek zastąpił donut: te same dane, jedna linia pionu.
+   Segmenty to `flex: <liczba znaków>`, więc proporcje liczy
+   przeglądarka — bez ręcznego przeliczania na obwód okręgu.
+========================================================= */
 
-.mastery-overview {
+.mastery-strip {
   max-width: 820px;
-  margin: 28px auto 0;
-  text-align: center;
-  /* wykres jest teraz pierwszy, więc nie może animować się po kartach */
+  margin: 26px auto 0;
+  padding: 0 4px;
   animation: fadeSlideIn 0.4s ease both;
 }
 
-.mastery-donut {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 16px;
-}
-
-.donut-svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.donut-center {
-  position: absolute;
-  inset: 0;
+.mastery-strip-bar {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.donut-number {
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--ink);
-  line-height: 1;
-}
-
-.donut-label {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.mastery-legend {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.legend-dot {
-  width: 10px;
   height: 10px;
-  border-radius: 50%;
-  display: inline-block;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
 }
 
-.mastery-hint {
+.mastery-seg {
+  display: block;
+  height: 100%;
+}
+
+.mastery-seg.mastered {
+  background: var(--mastered);
+}
+
+.mastery-seg.good {
+  background: var(--good);
+}
+
+.mastery-seg.learning {
+  background: var(--warn);
+}
+
+.mastery-seg.hard {
+  background: var(--bad);
+}
+
+.mastery-strip-text {
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
-  margin: 10px 0 0;
+  font-weight: 600;
 }
 
 /* =========================================================
@@ -2059,10 +2107,22 @@ footer {
 ========================================================= */
 
 @media (max-width: 800px) {
-  .menu,
   .learner,
   .character-area {
     grid-template-columns: 1fr;
+  }
+
+  /* Siatka menu zostaje dwukolumnowa: kafelki mają tylko ikonę i nazwę,
+     więc mieszczą się obok siebie nawet na telefonie. Wcześniej jedna
+     kolumna była wymuszona przez karty z akapitami opisu. */
+  .menu {
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .menu-card.tile {
+    padding: 18px;
+    min-height: 104px;
   }
 
   .learner {
@@ -2151,9 +2211,8 @@ footer {
     flex-direction: column;
   }
 
-  .mastery-legend {
-    gap: 10px;
-    font-size: 0.78rem;
+  .mastery-strip-text {
+    font-size: 0.82rem;
   }
 
   .flash-svg {

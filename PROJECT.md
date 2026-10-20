@@ -1139,7 +1139,7 @@ CARDS
 BUTTONS
 GHOST BUTTON
 MENU
-MASTERY DONUT
+MASTERY STRIP
 LEARNER
 SIDEBAR
 STUDY CARD
@@ -2372,6 +2372,35 @@ order (`hiragana-settings` → legacy `hiragana-theme` → `system`). This
 prevents a light/dark flash. It performs **no writes**; migration belongs to
 `loadSettings()`.
 
+## Main menu
+
+`renderMenu()` is deliberately short:
+
+```text
+script switcher  hiragana / katakana
+mastery strip    one bar + "Opanowane N z M"
+tiles (2×2)      Nauka · Egzamin · Powtórki · Fiszki
+toolbar          Ustawienia
+```
+
+The four modes are `.menu-card.tile` — icon and name, **no paragraph**. The
+strip replaced a donut: same counts from `masteryLevel()`, one line of
+vertical space, and the empty track doubles as the "new characters" share.
+"Powtórki" carries a badge with the due count, so the most time-sensitive
+mode is visible without opening it.
+
+Settings left the mode grid on purpose: it is not a way to study. It sits in
+a thin `.menu-tools` row under the tiles.
+
+The 2-column grid survives down to 320 px because a tile is just an icon and
+a word; the old single-column breakpoint existed for the paragraphs, not for
+the grid. At 320 px the menu is 221 px tall against roughly 1000 px before.
+
+Covered in `tests.js`: four `.menu-card.tile` elements, `#settingsCard`
+inside `.menu-tools` and not inside `.menu`, the strip present with no donut
+or legend left behind, the legacy `.menu-card-full` class still absent, and
+the CSS hooks (`.menu-card.tile`, `.mastery-strip-bar`) still defined.
+
 ## Screens
 
 `renderSettings()` renders five sections:
@@ -2666,7 +2695,7 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion, vocabulary data and progress
-                                   store (266 assertions)
+                                   store (265 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
