@@ -1230,6 +1230,48 @@
   }
 
   /* =====================================================
+     CZYSZCZENIE DANYCH — komplet kluczy i komunikat
+     ===================================================== */
+  try {
+    const keys = appStorageKeys();
+    const expected = [
+      SETTINGS_STORE_KEY,
+      SETTINGS_KEY,
+      PROGRESS_KEY,
+      DAILY_STATS_KEY,
+      LEGACY_THEME_KEY,
+      LEGACY_MUTED_KEY
+    ];
+    ok(
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie sześć kluczy aplikacji',
+      keys.length === 6 && expected.every(key => keys.indexOf(key) >= 0),
+      keys.join(', ')
+    );
+
+    setScreen('settings');
+    const messages = [];
+    const realConfirm = window.confirm;
+    window.confirm = message => {
+      messages.push(String(message));
+      return false; // nic nie kasujemy — sprawdzamy tylko treść
+    };
+    try {
+      const clearAll = document.getElementById('clearAllDataBtn');
+      if (clearAll) clearAll.click();
+    } finally {
+      window.confirm = realConfirm;
+    }
+
+    ok(
+      'CLR2 komunikat wspomina historię nauki, nie tylko postępy',
+      messages.length === 1 && /histori/i.test(messages[0]) && /postępy/i.test(messages[0]),
+      messages[0] || 'brak komunikatu'
+    );
+  } catch (e) {
+    ok('czyszczenie danych', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

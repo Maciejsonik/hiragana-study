@@ -2324,10 +2324,12 @@ Destructive actions are confirmed:
 - Reset Progress — one confirmation,
 - Clear All Data — two confirmations.
 
-"Clear All Data" removes exactly the five application keys
+"Clear All Data" removes exactly the six application keys
 (`hiragana-settings`, `hiragana-exam-settings`, `hiragana-progress`,
-`hiragana-theme`, `hiragana-muted`) and leaves unrelated `localStorage` keys
-untouched.
+`hiragana-daily`, `hiragana-theme`, `hiragana-muted`) and leaves unrelated
+`localStorage` keys untouched. Four are current stores, two are the legacy
+keys described above; the daily-history key is removed too, which the
+confirmation says out loud.
 
 ## Interaction with other systems
 

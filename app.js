@@ -2152,7 +2152,7 @@ function renderSettings() {
   document.getElementById('clearAllDataBtn').onclick = () => {
     if (
       !confirm(
-        'Wyczyść WSZYSTKIE dane aplikacji? Ustawienia, postępy i ustawienia egzaminu zostaną usunięte. Tej operacji nie można cofnąć.'
+        'Wyczyść WSZYSTKIE dane aplikacji? Ustawienia, ustawienia egzaminu, postępy i historia nauki zostaną usunięte. Tej operacji nie można cofnąć.'
       )
     )
       return;
