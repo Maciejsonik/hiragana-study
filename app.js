@@ -564,6 +564,54 @@ const katakanaStrokeText = {
 scriptData.katakana.strokeText = katakanaStrokeText;
 
 /* =========================================================
+   DANE: SŁOWNICTWO (T19)
+   Zeszyt ćwiczeń: „きょうしつで つかう ことば" (1) — wyrażenia,
+   których nauczyciel używa na lekcji, i czasowniki, od których
+   pochodzą.
+   ------------------------------------------------------------
+   Znaczenia są PO POLSKU. Źródło ma glosy angielskie, więc to
+   tłumaczenie, a nie kopia.
+   Romaji bez makronów, tak jak w `scriptData`: długą samogłoskę
+   zapisujemy literami, które są w kanie (renshuu, benkyou).
+   Pozycje 21–22 to wzorce zdań (`type: 'pattern'`), a nie karty:
+   nie mają odpowiednika w magazynie postępu.
+   `id` jest trwałe — trafi do zapisu postępu, więc go nie zmieniaj.
+   ========================================================= */
+
+// prettier-ignore
+const VOCAB_ITEMS = [
+  // 1–15 — strona 1 zeszytu
+  { id: 'v01', type: 'card', kana: 'きいてください', romaji: 'kiite kudasai', meaning: 'proszę słuchać', verb: 'ききます', verbRomaji: 'kikimasu', verbMeaning: 'słuchać' },
+  { id: 'v02', type: 'card', kana: 'いってください', romaji: 'itte kudasai', meaning: 'proszę powiedzieć', verb: 'いいます', verbRomaji: 'iimasu', verbMeaning: 'mówić' },
+  // źródło ma urwane „もういちどいいまし" — pełna forma to もういちどいいます
+  { id: 'v03', type: 'card', kana: 'もういちどいってください', romaji: 'mou ichido itte kudasai', meaning: 'proszę powiedzieć jeszcze raz', verb: 'もういちどいいます', verbRomaji: 'mou ichido iimasu', verbMeaning: 'powiedzieć jeszcze raz' },
+  { id: 'v04', type: 'card', kana: 'くりかえしてください', romaji: 'kurikaeshite kudasai', meaning: 'proszę powtórzyć', verb: 'くりかえします', verbRomaji: 'kurikaeshimasu', verbMeaning: 'powtarzać' },
+  { id: 'v05', type: 'card', kana: 'みてください', romaji: 'mite kudasai', meaning: 'proszę patrzeć', verb: 'みます', verbRomaji: 'mimasu', verbMeaning: 'patrzeć / widzieć / oglądać' },
+  { id: 'v06', type: 'card', kana: 'よんでください', romaji: 'yonde kudasai', meaning: 'proszę czytać', verb: 'よみます', verbRomaji: 'yomimasu', verbMeaning: 'czytać' },
+  { id: 'v07', type: 'card', kana: 'かいてください', romaji: 'kaite kudasai', meaning: 'proszę napisać', verb: 'かきます', verbRomaji: 'kakimasu', verbMeaning: 'pisać' },
+  { id: 'v08', type: 'card', kana: 'れんしゅうしてください', romaji: 'renshuu shite kudasai', meaning: 'proszę ćwiczyć', verb: 'れんしゅうします', verbRomaji: 'renshuu shimasu', verbMeaning: 'ćwiczyć' },
+  { id: 'v09', type: 'card', kana: 'はじめてください', romaji: 'hajimete kudasai', meaning: 'proszę zaczynać', verb: 'はじめます', verbRomaji: 'hajimemasu', verbMeaning: 'zaczynać' },
+  { id: 'v10', type: 'card', kana: 'やめてください', romaji: 'yamete kudasai', meaning: 'proszę przestać', verb: 'やめます', verbRomaji: 'yamemasu', verbMeaning: 'przestawać' },
+  { id: 'v11', type: 'card', kana: 'こたえてください', romaji: 'kotaete kudasai', meaning: 'proszę odpowiedzieć', verb: 'こたえます', verbRomaji: 'kotaemasu', verbMeaning: 'odpowiadać' },
+  { id: 'v12', type: 'card', kana: 'ひらいてください', romaji: 'hiraite kudasai', meaning: 'proszę otworzyć', verb: 'ひらきます', verbRomaji: 'hirakimasu', verbMeaning: 'otwierać', alt: 'あけてください', altRomaji: 'akete kudasai' },
+  { id: 'v13', type: 'card', kana: 'とじてください', romaji: 'tojite kudasai', meaning: 'proszę zamknąć', verb: 'とじます', verbRomaji: 'tojimasu', verbMeaning: 'zamykać', alt: 'しめてください', altRomaji: 'shimete kudasai' },
+  { id: 'v14', type: 'card', kana: 'みせてください', romaji: 'misete kudasai', meaning: 'proszę pokazać', verb: 'みせます', verbRomaji: 'misemasu', verbMeaning: 'pokazywać' },
+  { id: 'v15', type: 'card', kana: 'えらんでください', romaji: 'erande kudasai', meaning: 'proszę wybrać', verb: 'えらびます', verbRomaji: 'erabimasu', verbMeaning: 'wybierać' },
+
+  // 16–20 — strona 2 zeszytu
+  { id: 'v16', type: 'card', kana: 'だしてください', romaji: 'dashite kudasai', meaning: 'proszę wyjąć / oddać', verb: 'だします', verbRomaji: 'dashimasu', verbMeaning: 'wyjmować / oddawać' },
+  { id: 'v17', type: 'card', kana: 'たってください', romaji: 'tatte kudasai', meaning: 'proszę wstać', verb: 'たちます', verbRomaji: 'tachimasu', verbMeaning: 'stać / wstawać' },
+  { id: 'v18', type: 'card', kana: 'すわってください', romaji: 'suwatte kudasai', meaning: 'proszę usiąść', verb: 'すわります', verbRomaji: 'suwarimasu', verbMeaning: 'siadać / siedzieć' },
+  { id: 'v19', type: 'card', kana: 'しずかにしてください', romaji: 'shizuka ni shite kudasai', meaning: 'proszę być cicho', verb: 'しずかにします', verbRomaji: 'shizuka ni shimasu', verbMeaning: 'być cicho' },
+  { id: 'v20', type: 'card', kana: 'べんきょうしてください', romaji: 'benkyou shite kudasai', meaning: 'proszę się uczyć', verb: 'べんきょうします', verbRomaji: 'benkyou shimasu', verbMeaning: 'uczyć się' },
+
+  // 21–22 — wzorce; źródło podaje przy 21 jeszcze „わかりにく", ale bez romaji
+  // i bez notatki, więc potraktowane jako skaza transkrypcji i pominięte
+  { id: 'v21', type: 'pattern', kana: 'わかりますか。', romaji: 'wakarimasu ka', meaning: 'Czy rozumiesz?', answers: [['わかります。', 'wakarimasu', 'rozumiem'], ['わかりません。', 'wakarimasen', 'nie rozumiem']], variants: [['わかりますね。', 'wakarimasu ne', 'rozumiesz, prawda?']] },
+  { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで（ポーランドごで）～です。', '~ wa nihongo de (poorandogo de) ~ desu', '～ po japońsku (po polsku) to ～']] }
+];
+
+/* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
    ========================================================= */
 

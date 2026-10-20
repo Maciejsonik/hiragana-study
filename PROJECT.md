@@ -1742,6 +1742,27 @@ Potential functionality:
 
 Vocabulary should eventually connect naturally with kanji and grammar.
 
+### Status: data layer shipped
+
+`VOCAB_ITEMS` in `app.js` holds the 22 items of the class worksheet
+"きょうしつで つかう ことば" (1) — 20 request expressions with the verb each
+comes from, plus two sentence patterns. Every item carries a stable `id`
+(`v01`–`v22`), and items of `type: 'pattern'` are deliberately **not** cards:
+they have no counterpart in the progress store.
+
+Meanings are **Polish**; the source worksheet glosses in English, so the table
+is a translation, not a copy. Romaji follows `scriptData` and carries no
+macrons. The table is not read by any screen yet — it is the first of four
+layers (data → progress store → cards → patterns), so nothing here changes
+what the app does.
+
+Covered by VO1–VO7 in `tests.js`: counts, id sequence, required fields, kana
+fields free of Latin text, romaji free of macrons, unique kana, and the shape
+of the two patterns. VO5 fails when a macron is introduced.
+
+Nothing has verified the translations against a Polish teacher; they are my
+own reading of the worksheet.
+
 ---
 
 ## T20 — Grammar
@@ -2540,7 +2561,7 @@ from the app.
 ```text
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
-                                   completion (245 assertions)
+                                   completion, vocabulary data (252 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13)            (114 assertions)

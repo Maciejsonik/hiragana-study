@@ -1162,6 +1162,74 @@
   }
 
   /* =====================================================
+     SŁOWNICTWO (T19) — dane
+     ===================================================== */
+  try {
+    const items = VOCAB_ITEMS;
+    const cards = items.filter(item => item.type === 'card');
+    const patterns = items.filter(item => item.type === 'pattern');
+    const kanaOnly = /^[ぁ-んァ-ヶー～（）。\s]+$/;
+
+    ok(
+      'VO1 jest 20 kart i 2 wzorce',
+      cards.length === 20 && patterns.length === 2,
+      'karty=' + cards.length + ', wzorce=' + patterns.length
+    );
+
+    const expectedIds = items.map((_, index) => 'v' + String(index + 1).padStart(2, '0')).join(',');
+    ok(
+      'VO2 identyfikatory to v01…v22 po kolei',
+      items.map(item => item.id).join(',') === expectedIds,
+      items.map(item => item.id).join(',')
+    );
+
+    ok(
+      'VO3 każda karta ma japoński, romaji, znaczenie i czasownik',
+      cards.every(card => card.kana && card.romaji && card.meaning && card.verb && card.verbRomaji && card.verbMeaning),
+      cards
+        .filter(card => !(card.kana && card.romaji && card.meaning && card.verb && card.verbRomaji && card.verbMeaning))
+        .map(card => card.id)
+        .join(',')
+    );
+
+    ok(
+      'VO4 pola japońskie nie zawierają łaciny',
+      items.every(item => kanaOnly.test(item.kana)) && cards.every(card => kanaOnly.test(card.verb)),
+      items
+        .filter(item => !kanaOnly.test(item.kana))
+        .map(item => item.id)
+        .join(',')
+    );
+
+    const romaji = [];
+    for (const item of items) {
+      romaji.push(item.romaji, item.verbRomaji, item.altRomaji);
+      for (const answer of item.answers || []) romaji.push(answer[1]);
+      for (const variant of item.variants || []) romaji.push(variant[1]);
+    }
+    const filled = romaji.filter(Boolean);
+    ok(
+      'VO5 romaji jest wszędzie i bez makronów',
+      filled.length >= 20 && filled.every(text => !/[āīūēō]/.test(text)),
+      filled.filter(text => /[āīūēō]/.test(text)).join(' | ')
+    );
+
+    ok(
+      'VO6 karty mają unikalne kana',
+      new Set(cards.map(card => card.kana)).size === cards.length,
+      String(cards.length)
+    );
+
+    ok(
+      'VO7 wzorce mają odpowiedzi, a 21 także wariant',
+      patterns.every(pattern => pattern.answers && pattern.answers.length) && patterns[0].variants.length === 1,
+      patterns.map(pattern => pattern.id + ':' + pattern.answers.length).join(' ')
+    );
+  } catch (e) {
+    ok('dane słownictwa', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();
