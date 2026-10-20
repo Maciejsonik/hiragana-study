@@ -1601,12 +1601,19 @@ too. `applyHideGuide()` puts the class on `#svgWrap` and the CSS rule is scoped
 to `.svg-wrap.drawing`, so outside drawing mode the preview is untouched. The
 stroke numbers are `<text>` inside the same SVG, so they disappear with it.
 
+It has two entrances and one store, like the theme's topbar toggle: the Settings
+card, and a "👁 Ukryj wzór" button in the drawing controls that appears **only
+while drawing mode is on**. Hidden outside it on purpose — there the setting
+changes nothing, so a click would look broken. The button reads its state from
+`settings.hideGuide` on every render, so the two entrances cannot disagree.
+
 One consequence worth knowing: with the guide hidden, "Odtwórz", "Kreska po
 kresce" and "Cały znak" animate something invisible. That is the point of
 drawing from memory, and turning drawing off brings the character back.
 
-Covered by S17–S22; S18 measures the computed opacity (0.16 → 0) and fails
-when the CSS rule is removed.
+Covered by S17–S25; S18 measures the computed opacity (0.16 → 0) and fails
+when the CSS rule is removed, and S21 fails when the button stops being
+revealed by the drawing toggle.
 
 Not verified: real touch hardware. The harness synthesises Pointer Events and
 asserts the wiring, not how drawing with a finger feels. The field was measured
@@ -2263,7 +2270,8 @@ runtime mirror (`state.theme`, `Audio.muted`, `state.script`) and persists.
 `#svgWrap` through `applyHideGuide()`, which tolerates the element being absent
 (the setting can be changed from another screen). The CSS rule is scoped to
 `.svg-wrap.drawing`, so the character is hidden only while drawing mode is
-active — outside it the setting changes nothing.
+active — outside it the setting changes nothing. The learn panel also carries a
+quick toggle for it, shown only in drawing mode (§35).
 
 `setScript()` additionally resets `state.group` / `state.kana` to the first
 group of the newly active script, so script-dependent state can never leak
@@ -2588,7 +2596,7 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion, vocabulary data (252 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
-                                   surface and scoring (T13)            (120 assertions)
+                                   surface and scoring (T13)            (123 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

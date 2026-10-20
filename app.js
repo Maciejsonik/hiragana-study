@@ -2359,6 +2359,7 @@ function renderLearn() {
           <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">✍️ Rysuj</button>
           <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
           <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź rysunek</button>
+          <button class="btn btn-secondary hidden" id="hideGuideToggle" aria-pressed="false">👁 Ukryj wzór</button>
         </div>
 
         <div class="draw-result" id="drawResult" aria-live="polite"></div>
@@ -2416,6 +2417,7 @@ function renderLearn() {
   const drawToggle = document.getElementById('drawToggle');
   const clearDrawing = document.getElementById('clearDrawing');
   const checkDrawing = document.getElementById('checkDrawing');
+  const hideGuideToggle = document.getElementById('hideGuideToggle');
   const drawResult = document.getElementById('drawResult');
 
   /*
@@ -2447,7 +2449,29 @@ function renderLearn() {
     drawToggle.setAttribute('aria-pressed', String(on));
     drawToggle.textContent = on ? '✍️ Koniec rysowania' : '✍️ Rysuj';
     clearDrawing.disabled = !on;
+    // skrót do ustawienia pokazujemy tylko tam, gdzie coś zmienia (patrz niżej)
+    hideGuideToggle.classList.toggle('hidden', !on);
   };
+
+  /*
+    Skrót w miejscu użycia. Ustawienie ma jedno źródło prawdy
+    (`settings.hideGuide`, edytowalne w Ustawieniach), a ten przycisk jest
+    tylko drugim wejściem do niego — jak przełącznik motywu w topbarze.
+    Pokazujemy go wyłącznie w trybie rysowania: poza nim ukrywanie wzoru
+    nie zmienia niczego, więc kliknięcie wyglądałoby na zepsute.
+  */
+  const syncGuideToggle = () => {
+    hideGuideToggle.setAttribute('aria-pressed', String(settings.hideGuide));
+    hideGuideToggle.textContent = settings.hideGuide ? '👁 Pokaż wzór' : '👁 Ukryj wzór';
+  };
+
+  hideGuideToggle.onclick = () => {
+    Audio.click();
+    setHideGuide(!settings.hideGuide);
+    syncGuideToggle();
+  };
+
+  syncGuideToggle();
 
   drawToggle.onclick = () => {
     Audio.click();

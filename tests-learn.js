@@ -1143,23 +1143,55 @@
             'opacity=' + guideOpacity()
           );
 
+          /* --- skrót w panelu nauki, obok rysowania --- */
+          const guideShortcut = document.getElementById('hideGuideToggle');
+          ok(
+            'S21 skrót do wzoru jest widoczny w trybie rysowania',
+            !!guideShortcut &&
+              !guideShortcut.classList.contains('hidden') &&
+              guideShortcut.getAttribute('aria-pressed') === 'false' &&
+              /Ukryj wzór/.test(guideShortcut.textContent),
+            guideShortcut ? guideShortcut.textContent.trim() : 'brak przycisku'
+          );
+
+          if (guideShortcut) guideShortcut.click();
+          ok(
+            'S22 skrót ukrywa wzór, zapisuje wybór i zmienia etykietę',
+            settings.hideGuide === true &&
+              guideOpacity() === '0' &&
+              loadSettings().hideGuide === true &&
+              /Pokaż wzór/.test(guideShortcut.textContent),
+            'opacity=' + guideOpacity() + ' tekst=' + (guideShortcut ? guideShortcut.textContent.trim() : '')
+          );
+
+          // poza trybem rysowania ukrywanie wzoru nic nie zmienia, więc skrót znika
+          toggle.click();
+          ok(
+            'S23 skrót chowa się po wyjściu z rysowania',
+            !!guideShortcut && guideShortcut.classList.contains('hidden'),
+            guideShortcut ? String(guideShortcut.classList.contains('hidden')) : 'brak przycisku'
+          );
+          toggle.click();
+
           setScreen('settings');
           await wait(400);
           const guideBtn = document.querySelector('[data-hide-guide-set="true"]');
           const guideCard = guideBtn ? guideBtn.closest('.settings-group') : null;
           ok(
-            'S21 Ustawienia mają przełącznik wzoru w karcie „Rysowanie"',
+            'S24 Ustawienia mają przełącznik wzoru w karcie „Rysowanie"',
             !!guideBtn &&
-              guideBtn.getAttribute('aria-pressed') === 'false' &&
+              guideBtn.getAttribute('aria-pressed') === 'true' &&
               !!guideCard &&
               guideCard.querySelector('h3').textContent === 'Rysowanie',
             guideBtn ? 'aria-pressed=' + guideBtn.getAttribute('aria-pressed') : 'brak przycisku'
           );
 
           if (guideBtn) guideBtn.click();
+          const visibleBtn = document.querySelector('[data-hide-guide-set="false"]');
+          if (visibleBtn) visibleBtn.click();
           ok(
-            'S22 kliknięcie w „Ukryty" zapisuje wybór',
-            settings.hideGuide === true && loadSettings().hideGuide === true,
+            'S25 kliknięcie w „Widoczny" zapisuje wybór',
+            settings.hideGuide === false && loadSettings().hideGuide === false,
             'hideGuide=' + settings.hideGuide
           );
           setHideGuide(false);
