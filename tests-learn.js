@@ -1202,6 +1202,111 @@
         ok('S ocena rysunku', false, e.message);
       }
 
+      /* =====================================================
+         SŁOWNICTWO (T19) — fiszki
+         ===================================================== */
+      try {
+        localStorage.removeItem(VOCAB_KEY);
+        vocab = loadVocab();
+        state.vocab = null;
+        setScreen('vocab');
+        await wait(400);
+
+        const promptEl = document.querySelector('.question-vocab');
+        const optionButtons = [...document.querySelectorAll('[data-meaning]')];
+        const firstItem = vocabItem(state.vocab.order[0]);
+
+        ok(
+          'F1 fiszki startują od pierwszej karty z czterema odpowiedziami',
+          !!promptEl && promptEl.textContent.trim() === firstItem.kana && optionButtons.length === 4,
+          optionButtons.length + ' opcji, karta ' + (promptEl ? promptEl.textContent.trim() : 'brak')
+        );
+
+        ok(
+          'F2 dokładnie jedna odpowiedź jest poprawna',
+          optionButtons.filter(button => button.dataset.meaning === firstItem.meaning).length === 1,
+          optionButtons.map(button => button.dataset.meaning).join(' | ')
+        );
+
+        optionButtons.find(button => button.dataset.meaning === firstItem.meaning).click();
+        await wait(150);
+
+        const firstStat = vocabStat(firstItem.id);
+        ok(
+          'F3 poprawna odpowiedź zapisuje się w magazynie słownictwa',
+          firstStat.seen === 1 && firstStat.correct === 1 && state.vocab.correct === 1,
+          JSON.stringify(firstStat)
+        );
+
+        ok(
+          'F4 po odpowiedzi widać fiszkę z romaji, a opcje są zablokowane',
+          !!document.querySelector('.flashcard') &&
+            document.querySelector('.flashcard').textContent.includes(firstItem.romaji) &&
+            !!document.querySelector('[data-meaning].correct') &&
+            [...document.querySelectorAll('[data-meaning]')].every(button => button.disabled),
+          document.querySelector('.flashcard') ? 'fiszka jest' : 'brak fiszki'
+        );
+
+        document.getElementById('vocabNext').click();
+        await wait(150);
+
+        const secondItem = vocabItem(state.vocab.order[1]);
+        const wrongButton = [...document.querySelectorAll('[data-meaning]')].find(
+          button => button.dataset.meaning !== secondItem.meaning
+        );
+        wrongButton.click();
+        await wait(150);
+
+        const secondStat = vocabStat(secondItem.id);
+        ok(
+          'F5 zła odpowiedź trafia do magazynu i jest oznaczona',
+          secondStat.seen === 1 &&
+            secondStat.wrong === 1 &&
+            !!document.querySelector('[data-meaning].wrong') &&
+            !!document.querySelector('[data-meaning].correct'),
+          JSON.stringify(secondStat)
+        );
+
+        // Przechodzimy przez resztę zestawu, żeby zobaczyć ekran wyniku.
+        let guard = 0;
+        while (state.vocab && !state.vocab.finished && guard++ < 40) {
+          const item = vocabItem(state.vocab.order[state.vocab.index]);
+          const right = [...document.querySelectorAll('[data-meaning]')].find(
+            button => button.dataset.meaning === item.meaning
+          );
+          if (right && !right.disabled) right.click();
+          await wait(40);
+          const nextStep = document.getElementById('vocabNext');
+          if (nextStep) nextStep.click();
+          await wait(40);
+        }
+
+        ok(
+          'F6 po ostatniej karcie widać wynik zestawu',
+          state.vocab.finished && /Koniec zestawu/.test(app.textContent) && !!document.getElementById('vocabAgain'),
+          app.textContent.replace(/\s+/g, ' ').slice(0, 70)
+        );
+
+        const storedBefore = Object.keys(vocab.cards).length;
+        document.getElementById('vocabAgain').click();
+        await wait(250);
+        ok(
+          'F7 „Jeszcze raz" zaczyna od nowa i nie kasuje zapisu',
+          state.vocab.index === 0 && state.vocab.correct === 0 && Object.keys(vocab.cards).length === storedBefore,
+          'karty=' + Object.keys(vocab.cards).length
+        );
+
+        document.getElementById('vocabBack').click();
+        await wait(300);
+        ok(
+          'F8 wyjście z fiszek wraca do menu',
+          state.screen === 'menu' && !!document.getElementById('vocabCard'),
+          state.screen
+        );
+      } catch (e) {
+        ok('fiszki słownictwa', false, e.message);
+      }
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));

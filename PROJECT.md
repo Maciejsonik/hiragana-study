@@ -1765,7 +1765,7 @@ Potential functionality:
 
 Vocabulary should eventually connect naturally with kanji and grammar.
 
-### Status: data layer and progress store shipped
+### Status: data layer, progress store and flashcards shipped
 
 `VOCAB_ITEMS` in `app.js` holds the 22 items of the class worksheet
 "きょうしつで つかう ことば" (1) — 20 request expressions with the verb each
@@ -1823,6 +1823,38 @@ rejection of unknown cards and patterns, the `recent` cap, reload, corrupt
 JSON, foreign version, partial-record recovery, daily history untouched, reset,
 and the reset wording. CLR1 now asserts seven keys. Removing the card guard,
 the version check or `resetVocabData()` turns the suite red.
+
+### Flashcards (layer 3)
+
+"Słownictwo" in the menu opens `renderVocab()`: one card at a time, the
+expression in kana, four Polish meanings to choose from — the same answer
+rhythm as the exam, so the learner does not have to learn a second way of
+clicking. After the answer the options lock, the correct one is marked, and a
+`.flashcard` reveal adds romaji, the meaning and the source verb. A session is
+all 20 cards; the last screen shows the score, "Jeszcze raz" and a way back.
+
+The order is deterministic and derived from the store: untouched cards first,
+then the lowest accuracy, ties broken by table order. `vocabOptions()` draws
+three distractors from other cards and the options for a card are generated
+**once** and kept in the session — otherwise every re-render after an answer
+would reshuffle the buttons under the finger. Digits 1–4 answer and Enter
+advances, matching the exam's keyboard handling.
+
+The screen writes only through `recordVocabAnswer()`, so it changes
+`hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
+`hiragana-daily`, the exam settings or the SRS schedule.
+
+Covered by F1–F8 in `tests-learn.js`: a session starts on the first card with
+four options, exactly one of them correct, a correct answer is stored, the
+reveal locks the options, a wrong answer is stored and marked, the summary
+appears after the last card, "Jeszcze raz" restarts without erasing the store,
+and leaving returns to the menu. Removing the `recordVocabAnswer()` call or the
+disabled-state marking turns the suite red. Layout at 320 px was measured, not
+looked at: the longest expression wraps to two lines with no horizontal
+overflow.
+
+Not verified: the screen on a real touch device, and whether the Polish
+meanings are the ones a teacher would use.
 
 ---
 
@@ -2111,7 +2143,7 @@ Long-term statistics: implemented
 Drawing mode: NOT implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
-Vocabulary: data + progress store, no screen yet
+Vocabulary: data, progress store and flashcards; patterns pending
 Grammar: NOT implemented
 Spaced repetition engine: implemented
 Daily goals: NOT implemented
@@ -2637,7 +2669,8 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    store (266 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
-                                   surface and scoring (T13)            (123 assertions)
+                                   surface and scoring (T13), vocabulary
+                                   flashcards (T19)                      (131 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

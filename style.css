@@ -1390,6 +1390,71 @@ footer {
 }
 
 /* =========================================================
+   FISZKI SŁOWNICTWA (T19 — warstwa 3)
+   ---------------------------------------------------------
+   Odpowiedzi są zdaniami po polsku, a nie znakami, więc dostają
+   własny wariant rozmiaru i jedną kolumnę: dwie kolumny łamałyby
+   „proszę powiedzieć jeszcze raz" na 320 px do trzech linii.
+========================================================= */
+
+.vocab-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.question-vocab {
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 2rem;
+  line-height: 1.45;
+  margin: 8px 0 20px;
+  word-break: break-word;
+}
+
+.answers.answers-text {
+  grid-template-columns: 1fr;
+}
+
+.answer.answer-text {
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+  padding: 16px 18px 16px 34px;
+}
+
+.vocab-kana {
+  font-size: 1.9rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.vocab-correct {
+  border-color: var(--good);
+}
+
+.vocab-correct .flash-label {
+  color: var(--good);
+}
+
+.vocab-result {
+  text-align: center;
+}
+
+.vocab-result-score {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+}
+
+.vocab-back {
+  margin-top: 20px;
+}
+
+/* =========================================================
    RESULT
 ========================================================= */
 

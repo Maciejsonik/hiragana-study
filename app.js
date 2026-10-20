@@ -687,6 +687,7 @@ const state = {
   group: 'a',
   kana: 'あ',
   exam: null,
+  vocab: null,
   // preferencja żyje w `settings.theme`; tu trzymamy tę samą wartość surową,
   // bo `updateThemeButton()` rozróżnia 'system' (ikona ◐), a `resolveTheme()`
   // i tak rozstrzyga 'system' przy każdym zastosowaniu motywu
@@ -1753,6 +1754,7 @@ function render() {
   if (state.screen === 'learn') renderLearn();
   if (state.screen === 'exam') renderExam();
   if (state.screen === 'review') renderReview();
+  if (state.screen === 'vocab') renderVocab();
   if (state.screen === 'settings') renderSettings();
 }
 
@@ -1807,6 +1809,12 @@ function renderMenu() {
         <p>Znaki zaplanowane na dziś — powtórki w rozstawie rosnącym co do dnia.</p>
       </button>
 
+      <button class="menu-card full" id="vocabCard">
+        <div class="menu-icon">🎴</div>
+        <h2>Słownictwo</h2>
+        <p>Fiszki z wyrażeniami z lekcji — wybierz poprawne znaczenie.</p>
+      </button>
+
       <button class="menu-card full" id="settingsCard">
         <div class="menu-icon">⚙️</div>
         <h2>Ustawienia</h2>
@@ -1828,6 +1836,11 @@ function renderMenu() {
   document.getElementById('reviewCard').onclick = () => {
     Audio.click();
     setScreen('review');
+  };
+  document.getElementById('vocabCard').onclick = () => {
+    Audio.click();
+    state.vocab = null; // nowy zestaw za każdym wejściem
+    setScreen('vocab');
   };
   document.getElementById('settingsCard').onclick = () => {
     Audio.click();
@@ -1952,6 +1965,227 @@ function renderReview() {
       Audio.click();
       setScreen('learn');
     };
+}
+
+/* =========================================================
+   SŁOWNICTWO (T19 — warstwa 3: fiszki)
+   ------------------------------------------------------------
+   Jedna fiszka = jedno pytanie: co znaczy to wyrażenie? Cztery
+   odpowiedzi, jedna poprawna — ten sam rytm co w egzaminie, więc
+   użytkownik nie uczy się drugiego sposobu klikania.
+
+   Wynik idzie wyłącznie do `hiragana-vocab` (warstwa 2). Nie rusza
+   `hiragana-progress` (karta nie jest znakiem) ani `hiragana-daily`
+   (odpowiedź na fiszkę nie jest odpowiedzią na kanę).
+
+   Kolejność jest deterministyczna i liczona z liczników: najpierw
+   karty nietknięte, potem te z najniższą trafnością, a przy remisie
+   kolejność tabeli. Bez losowości — ta sama historia daje ten sam
+   zestaw, co czyni zachowanie przewidywalnym i testowalnym.
+========================================================= */
+
+const VOCAB_OPTIONS = 4;
+
+function vocabPool() {
+  return VOCAB_ITEMS.filter(item => item.type === 'card');
+}
+
+function vocabItem(cardId) {
+  return vocabPool().find(item => item.id === cardId) || null;
+}
+
+function vocabSessionOrder() {
+  return vocabPool()
+    .map((item, index) => ({ id: item.id, index: index, stat: vocabStat(item.id) }))
+    .sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index)
+    .map(entry => entry.id);
+}
+
+function vocabOptions(item) {
+  const chosen = new Set([item.meaning]);
+  const distractors = [];
+  for (const other of shuffle(vocabPool())) {
+    if (other.id === item.id || chosen.has(other.meaning)) continue;
+    chosen.add(other.meaning);
+    distractors.push(other.meaning);
+    if (distractors.length === VOCAB_OPTIONS - 1) break;
+  }
+  return shuffle([item.meaning, ...distractors]);
+}
+
+function startVocabSession() {
+  state.vocab = {
+    order: vocabSessionOrder(),
+    index: 0,
+    correct: 0,
+    answered: false,
+    chosen: null,
+    lastCorrect: false,
+    options: null,
+    finished: false
+  };
+  renderVocab();
+}
+
+function answerVocab(meaning) {
+  const session = state.vocab;
+  if (!session || session.answered || session.finished) return;
+
+  const item = vocabItem(session.order[session.index]);
+  if (!item) return;
+
+  const correct = meaning === item.meaning;
+  session.answered = true;
+  session.chosen = meaning;
+  session.lastCorrect = correct;
+  if (correct) session.correct++;
+
+  recordVocabAnswer(item.id, correct);
+  if (correct) Audio.correct();
+  else Audio.wrong();
+
+  renderVocab();
+}
+
+function nextVocab() {
+  const session = state.vocab;
+  if (!session || !session.answered) return;
+
+  session.index++;
+  session.answered = false;
+  session.chosen = null;
+  session.lastCorrect = false;
+  session.options = null;
+
+  if (session.index >= session.order.length) {
+    session.finished = true;
+    Audio.celebrate();
+  }
+
+  renderVocab();
+}
+
+function vocabRevealHTML(item, correct) {
+  return `
+    <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
+      <div class="flash-label">${correct ? '✓ Dobrze' : '✗ Poprawna odpowiedź'}</div>
+      <div class="flash-kana vocab-kana">${item.kana}</div>
+      <div class="flash-romaji">${item.romaji}</div>
+      <div class="flash-meta">${item.meaning}</div>
+      <div class="flash-meta">
+        Czasownik: <b>${item.verb}</b> (${item.verbRomaji}) — ${item.verbMeaning}
+      </div>
+      <button class="btn btn-primary" id="vocabNext">Dalej → (Enter)</button>
+    </div>
+  `;
+}
+
+function renderVocab() {
+  if (!state.vocab) {
+    startVocabSession();
+    return;
+  }
+
+  const session = state.vocab;
+
+  if (session.finished) {
+    const total = session.order.length;
+    app.innerHTML = `
+      <section class="vocab">
+        <div class="eyebrow">SŁOWNICTWO</div>
+        <h2>Koniec zestawu</h2>
+
+        <div class="card vocab-result">
+          <p class="vocab-result-score">${session.correct} / ${total}</p>
+          <p>${resultText(session.correct, total, state.script, 'vocab')}</p>
+          <button class="btn btn-primary" id="vocabAgain">Jeszcze raz</button>
+          <button class="btn btn-secondary" id="vocabBack">Wróć do menu</button>
+        </div>
+      </section>
+    `;
+
+    document.getElementById('vocabAgain').onclick = () => {
+      Audio.click();
+      startVocabSession();
+    };
+    document.getElementById('vocabBack').onclick = () => {
+      Audio.click();
+      state.vocab = null;
+      setScreen('menu');
+    };
+    return;
+  }
+
+  const item = vocabItem(session.order[session.index]);
+  if (!item) {
+    session.finished = true;
+    renderVocab();
+    return;
+  }
+
+  // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
+  // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
+  if (!session.options) session.options = vocabOptions(item);
+
+  app.innerHTML = `
+    <section class="vocab">
+      <div class="eyebrow">SŁOWNICTWO</div>
+      <h2>Fiszki</h2>
+
+      <p class="vocab-progress">
+        <span>Karta <strong>${session.index + 1}</strong> z <strong>${session.order.length}</strong></span>
+        <span>Poprawnie: <strong>${session.correct}</strong></span>
+      </p>
+
+      <div class="prompt">
+        <div class="polish">Co znaczy:</div>
+        <div class="question question-vocab">${item.kana}</div>
+
+        <div class="answers answers-text">
+          ${session.options
+            .map(
+              (meaning, i) => `
+            <button class="answer answer-text" data-meaning="${meaning}">
+              <span class="answer-key">${i + 1}</span>
+              ${meaning}
+            </button>
+          `
+            )
+            .join('')}
+        </div>
+
+        <div class="feedback" id="vocabFeedback"></div>
+      </div>
+
+      ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
+
+      <button class="btn btn-secondary vocab-back" id="vocabBack">Wróć do menu</button>
+    </section>
+  `;
+
+  document.querySelectorAll('[data-meaning]').forEach(button => {
+    if (session.answered) {
+      button.disabled = true;
+      if (button.dataset.meaning === item.meaning) button.classList.add('correct');
+      else if (button.dataset.meaning === session.chosen) button.classList.add('wrong');
+      return;
+    }
+    button.onclick = () => answerVocab(button.dataset.meaning);
+  });
+
+  const next = document.getElementById('vocabNext');
+  if (next) next.onclick = nextVocab;
+
+  const feedback = document.getElementById('vocabFeedback');
+  if (feedback && session.answered) {
+    feedback.textContent = session.lastCorrect ? 'Dobrze!' : 'Nie tym razem — poprawna odpowiedź jest niżej.';
+  }
+
+  document.getElementById('vocabBack').onclick = () => {
+    Audio.click();
+    state.vocab = null;
+    setScreen('menu');
+  };
 }
 
 /* =========================================================
@@ -4900,6 +5134,22 @@ document.addEventListener('keydown', event => {
         buttons[num - 1].click();
       }
       return;
+    }
+  }
+
+  // Fiszki słownictwa: cyfry wybierają odpowiedź, Enter przechodzi dalej
+  if (state.screen === 'vocab' && state.vocab && !state.vocab.finished) {
+    if (state.vocab.answered && event.key === 'Enter') {
+      nextVocab();
+      return;
+    }
+    if (!state.vocab.answered) {
+      const num = parseInt(event.key);
+      if (num >= 1 && num <= VOCAB_OPTIONS) {
+        const buttons = [...document.querySelectorAll('[data-meaning]')];
+        if (buttons[num - 1]) buttons[num - 1].click();
+        return;
+      }
     }
   }
 
