@@ -1765,7 +1765,7 @@ Potential functionality:
 
 Vocabulary should eventually connect naturally with kanji and grammar.
 
-### Status: data layer shipped
+### Status: data layer and progress store shipped
 
 `VOCAB_ITEMS` in `app.js` holds the 22 items of the class worksheet
 "きょうしつで つかう ことば" (1) — 20 request expressions with the verb each
@@ -1775,9 +1775,8 @@ they have no counterpart in the progress store.
 
 Meanings are **Polish**; the source worksheet glosses in English, so the table
 is a translation, not a copy. Romaji follows `scriptData` and carries no
-macrons. The table is not read by any screen yet — it is the first of four
-layers (data → progress store → cards → patterns), so nothing here changes
-what the app does.
+macrons. The table is still not read by any screen — it is the first of four
+layers (data → progress store → cards → patterns).
 
 Covered by VO1–VO7 in `tests.js`: counts, id sequence, required fields, kana
 fields free of Latin text, romaji free of macrons, unique kana, and the shape
@@ -1785,6 +1784,45 @@ of the two patterns. VO5 fails when a macron is introduced.
 
 Nothing has verified the translations against a Polish teacher; they are my
 own reading of the worksheet.
+
+### Vocabulary progress store
+
+`hiragana-vocab` (`VOCAB_VERSION = 1`) is a **third, disjoint store**, next to
+`hiragana-progress` and `hiragana-daily`. It answers "how is this card going",
+not "what does this kana look like today" and not "what did I do on a given
+day".
+
+Shape: `{ version, cards: { v01: { seen, correct, wrong, recent, last } } }`,
+with `recent` capped at `VOCAB_MAX_RECENT = 6` — the same record shape a
+character gets, minus confusion data.
+
+Three deliberate omissions define the layer:
+
+- **no SRS** — cards carry no schedule. The card order (layer 3) will be
+  computed from the counters, not stored, so nothing here advances or resets
+  a spaced-repetition schedule.
+- **no records for patterns** — `recordVocabAnswer()` returns `false` for
+  `type: 'pattern'` items and for unknown ids (`v99`), so a typo cannot create
+  a record that nothing will ever display.
+- **no daily history** — answering a card is not answering a character, so
+  `recordVocabAnswer()` never touches `hiragana-daily`. The two histories stay
+  separate on purpose; see "Daily statistics (T15)".
+
+Reading is optimistic, like the other stores: corrupt JSON, a foreign version
+or a missing `cards` object yield an empty store rather than an exception, and
+a partial record (`seen` without counters or `recent`) is replaced by a fresh
+one instead of throwing on the next answer.
+
+Clearing has one entrance: "Zresetuj postęp" clears vocabulary together with
+the kana state — there is no separate vocabulary button, because there is one
+kind of progress. `hiragana-vocab` is in `appStorageKeys()`, so "Wyczyść
+wszystkie dane" removes it too.
+
+Covered by V1–V12 in `tests.js`: empty start, record creation, counter split,
+rejection of unknown cards and patterns, the `recent` cap, reload, corrupt
+JSON, foreign version, partial-record recovery, daily history untouched, reset,
+and the reset wording. CLR1 now asserts seven keys. Removing the card guard,
+the version check or `resetVocabData()` turns the suite red.
 
 ---
 
@@ -2073,7 +2111,7 @@ Long-term statistics: implemented
 Drawing mode: NOT implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
-Vocabulary: NOT implemented
+Vocabulary: data + progress store, no screen yet
 Grammar: NOT implemented
 Spaced repetition engine: implemented
 Daily goals: NOT implemented
@@ -2324,12 +2362,12 @@ Destructive actions are confirmed:
 - Reset Progress — one confirmation,
 - Clear All Data — two confirmations.
 
-"Clear All Data" removes exactly the six application keys
+"Clear All Data" removes exactly the seven application keys
 (`hiragana-settings`, `hiragana-exam-settings`, `hiragana-progress`,
-`hiragana-daily`, `hiragana-theme`, `hiragana-muted`) and leaves unrelated
-`localStorage` keys untouched. Four are current stores, two are the legacy
-keys described above; the daily-history key is removed too, which the
-confirmation says out loud.
+`hiragana-daily`, `hiragana-vocab`, `hiragana-theme`, `hiragana-muted`) and
+leaves unrelated `localStorage` keys untouched. Five are current stores, two
+are the legacy keys described above; the daily-history key is removed too,
+which the confirmation says out loud.
 
 ## Interaction with other systems
 
@@ -2595,7 +2633,8 @@ from the app.
 ```text
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
-                                   completion, vocabulary data (252 assertions)
+                                   completion, vocabulary data and progress
+                                   store (266 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13)            (123 assertions)

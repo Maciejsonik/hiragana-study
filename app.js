@@ -1964,7 +1964,15 @@ function renderReview() {
  * w pliku, więc lista musi być budowana dopiero w chwili użycia.
  */
 function appStorageKeys() {
-  return [SETTINGS_STORE_KEY, SETTINGS_KEY, PROGRESS_KEY, DAILY_STATS_KEY, LEGACY_THEME_KEY, LEGACY_MUTED_KEY];
+  return [
+    SETTINGS_STORE_KEY,
+    SETTINGS_KEY,
+    PROGRESS_KEY,
+    DAILY_STATS_KEY,
+    VOCAB_KEY,
+    LEGACY_THEME_KEY,
+    LEGACY_MUTED_KEY
+  ];
 }
 
 /*
@@ -1981,10 +1989,14 @@ function settingsPill(value, current, label, attr, focusKey) {
    `hiragana-progress` to stan znaków, `hiragana-daily` to dziennik tego,
    co się działo. Kasowanie jednego nie powinno po cichu kasować drugiego —
    dlatego historia ma własny, jawnie nazwany przycisk w Ustawieniach.
+
+   Słownictwo (T19) jest postępem, nie historią: czyści się tutaj, razem
+   ze znakami. Osobnego przycisku nie ma, bo „postęp" jest jeden.
 */
 function resetProgressData() {
   progress = { version: PROGRESS_VERSION, chars: {} };
   saveProgress();
+  resetVocabData();
 }
 
 function resetSettings() {
@@ -2008,6 +2020,7 @@ function clearAllData() {
   // ponowne wczytanie odtwarza stan świeżej instalacji
   settings = loadSettings();
   progress = loadProgress();
+  vocab = loadVocab();
 
   state.script = settings.script;
   state.theme = settings.theme; // surowa preferencja, tak jak przy starcie
@@ -2124,7 +2137,7 @@ function renderSettings() {
     if (
       confirm(
         'Na pewno wyczyścić wszystkie zapisane postępy?\n\n' +
-          'Historia dzienna pozostanie bez zmian — kasujesz stan znaków, nie dziennik nauki.'
+          'Historia dzienna pozostanie bez zmian — kasujesz stan znaków i słownictwa, nie dziennik nauki.'
       )
     ) {
       resetProgressData();
@@ -3258,6 +3271,133 @@ function masteryLevel(kana) {
     return 'mastered';
   if (entry.recent.length >= 4 && rate === 0) return 'good';
   return 'learning';
+}
+
+/* =========================================================
+   POSTĘPY SŁOWNICTWA (T19 — warstwa 2: magazyn)
+   ------------------------------------------------------------
+   TRZECI klucz, rozłączny z `hiragana-progress` i `hiragana-daily`.
+   Odpowiada na pytanie „jak idzie mi ta karta", a nie „jak wygląda
+   ta kana" ani „co robiłem we wtorek" — i dlatego nie jest częścią
+   żadnego z tamtych magazynów.
+
+   Kształt karty (`v01`–`v20`, czyli wyłącznie `type: 'card'`):
+     seen, correct, wrong  — liczniki prób
+     recent               — ostatnie `VOCAB_MAX_RECENT` wyników
+     last                 — znacznik czasu ostatniej odpowiedzi
+
+   Czego tu celowo NIE MA:
+     - SRS. Karty nie mają harmonogramu; kolejność fiszek (warstwa 3)
+       liczymy z liczników, zamiast ją zapisywać.
+     - wpisów dla wzorców (`type: 'pattern'`, v21–v22). Wzorzec nie
+       jest kartą, więc nie dostaje rekordu.
+     - `hiragana-daily`. Odpowiedź na fiszkę nie jest odpowiedzią na
+       znak: historia dzienna liczy kany i egzamin, nie słownictwo.
+
+   Wersja to 1 i jest pierwsza — nie ma z czego migrować. Podniesienie
+   jej bez migracji wyrzuciłoby użytkownikowi postęp, więc traktuj to
+   jak zmianę formatu, nie jak porządek.
+========================================================= */
+
+const VOCAB_KEY = 'hiragana-vocab';
+const VOCAB_VERSION = 1;
+const VOCAB_MAX_RECENT = 6;
+
+// Karta istnieje tylko wtedy, gdy jest w tabeli danych i nie jest wzorcem.
+function vocabCard(cardId) {
+  const item = VOCAB_ITEMS.find(entry => entry.id === cardId);
+  return item && item.type === 'card' ? item : null;
+}
+
+function isVocabRecord(entry) {
+  return (
+    !!entry &&
+    typeof entry === 'object' &&
+    !Array.isArray(entry) &&
+    Number.isFinite(entry.seen) &&
+    entry.seen > 0 &&
+    Number.isFinite(entry.correct) &&
+    Number.isFinite(entry.wrong) &&
+    Array.isArray(entry.recent)
+  );
+}
+
+/*
+   Czytanie jest optymistyczne: uszkodzony zapis to strata postępu
+   słownictwa, a nie awaria aplikacji. Każdy niepoprawny kształt kończy
+   się pustym magazynem, nigdy wyjątkiem.
+*/
+function loadVocab() {
+  const empty = { version: VOCAB_VERSION, cards: {} };
+  try {
+    const data = JSON.parse(localStorage.getItem(VOCAB_KEY));
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return empty;
+    if (data.version !== VOCAB_VERSION) return empty;
+    if (!data.cards || typeof data.cards !== 'object' || Array.isArray(data.cards)) return empty;
+    return { version: VOCAB_VERSION, cards: data.cards };
+  } catch (error) {
+    /* brak klucza albo uszkodzony JSON */
+    return empty;
+  }
+}
+
+let vocab = loadVocab();
+
+function saveVocab() {
+  try {
+    localStorage.setItem(VOCAB_KEY, JSON.stringify(vocab));
+  } catch (error) {
+    /* np. tryb prywatny - aplikacja działa dalej bez zapisu */
+  }
+}
+
+/*
+   Zwraca `false` dla nieznanej karty i dla wzorca: literówka w `id`
+   nie może utworzyć rekordu, którego nic nigdy nie wyświetli.
+   Rekord o niepoprawnym kształcie zastępujemy świeżym — alternatywą
+   są liczniki `NaN`, które zatruwają każdy późniejszy odczyt.
+*/
+function recordVocabAnswer(cardId, correct) {
+  if (!vocabCard(cardId)) return false;
+
+  if (!isVocabRecord(vocab.cards[cardId])) {
+    vocab.cards[cardId] = { seen: 0, correct: 0, wrong: 0, recent: [], last: 0 };
+  }
+
+  const entry = vocab.cards[cardId];
+  entry.seen++;
+  if (correct) entry.correct++;
+  else entry.wrong++;
+  entry.recent.push(correct ? 1 : 0);
+  if (entry.recent.length > VOCAB_MAX_RECENT) entry.recent.shift();
+  entry.last = Date.now();
+
+  saveVocab();
+  return true;
+}
+
+/*
+   Odczyt przez `progressStat()`, żeby uszkodzone pole dało 0, a nie
+   `undefined` w obliczeniach warstwy 3.
+*/
+function vocabStat(cardId) {
+  const entry = vocab.cards[cardId];
+  const seen = progressStat(entry, 'seen');
+  const correct = progressStat(entry, 'correct');
+  return {
+    seen: seen,
+    correct: correct,
+    wrong: progressStat(entry, 'wrong'),
+    accuracy: seen ? correct / seen : 0,
+    recent: entry && Array.isArray(entry.recent) ? entry.recent : [],
+    last: progressStat(entry, 'last')
+  };
+}
+
+/* Postęp słownictwa ma jedno wejście kasowania: „Zresetuj postęp". */
+function resetVocabData() {
+  vocab = { version: VOCAB_VERSION, cards: {} };
+  saveVocab();
 }
 
 /*

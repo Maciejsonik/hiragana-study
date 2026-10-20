@@ -1230,6 +1230,117 @@
   }
 
   /* =====================================================
+     SŁOWNICTWO (T19) — magazyn postępu
+     ===================================================== */
+  try {
+    localStorage.removeItem(VOCAB_KEY);
+    vocab = loadVocab();
+
+    ok(
+      'V1 pusty magazyn startuje bez kart',
+      vocab.version === VOCAB_VERSION && Object.keys(vocab.cards).length === 0,
+      JSON.stringify(vocab)
+    );
+
+    ok(
+      'V2 poprawna odpowiedź tworzy rekord karty',
+      recordVocabAnswer('v01', true) === true &&
+        vocabStat('v01').seen === 1 &&
+        vocabStat('v01').correct === 1 &&
+        vocabStat('v01').wrong === 0,
+      JSON.stringify(vocab.cards.v01)
+    );
+
+    recordVocabAnswer('v01', false);
+    ok(
+      'V3 błędna odpowiedź liczy się osobno',
+      vocabStat('v01').seen === 2 && vocabStat('v01').correct === 1 && vocabStat('v01').wrong === 1,
+      JSON.stringify(vocab.cards.v01)
+    );
+
+    ok(
+      'V4 nieznana karta i wzorzec nie tworzą rekordu',
+      recordVocabAnswer('v99', true) === false &&
+        recordVocabAnswer('v21', true) === false &&
+        !vocab.cards.v99 &&
+        !vocab.cards.v21,
+      Object.keys(vocab.cards).join(',')
+    );
+
+    for (let i = 0; i < 8; i++) recordVocabAnswer('v02', true);
+    ok(
+      'V5 historia odpowiedzi jest przycięta do szóstki',
+      vocab.cards.v02.recent.length === VOCAB_MAX_RECENT && vocab.cards.v02.seen === 8,
+      'recent=' + vocab.cards.v02.recent.length + ' seen=' + vocab.cards.v02.seen
+    );
+
+    vocab = loadVocab();
+    ok(
+      'V6 zapis przeżywa ponowne wczytanie',
+      vocabStat('v01').seen === 2 && vocabStat('v02').seen === 8,
+      Object.keys(vocab.cards).join(',')
+    );
+
+    localStorage.setItem(VOCAB_KEY, '{nie json');
+    vocab = loadVocab();
+    ok('V7 uszkodzony zapis daje pusty magazyn', Object.keys(vocab.cards).length === 0, JSON.stringify(vocab));
+
+    localStorage.setItem(VOCAB_KEY, JSON.stringify({ version: VOCAB_VERSION + 1, cards: { v01: { seen: 4 } } }));
+    vocab = loadVocab();
+    ok(
+      'V8 magazyn w obcej wersji nie jest czytany po cichu',
+      Object.keys(vocab.cards).length === 0 && vocab.version === VOCAB_VERSION,
+      JSON.stringify(vocab)
+    );
+
+    localStorage.setItem(VOCAB_KEY, JSON.stringify({ version: VOCAB_VERSION, cards: { v03: { seen: 3 } } }));
+    vocab = loadVocab();
+    const recovered = recordVocabAnswer('v03', true);
+    ok(
+      'V9 niepełny rekord jest zastępowany, a nie wywala zapisu',
+      recovered === true && vocabStat('v03').seen === 1 && vocabStat('v03').recent.length === 1,
+      JSON.stringify(vocab.cards.v03)
+    );
+
+    const dailyBefore = localStorage.getItem(DAILY_STATS_KEY);
+    recordVocabAnswer('v01', true);
+    recordVocabAnswer('v01', false);
+    ok(
+      'V10 odpowiedzi słownictwa nie ruszają historii dziennej',
+      localStorage.getItem(DAILY_STATS_KEY) === dailyBefore,
+      'przed=' + String(dailyBefore) + ' po=' + String(localStorage.getItem(DAILY_STATS_KEY))
+    );
+
+    resetProgressData();
+    ok(
+      'V11 „Zresetuj postęp" czyści słownictwo i zostawia klucz na liście',
+      Object.keys(vocab.cards).length === 0 && appStorageKeys().indexOf(VOCAB_KEY) >= 0,
+      'karty=' + Object.keys(vocab.cards).length
+    );
+
+    setScreen('settings');
+    const resetMessages = [];
+    const realResetConfirm = window.confirm;
+    window.confirm = message => {
+      resetMessages.push(String(message));
+      return false; // nic nie kasujemy — sprawdzamy tylko treść
+    };
+    try {
+      const resetBtn = document.getElementById('resetProgressBtn');
+      if (resetBtn) resetBtn.click();
+    } finally {
+      window.confirm = realResetConfirm;
+    }
+    ok(
+      'V12 komunikat resetu postępu mówi też o słownictwie',
+      resetMessages.length === 1 && /słownictw/i.test(resetMessages[0]),
+      resetMessages[0] || 'brak komunikatu'
+    );
+  } catch (e) {
+    ok('magazyn słownictwa', false, e.message);
+  }
+
+  /* =====================================================
      CZYSZCZENIE DANYCH — komplet kluczy i komunikat
      ===================================================== */
   try {
@@ -1239,12 +1350,13 @@
       SETTINGS_KEY,
       PROGRESS_KEY,
       DAILY_STATS_KEY,
+      VOCAB_KEY,
       LEGACY_THEME_KEY,
       LEGACY_MUTED_KEY
     ];
     ok(
-      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie sześć kluczy aplikacji',
-      keys.length === 6 && expected.every(key => keys.indexOf(key) >= 0),
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie siedem kluczy aplikacji',
+      keys.length === 7 && expected.every(key => keys.indexOf(key) >= 0),
       keys.join(', ')
     );
 
