@@ -1,4 +1,4 @@
-name: Deploy Hiragana Study
+name: Deploy Koto
 
 on:
   push:

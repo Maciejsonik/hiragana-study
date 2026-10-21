@@ -21,7 +21,7 @@
    należą do aplikacji (T26) i są w pełni niezależne od cache.
    ========================================================= */
 
-const VERSION = 'v9';
+const VERSION = 'v11';
 
 const SHELL_CACHE = `shell-${VERSION}`;
 const KANJIVG_CACHE = `kanjivg-${VERSION}`;
@@ -34,10 +34,11 @@ const SHELL_ASSETS = [
   './style.css',
   './app.js',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/maskable-512.png',
-  './icons/apple-touch-icon.png',
+  './icons/icon-192.png?v=koto',
+  './icons/icon-512.png?v=koto',
+  './icons/maskable-512.png?v=koto',
+  './icons/apple-touch-icon.png?v=koto',
+  './logo.png',
   './offline.html'
 ];
 
