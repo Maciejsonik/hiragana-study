@@ -7,6 +7,11 @@
       "extensions": [".js", ".html", ".css", ".webmanifest"]
     }
   },
+  // Keep the watcher quiet. svg/ is a local offline copy of the KanjiVG strokes
+  // (see .gitignore); it is large and never part of the app.
+  "watcher": {
+    "ignore": ["svg/**", ".opencode/node_modules/**"]
+  },
   // Browser automation for the test harnesses (see .opencode/commands/verify.md).
   // Uses the system Chrome; --block-service-workers keeps a stale service
   // worker cache from faking results, --isolated keeps the profile in memory.
