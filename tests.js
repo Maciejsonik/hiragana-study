@@ -33,6 +33,21 @@
     ok(name, a === b, a === b ? '' : a + ' != ' + b);
   }
 
+  /*
+    Czekanie na stan zamiast stałego `setTimeout(6000)`. Timer egzaminu
+    nadal działa w realnym czasie (5 s), ale test nie dokłada sekundy
+    zapasu, gdy warunek jest już spełniony. Limit 7 s chroni przed
+    zawieszeniem, gdyby timeout w ogóle nie wystartował.
+  */
+  async function waitFor(condition, timeoutMs = 7000, stepMs = 50) {
+    const deadline = Date.now() + timeoutMs;
+    while (!condition()) {
+      if (Date.now() >= deadline) return false;
+      await new Promise(r => setTimeout(r, stepMs));
+    }
+    return true;
+  }
+
   // stan SRS: kana ćwiczona (seen>0), etap `stage`, `reps` poprawnych na tym etapie
   function entry(over) {
     return Object.assign(
@@ -1080,7 +1095,7 @@
     const totalBefore = ex.total,
       wrongBefore = ex.wrong,
       scoreBefore = ex.score;
-    await new Promise(r => setTimeout(r, 6000));
+    await waitFor(() => ex.total === totalBefore + 1);
 
     ok(
       'TYP4 timeout zaliczył pytanie jako błędne',
@@ -1115,7 +1130,10 @@
       !!state.exam && state.exam.currentMode === 'kana-romaji-type',
       state.exam && state.exam.currentMode
     );
-    await new Promise(r => setTimeout(r, 6000));
+    await waitFor(() => {
+      const input = document.getElementById('romajiInput');
+      return !!input && input.disabled;
+    });
     ok('TYP10 #romajiInput zablokowany po timeoutie', document.getElementById('romajiInput').disabled === true);
     ok('TYP11 #checkRomaji zablokowany po timeoutie', document.getElementById('checkRomaji').disabled === true);
     stopExam();
@@ -1130,7 +1148,10 @@
     });
     await new Promise(r => setTimeout(r, 200));
     ok('TYP12 tryb wyboru pokazuje przyciski .answer', document.querySelectorAll('.answer').length > 0);
-    await new Promise(r => setTimeout(r, 6000));
+    await waitFor(() => {
+      const answers = [...document.querySelectorAll('.answer')];
+      return answers.length > 0 && answers.every(a => a.disabled);
+    });
     ok(
       'TYP13 przyciski .answer zablokowane po timeoutie',
       [...document.querySelectorAll('.answer')].every(a => a.disabled)
@@ -1285,7 +1306,7 @@
     const beforeTimeout = { total: t.total, wrong: t.wrong, score: t.score };
     ok('LIM9 przed timeoutem na ostatnim pytaniu', beforeTimeout.total === 2, JSON.stringify(beforeTimeout));
 
-    await new Promise(r => setTimeout(r, 6000));
+    await waitFor(() => t.total === 3 && t.wrong === 1);
 
     ok(
       'LIM10 timeout policzył pytanie jako błędne dokładnie raz',

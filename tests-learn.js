@@ -31,6 +31,21 @@
   const ok = (n, c, e) => R.push((c ? 'PASS ' : 'FAIL ') + n + (e !== undefined ? ' :: ' + e : ''));
   const info = (n, v) => R.push('INFO ' + n + ' :: ' + v);
   const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  /*
+    Czekanie na warunek zamiast stałego opóźnienia. Po kliknięciu kana lub
+    nagłówka sekcji stan jest już ustawiony synchronicznie, więc nie ma
+    powodu czekać 350 ms na samą animację CSS — testy sprawdzają stan,
+    nie wysokość animacji (patrz komentarz na górze pliku).
+  */
+  async function waitFor(condition, timeoutMs = 1000, stepMs = 20) {
+    const deadline = Date.now() + timeoutMs;
+    while (!condition()) {
+      if (Date.now() >= deadline) return false;
+      await wait(stepMs);
+    }
+    return true;
+  }
   const sec = id => document.querySelector('.learn-section[data-category="' + id + '"]');
   const ids = ['basic', 'dakuten', 'handakuten', 'yoon'];
   const openIds = () => ids.filter(i => sec(i) && sec(i).open);
@@ -42,7 +57,12 @@
       const el = document.querySelector('[data-kana="' + kana + '"]');
       if (el) {
         el.click();
-        await wait(350);
+        await waitFor(
+          () =>
+            state.kana === kana &&
+            !!document.querySelector('[data-kana="' + kana + '"]') &&
+            document.querySelector('[data-kana="' + kana + '"]').classList.contains('active')
+        );
         return true;
       }
       await wait(100);
@@ -50,10 +70,12 @@
     return false;
   }
   // przeglądarka nie odpala transitionrun dla ::details-content, więc stan
-  // po kliknięciu odczytujemy po krótkiej chwili
+  // po kliknięciu odczytujemy po potwierdzeniu samego atrybutu `open`
   const clickHead = async id => {
-    sec(id).querySelector('summary').click();
-    await wait(350);
+    const section = sec(id);
+    const target = !section.open;
+    section.querySelector('summary').click();
+    await waitFor(() => section.open === target);
   };
   const ensureClosed = async id => {
     if (sec(id).open) await clickHead(id);
@@ -77,7 +99,7 @@
     try {
       setScript('hiragana');
       setScreen('learn');
-      await wait(1500);
+      await waitFor(() => !!sec('basic') && !!document.querySelector('.study-card'), 3000);
 
       /* =====================================================
          A. STAN DOMYŚLNY I LICZNIKI
