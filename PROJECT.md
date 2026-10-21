@@ -164,6 +164,10 @@ style.css
 `sw.js` runs alongside as a separate service worker global scope and never
 shares state with the page.
 
+UI structure helpers live in the rendering layer: `sessionFrameHTML()` builds
+the shared frame for active exam and flashcard sessions, and `icon()` returns
+the inline SVG used by the shell, menu and learning controls.
+
 T16 will eventually introduce modules/code splitting, but **do not prematurely refactor the current architecture while implementing earlier feature work**.
 
 ---
@@ -953,11 +957,14 @@ This should be audited later.
 
 # 23. Progress Panel
 
-The scope rows and the four quick buttons are the whole first screen. The
-numeric options (answers per question, question limit, timer, outside-scope
-distractors) and the four question modes live in a collapsed
-`<details class="exam-advanced">` whose summary shows the current values, so
-the same four selects no longer push the row list down on every visit.
+The scope rows are grouped into the same categories as the Learn sidebar
+(Basic, Dakuten, Handakuten, Yōon), and two quick buttons — "Wszystkie" and
+"Wyczyść" — complete the first screen. The old "Tylko samogłoski" and
+"Samogłoski + K" shortcuts were removed as redundant. The numeric options
+(answers per question, question limit, timer, outside-scope distractors) and
+the four question modes live in a collapsed `<details class="exam-advanced">`
+whose summary shows the current values, so the same four selects no longer
+push the row list down on every visit.
 
 Exam setup contains a progress panel showing:
 
@@ -1141,11 +1148,24 @@ Added by later phases:
 
 ```text
 .script-switcher      menu script selector
-.mastery-overview     progress chart on the menu
+.hub-summary         progress card on the Kana hub
+.hub-kicker          section label inside the hub
+.tile-primary        primary hub action (Nauka)
+.tile-cta            one-line hint inside the primary tile
 .settings             Settings screen
 .settings-group       settings sections
 .settings-pills       segmented preference controls
 #updateBanner         non-blocking service worker update notice
+.session              shared active-session card (exam + flashcards)
+.session-head/body/foot
+.session-position     card or score counter in the session header
+.icon                 inline SVG icon set
+.mastery-spacer       reserves the unpractised share of the mastery bar
+.exam-group-section   category block in the exam scope
+.exam-group-heading   category label (Basic / Dakuten / Handakuten / Yōon)
+.exam-group-grid      checkbox grid inside one category
+.control-set          playback or drawing tools in the learn panel
+.is-inactive          reserves the row while hiding an inactive tool set
 ```
 
 ---
@@ -1155,7 +1175,7 @@ Added by later phases:
 `style.css` is currently organized into:
 
 ```text
-CUSTOM PROPERTIES
+CUSTOM PROPERTIES / DESIGN TOKENS
 DARK MODE
 RESET / GLOBAL
 APP SHELL
@@ -1175,6 +1195,7 @@ SVG ANIMATION
 STROKE INDICATOR
 LEARN NAVIGATION
 STROKE INFORMATION
+SESSION FRAME
 EXAM
 STREAK BADGE
 FLASHCARD
@@ -1187,7 +1208,7 @@ TYPING MODE
 MODE B
 XP BADGE
 CONFETTI
-UTILITY
+UTILITY / ICONS
 RESPONSIVE TABLET
 RESPONSIVE MOBILE
 RESPONSIVE: DESKTOP — left navigation rail
@@ -1201,7 +1222,22 @@ Primary visual language:
 - soft shadows,
 - Inter for UI,
 - Noto Sans JP for Japanese,
-- dark theme with a lighter vermilion accent.
+- dark theme with a lighter vermilion accent,
+- inline SVG icons via `icon()` instead of colour emoji; icons inherit
+  `currentColor`, so they follow the theme.
+
+The visual system is exposed as tokens in the top-level `:root` block:
+
+- spacing (`--space-*`),
+- type roles and line heights (`--text-*`, `--leading-*`),
+- radii and shared surface border (`--radius-*`, `--surface-*`),
+- elevation and motion (`--shadow-*`, `--duration-*`, `--ease-standard`),
+- focus ring and layer order (`--focus-ring`, `--z-*`).
+
+Components consume those tokens instead of repeating the same literal values.
+One-off optical adjustments remain literal on purpose; not every pixel needs a
+token. Numeric scores and counters use tabular numerals so their widths do not
+jump when values change.
 
 ---
 
@@ -1251,8 +1287,13 @@ Fluid layout contract:
 sets `min-width: 0`, so the grid can shrink below the content's min-content
 width instead of pushing the page wider than the viewport. The glyph
 (`.svg-wrap`) is fluid — `width: 100%` capped at `max-width: 250px`, square —
-and `.controls` uses `repeat(auto-fit, minmax(80px, 1fr))` with wrapping
-labels, so three buttons share a row only when they actually fit.
+and each `.control-set` uses `repeat(auto-fit, minmax(80px, 1fr))` with
+wrapping labels, so three buttons share a row only when they actually fit. The
+two tool sets overlap in the same grid row; the inactive one is hidden with
+`visibility`, not removed from layout, so the row height does not change. The
+drawing toggle spans the full row (`grid-column: 1 / -1`) because it is the
+only control shared by both modes; its label can change without moving the
+target.
 
 Measured at 15 widths from 320 to 1920 px, with no horizontal overflow:
 
@@ -1633,7 +1674,7 @@ scaling and a `ResizeObserver`, and returns
 `{ canvas, enabled, strokes, setEnabled, clear, destroy }`. Strokes are kept as
 data, not only as pixels, so scoring can be added without changing that API.
 
-"✍️ Rysuj" toggles the mode and dims the character into a tracing guide;
+"Rysuj" toggles the mode and dims the character into a tracing guide;
 "Wyczyść" clears the drawing. `mountKana()` now takes an optional `overlay` and
 re-appends it at each of the three points where it rewrites the container, so
 the drawing surface does not depend on the KanjiVG fetch succeeding. Covered by
@@ -1684,14 +1725,19 @@ functions, S9–S14 and S16 run the whole path in the DOM against a stubbed
 **Layer 3 — polish — SHIPPED.**
 
 - The check button is "Sprawdź rysunek", not "Sprawdź": the learn panel also
-  has an exam button "🔍 Sprawdź się", and two buttons starting with the same
-  word in the same card read as the same action.
+  has an exam button "Sprawdź się", and two buttons starting with the same word
+  in the same card read as the same action.
 - A failure caused by direction names the strokes: "kierunek kresek (odwrotnie:
   kreska 2)" instead of only "kolejność albo kierunek kresek". `scoreDrawing()`
   returns a `pairs` entry per matched stroke (`{ index, agreement }`) and
   `strokeNumbers()` inflects the list in Polish.
 - S15 and S16 guard both, and S15 fails without the gate: with the direction
   check removed, a reversed stroke reports `passed: true`.
+- "Rysuj"/"Koniec rysowania" is the last control and spans the full row below
+  the other three, so switching modes does not move it. The three slots above
+  change from playback to guide, clear and check; both groups occupy the same
+  grid row and the inactive one is only visually hidden, so its height cannot
+  move the button. Covered by D4b–D4d.
 
 **Setting: hiding the reference character.**
 
@@ -1703,7 +1749,7 @@ to `.svg-wrap.drawing`, so outside drawing mode the preview is untouched. The
 stroke numbers are `<text>` inside the same SVG, so they disappear with it.
 
 It has two entrances and one store, like the theme's topbar toggle: the Settings
-card, and a "👁 Ukryj wzór" button in the drawing controls that appears **only
+card, and the "Ukryj wzór" button in the drawing controls that appears **only
 while drawing mode is on**. Hidden outside it on purpose — there the setting
 changes nothing, so a click would look broken. The button reads its state from
 `settings.hideGuide` on every render, so the two entrances cannot disagree.
@@ -2226,6 +2272,11 @@ change; **accepted** — a decision, not a bug.
 - **9. Unused CSS/JS hooks — RESOLVED, no test added.** Two dead rules removed: `.sound` and `.stroke-title`. Verified by literal search across `app.js`, `index.html`, all three harnesses and `sw.js`, by checking class attributes and `classList` use, and by confirming no concatenation can produce either name. Of the six `stroke-*` classes, the other five are in use. **Not covered by a test** — a CSS-scanner test would have to reimplement the detection and would break on any new dynamic class name. An earlier count of six unused classes was wrong: it missed the `mastery-*` classes, which are built at runtime as `mastery-${masteryLevel(kana)}`.
 - **11. Confetti hardcoded colors — RESOLVED, was a real bug.** `spawnConfetti()` set inline colors from six literals. Four matched theme tokens but only their light-theme values, so in dark mode the result screen threw light-theme confetti; two more had no token at all. Now references `--accent`, `--good`, `--warn`, `--bad`, `--mastered` — five colors instead of six, accepted rather than worked around. `var()` resolves in an inline style, so no `getComputedStyle` and no new variable. Covered by CF1–CF6 in `tests.js`; four of them fail against the old palette.
 - **2. Manual stroke counts vs KanjiVG — RESOLVED, 32 of 208 were wrong, and the manual data was the wrong side in every one.** All 148 KanjiVG parts were fetched through `loadKanji()`; 176 characters agreed. **21 hiragana** — `ぎ ぐ げ ご じゃ じゅ じょ だ ぢ づ で ど びゃ びゅ びょ ぶ べ ぼ ぎゃ ぎゅ ぎょ` — were short by exactly one, because their dakuten was written as a single entry covering both marks (`dwie ukośne kreski dakuten…`), while the count is `strokes.length`. The earlier note blamed KanjiVG for drawing the mark with three strokes; **that was wrong**. Measured: `き` is 4 and `ぎ` is 6, `く` is 1 and `ぐ` is 3 — the dakuten contributes two, which is the conventional count. **11 katakana were wrong in both directions**: `フ 4→1`, `ブ 6→3`, `プ 5→2`, `セ 3→2`, `ゼ 5→4`, `ヤ 3→2`, `レ 2→1`, `ン 1→2`, `テ 2→3`, `デ 4→5`, `ヂ 4→5`. The affected lists were regrouped onto the real stroke boundaries — for katakana against the measured KanjiVG geometry (`getPointAtLength`, including each stroke's direction), not by guesswork. `チ`'s third description was a placeholder (`trzecia kreska チ`) and is now the real stroke; its count was already correct. The runtime reconciliation in `mountKana` (`if (player.count !== count)`) is unchanged and is now a no-op for all 208 characters. Covered by STR1–STR4 in `tests-learn.js`; STR1, STR2 and STR4 fail against the old data.
+- **20. Exam options summary — RESOLVED.** `showExamSetup()` rendered the `<small>` summary once from saved settings; changing a select never updated it, and the choice was only persisted when an exam started. The advanced block now reacts to `change`, refreshes `#examSummary` through `examOptionsLabel()` and saves the advanced options immediately. Group selection still persists on start, because an empty group set is a transient editing state rather than a preference. Covered by CFG16–CFG17 in `tests.js`.
+- **21. Mastery strip with one practised character — RESOLVED.** The bar uses flex proportions, and zero-count segments were filtered out, so the only remaining segment grew to the full width and the strip read as entirely yellow. A `mastery-spacer` now reserves the share belonging to new characters; the bar background shows through it. Covered by MST2 in `tests.js`.
+- **22. Drawing controls always visible — RESOLVED.** Clear, check, guide and the verdict now appear only in drawing mode; playback controls disappear while drawing and return when it is switched off. The two groups share one grid row and are toggled with `.is-inactive` (`visibility: hidden`) inside `setDrawing()`, so the row height stays stable. The draw toggle is last and spans the full row, so its label changes in place. Covered by D3, D4, D4a–D4d, D8 and D8a in `tests-learn.js`.
+- **23. Emoji in the interface — REPLACED, not a defect.** Menu tiles, topbar controls, learning actions, progress legend and result badges now use the inline SVG `icon()` set; no colour emoji remain in the shell or learn panel. Covered by ICO1–ICO4 in `tests.js` and checked visually in light and dark themes.
+
 ## Verified correct, now covered by tests
 
 - **13. Question-limit off-by-one — VERIFIED CORRECT, now covered.** The limit is checked at the top of `nextExamQuestion()`, so after the Nth answer the exam finishes with `total === N` and never renders an extra question. Covered by LIM1–LIM8; verified by mutating `>=` to `>`.
@@ -2284,6 +2335,9 @@ Offline support (PWA): implemented
 Long-term statistics: implemented
 Drawing mode: implemented
 App shell / module navigation: implemented
+Design tokens / visual system: implemented
+Shared session frame: implemented
+SVG icon set: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: data, progress store and flashcards; patterns pending
@@ -2298,14 +2352,17 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-UI modernization — phase 2: design tokens, typography, surfaces
+UI modernization — phase 4: Kana hub (implemented; awaiting review)
 ```
 
-Phase 1 (app shell, module navigation, contextual top bar, focus mode) is
-implemented. The remaining UI phases are ordered deliberately: the skeleton first,
-then the visual system, then the shared session frame, the Kana hub, the
-list/detail components and finally Settings. Vocabulary, grammar and kanji
-plug into those archetypes instead of inventing their own screens.
+Phases 1 (app shell, module navigation, contextual top bar, focus mode),
+2 (design tokens, typography, surfaces) and 3 (shared session frame plus the
+SVG icon set) are implemented. Phase 3 also fixed the live exam-options
+summary, the mastery strip with unpractised characters and the drawing-control
+groups. Phase 4 adds the hub summary card and the primary `Nauka` action.
+The remaining UI phases are the list/detail components and Settings.
+Vocabulary, grammar and kanji plug into those archetypes instead of inventing
+their own screens.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2316,9 +2373,7 @@ and the polish are shipped (§35).
 ### Current recommended roadmap
 
 ```text
-UI phase 2 (tokens / typography / surfaces)
-↓
-UI phase 3 (shared session frame)
+UI phase 4 (Kana hub)
 ↓
 T19 Vocabulary (module list + detail)
 ↓
@@ -2532,14 +2587,17 @@ prevents a light/dark flash. It performs **no writes**; migration belongs to
 
 ```text
 script switcher  hiragana / katakana / both
-mastery strip    one bar + "Opanowane N z M"
+hub summary      "Postęp" + current script + mastery strip
 tiles (2×2)      Nauka · Egzamin · Powtórki · Fiszki
 toolbar          Ustawienia
 ```
 
 The four modes are `.menu-card.tile` — icon and name, **no paragraph**. The
-strip replaced a donut: same counts from `masteryLevel()`, one line of
-vertical space, and the empty track doubles as the "new characters" share.
+hub summary wraps the mastery strip in a card, so progress has a context
+instead of floating above the grid. "Nauka" is the primary tile
+(`.tile-primary`) and carries a one-line "Kontynuuj <znak>" hint. The strip
+replaced a donut: same counts from `masteryLevel()`, one line of vertical
+space, and the empty track doubles as the "new characters" share.
 "Powtórki" carries a badge with the due count, so the most time-sensitive
 mode is visible without opening it.
 
@@ -2551,9 +2609,11 @@ a word; the old single-column breakpoint existed for the paragraphs, not for
 the grid. At 320 px the menu is 221 px tall against roughly 1000 px before.
 
 Covered in `tests.js`: four `.menu-card.tile` elements, `#settingsCard`
-inside `.menu-tools` and not inside `.menu`, the strip present with no donut
-or legend left behind, the legacy `.menu-card-full` class still absent, and
-the CSS hooks (`.menu-card.tile`, `.mastery-strip-bar`) still defined.
+inside `.menu-tools` and not inside `.menu`, the strip inside `.hub-summary`
+with the current script name, the primary `#learnCard` hint showing the
+current kana, no donut or legend left behind, the legacy `.menu-card-full`
+class still absent, and the CSS hooks (`.menu-card.tile`,
+`.mastery-strip-bar`) still defined.
 
 ## Screens
 

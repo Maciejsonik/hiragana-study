@@ -440,7 +440,36 @@
         document.querySelectorAll('#examGroups input').length === getGroups().length,
         String(document.querySelectorAll('#examGroups input').length)
       );
-      ok('UX4 skróty zakresu nietknięte', !!document.getElementById('onlyA') && !!document.getElementById('allGroups'));
+      ok(
+        'UX4 skróty zakresu: zostały tylko „Wszystkie" i „Wyczyść"',
+        !document.getElementById('onlyA') &&
+          !document.getElementById('aPlusK') &&
+          !!document.getElementById('allGroups') &&
+          !!document.getElementById('noGroups')
+      );
+
+      const groupedSections = [...document.querySelectorAll('#examGroups .exam-group-section')];
+      const expectedSections = LEARN_CATEGORIES.map(category => ({
+        id: category.id,
+        label: category.label,
+        ids: examGroupRows()
+          .filter(row => learnCategoryOf(row.id) === category.id)
+          .map(row => row.id)
+      })).filter(section => section.ids.length);
+      ok(
+        'UX4a rzędy egzaminu są pogrupowane w kategorie',
+        groupedSections.length === expectedSections.length &&
+          groupedSections.every(
+            (section, index) =>
+              section.dataset.category === expectedSections[index].id &&
+              section.querySelector('.exam-group-heading').textContent.trim() === expectedSections[index].label &&
+              [...section.querySelectorAll('input')].map(input => input.value).join(',') ===
+                expectedSections[index].ids.join(',')
+          ),
+        groupedSections
+          .map(section => section.dataset.category + '=' + section.querySelectorAll('input').length)
+          .join(' ')
+      );
 
       setScreen('settings');
       await wait(600);
@@ -862,6 +891,10 @@
         const canvas = document.getElementById('drawCanvas');
         const toggle = document.getElementById('drawToggle');
         const clear = document.getElementById('clearDrawing');
+        const playback = document.getElementById('playbackControls');
+        const tools = document.getElementById('drawingTools');
+        const controls = toggle.closest('.controls');
+        const toggleBox = toggle.getBoundingClientRect();
 
         const pixels = () => {
           const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
@@ -898,20 +931,53 @@
           !wrap.classList.contains('drawing') && toggle.getAttribute('aria-pressed') === 'false',
           'klasa="' + wrap.className + '" aria-pressed=' + toggle.getAttribute('aria-pressed')
         );
-        ok('D3 „Wyczyść" jest zablokowane poza trybem rysowania', clear.disabled === true, String(clear.disabled));
+        ok(
+          'D3 „Wyczyść" jest ukryte i zablokowane poza trybem rysowania',
+          clear.disabled === true &&
+            tools.classList.contains('is-inactive') &&
+            getComputedStyle(tools).visibility === 'hidden',
+          'disabled=' + clear.disabled + ' inactive=' + tools.classList.contains('is-inactive')
+        );
 
         toggle.click();
         ok(
           'D4 włączenie rysowania oznacza kontener i odblokowuje „Wyczyść"',
           wrap.classList.contains('drawing') &&
             toggle.getAttribute('aria-pressed') === 'true' &&
-            clear.disabled === false,
+            clear.disabled === false &&
+            !tools.classList.contains('is-inactive'),
           'klasa="' +
             wrap.className +
             '" aria-pressed=' +
             toggle.getAttribute('aria-pressed') +
             ' disabled=' +
             clear.disabled
+        );
+        ok(
+          'D4a tryb rysowania chowa odtwarzanie i podgląd kresek',
+          playback.classList.contains('is-inactive') && getComputedStyle(playback).visibility === 'hidden',
+          'inactive=' + playback.classList.contains('is-inactive')
+        );
+        ok(
+          'D4b oba zestawy narzędzi zajmują ten sam wiersz siatki',
+          getComputedStyle(playback).gridRowStart === getComputedStyle(tools).gridRowStart,
+          getComputedStyle(playback).gridRowStart + ' / ' + getComputedStyle(tools).gridRowStart
+        );
+
+        const drawingBox = toggle.getBoundingClientRect();
+        const controlsWidth = controls.getBoundingClientRect().width;
+        ok(
+          'D4c „Rysuj” i „Koniec rysowania” zajmują ten sam slot',
+          Math.abs(toggleBox.x - drawingBox.x) < 1 &&
+            Math.abs(toggleBox.y - drawingBox.y) < 1 &&
+            Math.abs(toggleBox.width - drawingBox.width) < 1,
+          `przed=${Math.round(toggleBox.x)},${Math.round(toggleBox.y)}x${Math.round(toggleBox.width)} ` +
+            `po=${Math.round(drawingBox.x)},${Math.round(drawingBox.y)}x${Math.round(drawingBox.width)}`
+        );
+        ok(
+          'D4d przycisk rysowania zajmuje cały rząd',
+          Math.abs(drawingBox.width - controlsWidth) < 1,
+          `przycisk=${Math.round(drawingBox.width)} szerokość=${Math.round(controlsWidth)}`
         );
         ok(
           'D5 canvas przechwytuje dotyk (touch-action: none)',
@@ -932,16 +998,22 @@
         const placeholder = wrap.querySelector('.loading');
         toggle.click();
         ok(
-          'D8 wyłączenie rysowania zdejmuje tryb i blokuje „Wyczyść"',
+          'D8 wyłączenie rysowania zdejmuje tryb, blokuje i chowa „Wyczyść"',
           !wrap.classList.contains('drawing') &&
             toggle.getAttribute('aria-pressed') === 'false' &&
-            clear.disabled === true,
+            clear.disabled === true &&
+            tools.classList.contains('is-inactive'),
           'klasa="' +
             wrap.className +
             '" aria-pressed=' +
             toggle.getAttribute('aria-pressed') +
             ' disabled=' +
             clear.disabled
+        );
+        ok(
+          'D8a wyjście z rysowania przywraca odtwarzanie i podgląd kresek',
+          !playback.classList.contains('is-inactive'),
+          'inactive=' + playback.classList.contains('is-inactive')
         );
         ok(
           'D9 przełączenie trybu nie rusza zawartości kontenera znaku',
@@ -1080,6 +1152,7 @@
           const toggle = document.getElementById('drawToggle');
           const clear = document.getElementById('clearDrawing');
           const check = document.getElementById('checkDrawing');
+          const tools = document.getElementById('drawingTools');
           const verdict = document.getElementById('drawResult');
 
           ok(
@@ -1179,7 +1252,8 @@
           ok(
             'S21 skrót do wzoru jest widoczny w trybie rysowania',
             !!guideShortcut &&
-              !guideShortcut.classList.contains('hidden') &&
+              !tools.classList.contains('is-inactive') &&
+              getComputedStyle(tools).visibility === 'visible' &&
               guideShortcut.getAttribute('aria-pressed') === 'false' &&
               /Ukryj wzór/.test(guideShortcut.textContent),
             guideShortcut ? guideShortcut.textContent.trim() : 'brak przycisku'
@@ -1199,8 +1273,10 @@
           toggle.click();
           ok(
             'S23 skrót chowa się po wyjściu z rysowania',
-            !!guideShortcut && guideShortcut.classList.contains('hidden'),
-            guideShortcut ? String(guideShortcut.classList.contains('hidden')) : 'brak przycisku'
+            !!guideShortcut &&
+              tools.classList.contains('is-inactive') &&
+              getComputedStyle(tools).visibility === 'hidden',
+            guideShortcut ? 'inactive=' + tools.classList.contains('is-inactive') : 'brak przycisku'
           );
           toggle.click();
 

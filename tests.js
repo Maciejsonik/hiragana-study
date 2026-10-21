@@ -946,6 +946,18 @@
       ''
     );
     ok(
+      'hub summary wraps the mastery strip with the current script',
+      document.querySelector('.hub-summary .mastery-strip') !== null &&
+        document.querySelector('.hub-summary .hub-script').textContent.trim() === scriptName(),
+      document.querySelector('.hub-summary .hub-script')?.textContent.trim()
+    );
+    ok(
+      'learn is the primary hub action with the current kana',
+      document.getElementById('learnCard').classList.contains('tile-primary') &&
+        document.querySelector('#learnCard .tile-cta').textContent.trim().indexOf(state.kana) >= 0,
+      document.querySelector('#learnCard .tile-cta')?.textContent.trim()
+    );
+    ok(
       'chart still above cards',
       (function () {
         return document.querySelector('#app').firstElementChild.classList.contains('script-switcher');
@@ -1060,6 +1072,97 @@
     saveProgress();
   } catch (e) {
     ok('ustawienia egzaminu', false, e.message);
+  }
+
+  /* =====================================================
+     16a. PODSUMOWANIE OPCJI EGZAMINU — aktualizuje się na żywo
+     ===================================================== */
+  try {
+    saveExamSettings({
+      groups: ['a'],
+      options: 4,
+      limit: 0,
+      outside: false,
+      modes: { romajiKanaPick: true, kanaRomajiPick: false, romajiKanaType: false, kanaRomajiType: false },
+      timer: 0
+    });
+    showExamSetup();
+    await new Promise(r => setTimeout(r, 60));
+
+    const optionsSelect = document.getElementById('optionsCount');
+    optionsSelect.value = '8';
+    optionsSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+    const summary = document.getElementById('examSummary');
+    ok(
+      'CFG16 podsumowanie opcji aktualizuje się od razu',
+      !!summary && summary.textContent.indexOf('8 odpowiedzi') === 0,
+      summary ? summary.textContent : 'brak #examSummary'
+    );
+
+    const storedOptions = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    ok(
+      'CFG17 zmiana opcji zapisuje się bez startu egzaminu',
+      storedOptions.options === 8,
+      String(storedOptions.options)
+    );
+  } catch (e) {
+    ok('podsumowanie opcji egzaminu', false, e.message);
+  }
+
+  /* =====================================================
+     16b. PASEK OPANOWANIA — „nowe" rezerwuje miejsce
+     ===================================================== */
+  try {
+    const kana = getAll()[0].kana;
+    setProgress({ [kana]: { seen: 1, correct: 1, wrong: 0, recent: [1], confused: {}, last: 1 } });
+    setScreen('menu');
+    await new Promise(r => setTimeout(r, 60));
+
+    const seg = document.querySelector('.mastery-seg.learning');
+    const spacer = document.querySelector('.mastery-spacer');
+    const expectedNew = getAll().length - 1;
+
+    ok('MST1 jeden ćwiczony znak daje segment „learning"', !!seg, seg ? seg.className : 'brak');
+    ok(
+      'MST2 pasek rezerwuje miejsce dla nowych znaków',
+      !!spacer && Number(spacer.style.flexGrow) === expectedNew,
+      spacer ? 'flex-grow=' + spacer.style.flexGrow + ' expected=' + expectedNew : 'brak spacera'
+    );
+    ok(
+      'MST3 ćwiczony segment nie rozciąga się na całą szerokość',
+      !!seg && Number(seg.style.flexGrow) === 1,
+      seg ? 'flex-grow=' + seg.style.flexGrow : 'brak'
+    );
+
+    setProgress({});
+  } catch (e) {
+    ok('pasek opanowania', false, e.message);
+  }
+
+  /* =====================================================
+     16c. IKONY — menu i górny pasek bez emoji
+     ===================================================== */
+  try {
+    setScreen('menu');
+    await new Promise(r => setTimeout(r, 60));
+
+    const learnIcon = document.querySelector('#learnCard .menu-icon svg.icon');
+    const examIcon = document.querySelector('#examCard .menu-icon svg.icon');
+    const settingsIcon = document.querySelector('#settingsCard svg.icon');
+    const themeIcon = document.querySelector('#themeToggle svg.icon');
+    const muteIcon = document.querySelector('#muteToggle svg.icon');
+
+    ok('ICO1 kafelki menu używają SVG', !!learnIcon && !!examIcon, '');
+    ok('ICO2 przycisk Ustawienia używa SVG', !!settingsIcon, '');
+    ok(
+      'ICO3 ikona kafelka nie jest emoji',
+      !!learnIcon && document.querySelector('#learnCard .menu-icon').textContent.trim() === '',
+      document.querySelector('#learnCard .menu-icon')?.textContent.trim()
+    );
+    ok('ICO4 przełączniki górnego paska używają SVG', !!themeIcon && !!muteIcon, '');
+  } catch (e) {
+    ok('ikony interfejsu', false, e.message);
   }
 
   /* =====================================================

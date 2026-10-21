@@ -752,8 +752,8 @@ const state = {
   exam: null,
   vocab: null,
   // preferencja żyje w `settings.theme`; tu trzymamy tę samą wartość surową,
-  // bo `updateThemeButton()` rozróżnia 'system' (ikona ◐), a `resolveTheme()`
-  // i tak rozstrzyga 'system' przy każdym zastosowaniu motywu
+  // bo `updateThemeButton()` rozróżnia 'system' (ikona kontrastu), a
+  // `resolveTheme()` i tak rozstrzyga 'system' przy każdym zastosowaniu motywu
   theme: settings.theme
 };
 
@@ -782,6 +782,47 @@ function scriptName(script = state.script) {
 /* Czy w danym trybie trzeba pokazywać, z którego alfabetu jest znak. */
 function showsScriptLabels() {
   return state.script === 'both';
+}
+
+/*
+   IKONY
+   ------------------------------------------------------------
+   Jeden zestaw SVG zamiast emoji. Emoji renderują się różnie na
+   każdym systemie i wyglądają nieprofesjonalnie obok typografii
+   interfejsu; kreska dziedziczy `currentColor`, więc ikony same
+   dostosowują się do motywu.
+*/
+const ICONS = {
+  learn: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  exam: '<path d="M9 4h6a1 1 0 0 1 1 1v1h1.5A2.5 2.5 0 0 1 20 8.5v9A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-9A2.5 2.5 0 0 1 6.5 6H8V5a1 1 0 0 1 1-1Z"/><path d="M8 6V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1"/><path d="M8 11h8"/><path d="M8 15h5"/>',
+  review: '<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>',
+  vocab: '<rect x="4" y="3" width="14" height="18" rx="2"/><path d="M8 7h6"/><path d="M8 11h6"/><path d="M8 15h4"/>',
+  settings:
+    '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>',
+  contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18"/>',
+  volume: '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>',
+  'volume-off': '<path d="M11 5 6 9H3v6h3l5 4Z"/><path d="m17 9 5 6"/><path d="m22 9-5 6"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  'eye-off':
+    '<path d="m3 3 18 18"/><path d="M10.6 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  quiz: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9Z"/>',
+  flame:
+    '<path d="M12 3s4 4 4 8a4 4 0 0 1-8 0c0-1 .3-2 1-3-2 1-4 3.5-4 6.5A7 7 0 0 0 12 21a7 7 0 0 0 7-6.5c0-4-3-8-7-11.5Z"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  x: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
+  play: '<path d="m7 4 13 8-13 8Z"/>'
+};
+
+/* Jeden sposób wstawiania ikony: spójny viewBox, grubość kreski i brak
+   wpływu na dostępność (etykietę niesie przycisk/title). */
+function icon(name, className = 'icon') {
+  const paths = ICONS[name];
+  if (!paths) return '';
+  return `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths}</svg>`;
 }
 
 /* =========================================================
@@ -1040,6 +1081,15 @@ function masteryStripHTML() {
     ? segments.map(segment => segment.label + ': ' + segment.count).join(', ') + ', nowe: ' + counts.new
     : 'brak odpowiedzi, nowe: ' + total;
 
+  /*
+     Puste miejsce musi być osobnym elementem listy, nie tłem paska:
+     `flex` normalizuje szerokości do sumy dzieci, więc bez tego jeden
+     ćwiczony znak rozciągał swój segment na całą szerokość i pasek
+     wyglądał, jakby wszystkie znaki były „w trakcie".
+  */
+  const spacer =
+    counts.new > 0 ? `<span class="mastery-spacer" style="flex:${counts.new}" aria-hidden="true"></span>` : '';
+
   return `
     <div class="mastery-strip">
       <div class="mastery-strip-bar" role="img" aria-label="Opanowanie znaków — ${described}">
@@ -1048,7 +1098,7 @@ function masteryStripHTML() {
             segment =>
               `<span class="mastery-seg ${segment.key}" style="flex:${segment.count}" title="${segment.label}: ${segment.count}"></span>`
           )
-          .join('')}
+          .join('')}${spacer}
       </div>
       <p class="mastery-strip-text">
         ${
@@ -1858,13 +1908,13 @@ function updateThemeButton() {
   if (!button) return;
 
   if (state.theme === 'dark') {
-    button.innerHTML = '☀️';
+    button.innerHTML = icon('sun');
     button.title = 'Przełącz na jasny motyw';
   } else if (state.theme === 'light') {
-    button.innerHTML = '🌙';
+    button.innerHTML = icon('moon');
     button.title = 'Przełącz na ciemny motyw';
   } else {
-    button.innerHTML = '◐';
+    button.innerHTML = icon('contrast');
     button.title = 'Motyw systemowy';
   }
 }
@@ -1873,7 +1923,7 @@ function updateMuteButton() {
   const button = document.getElementById('muteToggle');
   if (!button) return;
 
-  button.innerHTML = Audio.muted ? '🔇' : '🔊';
+  button.innerHTML = icon(Audio.muted ? 'volume-off' : 'volume');
   button.title = Audio.muted ? 'Włącz dźwięk' : 'Wycisz';
 }
 
@@ -1973,33 +2023,40 @@ function renderMenu() {
       <button class="script-btn ${state.script === 'both' ? 'active' : ''}" data-script="both">ひカ Oba</button>
     </div>
 
-    ${masteryStripHTML()}
+    <section class="hub-summary" aria-labelledby="hubSummaryLabel">
+      <div class="hub-summary-head">
+        <span class="hub-kicker" id="hubSummaryLabel">Postęp</span>
+        <span class="hub-script">${scriptName()}</span>
+      </div>
+      ${masteryStripHTML()}
+    </section>
 
     <section class="menu">
-      <button class="menu-card tile" id="learnCard">
-        <span class="menu-icon">✍️</span>
+      <button class="menu-card tile tile-primary" id="learnCard">
+        <span class="menu-icon">${icon('learn')}</span>
         <span class="tile-title">Nauka</span>
+        <span class="tile-cta">Kontynuuj ${state.kana}</span>
       </button>
 
       <button class="menu-card tile" id="examCard">
-        <span class="menu-icon">📝</span>
+        <span class="menu-icon">${icon('exam')}</span>
         <span class="tile-title">Egzamin</span>
       </button>
 
       <button class="menu-card tile" id="reviewCard">
-        <span class="menu-icon">🔄</span>
+        <span class="menu-icon">${icon('review')}</span>
         <span class="tile-title">Powtórki</span>
         ${dueCount > 0 ? `<span class="tile-badge" aria-label="${dueCount} znaków do powtórki">${dueCount}</span>` : ''}
       </button>
 
       <button class="menu-card tile" id="vocabCard">
-        <span class="menu-icon">🎴</span>
+        <span class="menu-icon">${icon('vocab')}</span>
         <span class="tile-title">Fiszki</span>
       </button>
     </section>
 
     <div class="menu-tools">
-      <button class="menu-tool" id="settingsCard">⚙️ Ustawienia</button>
+      <button class="menu-tool" id="settingsCard">${icon('settings')} Ustawienia</button>
     </div>
   `;
 
@@ -2434,15 +2491,22 @@ function renderVocab() {
   const asksKana = session.direction === 'meaning-kana';
   const expected = asksKana ? item.kana : item.meaning;
 
-  app.innerHTML = `
-    <section class="vocab">
-      <div class="eyebrow">SŁOWNICTWO</div>
-      <h2>Fiszki</h2>
+  const total = session.order.length;
+  const percentage = total === 0 ? 0 : Math.round((session.index / total) * 100);
+  const stats = `
+    <span class="session-position">Karta <strong>${session.index + 1}</strong> z <strong>${total}</strong></span>
+    <div class="badge" aria-label="Poprawnie: ${session.correct}">${session.correct} ✓</div>
+  `;
 
-      <p class="vocab-progress">
-        <span>Karta <strong>${session.index + 1}</strong> z <strong>${session.order.length}</strong></span>
-        <span>Poprawnie: <strong>${session.correct}</strong></span>
-      </p>
+  app.innerHTML = sessionFrameHTML({
+    eyebrow: 'SŁOWNICTWO',
+    title: 'Fiszki',
+    stats,
+    content: `
+      <div class="progress session-progress" role="progressbar" aria-label="Postęp zestawu"
+        aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
+        <div style="width:${percentage}%"></div>
+      </div>
 
       <div class="prompt">
         <div class="polish">${asksKana ? 'Jak powiesz po japońsku:' : 'Co znaczy:'}</div>
@@ -2469,10 +2533,10 @@ function renderVocab() {
       </div>
 
       ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
-
-      <button class="btn btn-secondary vocab-back" id="vocabBack">Wróć do menu</button>
-    </section>
-  `;
+    `,
+    footer: '<button class="btn btn-secondary" id="vocabBack">Wróć do menu</button>',
+    className: 'vocab-session'
+  });
 
   document.querySelectorAll('[data-vocab-choice]').forEach(button => {
     const choice = button.dataset.vocabChoice;
@@ -2940,13 +3004,21 @@ function renderLearn() {
         <div class="svg-wrap" id="svgWrap"></div>
 
         <div class="controls">
-          <button class="btn btn-primary" id="playStrokes" disabled>▶ Odtwórz</button>
-          <button class="btn btn-secondary" id="stepStroke" disabled>Kreska po kresce</button>
-          <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
-          <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">✍️ Rysuj</button>
-          <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
-          <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź rysunek</button>
-          <button class="btn btn-secondary hidden" id="hideGuideToggle" aria-pressed="false">👁 Ukryj wzór</button>
+          <!-- Oba zestawy leżą w tym samym wierszu siatki. Nieaktywny jest
+               tylko ukryty wizualnie, więc wysokość rzędu nie zmienia się
+               przy przełączaniu trybu i „Rysuj"/„Koniec rysowania" zostaje
+               dokładnie w tym samym miejscu. -->
+          <div class="control-set playback" id="playbackControls">
+            <button class="btn btn-primary" id="playStrokes" disabled>${icon('play')} Odtwórz</button>
+            <button class="btn btn-secondary" id="stepStroke" disabled>Kreska po kresce</button>
+            <button class="btn btn-secondary" id="showAllStrokes" disabled>Cały znak</button>
+          </div>
+          <div class="control-set drawing-tools is-inactive" id="drawingTools">
+            <button class="btn btn-secondary" id="hideGuideToggle" aria-pressed="false" disabled>${icon('eye')} Ukryj wzór</button>
+            <button class="btn btn-secondary" id="clearDrawing" disabled>Wyczyść</button>
+            <button class="btn btn-secondary" id="checkDrawing" disabled>Sprawdź rysunek</button>
+          </div>
+          <button class="btn btn-secondary" id="drawToggle" aria-pressed="false">${icon('learn')} Rysuj</button>
         </div>
 
         <div class="draw-result" id="drawResult" aria-live="polite"></div>
@@ -2968,7 +3040,7 @@ function renderLearn() {
 
     <div class="learn-nav">
       <button class="btn btn-secondary" id="prevKana">← Poprzedni</button>
-      <button class="btn btn-secondary" id="quizMe">🧠 Sprawdź się</button>
+      <button class="btn btn-secondary" id="quizMe">${icon('quiz')} Sprawdź się</button>
       <button class="btn btn-secondary" id="nextKana">Następny →</button>
     </div>
   `;
@@ -3002,6 +3074,8 @@ function renderLearn() {
   applyHideGuide();
 
   const drawToggle = document.getElementById('drawToggle');
+  const playbackControls = document.getElementById('playbackControls');
+  const drawingTools = document.getElementById('drawingTools');
   const clearDrawing = document.getElementById('clearDrawing');
   const checkDrawing = document.getElementById('checkDrawing');
   const hideGuideToggle = document.getElementById('hideGuideToggle');
@@ -3028,16 +3102,27 @@ function renderLearn() {
 
   drawing.onChange = () => {
     clearVerdict(); // każdy ruch unieważnia poprzedni werdykt
-    checkDrawing.disabled = !(referencePaths && drawing.strokes.length);
+    checkDrawing.disabled = !(drawing.enabled && referencePaths && drawing.strokes.length);
   };
 
   const setDrawing = on => {
     drawing.setEnabled(on);
     drawToggle.setAttribute('aria-pressed', String(on));
-    drawToggle.textContent = on ? '✍️ Koniec rysowania' : '✍️ Rysuj';
+    drawToggle.innerHTML = on ? `${icon('learn')} Koniec rysowania` : `${icon('learn')} Rysuj`;
+
+    /*
+      Grupy leżą w jednym wierszu siatki. Nieaktywna zostaje w układzie
+      (tylko `visibility: hidden`), żeby wysokość rzędu — a więc pozycja
+      przycisku Rysuj/Koniec — nie zależała od tego, która jest widoczna.
+    */
+    playbackControls.classList.toggle('is-inactive', on);
+    drawingTools.classList.toggle('is-inactive', !on);
+    drawResult.classList.toggle('hidden', !on);
+
     clearDrawing.disabled = !on;
     // skrót do ustawienia pokazujemy tylko tam, gdzie coś zmienia (patrz niżej)
-    hideGuideToggle.classList.toggle('hidden', !on);
+    hideGuideToggle.disabled = !on;
+    checkDrawing.disabled = !(on && referencePaths && drawing.strokes.length);
   };
 
   /*
@@ -3049,7 +3134,7 @@ function renderLearn() {
   */
   const syncGuideToggle = () => {
     hideGuideToggle.setAttribute('aria-pressed', String(settings.hideGuide));
-    hideGuideToggle.textContent = settings.hideGuide ? '👁 Pokaż wzór' : '👁 Ukryj wzór';
+    hideGuideToggle.innerHTML = settings.hideGuide ? `${icon('eye')} Pokaż wzór` : `${icon('eye-off')} Ukryj wzór`;
   };
 
   hideGuideToggle.onclick = () => {
@@ -4581,8 +4666,12 @@ function progressPanelHTML() {
           .join('')}
       </div>
 
-      <div style="color:var(--muted);font-size:.8rem">
-        ⬜ nowe &nbsp; 🟥 trudne &nbsp; 🟨 w trakcie &nbsp; 🟩 dobre &nbsp; ⭐ opanowane
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-swatch new"></span> nowe</span>
+        <span class="legend-item"><span class="legend-swatch hard"></span> trudne</span>
+        <span class="legend-item"><span class="legend-swatch learning"></span> w trakcie</span>
+        <span class="legend-item"><span class="legend-swatch good"></span> dobre</span>
+        <span class="legend-item">${icon('star')} opanowane</span>
       </div>
 
       ${
@@ -4610,7 +4699,7 @@ function progressPanelHTML() {
 
       <div class="exam-quick" style="margin-top:16px">
         <button class="btn btn-primary" id="practiceHardSetup" ${practiceCount < 2 ? 'disabled' : ''}>
-          🎯 Ćwicz trudne znaki
+          ${icon('target')} Ćwicz trudne znaki
         </button>
       </div>
     </div>
@@ -4658,18 +4747,42 @@ function examGroupRows() {
   return [...rows.values()];
 }
 
+/*
+   Egzamin używa tego samego podziału co panel nauki. Kategorie są tylko
+   widokiem na istniejące `group.id`, więc nie powstaje drugie źródło prawdy
+   ani nowy format zapisu wyboru zakresu.
+*/
+function examGroupSections() {
+  const rows = examGroupRows();
+
+  return LEARN_CATEGORIES.map(category => ({
+    ...category,
+    rows: rows.filter(row => learnCategoryOf(row.id) === category.id)
+  })).filter(section => section.rows.length);
+}
+
+/*
+   Podsumowanie opcji w nagłówku `<details>`. Jedno źródło tekstu dla
+   pierwszego renderu i dla zmian na żywo — inaczej nagłówek rozjeżdżał
+   się z faktycznie wybranymi wartościami.
+*/
+function examOptionsLabel({ options, limit, timer }) {
+  const limitLabel = limit === 0 ? 'bez limitu' : limit + ' pytań';
+  const timerLabel = timer === 0 ? 'bez timera' : 'timer ' + timer + ' s';
+  return `${options} odpowiedzi · ${limitLabel} · ${timerLabel}`;
+}
+
 function showExamSetup() {
   refreshChrome();
 
   const settings = loadExamSettings();
-  const rows = examGroupRows();
+  const sections = examGroupSections();
   const scriptHint =
     state.script === 'both'
       ? 'Zaznacz rzędy — w trybie „Oba" każdy rząd obejmuje hiraganę i katakanę.'
       : `Zaznacz rzędy ${state.script === 'katakana' ? 'katakany' : 'hiragany'}, które chcesz ćwiczyć.`;
 
-  const limitLabel = settings.limit === 0 ? 'bez limitu' : settings.limit + ' pytań';
-  const timerLabel = settings.timer === 0 ? 'bez timera' : 'timer ' + settings.timer + ' s';
+  const settingsLabel = examOptionsLabel(settings);
 
   app.innerHTML = `
     <section class="exam card">
@@ -4684,25 +4797,34 @@ function showExamSetup() {
       </p>
 
       <div class="exam-groups" id="examGroups">
-        ${rows
+        ${sections
           .map(
-            row => `
-          <label class="exam-group-option">
-            <input type="checkbox" value="${row.id}" ${settings.groups.includes(row.id) ? 'checked' : ''}>
-            <span>
-              <strong>${row.name}</strong>
-              <small>${row.previews[0]}</small>
-            </span>
-            ${row.previews.length > 1 ? '<small class="exam-group-scripts" title="Oba alfabety">＋ カ</small>' : ''}
-          </label>
+            section => `
+          <section class="exam-group-section" data-category="${section.id}" aria-labelledby="examCategory-${section.id}">
+            <h3 class="exam-group-heading" id="examCategory-${section.id}">${section.label}</h3>
+            <div class="exam-group-grid">
+              ${section.rows
+                .map(
+                  row => `
+                <label class="exam-group-option">
+                  <input type="checkbox" value="${row.id}" ${settings.groups.includes(row.id) ? 'checked' : ''}>
+                  <span>
+                    <strong>${row.name}</strong>
+                    <small>${row.previews[0]}</small>
+                  </span>
+                  ${row.previews.length > 1 ? '<small class="exam-group-scripts" title="Oba alfabety">＋ カ</small>' : ''}
+                </label>
+              `
+                )
+                .join('')}
+            </div>
+          </section>
         `
           )
           .join('')}
       </div>
 
       <div class="exam-quick">
-        <button class="btn btn-secondary" id="onlyA">Tylko samogłoski</button>
-        <button class="btn btn-secondary" id="aPlusK">Samogłoski + K</button>
         <button class="btn btn-secondary" id="allGroups">Wszystkie</button>
         <button class="btn btn-secondary" id="noGroups">Wyczyść</button>
       </div>
@@ -4710,7 +4832,7 @@ function showExamSetup() {
       <details class="exam-advanced" ${examAdvancedOpen ? 'open' : ''}>
         <summary>
           <span>Opcje egzaminu</span>
-          <small>${settings.options} odpowiedzi · ${limitLabel} · ${timerLabel}</small>
+          <small id="examSummary">${settingsLabel}</small>
         </summary>
 
         <div class="exam-settings">
@@ -4786,14 +4908,6 @@ function showExamSetup() {
     </section>
   `;
 
-  document.getElementById('onlyA').onclick = () => {
-    Audio.click();
-    setExamGroups(['a']);
-  };
-  document.getElementById('aPlusK').onclick = () => {
-    Audio.click();
-    setExamGroups(['a', 'k']);
-  };
   document.getElementById('allGroups').onclick = () => {
     Audio.click();
     setExamGroups(examGroupRows().map(row => row.id));
@@ -4806,6 +4920,25 @@ function showExamSetup() {
   const advanced = app.querySelector('.exam-advanced');
   advanced.addEventListener('toggle', () => {
     examAdvancedOpen = advanced.open;
+  });
+
+  /*
+     Zmiana opcji ma natychmiast odbicie w nagłówku i w zapisie — inaczej
+     podsumowanie pokazywało wartości z wejścia na ekran, a wybór przepadał
+     przy powrocie. Grupy celowo zostają zapisywane dopiero przy starcie:
+     puste zaznaczenie jest chwilowym stanem edycji, nie trwałą preferencją.
+  */
+  advanced.addEventListener('change', () => {
+    const current = readSetup();
+    document.getElementById('examSummary').textContent = examOptionsLabel(current);
+    saveExamSettings({
+      groups: settings.groups,
+      options: current.options,
+      limit: current.limit,
+      outside: current.outside,
+      modes: current.modes,
+      timer: current.timer
+    });
   });
 
   document.getElementById('startSelectedExam').onclick = () => {
@@ -5011,45 +5144,63 @@ function updateTimerDisplay(remaining, total) {
   if (label) label.textContent = `${remaining}s`;
 }
 
+/*
+   Wspólna rama sesji: nagłówek z tytułem i licznikami, treść oraz stopka.
+   Egzamin i fiszki mają różne silniki, ale użytkownik widzi ten sam rytm:
+   gdzie jest, ile już zrobił i jak wyjść.
+*/
+function sessionFrameHTML({ eyebrow, title, stats = '', content = '', footer = '', className = '' }) {
+  return `
+    <section class="session card ${className}">
+      <header class="session-head">
+        <div class="session-title">
+          <div class="eyebrow">${eyebrow}</div>
+          <h2>${title}</h2>
+        </div>
+        ${stats ? `<div class="session-stats">${stats}</div>` : ''}
+      </header>
+      <div class="session-body">${content}</div>
+      ${footer ? `<footer class="session-foot">${footer}</footer>` : ''}
+    </section>
+  `;
+}
+
 function examChromeHTML(exam, contentHTML) {
   const percentage = exam.total === 0 ? 0 : Math.round((exam.score / exam.total) * 100);
-
-  return `
-    <section class="exam card">
-
-      <div class="exam-top">
-        <div>
-          <div class="eyebrow">EGZAMIN</div>
-          <h2 style="margin:4px 0">Pytanie ${exam.total + 1}</h2>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          ${exam.xp > 0 ? `<span class="xp-badge">⭐ ${exam.xp} XP</span>` : ''}
-          ${exam.streak >= 3 ? `<span class="streak-badge">🔥 ${exam.streak}</span>` : ''}
-          <div class="badge">${exam.score} ✓ &nbsp; ${exam.wrong} ✗</div>
-        </div>
-      </div>
-
-      <div class="progress"><div style="width:${percentage}%"></div></div>
-
-      ${
-        exam.timerSec > 0
-          ? `
+  const stats = `
+    ${exam.xp > 0 ? `<span class="xp-badge">${icon('star')} ${exam.xp} XP</span>` : ''}
+    ${exam.streak >= 3 ? `<span class="streak-badge">${icon('flame')} ${exam.streak}</span>` : ''}
+    <div class="badge">${exam.score} ✓ &nbsp; ${exam.wrong} ✗</div>
+  `;
+  const progress = `
+    <div class="progress session-progress" role="progressbar" aria-label="Postęp egzaminu"
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
+      <div style="width:${percentage}%"></div>
+    </div>
+  `;
+  const timer =
+    exam.timerSec > 0
+      ? `
         <div class="timer-bar-wrap">
           <div class="timer-bar" id="timerBar"></div>
           <span class="timer-label" id="timerLabel">${exam.timerSec}s</span>
         </div>
       `
-          : ''
-      }
-
-      <div style="text-align:center;color:var(--muted);margin:10px 0 28px;">
-        ${exam.total === 0 ? 'Zaczynamy!' : `${exam.score}/${exam.total} poprawnych`}
-      </div>
-
-      ${contentHTML}
-
-    </section>
+      : '';
+  const summary = `
+    <div class="session-summary">
+      ${exam.total === 0 ? 'Zaczynamy!' : `${exam.score}/${exam.total} poprawnych`}
+    </div>
   `;
+
+  return sessionFrameHTML({
+    eyebrow: 'EGZAMIN',
+    title: `Pytanie ${exam.total + 1}`,
+    stats,
+    content: `${progress}${timer}${summary}${contentHTML}`,
+    footer: '<button class="btn btn-secondary" id="endExam">Zakończ egzamin</button>',
+    className: 'exam'
+  });
 }
 
 function examProgressHTML() {
@@ -5114,9 +5265,6 @@ function renderRomajiToKanaPick(question) {
 
       <div class="feedback" id="feedback"></div>
 
-      <button class="btn btn-secondary" id="endExam" style="margin-top:20px">
-        Zakończ egzamin
-      </button>
     </div>
   `;
 
@@ -5162,9 +5310,6 @@ function renderKanaToRomajiPick(question) {
 
       <div class="feedback" id="feedback"></div>
 
-      <button class="btn btn-secondary" id="endExam" style="margin-top:20px">
-        Zakończ egzamin
-      </button>
     </div>
   `;
 
@@ -5203,9 +5348,6 @@ function renderRomajiToKanaType(question) {
 
       <div class="feedback" id="feedback"></div>
 
-      <button class="btn btn-secondary" id="endExam" style="margin-top:20px">
-        Zakończ egzamin
-      </button>
     </div>
   `;
 
@@ -5244,7 +5386,7 @@ function renderRomajiToKanaType(question) {
       Audio.correct();
       input.classList.add('input-correct');
       feedback.textContent = '✓ Dobrze!';
-      if (exam.streak >= 3) feedback.textContent = `✓ Dobrze! 🔥 Seria: ${exam.streak}`;
+      if (exam.streak >= 3) feedback.innerHTML = `✓ Dobrze! ${icon('flame')} Seria: ${exam.streak}`;
 
       exam.timer = setTimeout(nextExamQuestion, 850);
     } else {
@@ -5335,9 +5477,6 @@ function renderKanaToRomajiType(question) {
 
       <div class="feedback" id="feedback"></div>
 
-      <button class="btn btn-secondary" id="endExam" style="margin-top:20px">
-        Zakończ egzamin
-      </button>
     </div>
   `;
 
@@ -5373,7 +5512,7 @@ function renderKanaToRomajiType(question) {
       Audio.correct();
       input.classList.add('input-correct');
       feedback.textContent = '✓ Dobrze!';
-      if (exam.streak >= 3) feedback.textContent = `✓ Dobrze! 🔥 Seria: ${exam.streak}`;
+      if (exam.streak >= 3) feedback.innerHTML = `✓ Dobrze! ${icon('flame')} Seria: ${exam.streak}`;
 
       exam.timer = setTimeout(nextExamQuestion, 850);
     } else {
@@ -5513,7 +5652,7 @@ function answerExam(button, question) {
     feedback.textContent = '✓ Dobrze!';
 
     if (exam.streak >= 3) {
-      feedback.textContent = `✓ Dobrze! 🔥 Seria: ${exam.streak}`;
+      feedback.innerHTML = `✓ Dobrze! ${icon('flame')} Seria: ${exam.streak}`;
     }
 
     exam.timer = setTimeout(nextExamQuestion, 850);
@@ -5668,8 +5807,8 @@ function renderExamResult() {
       <div class="score">${exam.score}/${exam.total}</div>
       <div style="font-size:1.2rem;font-weight:700;margin:10px 0 20px;">${percentage}%</div>
 
-      ${exam.xp > 0 ? `<div class="xp-result">⭐ ${exam.xp} XP zdobytych</div>` : ''}
-      ${exam.bestStreak >= 3 ? `<div class="result-streak">🔥 Najlepsza seria: ${exam.bestStreak} z rzędu</div>` : ''}
+      ${exam.xp > 0 ? `<div class="xp-result">${icon('star')} ${exam.xp} XP zdobytych</div>` : ''}
+      ${exam.bestStreak >= 3 ? `<div class="result-streak">${icon('flame')} Najlepsza seria: ${exam.bestStreak} z rzędu</div>` : ''}
 
       <p style="color:var(--muted)">${resultText(exam.score, exam.total, state.script, exam.kind)}</p>
 
@@ -5698,7 +5837,7 @@ function renderExamResult() {
 
       <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:25px;">
         <button class="btn btn-primary" id="again">Spróbuj jeszcze raz</button>
-        ${practiceList().length >= 2 ? '<button class="btn btn-secondary" id="practiceHard">🎯 Ćwicz trudne znaki</button>' : ''}
+        ${practiceList().length >= 2 ? `<button class="btn btn-secondary" id="practiceHard">${icon('target')} Ćwicz trudne znaki</button>` : ''}
         <button class="btn btn-secondary" id="backToMenu">← Menu</button>
       </div>
 
