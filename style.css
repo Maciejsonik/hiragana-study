@@ -13,10 +13,10 @@
   --ink: #25232a;
   --muted: #77727b;
 
-  --accent: #8d5cf6;
-  --accent-dark: #7040db;
-  --accent-hover: #a47dff;
-  --soft: #eee7ff;
+  --accent: #c93b1e;
+  --accent-dark: #9c2d13;
+  --accent-hover: #e4572f;
+  --soft: #fbe7e0;
 
   --line: #e7e0d8;
 
@@ -46,10 +46,10 @@
   --card-solid: #211e27;
   --ink: #f3eff8;
   --muted: #aaa3b2;
-  --accent: #9b70ff;
-  --accent-dark: #b08cff;
-  --accent-hover: #c4a8ff;
-  --soft: #30264a;
+  --accent: #ff7a55;
+  --accent-dark: #ffa184;
+  --accent-hover: #ff9773;
+  --soft: #3b211a;
   --line: #39333f;
   --good: #43b982;
   --warn: #f0b24a;
@@ -105,8 +105,12 @@ button {
 .app-shell {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 28px 22px 18px;
+  /* 84 px = dolny pasek nawigacji (56) + zapas, żeby treść
+     nie chowała się pod paskiem na telefonie. Safe area dokłada się
+     tylko tam, gdzie system faktycznie rezerwuje miejsce. */
+  padding: 28px 22px calc(84px + env(safe-area-inset-bottom));
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -116,10 +120,30 @@ button {
 ========================================================= */
 
 .topbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  /* Stała kolumna na powrót: przycisk jest ukrywany przez `visibility`,
+     więc tytuł nie skacze w bok przy przejściu hub → ekran. */
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
+  gap: 12px;
   margin-bottom: 28px;
+}
+
+.topbar-titles {
+  min-width: 0;
+}
+
+.topbar-back {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.topbar-back.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .topbar-actions {
@@ -141,19 +165,85 @@ h1 {
   letter-spacing: -0.04em;
 }
 
-/* =========================================================
-   FOOTER
-========================================================= */
+/* Tytuł jest teraz nazwą ekranu, a nie alfabetu — musi zmieścić się
+   obok powrotu i dwóch przycisków już przy 320 px. */
+.topbar h1 {
+  font-size: clamp(1.3rem, 4.2vw, 2rem);
+  overflow-wrap: anywhere;
+}
 
-footer {
-  margin-top: auto;
-  padding-top: 28px;
-  color: var(--muted);
-  font-size: 0.85rem;
+/* =========================================================
+   APP NAV — dolny pasek (mobile) / lewa szyna (desktop)
+======================================================== */
+
+.app-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
   display: flex;
-  gap: 8px;
+  align-items: stretch;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  background: var(--card-solid);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -10px 30px rgba(52, 41, 67, 0.07);
+}
+
+.app-nav-brand {
+  display: none;
+}
+
+.app-nav-items {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.app-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: 3px;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.app-nav-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.app-nav-item.active {
+  color: var(--accent-dark);
+  background: var(--soft);
+}
+
+.app-nav-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Sesja w toku (nauka, egzamin, fiszki) = pełny focus: nawigacja znika,
+   wyjściem jest wyłącznie powrót w top barze. */
+body.focus-mode .app-nav {
+  display: none;
+}
+
+body.focus-mode .app-shell {
+  padding-bottom: 18px;
 }
 
 /* =========================================================
@@ -483,6 +573,22 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.about-copy p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.about-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.about-copy a {
+  color: var(--accent-dark);
+  text-underline-offset: 2px;
 }
 
 /* =========================================================
@@ -2286,7 +2392,7 @@ footer {
 
 @media (max-width: 480px) {
   .app-shell {
-    padding: 18px 14px;
+    padding: 18px 14px calc(84px + env(safe-area-inset-bottom));
   }
 
   .topbar {
@@ -2372,5 +2478,102 @@ footer {
 
   .keyboard-hints {
     display: none;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE: DESKTOP — lewa szyna nawigacji
+======================================================== */
+
+@media (min-width: 1024px) {
+  .app-shell {
+    max-width: 1280px;
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "nav topbar"
+      "nav main";
+    column-gap: 36px;
+    padding-bottom: 18px;
+  }
+
+  .topbar {
+    grid-area: topbar;
+  }
+
+  #app {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .app-nav {
+    grid-area: nav;
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    /* Szyna ma tylko wysokość swojej treści: `height: 100vh` rozpychało
+       wiersz siatki o padding shella i wypychało dół treści poza ekran.
+       `sticky` nadal trzyma ją przy górze przy przewijaniu. */
+    align-self: start;
+    padding: 28px 12px 28px 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .app-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px 20px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .app-nav-logo {
+    width: 34px;
+    height: 34px;
+    /* Znak ma własny kanał alfa — bez ciemnego kafla, bez przycinania. */
+    background: url("logo.png") center / contain no-repeat;
+  }
+
+  .app-nav-items {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .app-nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+  }
+
+  .app-nav-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .app-nav-item:hover {
+    background: color-mix(in srgb, var(--soft) 55%, transparent);
+  }
+
+  /* Focus mode: szyna znika, a treść wraca do szerokości sprzed shella,
+     więc układ nauki nie zwęża się względem poprzedniej wersji. */
+  body.focus-mode .app-shell {
+    max-width: 1120px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "main";
   }
 }

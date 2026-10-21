@@ -1,6 +1,6 @@
-# Kana — nauka japońskiej kany
+# Koto — nauka japońskiej kany
 
-Aplikacja do nauki japońskiej kany: **hiragana i katakana**, z animacją kolejności kresek, trybem nauki, trybem egzaminu, śledzeniem postępu i ekranem ustawień.
+**Koto** to aplikacja do nauki japońskiej kany: **hiragana i katakana**, z animacją kolejności kresek, trybem nauki, trybem egzaminu, śledzeniem postępu i ekranem ustawień.
 
 Działa jako zwykła strona (bez build stepu) i jako **PWA** — po pierwszym poprawnym załadowaniu online cała aplikacja działa offline.
 

@@ -1,8 +1,10 @@
-# Hiragana Study — Project Documentation
+# Koto — Project Documentation
 
 ## 1. Project Overview
 
-**Hiragana Study** is a local, vanilla JavaScript web application for learning the 46 basic hiragana characters plus `ん`.
+**Koto** is a local, vanilla JavaScript web application for learning the 46 basic hiragana characters plus `ん`.
+
+The repository and published URL keep the historical `hiragana-study` slug; that is a technical identifier, not product branding.
 
 The app currently provides:
 
@@ -36,6 +38,7 @@ The application is intentionally simple and currently consists of three main sou
 ├── sw.js
 ├── manifest.webmanifest
 ├── offline.html
+├── logo.png
 ├── icons/
 │   ├── icon-192.png
 │   ├── icon-512.png
@@ -57,10 +60,9 @@ Contains:
 - Google Fonts,
 - initial theme detection (pre-paint bootstrap, see section 44),
 - application shell,
-- header,
-- theme/mute buttons,
+- contextual top bar (back button, screen title, theme/mute buttons),
+- module navigation (`#appNav` — bottom bar on mobile, left rail on desktop),
 - main `#app` container,
-- footer,
 - `app.js` and `style.css` references.
 
 ### `app.js`
@@ -122,7 +124,9 @@ Service Worker serves the cached `index.html`.
 ### `icons/`
 
 Application icons: 192×192, 512×512, a 512×512 `maskable` variant (Android
-adaptive icons) and a 180×180 `apple-touch-icon` (iOS home screen).
+adaptive icons) and a 180×180 `apple-touch-icon` (iOS home screen). All are
+generated from `logo.png` on the app's dark background; the maskable variant
+keeps the mark inside the safe zone.
 
 ---
 
@@ -1081,11 +1085,28 @@ Main permanent elements:
 .app-shell
 .topbar
 #homeBtn
+#appTitle
+#scriptEyebrow
 #muteToggle
 #themeToggle
 #app
-footer
+#appNav
 ```
+
+`#appNav` lives **outside** `#app`: `render()` replaces the whole content of
+`#app`, so navigation inside it would be destroyed on every screen change. It
+is rendered once by `renderNav()` and only its active state, `aria-current`
+and focus-mode visibility are updated afterwards.
+
+The top bar is contextual: `#appTitle` is the screen name (`Kana`, `Nauka`,
+`Egzamin`, `Powtórki`, `Fiszki`, `Ustawienia`) and `#scriptEyebrow` names the
+module. The script name is no longer a global page title — it lives in the
+Kana hub, next to the script switcher.
+
+Focus mode (`body.focus-mode`) hides the navigation during `learn`, a running
+exam and an active flashcard session. It is driven by unfinished session state,
+not by `screen` alone: exam configuration and the vocabulary setup keep the
+navigation.
 
 Most learning/exam DOM is dynamically rendered by JavaScript.
 
@@ -1139,7 +1160,7 @@ DARK MODE
 RESET / GLOBAL
 APP SHELL
 HEADER
-FOOTER
+APP NAV (mobile bottom bar / desktop left rail)
 ICON BUTTONS
 CARDS
 BUTTONS
@@ -1169,28 +1190,39 @@ CONFETTI
 UTILITY
 RESPONSIVE TABLET
 RESPONSIVE MOBILE
+RESPONSIVE: DESKTOP — left navigation rail
 ```
 
 Primary visual language:
 
 - warm off-white background,
-- purple accent,
+- vermilion accent sampled from the logo mark (`#c93b1e` light, `#ff7a55` dark),
 - rounded cards,
 - soft shadows,
 - Inter for UI,
 - Noto Sans JP for Japanese,
-- dark theme with purple accents.
+- dark theme with a lighter vermilion accent.
 
 ---
 
 # 28. Responsive Design
 
-Desktop:
+Desktop (≥1024 px):
 
 ```text
-max-width: 1120px
+max-width: 1280px
+left navigation rail: 232px, sticky
 learner: sidebar + content
 character area: two columns
+focus mode: rail hidden, shell back to max-width 1120px
+```
+
+Mobile/tablet (<1024 px):
+
+```text
+fixed bottom navigation bar (56px + env(safe-area-inset-bottom))
+app-shell reserves 84px + safe area at the bottom
+focus mode removes both the bar and the reserve
 ```
 
 Tablet:
@@ -1247,7 +1279,13 @@ swipe right → previous kana
 
 # 29. Accessibility / Interaction Notes
 
-Current minimum touch target is approximately 44px in mobile styles.
+Current minimum touch target is approximately 44px in mobile styles; navigation
+items use the same floor on both the bottom bar and the desktop rail.
+
+`#appNav` is a `<nav aria-label="Główna nawigacja">`; the active destination
+carries `aria-current="page"`. During focus mode the navigation is hidden with
+`display: none`, `aria-hidden="true"` and `tabindex="-1"` on its items, so it is
+not reachable by keyboard or screen readers.
 
 Keyboard interaction is intentionally supported.
 
@@ -1785,7 +1823,7 @@ The existing single-file architecture should not be prematurely fragmented.
 
 These features are intentionally outside the immediate roadmap.
 
-They represent the longer-term direction of Hiragana Study.
+They represent the longer-term direction of Koto.
 
 ---
 
@@ -1793,7 +1831,7 @@ They represent the longer-term direction of Hiragana Study.
 
 Goal:
 
-> Extend Hiragana Study from kana learning into introductory Japanese kanji learning.
+> Extend Koto from kana learning into introductory Japanese kanji learning.
 
 Potential scope:
 
@@ -2134,7 +2172,8 @@ Delivered:
 - default script (Hiragana / Katakana) preference,
 - migration from the legacy `hiragana-theme` / `hiragana-muted` keys,
 - pre-paint theme bootstrap,
-- Settings screen with appearance / sound / learning / data sections,
+- Settings screen with appearance / sound / learning / data sections and an
+  About card (local operation, character scope, KanjiVG attribution),
 - Reset Settings, Reset Progress and Clear All Data.
 
 ---
@@ -2244,6 +2283,7 @@ Offline support (PWA): implemented
 
 Long-term statistics: implemented
 Drawing mode: implemented
+App shell / module navigation: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: data, progress store and flashcards; patterns pending
@@ -2258,8 +2298,14 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-T19 Vocabulary — next
+UI modernization — phase 2: design tokens, typography, surfaces
 ```
+
+Phase 1 (app shell, module navigation, contextual top bar, focus mode) is
+implemented. The remaining UI phases are ordered deliberately: the skeleton first,
+then the visual system, then the shared session frame, the Kana hub, the
+list/detail components and finally Settings. Vocabulary, grammar and kanji
+plug into those archetypes instead of inventing their own screens.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2270,9 +2316,13 @@ and the polish are shipped (§35).
 ### Current recommended roadmap
 
 ```text
-T19
+UI phase 2 (tokens / typography / surfaces)
 ↓
-T16
+UI phase 3 (shared session frame)
+↓
+T19 Vocabulary (module list + detail)
+↓
+T16 Code splitting
 ```
 
 Long-term:
@@ -2383,7 +2433,7 @@ second fallback in `SVG_SOURCES` and is never reached while jsDelivr works.
 On `install`:
 
 - the shell (`./`, `index.html`, `style.css`, `app.js`, manifest, icons,
-  `offline.html`) via `cache.addAll`,
+  `logo.png`, `offline.html`) via `cache.addAll`,
 - **all 148 KanjiVG SVG files** required by both scripts,
 - the Google Fonts stylesheet.
 
@@ -2507,7 +2557,7 @@ the CSS hooks (`.menu-card.tile`, `.mastery-strip-bar`) still defined.
 
 ## Screens
 
-`renderSettings()` renders five sections:
+`renderSettings()` renders six sections:
 
 ```text
 Wygląd     theme: light / dark / system
@@ -2515,6 +2565,7 @@ Dźwięk     sound effects: on / off
 Nauka      default script: hiragana / katakana / both
 Rysowanie  reference character while drawing: visible / hidden
 Dane       Reset Settings / Reset Progress / Clear All Data
+O aplikacji  local operation, character scope, KanjiVG attribution
 ```
 
 Every control is a native `<button>` and applies immediately. Because each
@@ -2799,18 +2850,22 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion, vocabulary data and progress
-                                   store (293 assertions)
+                                   store, app shell, navigation, logo,
+                                   Koto branding and the About card
+                                   (378 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
                                    flashcards (T19, verbs + direction),
-                                   combined-script panel                  (144 assertions)
+                                   combined-script panel                  (145 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 
 The counts are a snapshot, not a contract — read the total from the run
 output rather than expecting these numbers. Sections 18 and 19 wait on
 real timers, so `tests.html` takes noticeably longer than the other two.
+The timeout assertions poll for the expected state after the real 5 s timer
+instead of padding every wait by a fixed second.
 
 Run them over HTTP — `file://` blocks `fetch('index.html')` and
 `fetch('style.css')`:

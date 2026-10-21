@@ -676,6 +676,195 @@
   }
 
   /* =====================================================
+     14b. LOGO — przezroczysty asset i jego podłączenie
+     ===================================================== */
+  try {
+    const logoSwSrc = await (await fetch('sw.js')).text();
+    const logoCssSrc = await (await fetch('style.css')).text();
+
+    ok(
+      'LOGO1 logo.png jest w precache',
+      logoSwSrc.indexOf("'./logo.png'") >= 0,
+      (logoSwSrc.match(/'\.\/logo\.[a-z]+'/g) || []).join(', ')
+    );
+    ok(
+      "LOGO2 stary logo.jpg nie jest precache'owany",
+      logoSwSrc.indexOf("'./logo.jpg'") < 0,
+      (logoSwSrc.match(/'\.\/logo\.[a-z]+'/g) || []).join(', ')
+    );
+    ok(
+      'LOGO3 CSS wskazuje logo.png, nie logo.jpg',
+      /\.app-nav-logo\s*\{[^}]*logo\.png/.test(logoCssSrc) && logoCssSrc.indexOf('logo.jpg') < 0
+    );
+
+    const logoImg = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('logo.png nie wczytuje się'));
+      el.src = 'logo.png';
+    });
+
+    ok(
+      'LOGO4 logo.png ma 512×512',
+      logoImg.naturalWidth === 512 && logoImg.naturalHeight === 512,
+      logoImg.naturalWidth + '×' + logoImg.naturalHeight
+    );
+
+    const logoCanvas = document.createElement('canvas');
+    logoCanvas.width = logoImg.naturalWidth;
+    logoCanvas.height = logoImg.naturalHeight;
+    const logoCtx = logoCanvas.getContext('2d', { willReadFrequently: true });
+    logoCtx.drawImage(logoImg, 0, 0);
+    const px = logoCtx.getImageData(0, 0, logoCanvas.width, logoCanvas.height).data;
+    const alphaAt = (x, y) => px[(y * logoCanvas.width + x) * 4 + 3];
+
+    let opaque = 0;
+    let semi = 0;
+    let vermilion = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      const a = px[i + 3];
+      if (a === 255) {
+        opaque++;
+        if (px[i] > 180 && px[i + 1] >= 40 && px[i + 1] <= 90 && px[i + 2] <= 60) vermilion++;
+      } else if (a > 0) {
+        semi++;
+      }
+    }
+
+    ok(
+      'LOGO5 narożniki są w pełni przezroczyste',
+      alphaAt(0, 0) === 0 &&
+        alphaAt(logoCanvas.width - 1, 0) === 0 &&
+        alphaAt(0, logoCanvas.height - 1) === 0 &&
+        alphaAt(logoCanvas.width - 1, logoCanvas.height - 1) === 0
+    );
+    ok('LOGO6 znak ma nieprzezroczyste piksele', opaque > 10000, 'opaque=' + opaque);
+    ok('LOGO7 krawędzie mają częściową alfa', semi > 1000, 'semi=' + semi);
+    ok('LOGO8 kolor znaku pozostał wermilionowy', vermilion > 1000, 'vermilion=' + vermilion);
+  } catch (e) {
+    ok('logo — asset i podłączenie', false, e.message);
+  }
+
+  /* =====================================================
+     14c. BRANDING KOTO I INFORMACJE Z FOOTERA
+     ===================================================== */
+  try {
+    const brandHtml = await (await fetch('index.html')).text();
+    const brandManifest = JSON.parse(await (await fetch('manifest.webmanifest')).text());
+    const brandOffline = await (await fetch('offline.html')).text();
+    const brandCss = await (await fetch('style.css')).text();
+
+    ok('BRAND1 tytuł dokumentu to Koto', /<title>Koto — nauka i egzamin<\/title>/.test(brandHtml));
+    ok(
+      'BRAND2 manifest: nazwa i skrót Koto',
+      brandManifest.name === 'Koto — nauka i egzamin' && brandManifest.short_name === 'Koto',
+      brandManifest.name + ' / ' + brandManifest.short_name
+    );
+    ok('BRAND3 apple-mobile-web-app-title = Koto', /apple-mobile-web-app-title" content="Koto"/.test(brandHtml));
+    ok(
+      'BRAND4 favicon i ikona Apple z wersjonowaniem ?v=koto',
+      /icons\/icon-192\.png\?v=koto/.test(brandHtml) && /icons\/apple-touch-icon\.png\?v=koto/.test(brandHtml)
+    );
+    ok(
+      'BRAND5 manifest: wszystkie ikony z ?v=koto',
+      brandManifest.icons.length === 3 && brandManifest.icons.every(icon => /\?v=koto$/.test(icon.src)),
+      brandManifest.icons.map(icon => icon.src).join(' ')
+    );
+    ok('BRAND6 offline.html mówi Koto', /<title>Offline — Koto<\/title>/.test(brandOffline));
+    ok(
+      'BRAND7 brak starej nazwy produktu w powłoce i manifeście',
+      brandHtml.indexOf('Hiragana Study') < 0 &&
+        brandHtml.indexOf('Kana — nauka') < 0 &&
+        brandManifest.name.indexOf('Kana') < 0
+    );
+    ok('BRAND8 brak <footer> w powłoce i w DOM', !/<\/?footer\b/i.test(brandHtml) && !document.querySelector('footer'));
+    ok('BRAND9 CSS nie ma już reguł footer', !/(^|\n)\s*footer\s*\{/.test(brandCss));
+    ok(
+      'BRAND10 nazwa marki w szynie to Koto',
+      (document.querySelector('.app-nav-brand-name') || {}).textContent?.trim() === 'Koto'
+    );
+
+    setScreen('settings');
+    await new Promise(r => setTimeout(r, 60));
+
+    const about = document.getElementById('aboutApp');
+    const aboutText = about ? about.textContent : '';
+    ok('BRAND11 Ustawienia mają kartę O aplikacji', !!about && /O aplikacji/.test(aboutText));
+    ok(
+      'BRAND12 informacja o lokalnym działaniu',
+      /lokalna aplikacja/.test(aboutText) && /wyłącznie na tym urządzeniu/.test(aboutText)
+    );
+    ok(
+      'BRAND13 zakres znaków przeniesiony z footera',
+      /hiragana i katakana/.test(aboutText) && /dakuten, handakuten, yōon/.test(aboutText)
+    );
+    ok('BRAND14 atrybucja KanjiVG i licencja', /KanjiVG/.test(aboutText) && /CC BY-SA 3\.0/.test(aboutText));
+
+    const aboutLinks = about ? [...about.querySelectorAll('a')].map(link => link.href) : [];
+    ok(
+      'BRAND15 linki do źródła i licencji',
+      aboutLinks.some(url => url.indexOf('github.com/KanjiVG/kanjivg') >= 0) &&
+        aboutLinks.some(url => url.indexOf('creativecommons.org/licenses/by-sa/3.0') >= 0),
+      aboutLinks.join(' ')
+    );
+
+    const iconImg = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('icons/icon-192.png nie wczytuje się'));
+      el.src = 'icons/icon-192.png?v=koto';
+    });
+    const iconCanvas = document.createElement('canvas');
+    iconCanvas.width = iconImg.naturalWidth;
+    iconCanvas.height = iconImg.naturalHeight;
+    const iconCtx = iconCanvas.getContext('2d', { willReadFrequently: true });
+    iconCtx.drawImage(iconImg, 0, 0);
+    const iconPx = iconCtx.getImageData(0, 0, iconCanvas.width, iconCanvas.height).data;
+    let iconVermilion = 0;
+    for (let i = 0; i < iconPx.length; i += 4) {
+      if (iconPx[i] > 170 && iconPx[i + 1] < 110 && iconPx[i + 2] < 90) iconVermilion++;
+    }
+    ok(
+      'BRAND16 nowa ikona 192 px zawiera wermilionowy znak',
+      iconImg.naturalWidth === 192 && iconImg.naturalHeight === 192 && iconVermilion > 1000,
+      iconImg.naturalWidth + '×' + iconImg.naturalHeight + ', px=' + iconVermilion
+    );
+
+    const maskImg = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error('icons/maskable-512.png nie wczytuje się'));
+      el.src = 'icons/maskable-512.png?v=koto';
+    });
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = maskImg.naturalWidth;
+    maskCanvas.height = maskImg.naturalHeight;
+    const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+    maskCtx.drawImage(maskImg, 0, 0);
+    const maskPx = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+    let outsideSafeZone = 0;
+    for (let y = 0; y < maskCanvas.height; y++) {
+      for (let x = 0; x < maskCanvas.width; x++) {
+        const i = (y * maskCanvas.width + x) * 4;
+        const differsFromBg =
+          Math.abs(maskPx[i] - 18) + Math.abs(maskPx[i + 1] - 17) + Math.abs(maskPx[i + 2] - 22) > 30;
+        const dx = x + 0.5 - maskCanvas.width / 2;
+        const dy = y + 0.5 - maskCanvas.height / 2;
+        if (differsFromBg && Math.hypot(dx, dy) > maskCanvas.width * 0.4) outsideSafeZone++;
+      }
+    }
+    ok(
+      'BRAND17 maskable trzyma znak w strefie bezpiecznej 80%',
+      maskImg.naturalWidth === 512 && maskImg.naturalHeight === 512 && outsideSafeZone === 0,
+      'px poza strefą=' + outsideSafeZone
+    );
+
+    setScreen('menu');
+  } catch (e) {
+    ok('branding Koto i informacje z footera', false, e.message);
+  }
+
+  /* =====================================================
      15. WIDOCZNOŚĆ EKRANU PRZEGLĄDU
      ===================================================== */
   try {
@@ -1633,6 +1822,212 @@
     );
   } catch (e) {
     ok('czyszczenie danych', false, e.message);
+  }
+
+  /* =====================================================
+     SHELL — nawigacja, top bar, focus mode
+     ===================================================== */
+  try {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const nav = document.getElementById('appNav');
+    const navButtons = () => [...document.querySelectorAll('#appNav [data-nav]')];
+    const navButton = id => navButtons().find(button => button.dataset.nav === id);
+    const navHidden = () =>
+      document.body.classList.contains('focus-mode') &&
+      document.getElementById('appNav').getAttribute('aria-hidden') === 'true';
+    const navShown = () =>
+      !document.body.classList.contains('focus-mode') &&
+      document.getElementById('appNav').getAttribute('aria-hidden') === null;
+    const title = () => document.getElementById('appTitle').textContent;
+
+    ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
+    eq('NAV2 trzy pozycje nawigacji', navButtons().length, 3);
+    deepEq(
+      'NAV3 etykiety modułów',
+      navButtons().map(button => button.querySelector('.app-nav-label').textContent),
+      ['Kana', 'Słownictwo', 'Ustawienia']
+    );
+    ok(
+      'NAV4 ikony to inline SVG, nie emoji',
+      navButtons().every(button => !!button.querySelector('svg.app-nav-icon')) &&
+        !/\p{Extended_Pictographic}/u.test(nav.textContent),
+      nav.textContent.trim()
+    );
+
+    setScreen('menu');
+    await sleep(30);
+    eq('NAV5 start na hubie kany', state.screen, 'menu');
+    eq('NAV6 tytuł huba', title(), 'Kana');
+    eq('NAV7 aktywna pozycja na hubie', navButton('kana').getAttribute('aria-current'), 'page');
+    ok('NAV8 powrót ukryty na hubie', homeBtn.classList.contains('is-hidden'));
+
+    /* Słownictwo — wejście przez nawigację i zachowanie magazynu. */
+    const cardsBefore = JSON.stringify(vocab.cards);
+    state.vocab = null;
+    navButton('vocab').click();
+    await sleep(30);
+    eq('NAV9 klik prowadzi do słownictwa', state.screen, 'vocab');
+    eq('NAV10 tytuł słownictwa', title(), 'Słownictwo');
+    eq('NAV11 aktywna pozycja słownictwa', navButton('vocab').getAttribute('aria-current'), 'page');
+    ok('NAV12 konfiguracja fiszek ma nawigację', navShown());
+    ok('NAV13 powrót widoczny poza hubem', !homeBtn.classList.contains('is-hidden'));
+
+    navButton('kana').click();
+    await sleep(30);
+    eq('NAV14 powrót do kany przez nawigację', state.screen, 'menu');
+    navButton('vocab').click();
+    await sleep(30);
+    ok(
+      'NAV15 vocab.cards bez zmian po Kana → Słownictwo',
+      JSON.stringify(vocab.cards) === cardsBefore,
+      JSON.stringify(vocab.cards)
+    );
+
+    navButton('settings').click();
+    await sleep(30);
+    eq('NAV16 klik prowadzi do ustawień', state.screen, 'settings');
+    eq('NAV17 tytuł ustawień', title(), 'Ustawienia');
+    eq('NAV18 aktywna pozycja ustawień', navButton('settings').getAttribute('aria-current'), 'page');
+
+    /* Egzamin: konfiguracja ≠ sesja. */
+    setScreen('exam');
+    await sleep(30);
+    ok('NAV19 konfiguracja egzaminu ma nawigację', navShown(), 'exam=' + !!state.exam);
+
+    const dailyBefore = localStorage.getItem(DAILY_STATS_KEY);
+    try {
+      startExam(['a'], { options: 4, limit: 1, outside: false, timer: 0, modes: { romajiKanaPick: true } });
+      await sleep(30);
+      ok('NAV20 trwający egzamin ukrywa nawigację', isFocusMode() && navHidden());
+      ok('NAV21 powrót zostaje w sesji', !homeBtn.classList.contains('is-hidden'));
+    } finally {
+      stopExam();
+      if (dailyBefore === null) localStorage.removeItem(DAILY_STATS_KEY);
+      else localStorage.setItem(DAILY_STATS_KEY, dailyBefore);
+      setScreen('menu');
+      await sleep(30);
+    }
+
+    /* Fiszki: konfiguracja ≠ sesja. */
+    state.vocab = null;
+    setScreen('vocab');
+    await sleep(30);
+    ok('NAV22 konfiguracja fiszek ma nawigację', navShown());
+
+    startVocabSession();
+    await sleep(30);
+    ok('NAV23 sesja fiszek ukrywa nawigację', isFocusMode() && navHidden());
+    eq('NAV24 tytuł sesji fiszek', title(), 'Fiszki');
+    state.vocab = null;
+    setScreen('vocab');
+    await sleep(30);
+
+    /* Nauka: zawsze pełny focus. */
+    setScreen('learn');
+    await sleep(60);
+    ok('NAV25 nauka ukrywa nawigację', isFocusMode() && navHidden());
+    eq('NAV26 tytuł nauki', title(), 'Nauka');
+    setScreen('menu');
+    await sleep(30);
+    ok('NAV27 powrót do huba przywraca nawigację', navShown());
+  } catch (e) {
+    ok('shell — nawigacja', false, e.message);
+  }
+
+  /* =====================================================
+     SHELL — układ: brak overflow, pasek vs szyna
+     ===================================================== */
+  try {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const holder = document.createElement('div');
+    holder.style.cssText =
+      'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'border:0;display:block;width:320px;height:900px;';
+    frame.src = 'index.html';
+    holder.appendChild(frame);
+    document.body.appendChild(holder);
+    await new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
+    await sleep(150);
+
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+
+    try {
+      for (const width of [320, 390, 600, 768, 1024, 1280]) {
+        frame.style.width = width + 'px';
+        await sleep(120);
+
+        for (const screen of ['menu', 'vocab', 'settings']) {
+          win.setScreen(screen);
+          await sleep(40);
+          const overflow = doc.documentElement.scrollWidth - doc.documentElement.clientWidth;
+          ok('LAYOUT nawigacja: ' + screen + ' ' + width + 'px bez overflow', overflow <= 0, 'overflow=' + overflow);
+        }
+
+        const nav = doc.getElementById('appNav');
+        const style = win.getComputedStyle(nav);
+        const rect = nav.getBoundingClientRect();
+
+        if (width >= 1024) {
+          /* Krótki hub musi mieścić się w ekranie — `height: 100vh`
+             na szynie rozpychało siatkę i wypychało dół treści poza
+             dolną krawędź. */
+          win.setScreen('menu');
+          await sleep(40);
+          const scroll = doc.documentElement.scrollHeight - doc.documentElement.clientHeight;
+          ok('LAYOUT hub bez przewijania ' + width + 'px', scroll <= 0, 'scroll=' + scroll);
+          ok(
+            'LAYOUT szyna ' + width + 'px ma 232px',
+            Math.abs(rect.width - 232) <= 1 && style.position === 'sticky',
+            rect.width.toFixed(1) + 'px ' + style.position
+          );
+        } else {
+          ok(
+            'LAYOUT dolny pasek ' + width + 'px',
+            style.position === 'fixed' && Math.abs(rect.bottom - doc.documentElement.clientHeight) <= 1,
+            style.position + ' bottom=' + rect.bottom.toFixed(1)
+          );
+          const padding = parseFloat(win.getComputedStyle(doc.querySelector('.app-shell')).paddingBottom);
+          ok('LAYOUT treść nie chowa się pod paskiem ' + width + 'px', padding >= 56, 'padding-bottom=' + padding);
+        }
+      }
+
+      /* Logo w szynie korzysta z przezroczystego pliku i zachowuje slot 34 px. */
+      const logoBox = doc.querySelector('.app-nav-logo');
+      const logoStyle = win.getComputedStyle(logoBox);
+      const logoRect = logoBox.getBoundingClientRect();
+      ok(
+        'LAYOUT logo w szynie: logo.png, 34×34',
+        /logo\.png/.test(logoStyle.backgroundImage) &&
+          Math.round(logoRect.width) === 34 &&
+          Math.round(logoRect.height) === 34,
+        logoStyle.backgroundImage + ' ' + logoRect.width.toFixed(1) + '×' + logoRect.height.toFixed(1)
+      );
+
+      /* Focus mode jest zależny od stanu, nie od szerokości — sprawdzamy
+         realne `display` na ekranie nauki, bo tests.html nie ładuje CSS. */
+      frame.style.width = '390px';
+      await sleep(120);
+      win.setScreen('learn');
+      await sleep(60);
+      ok(
+        'LAYOUT nauka ukrywa nawigację',
+        win.getComputedStyle(doc.getElementById('appNav')).display === 'none',
+        win.getComputedStyle(doc.getElementById('appNav')).display
+      );
+      win.setScreen('menu');
+      await sleep(60);
+      ok(
+        'LAYOUT hub przywraca nawigację',
+        win.getComputedStyle(doc.getElementById('appNav')).display !== 'none',
+        win.getComputedStyle(doc.getElementById('appNav')).display
+      );
+    } finally {
+      holder.remove();
+    }
+  } catch (e) {
+    ok('shell — układ', false, e.message);
   }
 
   /* =====================================================

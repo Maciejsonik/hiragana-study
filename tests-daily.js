@@ -884,8 +884,11 @@
         resultText(0, 0, 'katakana', 'exam')
       );
 
-      // nagłówek korzysta z tego samego helpera
-      ok('X14 nagłówek używa scriptName', /title\.textContent = scriptName\(\)/.test(src));
+      // nagłówek pokazuje nazwę ekranu, nie nazwę alfabetu
+      ok(
+        'X14 nagłówek używa screenTitle, nie scriptName',
+        /title\.textContent = screenTitle\(\)/.test(src) && !/title\.textContent = scriptName\(\)/.test(src)
+      );
 
       report();
     } catch (e) {

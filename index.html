@@ -2,23 +2,24 @@
 <html lang="pl">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
       content="Aplikacja do nauki japońskiej kany — hiragany i katakany, z animacjami kresek i trybem egzaminu."
     />
-    <title>Kana — nauka i egzamin</title>
+    <title>Koto — nauka i egzamin</title>
 
     <!-- T14 — PWA. Ścieżki WZGLĘDNE, bo aplikacja żyje pod /hiragana-study/. -->
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="icons/icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <!-- `?v=koto` odcina stary favicon z cache przeglądarki po zmianie marki. -->
+    <link rel="icon" href="icons/icon-192.png?v=koto" type="image/png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=koto" />
     <!-- Kolor paska zależny od motywu systemu; manifest deklaruje dark jako domyślny. -->
     <meta name="theme-color" content="#121116" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Kana" />
+    <meta name="apple-mobile-web-app-title" content="Koto" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -75,12 +76,12 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <div>
-          <div id="scriptEyebrow" class="eyebrow">JAPOŃSKI • HIRAGANA</div>
-          <h1 id="appTitle">Hiragana</h1>
+        <button id="homeBtn" class="ghost topbar-back is-hidden" type="button" aria-label="Wróć do menu">←</button>
+        <div class="topbar-titles">
+          <div id="scriptEyebrow" class="eyebrow">KANA</div>
+          <h1 id="appTitle">Kana</h1>
         </div>
         <div class="topbar-actions">
-          <button id="homeBtn" class="ghost hidden">← Menu</button>
           <button id="muteToggle" class="icon-btn" type="button" aria-label="Wycisz dźwięk"></button>
           <button id="themeToggle" class="icon-btn" type="button" aria-label="Zmień motyw"></button>
         </div>
@@ -88,13 +89,9 @@
 
       <main id="app"></main>
 
-      <footer>
-        <span>Prosta aplikacja lokalna</span>
-        <span>•</span>
-        <span>Podstawowe znaki + modyfikowane</span>
-        <span>•</span>
-        <span>Kształty znaków: KanjiVG (CC BY-SA 3.0)</span>
-      </footer>
+      <!-- Nawigacja modułów leży POZA #app: render() podmienia całą treść
+           ekranu, a pasek/szyna musi przetrwać każdy render. -->
+      <nav id="appNav" class="app-nav" aria-label="Główna nawigacja"></nav>
     </div>
     <script src="app.js"></script>
   </body>

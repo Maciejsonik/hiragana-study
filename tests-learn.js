@@ -467,9 +467,18 @@
       const labels = document.getElementById('examGroups').textContent;
       ok('UX16 konfiguracja pokazuje katakany', /カ/.test(labels) && /ア/.test(labels) && !/あ/.test(labels));
       ok(
-        'UX17 nagłówek nadal katakana',
-        document.getElementById('appTitle').textContent === 'Katakana',
-        document.getElementById('appTitle').textContent
+        'UX17 top bar pokazuje ekran, nie alfabet',
+        document.getElementById('appTitle').textContent === 'Egzamin' &&
+          document.getElementById('scriptEyebrow').textContent === 'KANA',
+        document.getElementById('appTitle').textContent + ' / ' + document.getElementById('scriptEyebrow').textContent
+      );
+
+      setScreen('menu');
+      await wait(80);
+      ok(
+        'UX17b hub pokazuje aktywny alfabet',
+        document.querySelector('.script-btn.active').textContent.indexOf('Katakana') >= 0,
+        document.querySelector('.script-btn.active').textContent.trim()
       );
 
       setScript('hiragana');

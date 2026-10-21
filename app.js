@@ -784,14 +784,150 @@ function showsScriptLabels() {
   return state.script === 'both';
 }
 
-function updateScriptHeader() {
+/* =========================================================
+   SHELL: NAWIGACJA I TOP BAR
+======================================================== */
+
+/*
+   Jedno miejsce decydujące o tym, co jest modułem. Dodanie gramatyki czy
+   kanji to wpis w `NAV_ITEMS` i etykieta w `MODULE_LABELS` — bez zmian
+   w renderze ekranów i bez placeholderów „wkrótce" w interfejsie.
+*/
+const NAV_ITEMS = [
+  {
+    id: 'kana',
+    label: 'Kana',
+    screen: 'menu',
+    icon: '<path d="M12 6.5C10 4.8 7 4 4 4v14c3 0 6 .8 8 2.5 2-1.7 5-2.5 8-2.5V4c-3 0-6 .8-8 2.5Z"/><path d="M12 6.5v14"/>'
+  },
+  {
+    id: 'vocab',
+    label: 'Słownictwo',
+    screen: 'vocab',
+    icon: '<rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/>'
+  },
+  {
+    id: 'settings',
+    label: 'Ustawienia',
+    screen: 'settings',
+    icon: '<path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h6M14 18h6"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="18" r="2"/>'
+  }
+];
+
+const SCREEN_TITLES = {
+  menu: 'Kana',
+  learn: 'Nauka',
+  exam: 'Egzamin',
+  review: 'Powtórki',
+  vocab: 'Słownictwo',
+  settings: 'Ustawienia'
+};
+
+const MODULE_LABELS = {
+  kana: 'KANA',
+  vocab: 'SŁOWNICTWO',
+  settings: 'APLIKACJA'
+};
+
+/* Ekran → moduł. Ekrany kany (hub, nauka, egzamin, powtórki) dzielą jeden
+   moduł, więc nawigacja nie udaje, że są osobnymi miejscami. */
+function screenModule(screen = state.screen) {
+  if (screen === 'vocab') return 'vocab';
+  if (screen === 'settings') return 'settings';
+  return 'kana';
+}
+
+/*
+   Focus mode to SESJA W TOKU, nie sam ekran. `screen === 'exam'` obejmuje
+   też konfigurację, a `screen === 'vocab'` ekran wyboru kierunku — żaden
+   z nich nie może ukrywać nawigacji. Sesję poznajemy po niezakończonym
+   obiekcie stanu, co jest tym samym warunkiem, którego używa render.
+*/
+function isFocusMode() {
+  if (state.screen === 'learn') return true;
+  if (state.screen === 'exam') return !!(state.exam && !state.exam.finished);
+  if (state.screen === 'vocab') return !!(state.vocab && !state.vocab.finished);
+  return false;
+}
+
+function screenTitle() {
+  if (state.screen === 'vocab') {
+    if (!state.vocab) return 'Słownictwo';
+    return state.vocab.finished ? 'Wynik' : 'Fiszki';
+  }
+  return SCREEN_TITLES[state.screen] || 'Kana';
+}
+
+/* Pasek i szyna powstają raz, poza #app, więc render() ich nie kasuje. */
+function renderNav() {
+  const nav = document.getElementById('appNav');
+  if (!nav) return;
+
+  nav.innerHTML = `
+    <span class="app-nav-brand" aria-hidden="true">
+      <span class="app-nav-logo"></span>
+      <span class="app-nav-brand-name">Koto</span>
+    </span>
+    <div class="app-nav-items">
+      ${NAV_ITEMS.map(
+        item => `
+        <button class="app-nav-item" type="button" data-nav="${item.id}">
+          <svg class="app-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true" focusable="false">${item.icon}</svg>
+          <span class="app-nav-label">${item.label}</span>
+        </button>`
+      ).join('')}
+    </div>
+  `;
+
+  nav.querySelectorAll('[data-nav]').forEach(button => {
+    button.onclick = () => {
+      // W trakcie sesji nawigacja jest ukryta; guard chroni też przed
+      // programowym kliknięciem, które przerwałoby sesję.
+      if (isFocusMode()) return;
+
+      const target = NAV_ITEMS.find(item => item.id === button.dataset.nav);
+      if (!target || state.screen === target.screen) return;
+
+      Audio.click();
+      setScreen(target.screen);
+    };
+  });
+}
+
+/* Jedno miejsce aktualizacji chromu: tytuł, etykieta modułu, powrót,
+   aktywna pozycja i widoczność nawigacji. */
+function refreshChrome() {
   const eyebrow = document.getElementById('scriptEyebrow');
   const title = document.getElementById('appTitle');
+  const focus = isFocusMode();
 
-  if (!eyebrow || !title) return;
+  if (eyebrow) eyebrow.textContent = MODULE_LABELS[screenModule()];
+  if (title) title.textContent = screenTitle();
 
-  eyebrow.textContent = 'JAPOŃSKI • ' + scriptName().toUpperCase();
-  title.textContent = scriptName();
+  document.body.classList.toggle('focus-mode', focus);
+
+  if (homeBtn) {
+    homeBtn.classList.toggle('is-hidden', state.screen === 'menu');
+    homeBtn.setAttribute('aria-label', 'Wróć do menu');
+  }
+
+  const nav = document.getElementById('appNav');
+  if (!nav) return;
+
+  if (focus) nav.setAttribute('aria-hidden', 'true');
+  else nav.removeAttribute('aria-hidden');
+
+  nav.querySelectorAll('[data-nav]').forEach(button => {
+    const active = button.dataset.nav === screenModule();
+
+    button.classList.toggle('active', active);
+    button.tabIndex = focus ? -1 : 0;
+
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  });
 }
 
 function item(kana) {
@@ -1293,7 +1429,7 @@ function mountDrawing(wrap) {
   const lineWidth = () => Math.max(4, Math.round(wrap.clientWidth * 0.03));
 
   // Kolor bierzemy z motywu, żeby rysunek był widoczny w obu.
-  const ink = () => getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#8d5cf6';
+  const ink = () => getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#c93b1e';
 
   function paint() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1715,7 +1851,6 @@ function setScript(script) {
   state.kana = firstGroup.chars[0][0];
 
   saveSettings(settings);
-  updateScriptHeader();
 }
 
 function updateThemeButton() {
@@ -1777,7 +1912,6 @@ function setupMuteToggle() {
 
 function setScreen(screen) {
   state.screen = screen;
-  homeBtn.classList.toggle('hidden', screen === 'menu');
   render();
 
   // animacja wejścia
@@ -1796,7 +1930,7 @@ function render() {
   createThemeToggle();
   setupMuteToggle();
   applyTheme();
-  updateScriptHeader();
+  refreshChrome();
 
   if (state.screen === 'menu') renderMenu();
   if (state.screen === 'learn') renderLearn();
@@ -1876,7 +2010,6 @@ function renderMenu() {
   document.getElementById('examCard').onclick = () => {
     Audio.click();
     state.screen = 'exam';
-    homeBtn.classList.remove('hidden');
     showExamSetup();
   };
   document.getElementById('reviewCard').onclick = () => {
@@ -2250,6 +2383,8 @@ function renderVocabSetup() {
 }
 
 function renderVocab() {
+  refreshChrome();
+
   if (!state.vocab) {
     renderVocabSetup();
     return;
@@ -2494,6 +2629,26 @@ function renderSettings() {
           <button class="btn btn-secondary" id="resetProgressBtn" data-focus-key="reset-progress">Zresetuj postęp</button>
           <button class="btn btn-secondary" id="clearDailyStatsBtn" data-focus-key="clear-stats">Wyczyść statystyki</button>
           <button class="btn btn-danger" id="clearAllDataBtn" data-focus-key="clear-all">Wyczyść wszystkie dane</button>
+        </div>
+      </div>
+
+      <div class="settings-group card" id="aboutApp">
+        <h3>O aplikacji</h3>
+        <div class="about-copy">
+          <p>
+            <strong>Koto</strong> to lokalna aplikacja do nauki japońskiej kany. Działa w przeglądarce — bez konta
+            i bez serwera. Ustawienia i postęp są zapisywane wyłącznie na tym urządzeniu, a po pierwszym
+            załadowaniu aplikacja działa również offline.
+          </p>
+          <p>Zakres: hiragana i katakana — znaki podstawowe oraz modyfikowane (dakuten, handakuten, yōon).</p>
+          <p>
+            Kształty znaków i animacje kresek:
+            <a href="https://github.com/KanjiVG/kanjivg" target="_blank" rel="noopener noreferrer">KanjiVG</a>,
+            licencja
+            <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer"
+              >CC BY-SA 3.0</a
+            >. Pliki SVG są pobierane z publicznego repozytorium KanjiVG przez jsDelivr.
+          </p>
         </div>
       </div>
     </section>
@@ -4504,6 +4659,8 @@ function examGroupRows() {
 }
 
 function showExamSetup() {
+  refreshChrome();
+
   const settings = loadExamSettings();
   const rows = examGroupRows();
   const scriptHint =
@@ -4757,7 +4914,6 @@ function startExam(groupIds, { kanaList = null, options, limit, outside, modes, 
   };
 
   state.screen = 'exam';
-  homeBtn.classList.remove('hidden');
 
   nextExamQuestion();
 }
@@ -4909,6 +5065,8 @@ function examProgressHTML() {
 }
 
 function renderExamQuestion(question) {
+  refreshChrome();
+
   const exam = state.exam;
   const mode = exam.currentMode;
 
@@ -5486,6 +5644,8 @@ function finishExam() {
 }
 
 function renderExamResult() {
+  refreshChrome();
+
   const exam = state.exam;
   const percentage = exam.total === 0 ? 0 : Math.round((exam.score / exam.total) * 100);
 
@@ -5635,6 +5795,7 @@ function resultText(score, total, script = state.script, kind = 'exam') {
    START
 ========================================================= */
 
+renderNav();
 render();
 
 /* =========================================================
