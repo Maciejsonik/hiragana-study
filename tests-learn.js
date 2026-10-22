@@ -1380,7 +1380,7 @@
           'F1 wejście w fiszki pokazuje wybór kierunku i zakresu',
           !!document.getElementById('vocabStart') &&
             document.querySelectorAll('[data-vocab-direction]').length === 2 &&
-            document.querySelectorAll('[data-vocab-scope]').length === 3,
+            document.querySelectorAll('[data-vocab-scope]').length === 5,
           document.querySelectorAll('[data-vocab-direction]').length +
             ' kierunki / ' +
             document.querySelectorAll('[data-vocab-scope]').length +
@@ -1388,12 +1388,14 @@
         );
 
         ok(
-          'F2 domyślny zakres to wszystko: 20 wyrażeń + 20 czasowników',
+          'F2 domyślny zakres to wszystko: 20 poleceń, 22 czasowniki, 7 rzeczowników i 8 zwrotów',
           vocabSetup.scope === 'all' &&
             scopeCount('cards') === 20 &&
-            scopeCount('verbs') === 20 &&
-            scopeCount('all') === 40,
-          scopeCount('cards') + '/' + scopeCount('verbs') + '/' + scopeCount('all')
+            scopeCount('verbs') === 22 &&
+            scopeCount('words') === 7 &&
+            scopeCount('phrases') === 8 &&
+            scopeCount('all') === 57,
+          ['cards', 'verbs', 'words', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
         document.getElementById('vocabStart').click();

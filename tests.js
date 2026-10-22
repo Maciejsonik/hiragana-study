@@ -1505,15 +1505,27 @@
     const patterns = items.filter(item => item.type === 'pattern');
     const kanaOnly = /^[ぁ-んァ-ヶー～（）。\s]+$/;
 
+    const words = items.filter(item => item.type === 'word');
+    const phrases = items.filter(item => item.type === 'phrase');
+    const extraVerbs = items.filter(item => item.type === 'verb');
+
     ok(
-      'VO1 jest 20 kart i 2 wzorce',
-      cards.length === 20 && patterns.length === 2,
-      'karty=' + cards.length + ', wzorce=' + patterns.length
+      'VO1 jest 20 poleceń, 2 wzorce, 7 rzeczowników, 6 zwrotów i 2 czasowniki',
+      cards.length === 20 &&
+        patterns.length === 2 &&
+        words.length === 7 &&
+        phrases.length === 6 &&
+        extraVerbs.length === 2,
+      [cards.length, patterns.length, words.length, phrases.length, extraVerbs.length].join(' / ')
     );
 
-    const expectedIds = items.map((_, index) => 'v' + String(index + 1).padStart(2, '0')).join(',');
+    const expectedIds = [
+      ...Array.from({ length: 24 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 7 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 6 }, (_, index) => 'p' + String(index + 1).padStart(2, '0'))
+    ].join(',');
     ok(
-      'VO2 identyfikatory to v01…v22 po kolei',
+      'VO2 identyfikatory są stabilne i uporządkowane',
       items.map(item => item.id).join(',') === expectedIds,
       items.map(item => item.id).join(',')
     );
@@ -1568,17 +1580,19 @@
        uzupełnienia pól wyrażenia złamie VO10, a nie tylko UI.
     */
     ok(
-      'VO8 karty czasowników powstają z kart wyrażeń',
-      VOCAB_VERB_ITEMS.length === 20 &&
-        VOCAB_VERB_ITEMS.every(
+      'VO8 czasowniki powstają z poleceń, a dwa mają własny wpis',
+      VOCAB_VERB_ITEMS.length === 22 &&
+        VOCAB_VERB_ITEMS.filter(item => item.source).length === 20 &&
+        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 2 &&
+        VOCAB_VERB_ITEMS.filter(item => item.source).every(
           item => item.type === 'verb' && item.id.endsWith('-verb') && item.source === item.id.replace('-verb', '')
         ),
       VOCAB_VERB_ITEMS.length + ' czasowników'
     );
 
     ok(
-      'VO9 wszystkie 40 kart nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 40 &&
+      'VO9 wszystkie 57 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 57 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1601,8 +1615,12 @@
     );
 
     ok(
-      'VO11 vocabCard przyjmuje czasownik, a wzorzec nadal odrzuca',
-      !!vocabCard('v01-verb') && vocabCard('v01-verb').type === 'verb' && vocabCard('v21') === null,
+      'VO11 vocabCard przyjmuje każdy typ materiału, a nieznany identyfikator odrzuca',
+      vocabCard('v01-verb')?.type === 'verb' &&
+        vocabCard('v21')?.type === 'pattern' &&
+        vocabCard('n01')?.type === 'word' &&
+        vocabCard('p01')?.type === 'phrase' &&
+        vocabCard('v99') === null,
       String(vocabCard('v21'))
     );
   } catch (e) {
@@ -1639,11 +1657,11 @@
     );
 
     ok(
-      'V4 nieznana karta i wzorzec nie tworzą rekordu',
+      'V4 nieznana karta nie tworzy rekordu, a wzorzec jest kartą nauki',
       recordVocabAnswer('v99', true) === false &&
-        recordVocabAnswer('v21', true) === false &&
+        recordVocabAnswer('v21', true) === true &&
         !vocab.cards.v99 &&
-        !vocab.cards.v21,
+        vocabStat('v21').seen === 1,
       Object.keys(vocab.cards).join(',')
     );
 

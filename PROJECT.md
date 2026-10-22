@@ -1929,19 +1929,20 @@ Vocabulary should eventually connect naturally with kanji and grammar.
 
 ### Status: data layer, progress store and flashcards shipped
 
-`VOCAB_ITEMS` in `app.js` holds the 22 items of the class worksheet
-"きょうしつで つかう ことば" (1) — 20 request expressions with the verb each
-comes from, plus two sentence patterns. Every item carries a stable `id`
-(`v01`–`v22`), and items of `type: 'pattern'` are deliberately **not** cards:
-they have no counterpart in the progress store.
+`VOCAB_ITEMS` in `app.js` holds the 37 items of the class worksheet
+"きょうしつで つかう ことば" (1): 20 request expressions, two sentence
+patterns, seven nouns, six noun + `を` + verb phrases, and two extra verbs
+(あけます, しめます) that have no separate request expression. Every item
+carries a stable `id` (`v01`–`v24`, `n01`–`n07`, `p01`–`p06`).
 
 Meanings are **Polish**; the source worksheet glosses in English, so the table
 is a translation, not a copy. Romaji follows `scriptData` and carries no
 macrons.
 
-Covered by VO1–VO7 in `tests.js`: counts, id sequence, required fields, kana
-fields free of Latin text, romaji free of macrons, unique kana, and the shape
-of the two patterns. VO5 fails when a macron is introduced.
+Covered by VO1–VO7 in `tests.js`: per-type counts, stable id sequence,
+required fields, kana fields free of Latin text, romaji free of macrons,
+unique kana, and the shape of the two patterns. VO5 fails when a macron is
+introduced.
 
 ### Verb cards
 
@@ -1955,17 +1956,20 @@ v01-verb  ききます        kikimasu          słuchać
 
 This is not a second table. Editing a verb in `VOCAB_ITEMS` changes both cards
 at once, so the two cannot drift apart. Ids are additive and stable
-(`<id>-verb`), and `hiragana-vocab` is keyed by id, so adding 20 more cards
-needs no migration and no `VOCAB_VERSION` bump. Patterns (`v21`, `v22`) have
-no verb card.
+(`<id>-verb`), and `hiragana-vocab` is keyed by id, so adding material needs no
+migration and no `VOCAB_VERSION` bump. The two verbs without a request
+expression (`v23`, `v24`) are explicit `type: 'verb'` entries.
 
-`VOCAB_LEARN_ITEMS` is the 40-card list; `vocabCard()` accepts both kinds, so
-`recordVocabAnswer('v01-verb', …)` creates a real record while a pattern id
-still returns `false`.
+`VOCAB_LEARN_ITEMS` is the 57-card list: 20 expressions, 22 verbs, 7 nouns,
+6 phrases and 2 patterns. `vocabCard()` accepts every one of those types, so
+`recordVocabAnswer('v01-verb', …)`, `recordVocabAnswer('n01', …)` and
+`recordVocabAnswer('v21', …)` create real records, while an unknown id such as
+`v99` still returns `null`.
 
-Covered by VO8–VO11: 20 derived cards, the `<id>-verb` / `source` link, 40
-unique kana across expressions and verbs, the fields copied from the source
-card, and `vocabCard()` accepting a verb while rejecting a pattern.
+Covered by VO8–VO11: 20 derived cards plus two explicit verbs, the
+`<id>-verb` / `source` link, 57 unique kana, the fields copied from the source
+card, and `vocabCard()` accepting all five material types while rejecting an
+unknown id.
 
 Nothing has verified the translations against a Polish teacher; they are my
 own reading of the worksheet.
@@ -1981,17 +1985,18 @@ Shape: `{ version, cards: { v01: { seen, correct, wrong, recent, last } } }`,
 with `recent` capped at `VOCAB_MAX_RECENT = 6` — the same record shape a
 character gets, minus confusion data.
 
-Three deliberate omissions define the layer:
+Two deliberate omissions define the layer:
 
 - **no SRS** — cards carry no schedule. The card order (layer 3) will be
   computed from the counters, not stored, so nothing here advances or resets
   a spaced-repetition schedule.
-- **no records for patterns** — `recordVocabAnswer()` returns `false` for
-  `type: 'pattern'` items and for unknown ids (`v99`), so a typo cannot create
-  a record that nothing will ever display.
 - **no daily history** — answering a card is not answering a character, so
   `recordVocabAnswer()` never touches `hiragana-daily`. The two histories stay
   separate on purpose; see "Daily statistics (T15)".
+
+`recordVocabAnswer()` returns `false` only for an unknown id (`v99`), so a typo
+cannot create a record that nothing will ever display. Patterns, nouns and
+phrases are ordinary learn items and do get records.
 
 Reading is optimistic, like the other stores: corrupt JSON, a foreign version
 or a missing `cards` object yield an empty store rather than an exception, and
@@ -2004,10 +2009,11 @@ kind of progress. `hiragana-vocab` is in `appStorageKeys()`, so "Wyczyść
 wszystkie dane" removes it too.
 
 Covered by V1–V12 in `tests.js`: empty start, record creation, counter split,
-rejection of unknown cards and patterns, the `recent` cap, reload, corrupt
-JSON, foreign version, partial-record recovery, daily history untouched, reset,
-and the reset wording. CLR1 now asserts seven keys. Removing the card guard,
-the version check or `resetVocabData()` turns the suite red.
+rejection of unknown cards, a pattern being a valid learn item, the `recent`
+cap, reload, corrupt JSON, foreign version, partial-record recovery, daily
+history untouched, reset, and the reset wording. CLR1 now asserts seven keys.
+Removing the card guard, the version check or `resetVocabData()` turns the
+suite red.
 
 ### Flashcards (layer 3)
 
@@ -2016,8 +2022,9 @@ choices, both session-only (they are a decision for one session, like the exam
 scope, not a stored preference):
 
 ```text
-Kierunek  Wyrażenie → znaczenie   |  Znaczenie → wyrażenie
-Zakres    Wyrażenia (20) | Czasowniki (20) | Wszystko (40, default)
+Kierunek  Japoński → znaczenie   |  Znaczenie → japoński
+Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (7)
+          Zwroty (8) | Wszystko (57, default)
 ```
 
 The first direction shows the expression in kana and four Polish meanings —
@@ -2030,27 +2037,29 @@ expression for a verb. The last screen shows the score, "Jeszcze raz" (same
 setup) and a way back.
 
 Distractors come from the **same type** as the question: infinitives
-(„słuchać") never sit next to request forms („proszę słuchać"), because those
-differ by grammar, not by meaning. The order is deterministic and derived
-from the store: untouched cards first, then the lowest accuracy, ties broken
-by table order. `vocabOptions()` generates a card's options **once** and keeps
-them in the session — otherwise every re-render after an answer would reshuffle
-the buttons under the finger. Digits 1–4 answer and Enter advances, matching
-the exam's keyboard handling.
+(„słuchać") never sit next to request forms („proszę słuchać"), nouns stay
+with nouns, and phrases with phrases, because those differ by grammar, not by
+meaning. The order is deterministic and derived from the store: untouched
+cards first, then the lowest accuracy, ties broken by table order.
+`vocabOptions()` generates a card's options **once** and keeps them in the
+session — otherwise every re-render after an answer would reshuffle the
+buttons under the finger. Digits 1–4 answer and Enter advances, matching the
+exam's keyboard handling.
 
 The screen writes only through `recordVocabAnswer()`, so it changes
 `hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
 `hiragana-daily`, the exam settings or the SRS schedule.
 
 Covered by F1–F14 in `tests-learn.js`: the setup screen with two directions
-and three scopes, the default `all` scope (20 + 20), the first card with four
-options, exactly one correct, a correct answer stored, the reveal locking the
-options, a wrong answer stored and marked, the summary after the last card,
-"Jeszcze raz" restarting without erasing the store, leaving back to the menu,
-the meaning→kana direction (Polish prompt, kana answers), a stored answer in
-that direction, the verb card pointing at its source expression, and progress
-under `v01-verb`. Removing the `recordVocabAnswer()` call, the disabled-state
-marking, the derived verb pool or the direction branch turns the suite red.
+and five scopes, the default `all` scope (20 + 22 + 7 + 8), the first card
+with four options, exactly one correct, a correct answer stored, the reveal
+locking the options, a wrong answer stored and marked, the summary after the
+last card, "Jeszcze raz" restarting without erasing the store, leaving back to
+the menu, the meaning→kana direction (Polish prompt, kana answers), a stored
+answer in that direction, the verb card pointing at its source expression, and
+progress under `v01-verb`. Removing the `recordVocabAnswer()` call, the
+disabled-state marking, the derived verb pool or the direction branch turns the
+suite red.
 Layout at 320 px was measured, not looked at: the setup screen is 421 px tall,
 the longest expression wraps with no horizontal overflow, and the four kana
 answers stay in their grid.

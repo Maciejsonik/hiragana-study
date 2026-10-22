@@ -648,10 +648,29 @@ const VOCAB_ITEMS = [
   { id: 'v19', type: 'card', kana: 'しずかにしてください', romaji: 'shizuka ni shite kudasai', meaning: 'proszę być cicho', verb: 'しずかにします', verbRomaji: 'shizuka ni shimasu', verbMeaning: 'być cicho' },
   { id: 'v20', type: 'card', kana: 'べんきょうしてください', romaji: 'benkyou shite kudasai', meaning: 'proszę się uczyć', verb: 'べんきょうします', verbRomaji: 'benkyou shimasu', verbMeaning: 'uczyć się' },
 
-  // 21–22 — wzorce; źródło podaje przy 21 jeszcze „わかりにく", ale bez romaji
-  // i bez notatki, więc potraktowane jako skaza transkrypcji i pominięte
+  // 21–22 — wzorce z sekcji „Rozumienie i odpowiedzi"
   { id: 'v21', type: 'pattern', kana: 'わかりますか。', romaji: 'wakarimasu ka', meaning: 'Czy rozumiesz?', answers: [['わかります。', 'wakarimasu', 'rozumiem'], ['わかりません。', 'wakarimasen', 'nie rozumiem']], variants: [['わかりますね。', 'wakarimasu ne', 'rozumiesz, prawda?']] },
-  { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで（ポーランドごで）～です。', '~ wa nihongo de (poorandogo de) ~ desu', '～ po japońsku (po polsku) to ～']] }
+  { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで（ポーランドごで）～です。', '~ wa nihongo de (poorandogo de) ~ desu', '～ po japońsku (po polsku) to ～']] },
+
+  // 23–24 — czasowniki z tabeli 2, które nie mają osobnego polecenia w tabeli 1
+  { id: 'v23', type: 'verb', kana: 'あけます', romaji: 'akemasu', meaning: 'otwierać (np. drzwi lub pudełko)' },
+  { id: 'v24', type: 'verb', kana: 'しめます', romaji: 'shimemasu', meaning: 'zamykać (np. drzwi)' },
+
+  // Rzeczowniki i zwroty z sekcji „Przydatne rzeczowniki" oraz „Rzeczownik + を + czasownik"
+  { id: 'n01', type: 'word', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
+  { id: 'n02', type: 'word', kana: 'これ', romaji: 'kore', meaning: 'to' },
+  { id: 'n03', type: 'word', kana: 'ほん', romaji: 'hon', meaning: 'książka' },
+  { id: 'n04', type: 'word', kana: 'きょうかしょ', romaji: 'kyoukasho', meaning: 'podręcznik' },
+  { id: 'n05', type: 'word', kana: 'しゅくだい', romaji: 'shukudai', meaning: 'praca domowa' },
+  { id: 'n06', type: 'word', kana: 'にほんご', romaji: 'nihongo', meaning: 'język japoński' },
+  { id: 'n07', type: 'word', kana: 'ポーランドご', romaji: 'poorandogo', meaning: 'język polski' },
+
+  { id: 'p01', type: 'phrase', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
+  { id: 'p02', type: 'phrase', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
+  { id: 'p03', type: 'phrase', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
+  { id: 'p04', type: 'phrase', kana: 'ほんを よんでください', romaji: 'hon o yonde kudasai', meaning: 'proszę przeczytać książkę' },
+  { id: 'p05', type: 'phrase', kana: 'きょうかしょを だしてください', romaji: 'kyoukasho o dashite kudasai', meaning: 'proszę wyjąć / przygotować podręcznik' },
+  { id: 'p06', type: 'phrase', kana: 'しゅくだいを だしてください', romaji: 'shukudai o dashite kudasai', meaning: 'proszę oddać pracę domową' }
 ];
 
 /*
@@ -662,20 +681,31 @@ const VOCAB_ITEMS = [
 
    Identyfikator `v01-verb` jest stabilny i addytywny: `hiragana-vocab`
    kluczuje rekordy po id, więc nowy materiał nie wymaga migracji ani
-   podbicia `VOCAB_VERSION`. Wzorce (v21, v22) kart czasowników nie mają.
+   podbicia `VOCAB_VERSION`. Rzeczowniki (`word`), zwroty (`phrase`) oraz
+   wzorce (`pattern`) są osobnymi typami, ale wszystkie należą do materiału
+   do nauki i dostają własny rekord postępu.
 */
 const VOCAB_CARDS = VOCAB_ITEMS.filter(item => item.type === 'card');
+const VOCAB_WORDS = VOCAB_ITEMS.filter(item => item.type === 'word');
+const VOCAB_PHRASES = VOCAB_ITEMS.filter(item => item.type === 'phrase');
+const VOCAB_PATTERNS = VOCAB_ITEMS.filter(item => item.type === 'pattern');
+const VOCAB_EXTRA_VERBS = VOCAB_ITEMS.filter(item => item.type === 'verb');
 
-const VOCAB_VERB_ITEMS = VOCAB_CARDS.map(item => ({
-  id: item.id + '-verb',
-  type: 'verb',
-  kana: item.verb,
-  romaji: item.verbRomaji,
-  meaning: item.verbMeaning,
-  source: item.id
-}));
+const VOCAB_VERB_ITEMS = [
+  ...VOCAB_CARDS.map(item => ({
+    id: item.id + '-verb',
+    type: 'verb',
+    kana: item.verb,
+    romaji: item.verbRomaji,
+    meaning: item.verbMeaning,
+    source: item.id
+  })),
+  ...VOCAB_EXTRA_VERBS
+];
 
-const VOCAB_LEARN_ITEMS = [...VOCAB_CARDS, ...VOCAB_VERB_ITEMS];
+const VOCAB_PHRASE_ITEMS = [...VOCAB_PHRASES, ...VOCAB_PATTERNS];
+
+const VOCAB_LEARN_ITEMS = [...VOCAB_CARDS, ...VOCAB_VERB_ITEMS, ...VOCAB_WORDS, ...VOCAB_PHRASES, ...VOCAB_PATTERNS];
 
 /* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
@@ -2234,16 +2264,18 @@ const VOCAB_OPTIONS = 4;
    Dzięki temu nie ruszamy formatu `hiragana-vocab`.
 */
 const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
-const VOCAB_SCOPES = ['cards', 'verbs', 'all'];
+const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'phrases', 'all'];
 
 const VOCAB_DIRECTION_LABELS = {
-  'kana-meaning': 'Wyrażenie → znaczenie',
-  'meaning-kana': 'Znaczenie → wyrażenie'
+  'kana-meaning': 'Japoński → znaczenie',
+  'meaning-kana': 'Znaczenie → japoński'
 };
 
 const VOCAB_SCOPE_LABELS = {
-  cards: 'Wyrażenia',
+  cards: 'Polecenia',
   verbs: 'Czasowniki',
+  words: 'Rzeczowniki',
+  phrases: 'Zwroty',
   all: 'Wszystko'
 };
 
@@ -2255,6 +2287,8 @@ const vocabSetup = {
 function vocabPool(scope) {
   if (scope === 'cards') return VOCAB_CARDS;
   if (scope === 'verbs') return VOCAB_VERB_ITEMS;
+  if (scope === 'words') return VOCAB_WORDS;
+  if (scope === 'phrases') return VOCAB_PHRASE_ITEMS;
   return VOCAB_LEARN_ITEMS;
 }
 
@@ -2277,7 +2311,15 @@ function vocabSessionOrder(scope) {
 */
 function vocabOptions(item, direction) {
   const field = direction === 'meaning-kana' ? 'kana' : 'meaning';
-  const pool = vocabPool(item.type === 'verb' ? 'verbs' : 'cards');
+  const poolScope =
+    item.type === 'verb'
+      ? 'verbs'
+      : item.type === 'word'
+        ? 'words'
+        : item.type === 'phrase' || item.type === 'pattern'
+          ? 'phrases'
+          : 'cards';
+  const pool = vocabPool(poolScope);
   const chosen = new Set([item[field]]);
   const distractors = [];
 
@@ -2348,7 +2390,20 @@ function nextVocab() {
 }
 
 function vocabRevealHTML(item, correct) {
-  const source = item.type === 'verb' ? vocabItem(item.source) : null;
+  const source = item.type === 'verb' && item.source ? vocabItem(item.source) : null;
+  let detail = '';
+
+  if (source) {
+    detail = `<div class="flash-meta">Wyrażenie: <b>${source.kana}</b> (${source.romaji}) — ${source.meaning}</div>`;
+  } else if (item.type === 'card') {
+    detail = `<div class="flash-meta">Czasownik: <b>${item.verb}</b> (${item.verbRomaji}) — ${item.verbMeaning}</div>`;
+  } else if (item.type === 'pattern' && item.answers) {
+    detail = `<div class="flash-meta">Odpowiedzi:<br>${item.answers
+      .map(answer => `<b>${answer[0]}</b> (${answer[1]}) — ${answer[2]}`)
+      .join('<br>')}</div>`;
+  }
+
+  const variant = item.alt ? `<div class="flash-meta">Wariant: <b>${item.alt}</b> (${item.altRomaji})</div>` : '';
 
   return `
     <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
@@ -2356,11 +2411,8 @@ function vocabRevealHTML(item, correct) {
       <div class="flash-kana vocab-kana">${item.kana}</div>
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
-      ${
-        source
-          ? `<div class="flash-meta">Wyrażenie: <b>${source.kana}</b> (${source.romaji}) — ${source.meaning}</div>`
-          : `<div class="flash-meta">Czasownik: <b>${item.verb}</b> (${item.verbRomaji}) — ${item.verbMeaning}</div>`
-      }
+      ${detail}
+      ${variant}
       <button class="btn btn-primary" id="vocabNext">Dalej → (Enter)</button>
     </div>
   `;
@@ -3954,8 +4006,6 @@ function masteryLevel(kana) {
    Czego tu celowo NIE MA:
      - SRS. Karty nie mają harmonogramu; kolejność fiszek (warstwa 3)
        liczymy z liczników, zamiast ją zapisywać.
-     - wpisów dla wzorców (`type: 'pattern'`, v21–v22). Wzorzec nie
-       jest kartą, więc nie dostaje rekordu.
      - `hiragana-daily`. Odpowiedź na fiszkę nie jest odpowiedzią na
        znak: historia dzienna liczy kany i egzamin, nie słownictwo.
 
@@ -3969,13 +4019,12 @@ const VOCAB_VERSION = 1;
 const VOCAB_MAX_RECENT = 6;
 
 /*
-   Karta istnieje wtedy, gdy jest materiałem do nauki: wyrażeniem z tabeli
-   albo czasownikiem z niego wyprowadzonym. Wzorce (v21, v22) nie są kartami,
-   więc literówka w id nie utworzy rekordu.
+   Karta istnieje wtedy, gdy jest materiałem do nauki. Wszystkie typy z
+   `VOCAB_LEARN_ITEMS` — polecenia, czasowniki, rzeczowniki, zwroty i wzorce
+   — dostają rekord postępu. Literówka w id nadal nie utworzy wpisu.
 */
 function vocabCard(cardId) {
-  const item = VOCAB_LEARN_ITEMS.find(entry => entry.id === cardId);
-  return item && (item.type === 'card' || item.type === 'verb') ? item : null;
+  return VOCAB_LEARN_ITEMS.find(entry => entry.id === cardId) || null;
 }
 
 function isVocabRecord(entry) {
@@ -4021,10 +4070,10 @@ function saveVocab() {
 }
 
 /*
-   Zwraca `false` dla nieznanej karty i dla wzorca: literówka w `id`
-   nie może utworzyć rekordu, którego nic nigdy nie wyświetli.
-   Rekord o niepoprawnym kształcie zastępujemy świeżym — alternatywą
-   są liczniki `NaN`, które zatruwają każdy późniejszy odczyt.
+   Zwraca `false` dla nieznanej karty: literówka w `id` nie może utworzyć
+   rekordu, którego nic nigdy nie wyświetli. Rekord o niepoprawnym kształcie
+   zastępujemy świeżym — alternatywą są liczniki `NaN`, które zatruwają
+   każdy późniejszy odczyt.
 */
 function recordVocabAnswer(cardId, correct) {
   if (!vocabCard(cardId)) return false;
