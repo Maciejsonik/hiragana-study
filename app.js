@@ -2177,6 +2177,8 @@ function renderExam() {
 
 function renderMenu() {
   const dueCount = dueList(Date.now()).length;
+  const streaks = dailyStreaks(Date.now());
+  const streakLabel = streaks.current > 0 ? `${streaks.current} dni serii` : 'Zacznij serię';
 
   app.innerHTML = `
     <div class="script-switcher" role="group" aria-label="Skrypt">
@@ -2187,27 +2189,38 @@ function renderMenu() {
 
     <section class="hub-summary" aria-labelledby="hubSummaryLabel">
       <div class="hub-summary-head">
-        <span class="hub-kicker" id="hubSummaryLabel">Postęp</span>
-        <span class="hub-script">${scriptName()}</span>
+        <div class="hub-head-info">
+          <span class="hub-kicker" id="hubSummaryLabel">Postęp</span>
+          <span class="hub-script">${scriptName()}</span>
+        </div>
+        <div class="hub-streak-badge" aria-label="Seria aktywności">
+          <span class="hub-streak-icon" aria-hidden="true">${icon('flame')}</span>
+          <span>${streakLabel}</span>
+        </div>
       </div>
       ${masteryStripHTML()}
     </section>
 
     <section class="menu">
       <button class="menu-card tile tile-primary" id="learnCard">
+        <span class="tile-watermark" aria-hidden="true">${state.kana}</span>
         <span class="menu-icon">${icon('learn')}</span>
         <span class="tile-title">Nauka</span>
         <span class="tile-cta">Kontynuuj ${state.kana}</span>
       </button>
 
       <button class="menu-card tile" id="examCard">
+        <span class="tile-watermark" aria-hidden="true">試</span>
         <span class="menu-icon">${icon('exam')}</span>
         <span class="tile-title">Egzamin</span>
+        <span class="tile-sub">Szybki test wiedzy</span>
       </button>
 
       <button class="menu-card tile" id="reviewCard">
+        <span class="tile-watermark" aria-hidden="true">復</span>
         <span class="menu-icon">${icon('review')}</span>
         <span class="tile-title">Powtórki</span>
+        <span class="tile-sub">${dueCount > 0 ? dueCount + ' czeka' : 'Wszystko powtórzone'}</span>
         ${dueCount > 0 ? `<span class="tile-badge" aria-label="${dueCount} znaków do powtórki">${dueCount}</span>` : ''}
       </button>
     </section>

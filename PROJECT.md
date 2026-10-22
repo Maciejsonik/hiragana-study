@@ -1134,8 +1134,11 @@ Added by later phases:
 .script-switcher      menu script selector
 .hub-summary         progress card on the Kana hub
 .hub-kicker          section label inside the hub
+.hub-streak-badge    active streak indicator pill inside the hub summary
 .tile-primary        primary hub action (Nauka)
 .tile-cta            one-line hint inside the primary tile
+.tile-sub            secondary description inside hub tiles
+.tile-watermark      atmospheric Japanese calligraphy background watermark
 .settings             Settings screen
 .settings-group       settings sections
 .settings-pills       segmented preference controls
