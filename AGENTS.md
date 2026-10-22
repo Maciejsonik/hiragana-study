@@ -85,6 +85,12 @@ to require breaking one, stop and raise it before writing code.
    wording, describe it as such — the severity and the correct fix differ.
 6. Legacy mastery and the SRS ladder are **distinct systems**. Do not conflate
    them in logic, in the UI, or in documentation.
+7. A vocabulary item may carry a **topic** from the closed list
+   `TOPIC_CATEGORIES` in `app.js`. A topic is a change in that list, never a
+   free-form string in the data, and it never enters the progress store:
+   `hiragana-vocab` is keyed by item id. The topic filter is session-only,
+   like the scope. The same identifiers are meant to be reused by the kanji
+   and grammar modules — see `PROJECT.md` §"Topic categories (layer 4)".
 
 ### 2.3 Tests
 
@@ -112,8 +118,8 @@ python3 -m http.server 8000
 
 | URL | Covers |
 | --- | --- |
-| `http://localhost:8000/tests.html` | SRS, migration, exam settings, typed-mode timeout |
-| `http://localhost:8000/tests-learn.html` | learn panel, layout, motion |
+| `http://localhost:8000/tests.html` | SRS, migration, exam settings, typed-mode timeout, vocabulary data and store |
+| `http://localhost:8000/tests-learn.html` | learn panel, layout, motion, vocabulary flashcards, topic filter |
 | `http://localhost:8000/tests-daily.html` | daily statistics |
 
 Confirm the current set of harness files before relying on that table. Read the

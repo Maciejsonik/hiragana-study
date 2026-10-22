@@ -2484,6 +2484,8 @@ Advanced audio / lo-fi: NOT implemented
 
 ```text
 UI modernization — phase 4: Kana hub — COMPLETE
+Vocabulary topic axis (layer 4) — COMPLETE
+Next planned: T19 Vocabulary (module list + detail) — NOT STARTED
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2494,8 +2496,23 @@ implemented and accepted. Phase 3 also fixed the live exam-options summary,
 the mastery strip with unpractised characters and the drawing-control groups.
 The remaining UI phases are the list/detail components and Settings.
 Vocabulary, grammar and kanji plug into those archetypes instead of inventing
-their own screens. No new feature work has started beyond closing the Kana
-hub; T19 is the next roadmap item.
+their own screens.
+
+The vocabulary module also gained its **topic axis** (layer 4): a closed,
+module-independent taxonomy, a filter in the setup screen and the extension
+contract for T18 and T20 (§"Topic categories (layer 4)"). No new feature
+work is in progress: the last two rounds closed the Kana hub and added the
+topic axis, and nothing beyond that has started.
+
+**Where the next session picks up.** The natural next piece is the T19
+"module list + detail": a list of topics with their progress and a detail
+view per topic, built on the existing taxonomy — the scope and the topic
+are already two independent filters over the same records, and a list of
+topics with per-topic progress needs no new store. The kanji data contract
+(T18) can be drafted on the same taxonomy in parallel. Two decisions are
+deliberately open and belong to those modules, not to this layer: whether a
+topic should influence the "smart" order, and whether kanji and vocabulary
+should share one session.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so

@@ -1,6 +1,6 @@
 # Koto — nauka japońskiej kany
 
-**Koto** to aplikacja do nauki japońskiej kany: **hiragana i katakana**, z animacją kolejności kresek, trybem nauki, trybem egzaminu, śledzeniem postępu i ekranem ustawień.
+**Koto** to aplikacja do nauki japońskiej kany: **hiragana i katakana**, z animacją kolejności kresek, trybem nauki, trybem egzaminu, modułem słownictwa (fiszki z filtrem tematycznym), śledzeniem postępu i ekranem ustawień.
 
 Działa jako zwykła strona (bez build stepu) i jako **PWA** — po pierwszym poprawnym załadowaniu online cała aplikacja działa offline.
 
@@ -32,8 +32,8 @@ python3 -m http.server 8000
 Następnie otwórz:
 
 ```
-http://localhost:8000/tests.html          SRS, migracja, ustawienia egzaminu, timeout, konfetti, granica limitu
-http://localhost:8000/tests-learn.html    panel nauki, layout, animacje
+http://localhost:8000/tests.html          SRS, migracja, ustawienia egzaminu, timeout, konfetti, granica limitu, dane i magazyn słownictwa
+http://localhost:8000/tests-learn.html    panel nauki, layout, animacje, fiszki słownictwa i filtr tematyczny
 http://localhost:8000/tests-daily.html    statystyki dzienne
 ```
 
@@ -79,10 +79,10 @@ Aplikacja korzysta z Web App Manifest i Service Workera.
 Po pierwszym poprawnym załadowaniu online Service Worker zapisuje w Cache Storage:
 
 - **powłokę aplikacji** — `index.html`, `app.js`, `style.css`, manifest, ikony, `offline.html`,
-- **148 plików SVG z KanjiVG** (74 części hiragany + 74 części katakany — razem pokrywają wszystkie 104 znaki obu skryptów, wraz z kana dwuczęściowymi: dakuten, handakuten, yōon),
+- **148 plików SVG z KanjiVG** (74 części hiragany + 74 części katakany — razem pokrywają wszystkie 104 znaki każdego ze skryptów, czyli 208 w sumie, wraz z kana dwuczęściowymi: dakuten, handakuten, yōon),
 - **Google Fonts** (Inter + Noto Sans JP).
 
-Od tego momentu aplikacja uruchamia się i działa bez sieci: tryb nauki (z animacją kolejności kresek), tryb egzaminu, postęp, ustawienia, motyw i dźwięk.
+Od tego momentu aplikacja uruchamia się i działa bez sieci: tryb nauki (z animacją kolejności kresek), tryb egzaminu, postęp, ustawienia, motyw i dźwięk oraz moduł słownictwa z fiszkami.
 
 Dźwięk jest generowany przez Web Audio (oscylatory), więc nie wymaga pobierania żadnych plików audio.
 
@@ -94,7 +94,7 @@ Aplikacja nigdy nie wymusza automatycznego przeładowania. Gdy pojawi się nowa 
 
 Przeładowanie następuje dopiero po świadomym kliknięciu — dzięki temu trwająca sesja, np. w trakcie egzaminu, nie zostaje przerwana.
 
-Cache są wersjonowane (`koto-shell-v1`, `koto-kanjivg-v1`, `koto-fonts-v1`); po aktywacji nowej wersji stare cache z przestrzeni `koto-*` są usuwane, a cache sprzed zmiany nazw pozostają nietknięte.
+Cache są wersjonowane (`koto-shell-v<N>`, `koto-kanjivg-v<N>`, `koto-fonts-v<N>`; bieżąca wersja jest w `sw.js` jako `VERSION`); po aktywacji nowej wersji stare cache z przestrzeni `koto-*` są usuwane, a cache sprzed zmiany nazw pozostają nietknięte.
 
 ### Localhost a Service Worker
 
@@ -121,13 +121,15 @@ Po pierwszym załadowaniu online potrzebne pliki SVG trafiają do Cache Storage,
 ```text
 hiragana-study/
 ├── index.html            powłoka aplikacji + bootstrap motywu przed pierwszym renderem
-├── app.js                cała logika: dane, stan, rendering, nauka, egzamin, postęp, audio, ustawienia
+├── app.js                cała logika: dane, stan, rendering, nauka, egzamin, słownictwo, postęp, audio, ustawienia
 ├── style.css             style, motywy, layout, animacje, responsywność
 ├── sw.js                 Service Worker (cache + strategie fetch)
 ├── manifest.webmanifest  manifest PWA
 ├── offline.html          fallback nawigacji, gdy dokument nie jest w cache
+├── logo.png              logotyp źródłowy
 ├── icons/                ikony aplikacji (192, 512, maskable, apple-touch-icon)
 ├── tests*.html + tests*.js  harnessy testowe (narzędzia deweloperskie)
+├── words_to_add.md       notatki źródłowe materiału do słownictwa
 ├── README.md
 ├── PROJECT.md            dokumentacja projektu i stan prac
 └── AGENTS.md             zasady pracy dla agentów kodujących
