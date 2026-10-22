@@ -607,6 +607,91 @@ const katakanaStrokeText = {
 scriptData.katakana.strokeText = katakanaStrokeText;
 
 /* =========================================================
+   TAXONOMIA TEMATYCZNA (wspólna dla T19 / T20 / T18)
+   ------------------------------------------------------------
+   Kategoria to TEMAT — „jedzenie", „szkoła", „transport" — a nie typ
+   gramatyczny. Typ zostaje w `type` i nadal steruje tym, z czego biorą
+   się rozpraszacze. Są to dwie ortogonalne osie: typ mówi, CZYM jest
+   pozycja, kategoria mówi, O CZYM jest.
+
+   Identyfikatory są wspólne dla wszystkich modułów: kanji z kategorii
+   „jedzenie" i słowo z kategorii „jedzenie" mają ten sam identyfikator,
+   więc filtr z T19 ma przedłużenie w T18 (kanji) i T20 (gramatyka)
+   bez osobnej taksonomii w każdym module.
+
+   Lista jest zamknięta. Nowa kategoria to zmiana w kodzie, a nie
+   dowolny string w danych — inaczej literówka („jedzenie" i „jedzenia")
+   rozjechałaby liczniki w UI na dwie niezależne kategorie.
+   ========================================================= */
+
+const CATEGORY_ALL = 'all';
+const CATEGORY_NONE = 'none';
+
+/* Kolejność deklaracji jest kolejnością w UI — nie alfabetyczna,
+   tylko od najbliższych tematów do dalszych. */
+const TOPIC_CATEGORIES = {
+  school: 'Szkoła',
+  people: 'Ludzie',
+  food: 'Jedzenie',
+  drink: 'Napoje',
+  home: 'Dom',
+  time: 'Czas',
+  body: 'Ciało',
+  clothes: 'Ubrania',
+  nature: 'Przyroda',
+  transport: 'Transport',
+  work: 'Praca',
+  place: 'Miejsca'
+};
+
+function isKnownCategory(id) {
+  return id === CATEGORY_NONE || Object.prototype.hasOwnProperty.call(TOPIC_CATEGORIES, id);
+}
+
+function categoryLabel(id) {
+  if (id === CATEGORY_NONE) return 'Bez kategorii';
+  return TOPIC_CATEGORIES[id] || id;
+}
+
+/*
+   Brak pola `category` oznacza „bez kategorii", a nie brak pozycji:
+   pozycja istnieje, tylko nie ma tematu. Dzięki temu filtrowanie jest
+   pełne — suma kategorii i koszyka „bez kategorii" daje zawsze
+   wielkość zakresu.
+
+   Nieznany identyfikator traktujemy tak samo jak brak tematu: literówka
+   w danych nie może stworzyć nowej, niewidocznej kategorii. Test
+   pilnuje, żeby takich literówek w tabeli nie było.
+*/
+function itemCategory(item) {
+  if (!item || !item.category) return CATEGORY_NONE;
+  return isKnownCategory(item.category) ? item.category : CATEGORY_NONE;
+}
+
+function filterByCategory(items, category) {
+  if (!category || category === CATEGORY_ALL) return items;
+  return items.filter(item => itemCategory(item) === category);
+}
+
+/*
+   Tylko kategorie, które w danym zbiorze coś mają, w kolejności
+   taksonomii. „Bez kategorii" zawsze na końcu, bo to koszyk
+   uzupełniający, a nie temat.
+*/
+function categoriesIn(items) {
+  const counts = new Map();
+  for (const item of items) {
+    const id = itemCategory(item);
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+
+  const present = Object.keys(TOPIC_CATEGORIES).filter(id => counts.has(id));
+  if (counts.has(CATEGORY_NONE)) present.push(CATEGORY_NONE);
+
+  return present.map(id => ({ id, label: categoryLabel(id), count: counts.get(id) }));
+}
+
+/* =========================================================
    DANE: SŁOWNICTWO (T19)
    Zeszyt ćwiczeń: „きょうしつで つかう ことば" (1) — wyrażenia,
    których nauczyciel używa na lekcji, i czasowniki, od których
@@ -657,20 +742,20 @@ const VOCAB_ITEMS = [
   { id: 'v24', type: 'verb', kana: 'しめます', romaji: 'shimemasu', meaning: 'zamykać (np. drzwi)' },
 
   // Rzeczowniki i zwroty z sekcji „Przydatne rzeczowniki" oraz „Rzeczownik + を + czasownik"
-  { id: 'n01', type: 'word', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
+  { id: 'n01', type: 'word', category: 'people', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
   { id: 'n02', type: 'word', kana: 'これ', romaji: 'kore', meaning: 'to' },
-  { id: 'n03', type: 'word', kana: 'ほん', romaji: 'hon', meaning: 'książka' },
-  { id: 'n04', type: 'word', kana: 'きょうかしょ', romaji: 'kyoukasho', meaning: 'podręcznik' },
-  { id: 'n05', type: 'word', kana: 'しゅくだい', romaji: 'shukudai', meaning: 'praca domowa' },
-  { id: 'n06', type: 'word', kana: 'にほんご', romaji: 'nihongo', meaning: 'język japoński' },
-  { id: 'n07', type: 'word', kana: 'ポーランドご', romaji: 'poorandogo', meaning: 'język polski' },
+  { id: 'n03', type: 'word', category: 'school', kana: 'ほん', romaji: 'hon', meaning: 'książka' },
+  { id: 'n04', type: 'word', category: 'school', kana: 'きょうかしょ', romaji: 'kyoukasho', meaning: 'podręcznik' },
+  { id: 'n05', type: 'word', category: 'school', kana: 'しゅくだい', romaji: 'shukudai', meaning: 'praca domowa' },
+  { id: 'n06', type: 'word', category: 'school', kana: 'にほんご', romaji: 'nihongo', meaning: 'język japoński' },
+  { id: 'n07', type: 'word', category: 'school', kana: 'ポーランドご', romaji: 'poorandogo', meaning: 'język polski' },
 
-  { id: 'p01', type: 'phrase', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
-  { id: 'p02', type: 'phrase', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
+  { id: 'p01', type: 'phrase', category: 'people', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
+  { id: 'p02', type: 'phrase', category: 'people', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
   { id: 'p03', type: 'phrase', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
-  { id: 'p04', type: 'phrase', kana: 'ほんを よんでください', romaji: 'hon o yonde kudasai', meaning: 'proszę przeczytać książkę' },
-  { id: 'p05', type: 'phrase', kana: 'きょうかしょを だしてください', romaji: 'kyoukasho o dashite kudasai', meaning: 'proszę wyjąć / przygotować podręcznik' },
-  { id: 'p06', type: 'phrase', kana: 'しゅくだいを だしてください', romaji: 'shukudai o dashite kudasai', meaning: 'proszę oddać pracę domową' }
+  { id: 'p04', type: 'phrase', category: 'school', kana: 'ほんを よんでください', romaji: 'hon o yonde kudasai', meaning: 'proszę przeczytać książkę' },
+  { id: 'p05', type: 'phrase', category: 'school', kana: 'きょうかしょを だしてください', romaji: 'kyoukasho o dashite kudasai', meaning: 'proszę wyjąć / przygotować podręcznik' },
+  { id: 'p06', type: 'phrase', category: 'school', kana: 'しゅくだいを だしてください', romaji: 'shukudai o dashite kudasai', meaning: 'proszę oddać pracę domową' }
 ];
 
 /*
@@ -2301,16 +2386,50 @@ const vocabSetup = {
   mode: 'learn',
   direction: 'kana-meaning',
   scope: 'all',
+  category: CATEGORY_ALL,
   order: 'smart',
   limit: 0
 };
 
-function vocabPool(scope) {
+/* Zbiór pojedynczego zakresu (typu) — bez filtra kategorii. */
+function vocabScopePool(scope) {
   if (scope === 'cards') return VOCAB_CARDS;
   if (scope === 'verbs') return VOCAB_VERB_ITEMS;
   if (scope === 'words') return VOCAB_WORDS;
   if (scope === 'phrases') return VOCAB_PHRASE_ITEMS;
   return VOCAB_LEARN_ITEMS;
+}
+
+/*
+   Kategoria zawęża ZESTAW do nauki. Rozpraszacze biorą się natomiast
+   z całej puli typu (`vocabPool(poolScope)` bez kategorii) — filtr
+   tematyczny nie może ograniczać puli odpowiedzi, bo przy wąskiej
+   kategorii nie dałoby się zbudować czterech wariantów.
+*/
+function vocabPool(scope, category = CATEGORY_ALL) {
+  return filterByCategory(vocabScopePool(scope), category);
+}
+
+/*
+   Kategorie dostępne w zakresie. Filtr pojawia się tylko wtedy, gdy
+   zakres ma przynajmniej jedną prawdziwą kategorię — sama puli
+   „bez kategorii" nie jest filtrem, więc kontrolki nie pokazujemy.
+*/
+function vocabCategoryOptions(scope) {
+  const categories = categoriesIn(vocabScopePool(scope));
+  const themed = categories.filter(category => category.id !== CATEGORY_NONE);
+  const unthemed = categories.find(category => category.id === CATEGORY_NONE);
+  const options = themed.slice();
+  if (unthemed) options.push(unthemed);
+  return { options, available: themed.length > 0 };
+}
+
+/* Kategoria, która w nowym zakresie nic nie ma, przestaje być wyborem. */
+function normalizeVocabCategory() {
+  const { options } = vocabCategoryOptions(vocabSetup.scope);
+  if (!options.some(option => option.id === vocabSetup.category)) {
+    vocabSetup.category = CATEGORY_ALL;
+  }
 }
 
 function vocabItem(cardId) {
@@ -2319,13 +2438,13 @@ function vocabItem(cardId) {
 
 /* Limit jest tylko skróceniem wybranego zakresu — nigdy nie powiększa go
    ponad liczbę dostępnych kart. */
-function vocabCardCount(scope, limit) {
-  const total = vocabPool(scope).length;
+function vocabCardCount(scope, category, limit) {
+  const total = vocabPool(scope, category).length;
   return limit > 0 ? Math.min(limit, total) : total;
 }
 
-function vocabSessionOrder(scope, { order = 'smart', limit = 0 } = {}) {
-  let entries = vocabPool(scope).map((item, index) => ({
+function vocabSessionOrder(scope, category, { order = 'smart', limit = 0 } = {}) {
+  let entries = vocabPool(scope, category).map((item, index) => ({
     id: item.id,
     index: index,
     stat: vocabStat(item.id)
@@ -2337,7 +2456,7 @@ function vocabSessionOrder(scope, { order = 'smart', limit = 0 } = {}) {
     entries.sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index);
   }
 
-  const count = vocabCardCount(scope, limit);
+  const count = vocabCardCount(scope, category, limit);
   return entries.slice(0, count).map(entry => entry.id);
 }
 
@@ -2374,12 +2493,13 @@ function vocabOptions(item, direction) {
 function startVocabSession({ ids = null } = {}) {
   const order = ids
     ? [...ids]
-    : vocabSessionOrder(vocabSetup.scope, { order: vocabSetup.order, limit: vocabSetup.limit });
+    : vocabSessionOrder(vocabSetup.scope, vocabSetup.category, { order: vocabSetup.order, limit: vocabSetup.limit });
 
   state.vocab = {
     mode: vocabSetup.mode,
     direction: vocabSetup.direction,
     scope: vocabSetup.scope,
+    category: vocabSetup.category,
     order,
     index: 0,
     correct: 0,
@@ -2517,13 +2637,15 @@ function vocabLearnAnswerHTML(item, asksKana) {
 /* Ekran wyboru: tryb, kierunek, zakres, kolejność i długość sesji. Wszystkie
    decyzje są sesyjne, więc nie ruszają formatu `hiragana-vocab`. */
 function renderVocabSetup() {
-  const { mode, direction, scope, order, limit } = vocabSetup;
-  const pool = vocabPool(scope);
-  const count = vocabCardCount(scope, limit);
+  const { mode, direction, scope, category, order, limit } = vocabSetup;
+  const pool = vocabPool(scope, category);
+  const count = vocabCardCount(scope, category, limit);
   const attempts = pool.reduce((sum, item) => sum + vocabStat(item.id).seen, 0);
   const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
   const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
   const started = pool.filter(item => vocabStat(item.id).seen > 0).length;
+  const categories = vocabCategoryOptions(scope);
+  const scopeSize = vocabScopePool(scope).length;
 
   const directionHint =
     direction === 'meaning-kana'
@@ -2582,6 +2704,25 @@ function renderVocabSetup() {
           </div>
         </div>
 
+        ${
+          categories.available
+            ? `
+        <div class="vocab-setup-group">
+          <label class="settings-label" for="vocabCategory">Kategoria</label>
+          <select class="vocab-select" id="vocabCategory" data-focus-key="vocab-category">
+            <option value="${CATEGORY_ALL}" ${category === CATEGORY_ALL ? 'selected' : ''}>Wszystkie kategorie (${scopeSize})</option>
+            ${categories.options
+              .map(
+                option => `
+              <option value="${option.id}" ${category === option.id ? 'selected' : ''}>${option.label} (${option.count})</option>`
+              )
+              .join('')}
+          </select>
+          <small class="vocab-hint">Filtr tematyczny — ta sama lista kategorii dla słownictwa, kanji i gramatyki.</small>
+        </div>`
+            : ''
+        }
+
         <div class="vocab-setup-pair">
           <div class="vocab-setup-group">
             <span class="settings-label" id="vocabOrderLabel">Kolejność</span>
@@ -2634,6 +2775,8 @@ function renderVocabSetup() {
   const rerender = (field, value, focusKey) => {
     Audio.click();
     vocabSetup[field] = value;
+    // Kategoria z poprzedniego zakresu może w nowym nie istnieć.
+    normalizeVocabCategory();
     renderVocab();
 
     // Pełny `innerHTML` gubi fokus; przywracamy go na tym samym kontrolu.
@@ -2653,6 +2796,11 @@ function renderVocabSetup() {
   document.querySelectorAll('[data-vocab-scope]').forEach(button => {
     button.onclick = () => rerender('scope', button.dataset.vocabScope, 'vocab-scope-' + button.dataset.vocabScope);
   });
+
+  const categorySelect = document.getElementById('vocabCategory');
+  if (categorySelect) {
+    categorySelect.onchange = () => rerender('category', categorySelect.value, 'vocab-category');
+  }
 
   document.querySelectorAll('[data-vocab-order]').forEach(button => {
     button.onclick = () => rerender('order', button.dataset.vocabOrder, 'vocab-order-' + button.dataset.vocabOrder);

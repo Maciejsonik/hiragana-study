@@ -1983,6 +1983,28 @@ body.focus-mode .app-shell {
   line-height: 1.4;
 }
 
+/*
+   Kategoria to jedyna oś, która rośnie z danymi, więc dostaje `select`
+   zamiast pigułek: kilkanaście tematów nie zmieści się w rządzie na
+   telefonie, a natywna lista skalowana jest poza tym dostępna.
+*/
+.vocab-select {
+  width: 100%;
+  max-width: 420px;
+  padding: 9px 10px;
+  border: var(--surface-border);
+  border-radius: var(--radius-xs);
+  background: var(--card);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-md);
+}
+
+.vocab-select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
 /* Trzy liczby przed startem: ile kart, ile już rozpoczętych i jaka trafność. */
 .vocab-summary {
   display: grid;

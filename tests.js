@@ -1687,6 +1687,54 @@
         vocabCard('v99') === null,
       String(vocabCard('v21'))
     );
+
+    /*
+       Kategorie tematyczne: identyfikatory muszą pochodzić z zamkniętej
+       taksonomii, a podział ma być pełny — suma kategorii i koszyka
+       „bez kategorii" zawsze daje wielkość zakresu.
+    */
+    const categorised = VOCAB_LEARN_ITEMS.filter(item => item.category);
+    ok(
+      'VO12 każda kategoria pochodzi z taksonomii',
+      categorised.length > 0 &&
+        categorised.every(item => isKnownCategory(item.category)) &&
+        categorised.every(item => item.category !== CATEGORY_NONE),
+      categorised
+        .filter(item => !isKnownCategory(item.category))
+        .map(item => item.id + ':' + item.category)
+        .join(',')
+    );
+
+    ok(
+      'VO13 kategoria jest tylko tematem rzeczownika i zwrotu',
+      categorised.every(item => item.type === 'word' || item.type === 'phrase') &&
+        VOCAB_CARDS.every(card => !card.category) &&
+        VOCAB_VERB_ITEMS.every(verb => !verb.category),
+      categorised.map(item => item.id + ':' + item.type).join(',')
+    );
+
+    const themeCounts = categoriesIn(VOCAB_LEARN_ITEMS);
+    const themedTotal = themeCounts
+      .filter(category => category.id !== CATEGORY_NONE)
+      .reduce((sum, category) => sum + category.count, 0);
+    const noneTotal = themeCounts.find(category => category.id === CATEGORY_NONE)?.count || 0;
+    ok(
+      'VO14 podział na kategorie jest pełny i zgodny z tabelą',
+      themedTotal + noneTotal === VOCAB_LEARN_ITEMS.length &&
+        themedTotal === categorised.length &&
+        themeCounts.filter(category => category.id !== CATEGORY_NONE).length >= 2,
+      themeCounts.map(category => category.id + ':' + category.count).join(' ')
+    );
+
+    ok(
+      'VO15 filtr kategorii zwęża zakres, a suma kategorii daje jego wielkość',
+      vocabPool('words', 'school').length === 5 &&
+        vocabPool('words', 'people').length === 1 &&
+        vocabPool('words', CATEGORY_NONE).length === 1 &&
+        vocabPool('words').length === 7 &&
+        vocabPool('words', 'school').every(item => item.category === 'school'),
+      ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
+    );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
   }

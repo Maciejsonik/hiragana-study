@@ -2021,9 +2021,15 @@ Tryb      Nauka (default) | Test
 Kierunek  Japoński → znaczenie | Znaczenie → japoński
 Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (7)
           Zwroty (8) | Wszystko (57, default)
+Kategoria  Wszystkie (default) | temat z zakresu | Bez kategorii
 Kolejność Inteligentna (default) | Losowa
 Liczba    Wszystkie (default) | 10 | 20
 ```
+
+The category row is a `select`, not a row of pills: the topic list is the
+one axis that grows with the data, and a dozen topics would not fit in a
+row on a phone. It is rendered only when the chosen scope actually has
+topics — the rules are in "Topic categories (layer 4)".
 
 The setup shows the effective card count, how many cards in the scope have
 been started, and the scope accuracy. "Nauka" opens a flashcard with one side
@@ -2056,6 +2062,101 @@ reshuffle the buttons under the finger.
 Every mode writes only through `recordVocabAnswer()`, so it changes
 `hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
 `hiragana-daily`, the exam settings or the SRS schedule.
+
+### Topic categories (layer 4)
+
+A second, orthogonal axis was added next to the scope: **the topic**.
+The scope answers *what kind of material is this* (a request, a verb, a
+noun, a phrase); the category answers *what is it about* (school, people,
+food, transport).
+
+The two axes do not compete. The scope still decides where the
+distractors come from, the category only narrows the set that is
+studied.
+
+```text
+scope      Polecenia | Czasowniki | Rzeczowniki | Zwroty | Wszystko
+category   Wszystkie | Szkoła | Ludzie | Jedzenie | Napoje | Dom | Czas
+           | Ciało | Ubrania | Przyroda | Transport | Praca | Miejsca
+           | Bez kategorii
+```
+
+`TOPIC_CATEGORIES` in `app.js` is the **closed list** of topics, and the
+identifiers are shared by every module: a kanji in the topic `food` and a
+word in the topic `food` carry the same identifier, so the filter that
+T19 introduces has a direct continuation in T18 (kanji) and T20
+(grammar) without a second taxonomy. A new topic is a change in code,
+never a free-form string in the data — otherwise a typo (`jedzenie` and
+`jedzenia`) would silently split one topic into two.
+
+An item carries an optional `category`. **No field means "no topic", not
+"missing item"**: `itemCategory()` maps a missing field to
+`CATEGORY_NONE`, so the buckets always add up to the size of the scope.
+
+```text
+n03  word    school   ほん            książka
+n01  word    people   なまえ          imię
+n02  word    —        これ            to
+p04  phrase  school   ほんを よんで…   proszę przeczytać książkę
+```
+
+Only nouns and noun + `を` + verb phrases carry a topic today. The
+classroom commands, the verbs and the sentence patterns have none —
+their topic would be an activity, not a subject, and mixing the two
+taxonomies in one list would make the counts meaningless.
+
+Three rules make the filter behave:
+
+- **The control appears only where it can narrow something.** A scope
+  with no categorised item shows no category control at all; a scope
+  with categorised items also offers "Bez kategorii" when it holds
+  untagged material. A scope of only untagged items would otherwise
+  offer a filter that changes nothing.
+- **Changing the scope resets an impossible category.** A topic that
+  has no items in the new scope is no longer a choice, so
+  `normalizeVocabCategory()` falls back to "all".
+- **Distractors are not filtered.** `vocabOptions()` still draws from
+  the whole type pool, never from the narrowed category — with a
+  one-item topic there would be nothing to build four answers from.
+  This is asserted, not assumed: a topic with a single noun still
+  shows four options.
+
+The filter is session-only, exactly like the scope: it lives in
+`vocabSetup` and in the session object, so `hiragana-vocab` is
+untouched and no migration or version bump is needed. The store is
+keyed by item id, and the topic lives in the static table, not in the
+store.
+
+Covered by VO12–VO15 in `tests.js` (every topic comes from the
+taxonomy; topics only on nouns and phrases; the partition is complete
+and matches the table; the filter narrows the scope) and by F22a–F22e
+in `tests-learn.js` (the control and its counts; no control in a scope
+without topics; the control returns with the scope; the choice
+narrows the set to one card; a narrow topic still gives four options).
+
+**What this is not.** There is no per-topic progress store, no
+per-topic SRS and no per-topic daily history. Topic is a filter over
+one set of records, not a second progress system. The "smart" order
+still ignores topics deliberately: interleaving topics is a learning
+decision, not a side effect of filtering.
+
+### Extension contract for T18 and T20
+
+The category axis is already shaped for the modules that come next:
+
+- a kanji item and a grammar item are ordinary items with a `type` of
+  their own and a `category` from the same `TOPIC_CATEGORIES`;
+- a module's scope stays local to that module (`vocabScopePool()` is
+  the vocabulary one), while the topic list is global;
+- `filterByCategory()` and `categoriesIn()` are module-independent and
+  are what a kanji or grammar list would reuse;
+- topics are a filter over the existing records, so a new module needs
+  its own store only if it introduces genuinely new progress.
+
+What is deliberately **not** decided yet: whether a topic should
+influence the "smart" order, whether kanji and vocabulary should share
+one session, and how a topic maps onto future grammar exercises. Those
+are decisions for T18 and T20, not for this layer.
 
 Covered by F1–F21 in `tests-learn.js`: the setup with mode, direction, five
 scopes, order and limit; the default `all` scope (20 + 22 + 7 + 8); the default
@@ -2369,7 +2470,8 @@ SVG icon set: implemented
 Kana hub: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
-Vocabulary: data, progress store, flashcards and patterns; all 57 items implemented
+Vocabulary: data, progress store, flashcards, patterns and topic
+           categories; all 57 items implemented
 Grammar: NOT implemented
 Spaced repetition engine: implemented
 Daily goals: NOT implemented
@@ -2407,6 +2509,7 @@ and the polish are shipped (§35).
 UI phase 4 (Kana hub) — COMPLETE
 ↓
 T19 Vocabulary (module list + detail) — NOT STARTED
+   topic axis (layer 4) shipped as its foundation
 ↓
 T16 Code splitting
 ```
@@ -2968,13 +3071,14 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    store, partial-progress recovery,
                                    future-version guard, app shell,
                                    navigation, logo, Koto branding, the
-                                   About card and the Kana hub            (408 assertions)
+                                   About card, the Kana hub and the topic
+                                   taxonomy                           (412 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
                                    flashcards (T19, learn + test modes),
-                                   focus, 320 px layout, combined-script
-                                   panel                                  (173 assertions)
+                                   topic filter, focus, 320 px layout,
+                                   combined-script panel            (178 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

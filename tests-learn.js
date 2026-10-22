@@ -1764,6 +1764,81 @@
           state.vocab ? 'stary stan sesji' : 'setup'
         );
 
+        /*
+           Filtr tematyczny: druga oś obok zakresu. Kategoria zawęża
+           ZESTAW, ale nie zawęża puli rozpraszaczy — wąska kategoria
+           nadal musi dać cztery odpowiedzi.
+        */
+        document.querySelector('[data-vocab-scope="all"]').click();
+        await wait(120);
+        const categorySelect = document.getElementById('vocabCategory');
+        ok(
+          'F22a setup pokazuje filtr kategorii wraz z licznikami',
+          !!categorySelect &&
+            [...categorySelect.options].map(option => option.value).join(',') === 'all,school,people,none' &&
+            categorySelect.options[1].textContent.includes('Szkoła') &&
+            categorySelect.options[1].textContent.includes('8'),
+          categorySelect
+            ? [...categorySelect.options].map(option => option.textContent.trim()).join(' | ')
+            : 'brak selectu'
+        );
+
+        document.querySelector('[data-vocab-scope="cards"]').click();
+        await wait(120);
+        ok(
+          'F22b zakres bez kategorii nie pokazuje filtra i wraca do wszystkich',
+          !document.getElementById('vocabCategory') && vocabSetup.category === CATEGORY_ALL,
+          'select: ' +
+            (document.getElementById('vocabCategory') ? 'jest' : 'brak') +
+            ', kategoria: ' +
+            vocabSetup.category
+        );
+
+        document.querySelector('[data-vocab-scope="words"]').click();
+        await wait(120);
+        const wordSelect = document.getElementById('vocabCategory');
+        ok(
+          'F22c filtr wraca w zakresie z kategoriami i liczy karty',
+          !!wordSelect &&
+            wordSelect.options.length === 4 &&
+            document.querySelector('.vocab-summary-item strong').textContent === '7',
+          wordSelect ? [...wordSelect.options].map(option => option.textContent.trim()).join(' | ') : 'brak selectu'
+        );
+
+        if (wordSelect) {
+          wordSelect.value = 'people';
+          wordSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        await wait(120);
+        ok(
+          'F22d wybór kategorii zawęża zestaw do jednej karty',
+          vocabSetup.category === 'people' &&
+            document.querySelector('.vocab-summary-item strong').textContent === '1' &&
+            document.getElementById('vocabStart').textContent.includes('1 kart'),
+          'kategoria: ' +
+            vocabSetup.category +
+            ', karty: ' +
+            document.querySelector('.vocab-summary-item strong').textContent
+        );
+
+        document.querySelector('[data-vocab-mode="test"]').click();
+        await wait(100);
+        document.getElementById('vocabStart').click();
+        await wait(250);
+        const narrowOptions = [...document.querySelectorAll('[data-vocab-choice]')];
+        ok(
+          'F22e wąska kategoria nadal daje cztery odpowiedzi',
+          state.vocab.order.length === 1 &&
+            state.vocab.order[0] === 'n01' &&
+            state.vocab.category === 'people' &&
+            narrowOptions.length === 4,
+          state.vocab.order.join(',') + ' / ' + narrowOptions.length + ' opcji'
+        );
+
+        state.vocab = null;
+        renderVocab();
+        await wait(100);
+
         state.vocab = { finished: true };
         resetProgressData();
         ok('F23 reset postępu czyści stan fiszek', state.vocab === null, String(state.vocab));
@@ -1775,6 +1850,7 @@
         vocabSetup.mode = 'learn';
         vocabSetup.direction = 'kana-meaning';
         vocabSetup.scope = 'all';
+        vocabSetup.category = CATEGORY_ALL;
         vocabSetup.order = 'smart';
         vocabSetup.limit = 0;
         state.vocab = null;
