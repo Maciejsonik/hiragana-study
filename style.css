@@ -1983,13 +1983,51 @@ body.focus-mode .app-shell {
 
 .answers.answers-text {
   grid-template-columns: 1fr;
+  gap: var(--space-2-5);
+  max-width: 540px;
+  margin: var(--space-4) auto 0;
 }
 
 .answer.answer-text {
   font-family: inherit;
   font-size: var(--text-base);
+  font-weight: 600;
   text-align: left;
-  padding: 16px 18px 16px 34px;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.answer.answer-text:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.answer.answer-text:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.answer.answer-text .answer-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+  position: static;
+  margin: 0;
 }
 
 .vocab-kana {
@@ -2007,15 +2045,27 @@ body.focus-mode .app-shell {
 }
 
 .vocab-result {
-  padding: var(--space-6);
+  padding: var(--space-8) var(--space-6);
   text-align: center;
+  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in srgb, var(--line) 75%, var(--accent) 25%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card-solid) 96%, var(--accent) 4%) 0%,
+    var(--card-solid) 100%
+  );
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--line) 35%, transparent);
 }
 
 .vocab-result-score {
-  font-size: 2.4rem;
-  font-weight: 800;
+  font-size: clamp(2.6rem, 7vw, 3.6rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   margin: 0 0 var(--space-2);
-  color: var(--accent-dark);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .vocab-heading {
@@ -2215,7 +2265,7 @@ body.focus-mode .app-shell {
 .vocab-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
+  gap: var(--space-3);
   margin: var(--space-4) 0;
 }
 
@@ -2223,148 +2273,496 @@ body.focus-mode .app-shell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: var(--space-3);
-  border: var(--surface-border);
-  border-radius: var(--radius-lg);
-  background: var(--card);
+  gap: 4px;
+  padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--card) 92%, var(--accent) 8%);
   text-align: center;
+  transition: transform var(--duration-fast) var(--ease-standard);
 }
 
 .vocab-summary-item strong {
-  color: var(--accent-dark);
-  font-size: var(--text-2xl);
+  color: var(--accent);
+  font-size: clamp(1.4rem, 4vw, 1.85rem);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
 .vocab-summary-item span {
   color: var(--muted);
   font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .vocab-start {
   width: 100%;
-  min-height: 50px;
+  min-height: 52px;
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+.vocab-start .icon {
+  width: 20px;
+  height: 20px;
 }
 
 /* =========================================================
-   NAUKA SŁOWNICTWA — fiszka + samoocena
+   NAUKA SŁOWNICTWA — fiszka + samoocena (T19)
 ========================================================= */
 
+.vocab-session {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.session-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.session-score-badge .score-correct {
+  color: var(--good);
+  display: inline-flex;
+  align-items: center;
+}
+
+.session-score-badge .score-wrong {
+  color: var(--bad);
+  display: inline-flex;
+  align-items: center;
+}
+
 .vocab-learn {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
 }
 
 .vocab-learn-instruction {
-  margin-bottom: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  padding: 5px 16px;
+  border-radius: var(--radius-pill);
   color: var(--muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  margin-bottom: var(--space-4);
   text-align: center;
 }
 
 .vocab-learn-card {
-  min-height: 230px;
-  padding: var(--space-6) var(--space-5);
-  border: var(--surface-border);
-  border-radius: var(--radius-xl);
-  background: var(--card-solid);
+  position: relative;
+  overflow: hidden;
+  min-height: 290px;
+  padding: var(--space-8) var(--space-6);
+  border: 1px solid color-mix(in srgb, var(--line) 75%, var(--accent) 25%);
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card-solid) 98%, var(--accent) 2%) 0%,
+    var(--card-solid) 100%
+  );
+  box-shadow:
+    0 20px 48px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--line) 35%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+@media (max-width: 600px) {
+  .vocab-learn-card {
+    min-height: 250px;
+    padding: var(--space-6) var(--space-4);
+    border-radius: var(--radius-xl);
+  }
+}
+
+.vocab-card-watermark {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  font-family: var(--font-japanese);
+  font-size: 8.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.045;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  filter: blur(0.5px);
 }
 
 .vocab-learn-side {
-  margin-bottom: var(--space-2);
-  color: var(--muted);
-  font-size: var(--text-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  margin-bottom: var(--space-4);
+  z-index: 1;
+  position: relative;
+}
+
+.vocab-learn-side::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
 }
 
 .vocab-learn-front {
-  margin-bottom: var(--space-4);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.vocab-learn-front.question-vocab {
+  font-size: clamp(2.6rem, 7vw, 3.8rem);
+  font-family: var(--font-japanese);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  margin: 0 auto;
+}
+
+.vocab-learn-front.question-vocab-pl {
+  font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+  margin: 0 auto;
 }
 
 .vocab-learn-placeholder {
-  padding: var(--space-5);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 440px;
+  padding: var(--space-6) var(--space-4);
+  margin-top: var(--space-4);
+  border: 1px dashed color-mix(in srgb, var(--line) 85%, var(--accent) 25%);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--soft) 60%, transparent);
   color: var(--muted);
   font-size: var(--text-sm);
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 1;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.vocab-placeholder-eye {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.vocab-placeholder-eye .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.vocab-placeholder-text {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.vocab-placeholder-tip {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  opacity: 0.85;
 }
 
 .vocab-learn-answer {
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
-  animation: fadeSlideIn var(--duration-slow) var(--ease-standard);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  padding-top: var(--space-5);
+  margin-top: var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  animation: vocabAnswerReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes vocabAnswerReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .vocab-learn-label {
-  margin-bottom: var(--space-1);
-  color: var(--good);
-  font-size: var(--text-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  background: color-mix(in srgb, var(--good) 12%, transparent);
+  color: var(--good);
+  border: 1px solid color-mix(in srgb, var(--good) 28%, transparent);
+  margin-bottom: var(--space-2);
 }
 
-.vocab-learn-answer .question-vocab,
+.vocab-learn-answer .question-vocab {
+  font-size: clamp(2rem, 5.5vw, 2.75rem);
+  font-family: var(--font-japanese);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 auto var(--space-1);
+}
+
 .vocab-learn-answer .question-vocab-pl {
-  margin: 0 auto var(--space-2);
+  font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 auto var(--space-1);
 }
 
-.vocab-learn-action {
-  width: 100%;
-  min-height: 48px;
-  margin-top: var(--space-4);
+.vocab-learn-answer .flash-romaji {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-2);
+}
+
+.vocab-learn-answer .flash-meta {
+  display: block;
+  text-align: left;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-2-5) var(--space-3);
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .vocab-grade-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2-5);
+  gap: var(--space-3);
   margin-top: var(--space-4);
 }
 
 .vocab-grade-actions .btn {
-  min-height: 48px;
-}
-
-.vocab-grade-wrong {
-  border-color: var(--bad);
-  color: var(--bad);
-}
-
-.vocab-grade-correct {
-  border-color: var(--good);
-}
-
-.key-hint {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 6px;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-xs);
-  font-size: 0.68em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 54px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
   font-weight: 700;
-  opacity: 0.68;
-  vertical-align: 1px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
 }
 
-.vocab-learn-feedback {
-  margin-top: var(--space-3);
-  font-size: var(--text-lg);
-  font-weight: 800;
+.vocab-grade-actions .btn:active {
+  transform: scale(0.97);
+}
+
+.vocab-grade-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.vocab-grade-icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.vocab-grade-text {
+  flex: 1;
   text-align: center;
 }
 
+.vocab-grade-wrong {
+  background: color-mix(in srgb, var(--bad) 10%, var(--card-solid));
+  border: 1.5px solid color-mix(in srgb, var(--bad) 35%, transparent);
+  color: var(--bad);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--bad) 12%, transparent);
+}
+
+.vocab-grade-wrong:hover {
+  background: color-mix(in srgb, var(--bad) 18%, var(--card-solid));
+  border-color: var(--bad);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--bad) 28%, transparent);
+}
+
+.vocab-grade-correct {
+  background: color-mix(in srgb, var(--good) 12%, var(--card-solid));
+  border: 1.5px solid color-mix(in srgb, var(--good) 35%, transparent);
+  color: var(--good);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--good) 12%, transparent);
+}
+
+.vocab-grade-correct:hover {
+  background: color-mix(in srgb, var(--good) 20%, var(--card-solid));
+  border-color: var(--good);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--good) 30%, transparent);
+}
+
+.key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  box-shadow: 0 1.5px 0 color-mix(in srgb, currentColor 28%, transparent);
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.vocab-learn-action {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--space-4);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 26%, transparent);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.vocab-learn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.vocab-learn-action:active {
+  transform: scale(0.97);
+}
+
+.vocab-learn-action .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.vocab-learn-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-base);
+  font-weight: 800;
+  margin: var(--space-3) auto 0;
+  text-align: center;
+  animation: feedbackPop 0.25s var(--ease-spring);
+}
+
+@keyframes feedbackPop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .vocab-learn-feedback.is-correct {
+  background: color-mix(in srgb, var(--good) 14%, var(--card-solid));
+  border: 1px solid color-mix(in srgb, var(--good) 32%, transparent);
   color: var(--good);
 }
 
 .vocab-learn-feedback.is-wrong {
+  background: color-mix(in srgb, var(--bad) 14%, var(--card-solid));
+  border: 1px solid color-mix(in srgb, var(--bad) 32%, transparent);
   color: var(--bad);
+}
+
+.vocab-feedback-icon {
+  display: grid;
+  place-items: center;
+}
+
+.vocab-feedback-icon .icon {
+  width: 20px;
+  height: 20px;
 }
 
 /* =========================================================
@@ -3645,7 +4043,14 @@ body.focus-mode .app-shell {
   }
 
   .vocab-grade-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .vocab-grade-actions .btn {
+    padding: var(--space-2-5) var(--space-2);
+    font-size: var(--text-sm);
+    min-height: 50px;
   }
 
   .vocab-setup {

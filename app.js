@@ -2790,7 +2790,7 @@ function vocabRevealHTML(item, correct) {
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
       ${vocabAnswerDetailsHTML(item)}
-      <button class="btn btn-primary" id="vocabNext">Dalej → (Enter)</button>
+      <button class="btn btn-primary" id="vocabNext">Dalej <span class="key-hint">Enter</span> ${icon('chevron-right')}</button>
     </div>
   `;
 }
@@ -3067,8 +3067,8 @@ function renderVocab() {
 
   const stats = `
     <span class="session-position">Karta <strong>${session.index + 1}</strong> z <strong>${total}</strong></span>
-    <div class="badge" aria-label="Wynik: ${session.correct} dobrze, ${session.wrong} błędnie">
-      ${session.correct} ✓ &nbsp; ${session.wrong} ✗
+    <div class="badge session-score-badge" aria-label="Wynik: ${session.correct} dobrze, ${session.wrong} błędnie">
+      <span class="score-correct">${session.correct} ✓</span> &nbsp; <span class="score-wrong">${session.wrong} ✗</span>
     </div>
   `;
 
@@ -3097,18 +3097,23 @@ function renderVocab() {
           </div>
 
           <div class="vocab-learn-card">
+            <span class="vocab-card-watermark" aria-hidden="true">${item.kana ? item.kana.charAt(0) : '語'}</span>
             <div class="vocab-learn-side">${sideLabel}</div>
             <div class="${frontClass} vocab-learn-front">${front}</div>
             ${
               session.revealed
                 ? vocabLearnAnswerHTML(item, asksKana)
-                : '<div class="vocab-learn-placeholder">Odpowiedź jest ukryta</div>'
+                : `<div class="vocab-learn-placeholder">
+                    <span class="vocab-placeholder-eye" aria-hidden="true">${icon('eye')}</span>
+                    <span class="vocab-placeholder-text">Odpowiedź jest ukryta</span>
+                    <small class="vocab-placeholder-tip">Sprawdź pamięć przed odkryciem</small>
+                  </div>`
             }
           </div>
 
           ${
             !session.revealed
-              ? `<button class="btn btn-primary vocab-learn-action" id="vocabReveal">Pokaż odpowiedź <span class="key-hint">Space</span></button>`
+              ? `<button class="btn btn-primary vocab-learn-action" id="vocabReveal">${icon('eye')} Pokaż odpowiedź <span class="key-hint">Space</span></button>`
               : ''
           }
 
@@ -3117,10 +3122,14 @@ function renderVocab() {
               ? `
                 <div class="vocab-grade-actions">
                   <button class="btn btn-danger vocab-grade-wrong" data-vocab-grade="wrong">
-                    ${icon('x')} Nie wiedziałem <span class="key-hint">1</span>
+                    <span class="vocab-grade-icon" aria-hidden="true">${icon('x')}</span>
+                    <span class="vocab-grade-text">Nie wiedziałem</span>
+                    <span class="key-hint">1</span>
                   </button>
                   <button class="btn btn-primary vocab-grade-correct" data-vocab-grade="correct">
-                    ${icon('check')} Wiedziałem <span class="key-hint">2</span>
+                    <span class="vocab-grade-icon" aria-hidden="true">${icon('check')}</span>
+                    <span class="vocab-grade-text">Wiedziałem</span>
+                    <span class="key-hint">2</span>
                   </button>
                 </div>
               `
@@ -3131,9 +3140,10 @@ function renderVocab() {
             session.answered
               ? `
                 <div class="vocab-learn-feedback ${session.lastCorrect ? 'is-correct' : 'is-wrong'}" role="status" aria-live="polite">
-                  ${session.lastCorrect ? '✓ Dobrze' : '✗ Nie tym razem'}
+                  <span class="vocab-feedback-icon" aria-hidden="true">${icon(session.lastCorrect ? 'check' : 'x')}</span>
+                  <span>${session.lastCorrect ? 'Dobrze' : 'Nie tym razem'}</span>
                 </div>
-                <button class="btn btn-primary vocab-learn-action" id="vocabNext">Dalej → <span class="key-hint">Enter</span></button>
+                <button class="btn btn-primary vocab-learn-action" id="vocabNext">Dalej <span class="key-hint">Enter</span> ${icon('chevron-right')}</button>
               `
               : ''
           }

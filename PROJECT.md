@@ -2033,7 +2033,11 @@ related card, and the learner grades themselves with "Nie wiedziałem" (1) or
 Enter advances. Both modes show the result screen, which offers "Powtórz
 błędne" when anything was missed, "Jeszcze raz" for the same setup, and "Nowy
 zestaw" back to setup. There is no separate "Wróć do menu" button: the top-bar
-home action ends the session and clears the active vocabulary state.
+home action ends the session and clears the active vocabulary state. Flashcards
+feature 3D layered card surfaces (`.vocab-learn-card`) with an atmospheric
+calligraphy watermark glyph, a peek placeholder with icon and memory prompt,
+tactile self-grading cards with mechanical keyboard keycaps (`.key-hint`),
+and a dual-counter score pill (`.session-score-badge`).
 
 In a test, the first direction shows the expression in kana and four Polish
 meanings; the second shows the Polish meaning as a sentence and four kana
