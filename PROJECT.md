@@ -767,17 +767,12 @@ On timeout:
 
 The timer applies independently to the optional overall question limit.
 
-### Known issue
+### Resolved
 
-Typed modes do not have `.answer` buttons.
-
-Therefore timeout behavior currently needs additional verification for typing questions, especially:
-
-- disabling the text input,
-- showing the expected answer,
-- preventing input after timeout.
-
-This should be checked during the next audit or relevant exam refactor.
+Typed modes do not have `.answer` buttons, so the timeout path disables the
+text input and the "Sprawdź" button explicitly, marks the question as answered
+and shows the expected answer. A late submission returns early and cannot
+change the score or daily stats. Covered by the TYP assertions in `tests.js`.
 
 ---
 
@@ -939,19 +934,11 @@ The list prioritizes:
 
 The current implementation uses a limit of 12.
 
-### Known issue
+### Resolved
 
-The "practice hard" path saves only part of the exam settings:
-
-```text
-groups
-options
-outside
-```
-
-and does not explicitly preserve all mode/timer settings.
-
-This should be audited later.
+The "practice hard" path passes the full `readSetup()` result to both
+`saveExamSettings()` and `startExam()`, so `limit`, `modes` and `timer` survive
+the shortcut. Covered by the CFG assertions in `tests.js`.
 
 ---
 
@@ -2384,7 +2371,7 @@ Shared session frame: implemented
 SVG icon set: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
-Vocabulary: data, progress store and flashcards; patterns pending
+Vocabulary: data, progress store, flashcards and patterns; all 57 items implemented
 Grammar: NOT implemented
 Spaced repetition engine: implemented
 Daily goals: NOT implemented
@@ -2503,9 +2490,9 @@ assumes deployment at the domain root.
 ## Versioned caches
 
 ```text
-shell-v<N>      application shell
-kanjivg-v<N>    KanjiVG stroke data
-fonts-v<N>      Google Fonts
+koto-shell-v<N>      application shell
+koto-kanjivg-v<N>    KanjiVG stroke data
+koto-fonts-v<N>      Google Fonts
 ```
 
 `<N>` is the `VERSION` constant in `sw.js`. Any change to `sw.js` makes the
@@ -2515,8 +2502,12 @@ without it, stale-while-revalidate could pair the new HTML with the old JS/CSS
 for one load. Activation rebuilds the KanjiVG and font caches, which is the
 accepted cost of not serving a mixed shell.
 
-On `activate` the worker deletes every cache that is not one of the three
-current ones, so stale versions cannot accumulate or be served.
+On `activate` the worker deletes only caches whose names start with
+`koto-shell-`, `koto-kanjivg-` or `koto-fonts-` and that are not the current
+versions. Caches created before this namespace was introduced are left
+untouched and ignored; the current worker only opens the new names. New stale
+versions cannot accumulate, while caches owned by other applications on the
+same origin are left alone.
 
 ## Fetch strategies
 
@@ -2541,10 +2532,10 @@ On `install`:
 - the Google Fonts stylesheet.
 
 The KanjiVG fill is deliberately tolerant: requests run with limited
-concurrency and a second retry pass, so a single failed CDN request can never
-abort the installation and a partially filled cache cannot become permanent.
-A missing SVG still degrades gracefully through the existing font-glyph fallback
-in `mountKana()`.
+concurrency and a second retry pass over the expected URLs still absent from
+the cache, so a single failed CDN request can never abort the installation and
+a partially filled cache is retried. A missing SVG still degrades gracefully
+through the existing font-glyph fallback in `mountKana()`.
 
 ## Update UX
 
@@ -2681,7 +2672,8 @@ O aplikacji  local operation, character scope, KanjiVG attribution
 
 Every control is a native `<button>` and applies immediately. Because each
 change re-renders the screen, focus is restored to the control that was
-activated (via `data-focus-key`).
+activated (via `data-focus-key`). The same mechanism covers the vocabulary
+setup controls, whose selection also re-renders the whole setup.
 
 Destructive actions are confirmed:
 
@@ -2790,8 +2782,12 @@ Fresh records seed stage 0. `due` is 0, `reps` and `lapses` are 0.
 Corruption handling: negative and non-integer values are treated as damage and
 replaced by the seed, while a positive out-of-range `stage` (e.g. 99) is clamped
 to `MAX_STAGE` — an overshoot still points at a genuinely practised kana and
-should not be hidden. Non-object entries are **kept** in `chars` (no data loss)
-but excluded from the queue and from `progressSummary()`.
+should not be hidden. Partial records are normalized on every load, including
+records already at `PROGRESS_VERSION`: missing or malformed `seen`, counters,
+`recent`, `confused` and `last` are repaired without touching SRS fields, so a
+record without `recent` cannot crash the menu. Non-object entries are **kept**
+in `chars` (no data loss) but excluded from the queue and from
+`progressSummary()`; answering that kana replaces the entry with a fresh record.
 
 `progressSummary()` sums only records passing `isProgressRecord()`, so `seen` and
 `correct` come from the same set and the percentage cannot exceed 100 or become
@@ -2961,14 +2957,16 @@ from the app.
 tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    typed-mode timeout, confetti, exam
                                    completion, vocabulary data and progress
-                                   store, app shell, navigation, logo,
-                                   Koto branding and the About card
-                                   (395 assertions)
+                                   store, partial-progress recovery,
+                                   future-version guard, app shell,
+                                   navigation, logo, Koto branding and
+                                   the About card                        (406 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
                                    flashcards (T19, learn + test modes),
-                                   combined-script panel                  (164 assertions)
+                                   focus, 320 px layout, combined-script
+                                   panel                                  (173 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 
