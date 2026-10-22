@@ -1739,6 +1739,60 @@
     ok('dane słownictwa', false, e.message);
   }
 
+  /* T19 list/detail (nowe aserty) */
+  try {
+    state.vocab = null;
+    state.screen = 'vocab';
+    renderNav();
+    refreshChrome();
+    vocabTopicNav.view = 'topics';
+    renderVocab();
+    vocabTopicNav.scope = 'all';
+    ok(
+      'T19 list renders themed and unthemed cards',
+      document.querySelectorAll('.vocab-topics-card').length >= 3 &&
+        [...document.querySelectorAll('.vocab-topics-card .vocab-topics-label')].some(
+          el => el.textContent === 'Bez kategorii'
+        ),
+      'cards=' + document.querySelectorAll('.vocab-topics-card').length
+    );
+    vocabTopicNav.topic = 'school';
+    vocabTopicNav.view = 'detail';
+    renderVocabTopics();
+    ok(
+      'T19 detail shows items',
+      document.querySelectorAll('.vocab-item-row').length > 0,
+      'rows=' + document.querySelectorAll('.vocab-item-row').length
+    );
+    vocabTopicNav.topic = null;
+    vocabTopicNav.view = 'topics';
+    vocabTopicNav.scope = 'words';
+    renderVocabTopics();
+    ok(
+      'T19 topic folder follows selected scope',
+      document.querySelectorAll('.vocab-topics-card').length === 3 &&
+        document.querySelector('.vocab-lead').textContent.includes('Rzeczowniki') &&
+        vocabTopicNav.scope === 'words',
+      'cards=' + document.querySelectorAll('.vocab-topics-card').length
+    );
+    document.querySelector('[data-nav="vocab"]').click();
+    ok(
+      'T19 vocabulary nav returns to setup from topics',
+      vocabTopicNav.view === 'setup' && !vocabTopicNav.topic && !state.vocab && !!document.getElementById('vocabStart'),
+      'screen=' + state.screen
+    );
+    const schoolIds = vocabPool('all', 'school').map(i => i.id);
+    startVocabSession({ ids: schoolIds });
+    ok(
+      'T19 session starts from topic',
+      state.vocab && state.vocab.order.length === schoolIds.length,
+      'order=' + (state.vocab ? state.vocab.order.length : 0) + ' expected=' + schoolIds.length
+    );
+    ok('T19 home exit guard is available to top bar', typeof confirmVocabExit === 'function');
+  } catch (e) {
+    ok('T19 list/detail', false, e.message);
+  }
+
   /* =====================================================
      SŁOWNICTWO (T19) — magazyn postępu
      ===================================================== */

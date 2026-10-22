@@ -198,17 +198,14 @@ w — W
 Characters are represented as:
 
 ```js
-[kana, romaji]
+[kana, romaji];
 ```
 
 and transformed into:
 
 ```js
 {
-  kana,
-  romaji,
-  group,
-  groupId
+  (kana, romaji, group, groupId);
 }
 ```
 
@@ -444,12 +441,8 @@ const overall = entry.correct / entry.seen;
 
 if (entry.recent.length >= 4 && rate >= 0.5) return 'hard';
 
-if (
-  entry.seen >= 10 &&
-  overall >= 0.9 &&
-  entry.recent.length >= 5 &&
-  entry.recent.slice(-5).every(r => r === 1)
-) return 'mastered';
+if (entry.seen >= 10 && overall >= 0.9 && entry.recent.length >= 5 && entry.recent.slice(-5).every(r => r === 1))
+  return 'mastered';
 
 if (entry.recent.length >= 4 && rate === 0) return 'good';
 
@@ -631,41 +624,30 @@ Exam state contains approximately:
 
 ```js
 {
-  groups,
-  kanaList,
-  options,
-  outside,
-  enabledModes,
-
-  currentMode,
-
-  timerSec,
-  timerCountdown,
-  timerRemaining,
-
-  questionLimit,
-
-  current,
-
-  score,
-  wrong,
-  total,
-
-  serial,
-  asked,
-
-  answered,
-  waiting,
-  finished,
-
-  timer,
-
-  mistakes,
-
-  streak,
-  bestStreak,
-
-  xp
+  (groups,
+    kanaList,
+    options,
+    outside,
+    enabledModes,
+    currentMode,
+    timerSec,
+    timerCountdown,
+    timerRemaining,
+    questionLimit,
+    current,
+    score,
+    wrong,
+    total,
+    serial,
+    asked,
+    answered,
+    waiting,
+    finished,
+    timer,
+    mistakes,
+    streak,
+    bestStreak,
+    xp);
 }
 ```
 
@@ -1693,12 +1675,12 @@ D1–D10 in `tests-learn.js`.
 `scoreDrawing(drawn, reference, box)` returns numbers, not a verdict, and weighs
 four components into one score:
 
-| component | question | weight |
-| --- | --- | --- |
-| count | were as many strokes drawn as the pattern needs | 0.35 |
-| direction | does stroke *n* point where stroke *n* of the pattern points | 0.25 |
-| coverage | how much of the **pattern** lies near the drawing | 0.40 |
-| precision | how much of the **drawing** lies near the pattern | — |
+| component | question                                                     | weight |
+| --------- | ------------------------------------------------------------ | ------ |
+| count     | were as many strokes drawn as the pattern needs              | 0.35   |
+| direction | does stroke _n_ point where stroke _n_ of the pattern points | 0.25   |
+| coverage  | how much of the **pattern** lies near the drawing            | 0.40   |
+| precision | how much of the **drawing** lies near the pattern            | —      |
 
 Coverage and precision are kept apart on purpose: the first punishes missing
 strokes, the second punishes scribbling beside the character, and their mean is
@@ -2021,15 +2003,23 @@ Tryb      Nauka (default) | Test
 Kierunek  Japoński → znaczenie | Znaczenie → japoński
 Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (7)
           Zwroty (8) | Wszystko (57, default)
-Kategoria  Wszystkie (default) | temat z zakresu | Bez kategorii
+Tematy    osobny folder tematów, w tym Bez kategorii
 Kolejność Inteligentna (default) | Losowa
 Liczba    Wszystkie (default) | 10 | 20
 ```
 
-The category row is a `select`, not a row of pills: the topic list is the
-one axis that grows with the data, and a dozen topics would not fit in a
-row on a phone. It is rendered only when the chosen scope actually has
-topics — the rules are in "Topic categories (layer 4)".
+The setup screen links to a separate topic folder instead of duplicating the
+category filter as a control: the topic list is the one axis that grows with
+the data, and a dozen topics would not fit in a row on a phone. The folder
+follows the selected scope, contains both themed and unthemed cards, and
+choosing one opens its detail view and starts a session for that group. The
+rules are in "Topic categories (layer 4)".
+
+Topic sessions retain the setup's direction, mode, ordering and card limit.
+The topic only narrows the pool; it does not create a second flashcard
+configuration. Leaving an active vocabulary session through the top-bar home
+action requires confirmation so accidental navigation cannot discard the
+session.
 
 The setup shows the effective card count, how many cards in the scope have
 been started, and the scope accuracy. "Nauka" opens a flashcard with one side
@@ -2066,8 +2056,8 @@ Every mode writes only through `recordVocabAnswer()`, so it changes
 ### Topic categories (layer 4)
 
 A second, orthogonal axis was added next to the scope: **the topic**.
-The scope answers *what kind of material is this* (a request, a verb, a
-noun, a phrase); the category answers *what is it about* (school, people,
+The scope answers _what kind of material is this_ (a request, a verb, a
+noun, a phrase); the category answers _what is it about_ (school, people,
 food, transport).
 
 The two axes do not compete. The scope still decides where the
@@ -2076,7 +2066,7 @@ studied.
 
 ```text
 scope      Polecenia | Czasowniki | Rzeczowniki | Zwroty | Wszystko
-category   Wszystkie | Szkoła | Ludzie | Jedzenie | Napoje | Dom | Czas
+topics     osobny folder: Szkoła | Ludzie | Jedzenie | Napoje | Dom | Czas
            | Ciało | Ubrania | Przyroda | Transport | Praca | Miejsca
            | Bez kategorii
 ```
@@ -2105,34 +2095,36 @@ classroom commands, the verbs and the sentence patterns have none —
 their topic would be an activity, not a subject, and mixing the two
 taxonomies in one list would make the counts meaningless.
 
-Three rules make the filter behave:
+Three rules make the topic folder behave:
 
-- **The control appears only where it can narrow something.** A scope
-  with no categorised item shows no category control at all; a scope
-  with categorised items also offers "Bez kategorii" when it holds
-  untagged material. A scope of only untagged items would otherwise
-  offer a filter that changes nothing.
-- **Changing the scope resets an impossible category.** A topic that
-  has no items in the new scope is no longer a choice, so
-  `normalizeVocabCategory()` falls back to "all".
+- **The folder contains only non-empty topics.** "Bez kategorii" is
+  displayed as a real card, not hidden as a fallback, so every item can
+  be reached from the same navigation.
+- **Choosing a topic opens its detail view.** The detail view lists its
+  cards and starts a session for exactly that topic; returning goes back
+  to the topic folder or setup screen.
 - **Distractors are not filtered.** `vocabOptions()` still draws from
-  the whole type pool, never from the narrowed category — with a
-  one-item topic there would be nothing to build four answers from.
+  the whole type pool, never from the selected topic — with a one-item
+  topic there would be nothing to build four answers from.
   This is asserted, not assumed: a topic with a single noun still
   shows four options.
 
-The filter is session-only, exactly like the scope: it lives in
-`vocabSetup` and in the session object, so `hiragana-vocab` is
-untouched and no migration or version bump is needed. The store is
-keyed by item id, and the topic lives in the static table, not in the
-store.
+The topic selection is session-only, exactly like the scope: it lives in
+`vocabSetup` and in the session object, so `hiragana-vocab` is untouched and
+no migration or version bump is needed. The store is keyed by item id, and
+the topic lives in the static table, not in the store.
+
+The topic folder is navigation, not a second setup screen. Its controls
+return to the selected topic or to the main setup, preserve keyboard focus
+where possible, and use a mobile stacked layout for long meanings and
+statistics.
 
 Covered by VO12–VO15 in `tests.js` (every topic comes from the
 taxonomy; topics only on nouns and phrases; the partition is complete
-and matches the table; the filter narrows the scope) and by F22a–F22e
-in `tests-learn.js` (the control and its counts; no control in a scope
-without topics; the control returns with the scope; the choice
-narrows the set to one card; a narrow topic still gives four options).
+and matches the table; the topic narrows the scope) and by F22a–F22e
+in `tests-learn.js` (the topic button and its scope; no legacy select;
+the topic folder follows the selected scope; a topic still gives four
+options).
 
 **What this is not.** There is no per-topic progress store, no
 per-topic SRS and no per-topic daily history. Topic is a filter over
@@ -2414,6 +2406,7 @@ change; **accepted** — a decision, not a bug.
 - **13. Question-limit off-by-one — VERIFIED CORRECT, now covered.** The limit is checked at the top of `nextExamQuestion()`, so after the Nth answer the exam finishes with `total === N` and never renders an extra question. Covered by LIM1–LIM8; verified by mutating `>=` to `>`.
 - **14. Automatic completion after a timed-out final question — VERIFIED CORRECT, now covered.** The timeout counts once as wrong, sets `waiting`, and does **not** finish by itself; the exam completes when the user advances. Covered by LIM9–LIM16; verified by mutating the `waiting` flag and by making `finishExam()` recount.
 - **16. Interaction with the wrong-answer feedback flow — VERIFIED CORRECT, now covered.** This is the asymmetry, and it is distinct from 13 and 14: a correct answer schedules `nextExamQuestion` after 850 ms and therefore completes the exam with no user action, while a wrong answer and a timeout both show the answer card with no auto-advance. Covered by LIM17–LIM23. Verified by mutating the wrong-answer path to auto-advance — detected **only** by LIM20 and LIM21, which confirms this is tested on its own terms.
+
 ## Checked, no change needed
 
 - **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
@@ -2421,11 +2414,13 @@ change; **accepted** — a decision, not a bug.
 - **6. `mountKana().finish()` — NOT A BUG, the item rests on a wrong premise.** `mountKana()` returns `{ play, step, showAll, count }`. There is no `finish` on the returned object; `finish` is a local function inside `mountKana`, called by `step()` and `play()` when the last stroke completes, and never exposed. `player.finish` is not referenced anywhere in the app or the harnesses.
 - **7. Global keyboard listener vs text inputs — NO DEFECT FOUND.** Typed inputs attach their own `keydown` handler that calls `e.stopPropagation()` for Enter, so the global listener never sees it. Digit shortcuts are additionally guarded by `exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type'`, so typing digits into the field selects nothing. Escape reaches the global handler and returns to the menu, which is intended. Worth remembering: that guard is positional — any input added to Learn mode later will need its own handling.
 - **8. Four exam modes vs original T7 specification — NO DEFECT.** The original T7 specification described three modes, but the implementation deliberately supports four and §12 documents all of them. The fourth mode (Kana → type Romaji) is exercised by the M-series assertions in `tests.js`, so this is an intentional extension of the specification, not a discrepancy in the product.
+
 ## Accepted — deliberate decisions, not bugs
 
 - **5. Theme system branch — ACCEPTED, no listener added.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render; with the theme set to `system`, an OS appearance change is picked up on the next render or reload. The resolution itself is correct. A live `change` listener was considered and deliberately not added: it would add event wiring without changing any stored preference, and the current branch is correct at every render.
 - **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
 - **12. KanjiVG loaded from a CDN — ACCEPTED.** The app needs one online load before it is fully offline. Vendoring all 148 stroke SVGs would remove that dependency at the cost of a much larger repository, and KanjiVG data changes rarely. `SVG_SOURCES` tries three locations in order, and Google Fonts are cached by the service worker with a system-font stack in `style.css` as the fallback, so a single failed host does not break the app.
+
 ## Open, forward-looking
 
 17. Future multi-character kana representation for yōon.
@@ -2433,7 +2428,6 @@ change; **accepted** — a decision, not a bug.
 19. Separation of music/SFX/master volume when advanced audio is implemented.
 
 ---
-
 
 # 42. Current Project State
 
@@ -2484,8 +2478,11 @@ Advanced audio / lo-fi: NOT implemented
 
 ```text
 UI modernization — phase 4: Kana hub — COMPLETE
+Visual polish — calm Japanese learning app layer — IN PROGRESS
 Vocabulary topic axis (layer 4) — COMPLETE
-Next planned: T19 Vocabulary (module list + detail) — NOT STARTED
+T19 Vocabulary (data, progress, flashcards, topics) — SHIPPED
+Next planned: T19 UX cleanup and scope/topic integration; continue shared
+visual language across new modules
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2498,21 +2495,18 @@ The remaining UI phases are the list/detail components and Settings.
 Vocabulary, grammar and kanji plug into those archetypes instead of inventing
 their own screens.
 
-The vocabulary module also gained its **topic axis** (layer 4): a closed,
-module-independent taxonomy, a filter in the setup screen and the extension
-contract for T18 and T20 (§"Topic categories (layer 4)"). No new feature
-work is in progress: the last two rounds closed the Kana hub and added the
-topic axis, and nothing beyond that has started.
+The vocabulary module now includes its **topic axis** (layer 4): a closed,
+module-independent taxonomy, a dedicated scope-aware topic folder with detail
+views, progress summaries and an explicit "Bez kategorii" bucket, plus the
+extension contract for T18 and T20 (§"Topic categories (layer 4)").
 
-**Where the next session picks up.** The natural next piece is the T19
-"module list + detail": a list of topics with their progress and a detail
-view per topic, built on the existing taxonomy — the scope and the topic
-are already two independent filters over the same records, and a list of
-topics with per-topic progress needs no new store. The kanji data contract
-(T18) can be drafted on the same taxonomy in parallel. Two decisions are
-deliberately open and belong to those modules, not to this layer: whether a
-topic should influence the "smart" order, and whether kanji and vocabulary
-should share one session.
+**Where the next session picks up.** The next T19 work is UX cleanup:
+decide whether the topic folder is global or follows the selected scope,
+remove the old setup-filter path, and replace remaining inline styles and
+inline handlers in the topic views. The kanji data contract (T18) can be
+drafted on the same taxonomy in parallel. Two decisions remain deliberately
+open: whether a topic should influence the "smart" order, and whether kanji
+and vocabulary should share one session.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2525,8 +2519,8 @@ and the polish are shipped (§35).
 ```text
 UI phase 4 (Kana hub) — COMPLETE
 ↓
-T19 Vocabulary (module list + detail) — NOT STARTED
-   topic axis (layer 4) shipped as its foundation
+T19 Vocabulary (data, progress, flashcards, topics) — SHIPPED
+   UX cleanup and scope/topic integration next
 ↓
 T16 Code splitting
 ```
@@ -2631,13 +2625,13 @@ same origin are left alone.
 
 ## Fetch strategies
 
-| Request | Strategy | Reason |
-|---|---|---|
-| navigation / HTML | network-first → cache → `offline.html` | the document must never be stale |
-| same-origin JS / CSS / icons | stale-while-revalidate | instant, updates in background |
-| `cdn.jsdelivr.net/gh/KanjiVG/…` | cache-first | per-kana stroke data is stable and small |
-| `fonts.googleapis.com`, `fonts.gstatic.com` | cache-first | decorative, but removes a third-party dependency |
-| anything else | not intercepted | let the browser handle it |
+| Request                                     | Strategy                               | Reason                                           |
+| ------------------------------------------- | -------------------------------------- | ------------------------------------------------ |
+| navigation / HTML                           | network-first → cache → `offline.html` | the document must never be stale                 |
+| same-origin JS / CSS / icons                | stale-while-revalidate                 | instant, updates in background                   |
+| `cdn.jsdelivr.net/gh/KanjiVG/…`             | cache-first                            | per-kana stroke data is stable and small         |
+| `fonts.googleapis.com`, `fonts.gstatic.com` | cache-first                            | decorative, but removes a third-party dependency |
+| anything else                               | not intercepted                        | let the browser handle it                        |
 
 `raw.githubusercontent.com` is deliberately **not** intercepted: it is only the
 second fallback in `SVG_SOURCES` and is never reached while jsDelivr works.
@@ -2692,8 +2686,8 @@ single plain object plus four setter functions.
 hiragana-settings = { theme, muted, script, hideGuide }
 ```
 
-- `theme`  — `light` | `dark` | `system`
-- `muted`  — boolean
+- `theme` — `light` | `dark` | `system`
+- `muted` — boolean
 - `script` — `hiragana` | `katakana` | `both` (default)
 - `hideGuide` — boolean; hides the reference character while drawing (see §35)
 
@@ -2821,7 +2815,7 @@ which the confirmation says out loud.
 - **Theme:** `applyTheme()` resolves `system` through the OS
   `prefers-color-scheme`; `data-theme` never becomes the literal `system`.
   The topbar quick toggle flips between light and dark based on the currently
-  *visible* theme, so a `system` preference never produces a no-op click.
+  _visible_ theme, so a `system` preference never produces a no-op click.
 - **Audio:** `Audio.muted` mirrors `settings.muted`; audio is synthesized with
   Web Audio oscillators and needs no asset files.
 - **Progress / exam:** untouched. `hiragana-progress` and
@@ -2859,14 +2853,14 @@ localStorage:
 current stage only**, so `dueReps` is a progress-through-rung counter.
 
 | stage | interval | reps to advance |
-| ----- | -------- | ---------------- |
-| 0     | 0 d      | 1                |
-| 1     | 1 d      | 1                |
-| 2     | 3 d      | 1                |
-| 3     | 7 d      | 1                |
-| 4     | 14 d     | 2                |
-| 5     | 30 d     | 2                |
-| 6     | 60 d     | 2                |
+| ----- | -------- | --------------- |
+| 0     | 0 d      | 1               |
+| 1     | 1 d      | 1               |
+| 2     | 3 d      | 1               |
+| 3     | 7 d      | 1               |
+| 4     | 14 d     | 2               |
+| 5     | 30 d     | 2               |
+| 6     | 60 d     | 2               |
 | 7     | 120 d    | 3 (`MAX_STAGE`) |
 
 A wrong answer drops one stage and counts a `lapse`, except at stage 0 — failing
@@ -2876,12 +2870,12 @@ the very first rung is ordinary learning, not a retention loss.
 
 `deriveStatus()` is computed on read and never stored:
 
-| status     | condition                                | label          |
-| ---------- | ---------------------------------------- | -------------- |
-| `unseen`   | no valid progress record                 | —              |
+| status     | condition                                | label           |
+| ---------- | ---------------------------------------- | --------------- |
+| `unseen`   | no valid progress record                 | —               |
 | `learning` | stage 0                                  | W trakcie nauki |
-| `review`   | any stage below max, or max without reps | Do powtórki    |
-| `mastered` | stage `MAX_STAGE` **and** `reps >= 3`    | Długi odstęp   |
+| `review`   | any stage below max, or max without reps | Do powtórki     |
+| `mastered` | stage `MAX_STAGE` **and** `reps >= 3`    | Długi odstęp    |
 
 `mastered` requires confirmation **on** the top rung. `scheduleAnswer()` must
 therefore cap `reps` at `MAX_STAGE` rather than zeroing it — zeroing there makes
@@ -2924,9 +2918,9 @@ in `chars` (no data loss) but excluded from the queue and from
 ## Queue
 
 ```js
-dueList(now)      // every due kana, sorted due → lapses → stage → codepoint
-dueCount(now)     // length of the queue
-reviewSession()   // queue capped at MAX_REVIEW_PER_SESSION (20)
+dueList(now); // every due kana, sorted due → lapses → stage → codepoint
+dueCount(now); // length of the queue
+reviewSession(); // queue capped at MAX_REVIEW_PER_SESSION (20)
 ```
 
 Only Exam feeds the schedule. Learn stays browse-only, and `exam-timeout` updates
@@ -2936,11 +2930,11 @@ legacy stats but never touches SRS — a timeout is not a retention failure.
 
 Two independent systems coexist on purpose:
 
-| | legacy `masteryLevel()` | SRS `deriveStatus()` |
-| - | ----------------------- | -------------------- |
-| input | `seen`, `correct`, `recent` | `stage`, `reps` |
-| time | historical accuracy | schedule position |
-| used by | progress chart, `practiceList()`, `difficultyMultiplier()`, exam weighting, kana colours | review screen only |
+|         | legacy `masteryLevel()`                                                                  | SRS `deriveStatus()` |
+| ------- | ---------------------------------------------------------------------------------------- | -------------------- |
+| input   | `seen`, `correct`, `recent`                                                              | `stage`, `reps`      |
+| time    | historical accuracy                                                                      | schedule position    |
+| used by | progress chart, `practiceList()`, `difficultyMultiplier()`, exam weighting, kana colours | review screen only   |
 
 Do not merge them. Exam weighting must not shift because a kana reached a long
 SRS interval — that would change existing practice behaviour as a side effect of
@@ -2969,15 +2963,15 @@ untouched by anything here.
 
 ### Field semantics
 
-| field | definition |
-| ----- | ---------- |
-| `answers` | every `recordAnswer()` call on that local calendar day, **timeouts included** |
-| `correct` | of those, graded correct — `exam-timeout` never is |
-| `examAnswers` / `reviewAnswers` | the same calls split by session kind, so the totals are auditable |
-| `exams` | non-review sessions that **ended** |
-| `reviews` | review sessions that **ended** |
-| `xp` | `exam.xp` read once at session end — never recomputed, never awarded twice |
-| `seconds` | `endedAt - startedAt`; result screen and time outside a session excluded; missing or invalid → `0` |
+| field                           | definition                                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `answers`                       | every `recordAnswer()` call on that local calendar day, **timeouts included**                      |
+| `correct`                       | of those, graded correct — `exam-timeout` never is                                                 |
+| `examAnswers` / `reviewAnswers` | the same calls split by session kind, so the totals are auditable                                  |
+| `exams`                         | non-review sessions that **ended**                                                                 |
+| `reviews`                       | review sessions that **ended**                                                                     |
+| `xp`                            | `exam.xp` read once at session end — never recomputed, never awarded twice                         |
+| `seconds`                       | `endedAt - startedAt`; result screen and time outside a session excluded; missing or invalid → `0` |
 
 ### Rules that are easy to get wrong
 
@@ -3006,11 +3000,11 @@ kana counters.
 
 ### Reset semantics
 
-| action | progress | history |
-| ------ | -------- | ------- |
-| "Zresetuj postęp" | cleared | **kept** |
-| "Wyczyść statystyki" | kept | cleared (explicit confirmation) |
-| "Wyczyść wszystkie dane" | cleared | cleared |
+| action                   | progress | history                         |
+| ------------------------ | -------- | ------------------------------- |
+| "Zresetuj postęp"        | cleared  | **kept**                        |
+| "Wyczyść statystyki"     | kept     | cleared (explicit confirmation) |
+| "Wyczyść wszystkie dane" | cleared  | cleared                         |
 
 The two stores are registered together in `appStorageKeys()`, so "clear all"
 cannot leave history behind.
@@ -3035,13 +3029,13 @@ kana records while keeping history, so "no progress but history" is a normal,
 reachable state and the statistics must not vanish with the old early return.
 The legacy lifetime line, mastery map and hard-characters list are unchanged.
 
-| helper | returns |
-| ------ | ------- |
-| `dailyWindow(now, days = 14)` | 14 rows, oldest → newest, each `{key, answers, state}` where state is `before` \| `idle` \| `active` |
-| `dailyStreaks(now)` | `{current, live, lastActiveKey, lastActiveDaysAgo, best}` |
-| `dailyTotals()` | the eight stored counters plus `daysTracked` and `firstKey` |
-| `dailyAccuracy(now, days = 14)` | `{percent, answers, correct, hasData}` |
-| `formatDuration(seconds)` | `"0 s"`, `"1 minuta"`, `"2 godziny 15 minut"` … |
+| helper                          | returns                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `dailyWindow(now, days = 14)`   | 14 rows, oldest → newest, each `{key, answers, state}` where state is `before` \| `idle` \| `active` |
+| `dailyStreaks(now)`             | `{current, live, lastActiveKey, lastActiveDaysAgo, best}`                                            |
+| `dailyTotals()`                 | the eight stored counters plus `daysTracked` and `firstKey`                                          |
+| `dailyAccuracy(now, days = 14)` | `{percent, answers, correct, hasData}`                                                               |
+| `formatDuration(seconds)`       | `"0 s"`, `"1 minuta"`, `"2 godziny 15 minut"` …                                                      |
 
 All take `now` explicitly — no `Date.now()` inside — so the chart and streaks
 are deterministic and testable.
@@ -3089,13 +3083,13 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    future-version guard, app shell,
                                    navigation, logo, Koto branding, the
                                    About card, the Kana hub and the topic
-                                   taxonomy                           (412 assertions)
+                                   taxonomy                           (417 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
                                    flashcards (T19, learn + test modes),
                                    topic filter, focus, 320 px layout,
-                                   combined-script panel            (178 assertions)
+                                   combined-script panel            (177 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

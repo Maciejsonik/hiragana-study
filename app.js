@@ -930,6 +930,11 @@ const ICONS = {
   check: '<path d="m5 12 4 4L19 6"/>',
   x: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+  'chevron-left': '<polyline points="15 18 9 12 15 6"/>',
+  'chevron-right': '<polyline points="9 18 15 12 9 6"/>',
+  list: '<line x1="3" y1="5" x2="18" y2="5"/><line x1="3" y1="9" x2="18" y2="9"/><line x1="3" y1="13" x2="18" y2="13"/>',
+  folder:
+    '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
   play: '<path d="m7 4 13 8-13 8Z"/>'
 };
 
@@ -1039,16 +1044,30 @@ function renderNav() {
       if (isFocusMode()) return;
 
       const target = NAV_ITEMS.find(item => item.id === button.dataset.nav);
-      if (!target || state.screen === target.screen) return;
+      if (!target) return;
 
       // Wejście z menu w Słownictwo zawsze zaczyna od setupu, nie od
       // wyniku poprzedniego zestawu.
-      if (target.screen === 'vocab') state.vocab = null;
+      if (target.screen === 'vocab') {
+        state.vocab = null;
+        vocabTopicNav.view = 'setup';
+        vocabTopicNav.topic = null;
+        vocabTopicNav.scope = vocabSetup.scope;
+      }
+
+      if (state.screen === target.screen) {
+        if (target.screen === 'vocab') renderVocab();
+        return;
+      }
 
       Audio.click();
       setScreen(target.screen);
     };
   });
+}
+
+function confirmVocabExit() {
+  return !isFocusMode() || window.confirm('Czy zakończyć bieżącą sesję fiszek?');
 }
 
 /* Jedno miejsce aktualizacji chromu: tytuł, etykieta modułu, powrót,
@@ -2107,9 +2126,12 @@ function setScreen(screen) {
 }
 
 homeBtn.onclick = () => {
+  if (state.screen === 'vocab' && !confirmVocabExit()) return;
   Audio.click();
   stopExam();
   state.vocab = null;
+  vocabTopicNav.view = 'setup';
+  vocabTopicNav.topic = null;
   setScreen('menu');
 };
 
@@ -2382,6 +2404,9 @@ const VOCAB_LIMIT_LABELS = {
   20: '20 kart'
 };
 
+/* Nawigacja tematów słownictwa (T19 list/detail) — sesyjna, nie zapisana. */
+let vocabTopicNav = { view: 'setup', topic: null, scope: 'all' };
+
 const vocabSetup = {
   mode: 'learn',
   direction: 'kana-meaning',
@@ -2400,36 +2425,79 @@ function vocabScopePool(scope) {
   return VOCAB_LEARN_ITEMS;
 }
 
-/*
-   Kategoria zawęża ZESTAW do nauki. Rozpraszacze biorą się natomiast
-   z całej puli typu (`vocabPool(poolScope)` bez kategorii) — filtr
-   tematyczny nie może ograniczać puli odpowiedzi, bo przy wąskiej
-   kategorii nie dałoby się zbudować czterech wariantów.
-*/
+/* Temat zawęża zestaw do nauki. Rozpraszacze nadal biorą się z całej
+   puli typu, bo wąski temat nie może ograniczać czterech odpowiedzi. */
 function vocabPool(scope, category = CATEGORY_ALL) {
   return filterByCategory(vocabScopePool(scope), category);
 }
 
-/*
-   Kategorie dostępne w zakresie. Filtr pojawia się tylko wtedy, gdy
-   zakres ma przynajmniej jedną prawdziwą kategorię — sama puli
-   „bez kategorii" nie jest filtrem, więc kontrolki nie pokazujemy.
-*/
-function vocabCategoryOptions(scope) {
-  const categories = categoriesIn(vocabScopePool(scope));
-  const themed = categories.filter(category => category.id !== CATEGORY_NONE);
-  const unthemed = categories.find(category => category.id === CATEGORY_NONE);
-  const options = themed.slice();
-  if (unthemed) options.push(unthemed);
-  return { options, available: themed.length > 0 };
-}
-
-/* Kategoria, która w nowym zakresie nic nie ma, przestaje być wyborem. */
-function normalizeVocabCategory() {
-  const { options } = vocabCategoryOptions(vocabSetup.scope);
-  if (!options.some(option => option.id === vocabSetup.category)) {
-    vocabSetup.category = CATEGORY_ALL;
+function renderVocabTopics() {
+  if (vocabTopicNav.view === 'topics') {
+    const categories = categoriesIn(vocabScopePool(vocabTopicNav.scope));
+    let gridHTML = `<section class="vocab"><div class="eyebrow">SŁOWNICTWO · TEMATY</div><h2>Tematy</h2><p class="vocab-lead">Zakres: ${VOCAB_SCOPE_LABELS[vocabTopicNav.scope]}. Wybierz temat, by zobaczyć jego słownictwo i rozpocząć naukę.</p><div class="vocab-topics-grid">`;
+    for (const cat of categories) {
+      const pool = filterByCategory(vocabScopePool(vocabTopicNav.scope), cat.id);
+      const stats = pool.map(i => vocabStat(i.id));
+      const started = stats.filter(s => s.seen > 0).length;
+      const accuracyStr = stats.length
+        ? Math.round((stats.reduce((a, b) => a + b.accuracy, 0) / stats.length) * 100) + '%'
+        : '—';
+      gridHTML += `<button class="vocab-topics-card" data-vocab-topic="${cat.id}" data-focus-key="topic-${cat.id}">
+        <div class="vocab-topics-label">${categoryLabel(cat.id)}</div>
+        <div class="vocab-topics-sub">${pool.length} kart · ${started} rozpoczętych · ${accuracyStr}</div>
+      </button>`;
+    }
+    gridHTML +=
+      '</div><button class="btn btn-secondary vocab-topics-back" data-vocab-topics-back data-focus-key="back-from-topics">Wróć do konfiguracji</button></section>';
+    app.innerHTML = gridHTML;
+    document.querySelectorAll('[data-vocab-topic]').forEach(button => {
+      button.onclick = () => {
+        Audio.click();
+        vocabTopicNav.topic = button.dataset.vocabTopic;
+        vocabTopicNav.view = 'detail';
+        renderVocabTopics();
+        app.querySelector('[data-vocab-topic-start]')?.focus();
+      };
+    });
+    document.querySelector('[data-vocab-topics-back]').onclick = () => {
+      Audio.click();
+      vocabTopicNav.view = 'setup';
+      vocabTopicNav.topic = null;
+      renderVocab();
+      app.querySelector('#vocabTopicsBtn')?.focus();
+    };
+    return;
   }
+
+  // Detail view
+  const topicId = vocabTopicNav.topic;
+  const pool = filterByCategory(vocabScopePool(vocabTopicNav.scope), topicId);
+  const rows = pool
+    .map(item => {
+      const stat = vocabStat(item.id);
+      const seenStr = stat.seen ? stat.seen + ' / ' + Math.round(stat.accuracy * 100) + '%' : 'nie rozpoczęte';
+      return `<div class="vocab-item-row"><div><strong>${item.kana}</strong> <span class="vocab-item-romaji">${item.romaji}</span></div><div><span class="vocab-item-meaning">${item.meaning}</span></div><div class="vocab-item-stat">${seenStr}</div></div>`;
+    })
+    .join('');
+  const content = `<section class="vocab"><div class="eyebrow">SŁOWNICTWO · TEMATY</div><h2>${categoryLabel(topicId)}</h2><div class="vocab-topic-meta">${pool.length} kart · ${rows.split('vocab-item-row').length - 1} wyświetlonych</div>${rows}<div class="vocab-topic-actions"><button class="btn btn-primary" data-vocab-topic-start>Rozpocznij temat</button><button class="btn btn-secondary" data-vocab-topics-back>Wróć do tematów</button></div></section>`;
+  app.innerHTML = content;
+  document.querySelector('[data-vocab-topic-start]').onclick = () => {
+    Audio.click();
+    const ids = vocabSessionOrder(vocabTopicNav.scope, topicId, {
+      order: vocabSetup.order,
+      limit: vocabSetup.limit
+    });
+    vocabTopicNav.view = 'setup';
+    vocabTopicNav.topic = null;
+    startVocabSession({ ids, scope: vocabTopicNav.scope, category: topicId });
+  };
+  document.querySelector('[data-vocab-topics-back]').onclick = () => {
+    Audio.click();
+    vocabTopicNav.view = 'topics';
+    vocabTopicNav.topic = null;
+    renderVocabTopics();
+    app.querySelector(`[data-vocab-topic="${topicId}"]`)?.focus();
+  };
 }
 
 function vocabItem(cardId) {
@@ -2490,17 +2558,24 @@ function vocabOptions(item, direction) {
   return shuffle([item[field], ...distractors]);
 }
 
-function startVocabSession({ ids = null } = {}) {
-  const order = ids
-    ? [...ids]
-    : vocabSessionOrder(vocabSetup.scope, vocabSetup.category, { order: vocabSetup.order, limit: vocabSetup.limit });
+function startVocabSession({
+  ids = null,
+  scope = vocabSetup.scope,
+  category = vocabSetup.category,
+  mode = vocabSetup.mode,
+  direction = vocabSetup.direction,
+  order = vocabSetup.order,
+  limit = vocabSetup.limit
+} = {}) {
+  const sessionOrder = ids ? [...ids] : vocabSessionOrder(scope, category, { order, limit });
 
   state.vocab = {
-    mode: vocabSetup.mode,
-    direction: vocabSetup.direction,
-    scope: vocabSetup.scope,
-    category: vocabSetup.category,
-    order,
+    mode,
+    direction,
+    scope,
+    category,
+    order: sessionOrder,
+    limit,
     index: 0,
     correct: 0,
     wrong: 0,
@@ -2644,8 +2719,6 @@ function renderVocabSetup() {
   const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
   const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
   const started = pool.filter(item => vocabStat(item.id).seen > 0).length;
-  const categories = vocabCategoryOptions(scope);
-  const scopeSize = vocabScopePool(scope).length;
 
   const directionHint =
     direction === 'meaning-kana'
@@ -2704,24 +2777,11 @@ function renderVocabSetup() {
           </div>
         </div>
 
-        ${
-          categories.available
-            ? `
         <div class="vocab-setup-group">
-          <label class="settings-label" for="vocabCategory">Kategoria</label>
-          <select class="vocab-select" id="vocabCategory" data-focus-key="vocab-category">
-            <option value="${CATEGORY_ALL}" ${category === CATEGORY_ALL ? 'selected' : ''}>Wszystkie kategorie (${scopeSize})</option>
-            ${categories.options
-              .map(
-                option => `
-              <option value="${option.id}" ${category === option.id ? 'selected' : ''}>${option.label} (${option.count})</option>`
-              )
-              .join('')}
-          </select>
-          <small class="vocab-hint">Filtr tematyczny — ta sama lista kategorii dla słownictwa, kanji i gramatyki.</small>
-        </div>`
-            : ''
-        }
+          <span class="settings-label">Tematy</span>
+          <button class="btn btn-secondary vocab-topics-button" id="vocabTopicsBtn" data-focus-key="vocab-topics">${icon('folder')} Wybierz temat</button>
+          <small class="vocab-hint">Przejdź do folderu tematów, aby zobaczyć karty pogrupowane według kategorii.</small>
+        </div>
 
         <div class="vocab-setup-pair">
           <div class="vocab-setup-group">
@@ -2775,8 +2835,7 @@ function renderVocabSetup() {
   const rerender = (field, value, focusKey) => {
     Audio.click();
     vocabSetup[field] = value;
-    // Kategoria z poprzedniego zakresu może w nowym nie istnieć.
-    normalizeVocabCategory();
+    if (field === 'scope') vocabSetup.category = CATEGORY_ALL;
     renderVocab();
 
     // Pełny `innerHTML` gubi fokus; przywracamy go na tym samym kontrolu.
@@ -2797,11 +2856,6 @@ function renderVocabSetup() {
     button.onclick = () => rerender('scope', button.dataset.vocabScope, 'vocab-scope-' + button.dataset.vocabScope);
   });
 
-  const categorySelect = document.getElementById('vocabCategory');
-  if (categorySelect) {
-    categorySelect.onchange = () => rerender('category', categorySelect.value, 'vocab-category');
-  }
-
   document.querySelectorAll('[data-vocab-order]').forEach(button => {
     button.onclick = () => rerender('order', button.dataset.vocabOrder, 'vocab-order-' + button.dataset.vocabOrder);
   });
@@ -2811,6 +2865,13 @@ function renderVocabSetup() {
       rerender('limit', Number(button.dataset.vocabLimit), 'vocab-limit-' + button.dataset.vocabLimit);
   });
 
+  document.getElementById('vocabTopicsBtn').onclick = () => {
+    Audio.click();
+    vocabTopicNav.view = 'topics';
+    vocabTopicNav.topic = null;
+    vocabTopicNav.scope = vocabSetup.scope;
+    renderVocab();
+  };
   document.getElementById('vocabStart').onclick = () => {
     Audio.click();
     startVocabSession();
@@ -2820,6 +2881,10 @@ function renderVocabSetup() {
 function renderVocab() {
   refreshChrome();
 
+  if (vocabTopicNav.view !== 'setup') {
+    renderVocabTopics();
+    return;
+  }
   if (!state.vocab) {
     renderVocabSetup();
     return;
@@ -2864,7 +2929,14 @@ function renderVocab() {
 
     document.getElementById('vocabAgain').onclick = () => {
       Audio.click();
-      startVocabSession();
+      startVocabSession({
+        ids: session.sessionOrder || session.order,
+        scope: session.scope,
+        category: session.category,
+        mode: session.mode,
+        direction: session.direction,
+        limit: session.limit
+      });
     };
 
     const retry = document.getElementById('vocabRetryWrong');

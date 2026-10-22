@@ -1558,7 +1558,10 @@
           'karty=' + Object.keys(vocab.cards).length
         );
 
+        const realVocabExitConfirm = window.confirm;
+        window.confirm = () => true;
         homeBtn.click();
+        window.confirm = realVocabExitConfirm;
         await wait(300);
         ok(
           'F10 wyjście z fiszek przez przycisk domu wraca do menu',
@@ -1764,30 +1767,24 @@
           state.vocab ? 'stary stan sesji' : 'setup'
         );
 
-        /*
-           Filtr tematyczny: druga oś obok zakresu. Kategoria zawęża
-           ZESTAW, ale nie zawęża puli rozpraszaczy — wąska kategoria
-           nadal musi dać cztery odpowiedzi.
-        */
+        /* Tematy są osobnym folderem obok zakresu fiszek. */
         document.querySelector('[data-vocab-scope="all"]').click();
         await wait(120);
-        const categorySelect = document.getElementById('vocabCategory');
         ok(
-          'F22a setup pokazuje filtr kategorii wraz z licznikami',
-          !!categorySelect &&
-            [...categorySelect.options].map(option => option.value).join(',') === 'all,school,people,none' &&
-            categorySelect.options[1].textContent.includes('Szkoła') &&
-            categorySelect.options[1].textContent.includes('8'),
-          categorySelect
-            ? [...categorySelect.options].map(option => option.textContent.trim()).join(' | ')
-            : 'brak selectu'
+          'F22a setup pokazuje przycisk tematów zamiast selektora kategorii',
+          !!document.getElementById('vocabTopicsBtn') &&
+            !document.getElementById('vocabCategory') &&
+            document.getElementById('vocabTopicsBtn').textContent.includes('Wybierz temat'),
+          document.getElementById('vocabTopicsBtn') ? 'przycisk tematów' : 'brak przycisku'
         );
 
         document.querySelector('[data-vocab-scope="cards"]').click();
         await wait(120);
         ok(
-          'F22b zakres bez kategorii nie pokazuje filtra i wraca do wszystkich',
-          !document.getElementById('vocabCategory') && vocabSetup.category === CATEGORY_ALL,
+          'F22b zakres fiszek zachowuje przycisk tematów',
+          !!document.getElementById('vocabTopicsBtn') &&
+            !document.getElementById('vocabCategory') &&
+            vocabSetup.category === CATEGORY_ALL,
           'select: ' +
             (document.getElementById('vocabCategory') ? 'jest' : 'brak') +
             ', kategoria: ' +
@@ -1796,29 +1793,11 @@
 
         document.querySelector('[data-vocab-scope="words"]').click();
         await wait(120);
-        const wordSelect = document.getElementById('vocabCategory');
         ok(
-          'F22c filtr wraca w zakresie z kategoriami i liczy karty',
-          !!wordSelect &&
-            wordSelect.options.length === 4 &&
+          'F22c zakres zmienia się bez selektora kategorii',
+          !document.getElementById('vocabCategory') &&
             document.querySelector('.vocab-summary-item strong').textContent === '7',
-          wordSelect ? [...wordSelect.options].map(option => option.textContent.trim()).join(' | ') : 'brak selectu'
-        );
-
-        if (wordSelect) {
-          wordSelect.value = 'people';
-          wordSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        await wait(120);
-        ok(
-          'F22d wybór kategorii zawęża zestaw do jednej karty',
-          vocabSetup.category === 'people' &&
-            document.querySelector('.vocab-summary-item strong').textContent === '1' &&
-            document.getElementById('vocabStart').textContent.includes('1 kart'),
-          'kategoria: ' +
-            vocabSetup.category +
-            ', karty: ' +
-            document.querySelector('.vocab-summary-item strong').textContent
+          'karty: ' + document.querySelector('.vocab-summary-item strong').textContent
         );
 
         document.querySelector('[data-vocab-mode="test"]').click();
@@ -1827,11 +1806,8 @@
         await wait(250);
         const narrowOptions = [...document.querySelectorAll('[data-vocab-choice]')];
         ok(
-          'F22e wąska kategoria nadal daje cztery odpowiedzi',
-          state.vocab.order.length === 1 &&
-            state.vocab.order[0] === 'n01' &&
-            state.vocab.category === 'people' &&
-            narrowOptions.length === 4,
+          'F22d pełny zakres nadal daje cztery odpowiedzi',
+          state.vocab.order.length === 7 && narrowOptions.length === 4,
           state.vocab.order.join(',') + ' / ' + narrowOptions.length + ' opcji'
         );
 
