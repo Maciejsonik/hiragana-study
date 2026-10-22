@@ -814,6 +814,7 @@ const ICONS = {
     '<path d="M12 3s4 4 4 8a4 4 0 0 1-8 0c0-1 .3-2 1-3-2 1-4 3.5-4 6.5A7 7 0 0 0 12 21a7 7 0 0 0 7-6.5c0-4-3-8-7-11.5Z"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
   x: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   play: '<path d="m7 4 13 8-13 8Z"/>'
 };
 
@@ -4635,7 +4636,7 @@ function progressPanelHTML() {
       <div class="progress-panel">
         <h3>Twoje postępy</h3>
         ${daily}
-        <p style="color:var(--muted);margin:0">
+        <p class="progress-panel-empty">
           Statystyki i trudne znaki pojawią się tutaj po pierwszym egzaminie.
         </p>
       </div>
@@ -4655,7 +4656,7 @@ function progressPanelHTML() {
 
       ${daily}
 
-      <div style="color:var(--muted)">
+      <div class="progress-panel-summary">
         Odpowiedzi: <b>${stats.seen}</b> • skuteczność: <b>${stats.percent}%</b>
       </div>
 
@@ -4682,8 +4683,8 @@ function progressPanelHTML() {
       ${
         hard.length
           ? `
-        <h3 style="margin-top:18px">Sprawiają Ci trudność</h3>
-        <div class="mistakes-list" style="justify-content:flex-start">
+        <h3 class="progress-panel-subhead">Sprawiają Ci trudność</h3>
+        <div class="mistakes-list mistakes-list-start">
           ${hard
             .map(c => {
               const entry = progress.chars[c.kana];
@@ -4702,7 +4703,7 @@ function progressPanelHTML() {
           : ''
       }
 
-      <div class="exam-quick" style="margin-top:16px">
+      <div class="exam-quick exam-quick-progress">
         <button class="btn btn-primary" id="practiceHardSetup" ${practiceCount < 2 ? 'disabled' : ''}>
           ${icon('target')} Ćwicz trudne znaki
         </button>
@@ -4732,6 +4733,14 @@ function readSetup() {
    którą otwiera się na chwilę, a nie preferencja.
 */
 let examAdvancedOpen = false;
+
+/*
+   Kategorie zakresu również są rozwijane sesyjnie. Domyślnie są zwinięte:
+   cztery nagłówki z licznikami zastępują 26 wierszy, więc przycisk startu
+   nie ucieka pod koniec ekranu. Użytkownik otwiera tylko tę kategorię,
+   którą chce edytować.
+*/
+let examCategoryOpen = {};
 
 /*
    Rzędy egzaminu to bazowe id grup — wspólne dla obu skryptów. Dzięki temu
@@ -4795,18 +4804,27 @@ function showExamSetup() {
       <div class="eyebrow">EGZAMIN</div>
       <h2>Wybierz zakres</h2>
 
-      <p style="color:var(--muted)">
+      <p class="exam-lead">
         ${scriptHint}
+        Rozwiń kategorię, aby wybrać pojedyncze rzędy, albo zaznacz całą sekcję.
         Egzamin trwa tak długo, jak chcesz. Znaki, które sprawiają Ci trudność,
         będą wracały częściej.
       </p>
 
       <div class="exam-groups" id="examGroups">
         ${sections
-          .map(
-            section => `
-          <section class="exam-group-section" data-category="${section.id}" aria-labelledby="examCategory-${section.id}">
-            <h3 class="exam-group-heading" id="examCategory-${section.id}">${section.label}</h3>
+          .map(section => {
+            const selected = section.rows.filter(row => settings.groups.includes(row.id)).length;
+            const allSelected = selected === section.rows.length;
+
+            return `
+          <details class="exam-group-section" data-category="${section.id}" ${examCategoryOpen[section.id] ? 'open' : ''}>
+            <summary class="exam-group-summary">
+              <span class="exam-group-heading" id="examCategory-${section.id}" role="heading" aria-level="3">${section.label}</span>
+              <span class="exam-group-count" data-exam-count>${selected}/${section.rows.length}</span>
+              <button class="exam-group-select" type="button" data-exam-category="${section.id}" aria-pressed="${allSelected}" aria-label="${allSelected ? 'Odznacz' : 'Zaznacz'} całą sekcję ${section.label}">${allSelected ? 'Wyczyść' : 'Wszystkie'}</button>
+              <span class="exam-group-chevron" aria-hidden="true">${icon('chevron-down')}</span>
+            </summary>
             <div class="exam-group-grid">
               ${section.rows
                 .map(
@@ -4823,9 +4841,9 @@ function showExamSetup() {
                 )
                 .join('')}
             </div>
-          </section>
-        `
-          )
+          </details>
+        `;
+          })
           .join('')}
       </div>
 
@@ -4835,80 +4853,88 @@ function showExamSetup() {
       </div>
 
       <details class="exam-advanced" ${examAdvancedOpen ? 'open' : ''}>
-        <summary>
-          <span>Opcje egzaminu</span>
-          <small id="examSummary">${settingsLabel}</small>
+        <summary class="exam-advanced-summary">
+          <span class="exam-advanced-title">Opcje egzaminu</span>
+          <small id="examSummary" class="exam-advanced-hint">${settingsLabel}</small>
+          <span class="exam-advanced-chevron" aria-hidden="true">${icon('chevron-down')}</span>
         </summary>
 
-        <div class="exam-settings">
-          <label>
-            Liczba odpowiedzi:
-            <select id="optionsCount">
-              ${[4, 6, 8].map(n => `<option value="${n}" ${n === settings.options ? 'selected' : ''}>${n}</option>`).join('')}
-            </select>
-          </label>
+        <div class="exam-advanced-body">
+          <div class="exam-option-grid">
+            <label class="exam-option-field">
+              <span class="exam-option-label">Liczba odpowiedzi</span>
+              <select id="optionsCount" class="exam-select">
+                ${[4, 6, 8].map(n => `<option value="${n}" ${n === settings.options ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+            </label>
 
-          <label>
-            Liczba pytań:
-            <select id="questionLimit">
-              ${[
-                [0, 'Bez limitu'],
-                [5, '5'],
-                [10, '10'],
-                [20, '20'],
-                [30, '30']
-              ]
-                .map(([v, l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
-                .join('')}
-            </select>
-          </label>
+            <label class="exam-option-field">
+              <span class="exam-option-label">Liczba pytań</span>
+              <select id="questionLimit" class="exam-select">
+                ${[
+                  [0, 'Bez limitu'],
+                  [5, '5'],
+                  [10, '10'],
+                  [20, '20'],
+                  [30, '30']
+                ]
+                  .map(([v, l]) => `<option value="${v}" ${v === settings.limit ? 'selected' : ''}>${l}</option>`)
+                  .join('')}
+              </select>
+            </label>
 
-          <label>
-            Timer:
-            <select id="timerOpt">
-              ${[
-                [0, 'Wyłączony'],
-                [5, '5s'],
-                [10, '10s'],
-                [15, '15s']
-              ]
-                .map(([v, l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`)
-                .join('')}
-            </select>
-          </label>
+            <label class="exam-option-field">
+              <span class="exam-option-label">Timer</span>
+              <select id="timerOpt" class="exam-select">
+                ${[
+                  [0, 'Wyłączony'],
+                  [5, '5s'],
+                  [10, '10s'],
+                  [15, '15s']
+                ]
+                  .map(([v, l]) => `<option value="${v}" ${v === settings.timer ? 'selected' : ''}>${l}</option>`)
+                  .join('')}
+              </select>
+            </label>
 
-          <label class="exam-check">
-            <input type="checkbox" id="outsideOpt" ${settings.outside ? 'checked' : ''}>
-            Dodawaj mylące znaki spoza wybranego zakresu
-          </label>
-        </div>
+            <label class="exam-option-field exam-option-toggle">
+              <span class="exam-option-label">Mylące znaki</span>
+              <span class="exam-check-row">
+                <input type="checkbox" id="outsideOpt" ${settings.outside ? 'checked' : ''}>
+                <span>Dodawaj znaki spoza wybranego zakresu</span>
+              </span>
+            </label>
+          </div>
 
-        <div class="exam-settings" style="margin-top:4px">
-          <strong style="font-size:.85rem">Tryby pytań:</strong>
-          <label class="exam-check">
-            <input type="checkbox" id="modeA" ${settings.modes.romajiKanaPick ? 'checked' : ''}>
-            Romaji → wybierz kana
-          </label>
-          <label class="exam-check">
-            <input type="checkbox" id="modeB" ${settings.modes.kanaRomajiPick ? 'checked' : ''}>
-            Kana → wybierz romaji
-          </label>
-          <label class="exam-check">
-            <input type="checkbox" id="modeC" ${settings.modes.romajiKanaType ? 'checked' : ''}>
-            Romaji → wpisz kana
-          </label>
-          <label class="exam-check">
-            <input type="checkbox" id="modeD" ${settings.modes.kanaRomajiType ? 'checked' : ''}>
-            Kana → wpisz romaji
-          </label>
+          <div class="exam-modes">
+            <span class="exam-option-label">Tryby pytań</span>
+            <div class="exam-mode-grid">
+              <label class="exam-mode-card">
+                <input type="checkbox" id="modeA" ${settings.modes.romajiKanaPick ? 'checked' : ''}>
+                <span>Romaji → wybierz kana</span>
+              </label>
+              <label class="exam-mode-card">
+                <input type="checkbox" id="modeB" ${settings.modes.kanaRomajiPick ? 'checked' : ''}>
+                <span>Kana → wybierz romaji</span>
+              </label>
+              <label class="exam-mode-card">
+                <input type="checkbox" id="modeC" ${settings.modes.romajiKanaType ? 'checked' : ''}>
+                <span>Romaji → wpisz kana</span>
+              </label>
+              <label class="exam-mode-card">
+                <input type="checkbox" id="modeD" ${settings.modes.kanaRomajiType ? 'checked' : ''}>
+                <span>Kana → wpisz romaji</span>
+              </label>
+            </div>
+          </div>
         </div>
       </details>
 
-      ${progressPanelHTML()}
-
       <div id="examSetupError" class="feedback"></div>
 
-      <button class="btn btn-primary" id="startSelectedExam">Rozpocznij egzamin →</button>
+      <button class="btn btn-primary exam-start" id="startSelectedExam">Rozpocznij egzamin →</button>
+
+      ${progressPanelHTML()}
 
     </section>
   `;
@@ -4921,6 +4947,35 @@ function showExamSetup() {
     Audio.click();
     setExamGroups([]);
   };
+
+  document.querySelectorAll('#examGroups .exam-group-section').forEach(section => {
+    section.addEventListener('toggle', () => {
+      examCategoryOpen[section.dataset.category] = section.open;
+    });
+  });
+
+  document.querySelectorAll('#examGroups input[type="checkbox"]').forEach(input => {
+    input.addEventListener('change', syncExamGroupSections);
+  });
+
+  document.querySelectorAll('.exam-group-select').forEach(button => {
+    button.onclick = event => {
+      event.stopPropagation();
+
+      const section = button.closest('.exam-group-section');
+      const inputs = [...section.querySelectorAll('input[type="checkbox"]')];
+      const allSelected = inputs.length > 0 && inputs.every(input => input.checked);
+
+      inputs.forEach(input => {
+        input.checked = !allSelected;
+      });
+
+      Audio.click();
+      syncExamGroupSections();
+    };
+  });
+
+  syncExamGroupSections();
 
   const advanced = app.querySelector('.exam-advanced');
   advanced.addEventListener('toggle', () => {
@@ -4995,10 +5050,35 @@ function showExamSetup() {
   // miał jeden, jasno opisany punkt wejścia.
 }
 
+/*
+   Nagłówek kategorii pokazuje, ile jej rzędów jest zaznaczonych, a przycisk
+   „Wszystkie"/„Wyczyść" działa na całą sekcję. Jedna funkcja synchronizuje
+   oba stany po każdym kliknięciu — indywidualnym, zbiorczym i globalnym.
+*/
+function syncExamGroupSections() {
+  document.querySelectorAll('#examGroups .exam-group-section').forEach(section => {
+    const inputs = [...section.querySelectorAll('input[type="checkbox"]')];
+    const selected = inputs.filter(input => input.checked).length;
+    const count = section.querySelector('[data-exam-count]');
+    const button = section.querySelector('.exam-group-select');
+    const label = section.querySelector('.exam-group-heading')?.textContent.trim() || '';
+
+    if (count) count.textContent = `${selected}/${inputs.length}`;
+
+    if (!button) return;
+
+    const allSelected = inputs.length > 0 && selected === inputs.length;
+    button.textContent = allSelected ? 'Wyczyść' : 'Wszystkie';
+    button.setAttribute('aria-pressed', String(allSelected));
+    button.setAttribute('aria-label', `${allSelected ? 'Odznacz' : 'Zaznacz'} całą sekcję ${label}`);
+  });
+}
+
 function setExamGroups(groupIds) {
   document.querySelectorAll('#examGroups input').forEach(input => {
     input.checked = groupIds.includes(input.value);
   });
+  syncExamGroupSections();
 }
 
 /* =========================================================

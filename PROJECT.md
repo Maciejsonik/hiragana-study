@@ -958,13 +958,20 @@ This should be audited later.
 # 23. Progress Panel
 
 The scope rows are grouped into the same categories as the Learn sidebar
-(Basic, Dakuten, Handakuten, Yōon), and two quick buttons — "Wszystkie" and
-"Wyczyść" — complete the first screen. The old "Tylko samogłoski" and
-"Samogłoski + K" shortcuts were removed as redundant. The numeric options
-(answers per question, question limit, timer, outside-scope distractors) and
-the four question modes live in a collapsed `<details class="exam-advanced">`
-whose summary shows the current values, so the same four selects no longer
-push the row list down on every visit.
+(Basic, Dakuten, Handakuten, Yōon). Each category is a native
+`<details class="exam-group-section">`: the summary carries the label, a
+selected/total counter and a compact "Wszystkie"/"Wyczyść" button that
+toggles the whole section without expanding it. The sections start collapsed,
+so the start button is no longer pushed below 26 rows; the two global quick
+buttons — "Wszystkie" and "Wyczyść" — remain. The old "Tylko samogłoski" and
+"Samogłoski + K" shortcuts were removed as redundant.
+
+The numeric options (answers per question, question limit, timer,
+outside-scope distractors) and the four question modes live in a collapsed
+`<details class="exam-advanced">`. Its summary shows the current values, and
+the open panel uses a field grid plus mode cards instead of inline-styled
+labels and raw selects. The start button sits **before** the progress panel,
+so statistics never stand between the user and starting a session.
 
 Exam setup contains a progress panel showing:
 
@@ -1163,9 +1170,15 @@ Added by later phases:
 .session-position     card or score counter in the session header
 .icon                 inline SVG icon set
 .mastery-spacer       reserves the unpractised share of the mastery bar
-.exam-group-section   category block in the exam scope
+.exam-group-section   collapsible category block in the exam scope
+.exam-group-summary   clickable category header
 .exam-group-heading   category label (Basic / Dakuten / Handakuten / Yōon)
+.exam-group-count     selected/total counter in the category header
+.exam-group-select    section-wide select all/clear button
 .exam-group-grid      checkbox grid inside one category
+.exam-option-grid     advanced exam option fields
+.exam-mode-grid       question-mode cards
+.exam-start           full-width start-session button
 .control-set          playback or drawing tools in the learn panel
 .is-inactive          reserves the row while hiding an inactive tool set
 ```

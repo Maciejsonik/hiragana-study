@@ -471,6 +471,61 @@
           .join(' ')
       );
 
+      const basicSection = document.querySelector('#examGroups .exam-group-section[data-category="basic"]');
+      const basicSelectAll = basicSection.querySelector('.exam-group-select');
+      const basicInputs = [...basicSection.querySelectorAll('input[type="checkbox"]')];
+      const basicCount = basicSection.querySelector('[data-exam-count]');
+      const originalGroups = [...document.querySelectorAll('#examGroups input:checked')].map(input => input.value);
+
+      ok(
+        'UX4b kategorie są zwijanymi sekcjami, domyślnie zamkniętymi',
+        groupedSections.every(section => section.tagName === 'DETAILS' && !section.open),
+        groupedSections.map(section => section.tagName + ':' + section.open).join(' ')
+      );
+      ok(
+        'UX4c „Wszystkie” w nagłówku zaznacza całą kategorię',
+        (basicSelectAll.click(),
+        basicInputs.every(input => input.checked) &&
+          basicSelectAll.getAttribute('aria-pressed') === 'true' &&
+          basicSelectAll.textContent.trim() === 'Wyczyść' &&
+          basicCount.textContent === `${basicInputs.length}/${basicInputs.length}`),
+        `${basicCount.textContent} / ${basicSelectAll.textContent.trim()}`
+      );
+      ok(
+        'UX4d drugi klik czyści całą kategorię',
+        (basicSelectAll.click(),
+        basicInputs.every(input => !input.checked) &&
+          basicSelectAll.getAttribute('aria-pressed') === 'false' &&
+          basicSelectAll.textContent.trim() === 'Wszystkie' &&
+          basicCount.textContent === `0/${basicInputs.length}`),
+        `${basicCount.textContent} / ${basicSelectAll.textContent.trim()}`
+      );
+      setExamGroups(originalGroups);
+
+      const advanced = document.querySelector('details.exam-advanced');
+      const startButton = document.getElementById('startSelectedExam');
+      const progressPanel = document.querySelector('.progress-panel');
+      ok(
+        'UX4e opcje egzaminu mają nowy układ pól i trybów',
+        !!advanced &&
+          advanced.querySelectorAll('.exam-option-field').length === 4 &&
+          advanced.querySelectorAll('.exam-mode-card').length === 4 &&
+          !!document.getElementById('optionsCount') &&
+          !!document.getElementById('questionLimit') &&
+          !!document.getElementById('timerOpt') &&
+          !!document.getElementById('outsideOpt'),
+        advanced ? advanced.querySelectorAll('.exam-option-field').length + ' pól' : 'brak'
+      );
+      ok(
+        'UX4f start egzaminu jest przed panelem postępów',
+        !!startButton &&
+          !!progressPanel &&
+          !!(startButton.compareDocumentPosition(progressPanel) & Node.DOCUMENT_POSITION_FOLLOWING),
+        startButton && progressPanel
+          ? startButton.getBoundingClientRect().top + ' < ' + progressPanel.getBoundingClientRect().top
+          : 'brak'
+      );
+
       setScreen('settings');
       await wait(600);
       ok('UX5 Ustawienia nadal mają reset postępu', !!document.getElementById('resetProgressBtn'));
