@@ -1568,8 +1568,10 @@
     );
 
     ok(
-      'VO7 wzorce mają odpowiedzi, a 21 także wariant',
-      patterns.every(pattern => pattern.answers && pattern.answers.length) && patterns[0].variants.length === 1,
+      'VO7 wzorce mają odpowiedzi i warianty, w tym polski wzór odpowiedzi',
+      patterns.every(pattern => pattern.answers && pattern.answers.length === 2) &&
+        patterns[0].variants.length === 3 &&
+        patterns[1].answers.some(answer => answer[1].includes('poorandogo')),
       patterns.map(pattern => pattern.id + ':' + pattern.answers.length).join(' ')
     );
 

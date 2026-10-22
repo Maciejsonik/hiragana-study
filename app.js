@@ -625,7 +625,7 @@ scriptData.katakana.strokeText = katakanaStrokeText;
 const VOCAB_ITEMS = [
   // 1–15 — strona 1 zeszytu
   { id: 'v01', type: 'card', kana: 'きいてください', romaji: 'kiite kudasai', meaning: 'proszę słuchać', verb: 'ききます', verbRomaji: 'kikimasu', verbMeaning: 'słuchać' },
-  { id: 'v02', type: 'card', kana: 'いってください', romaji: 'itte kudasai', meaning: 'proszę powiedzieć', verb: 'いいます', verbRomaji: 'iimasu', verbMeaning: 'mówić' },
+  { id: 'v02', type: 'card', kana: 'いってください', romaji: 'itte kudasai', meaning: 'proszę powiedzieć', verb: 'いいます', verbRomaji: 'iimasu', verbMeaning: 'mówić / powiedzieć' },
   // źródło ma urwane „もういちどいいまし" — pełna forma to もういちどいいます
   { id: 'v03', type: 'card', kana: 'もういちどいってください', romaji: 'mou ichido itte kudasai', meaning: 'proszę powiedzieć jeszcze raz', verb: 'もういちどいいます', verbRomaji: 'mou ichido iimasu', verbMeaning: 'powiedzieć jeszcze raz' },
   { id: 'v04', type: 'card', kana: 'くりかえしてください', romaji: 'kurikaeshite kudasai', meaning: 'proszę powtórzyć', verb: 'くりかえします', verbRomaji: 'kurikaeshimasu', verbMeaning: 'powtarzać' },
@@ -642,15 +642,15 @@ const VOCAB_ITEMS = [
   { id: 'v15', type: 'card', kana: 'えらんでください', romaji: 'erande kudasai', meaning: 'proszę wybrać', verb: 'えらびます', verbRomaji: 'erabimasu', verbMeaning: 'wybierać' },
 
   // 16–20 — strona 2 zeszytu
-  { id: 'v16', type: 'card', kana: 'だしてください', romaji: 'dashite kudasai', meaning: 'proszę wyjąć / oddać', verb: 'だします', verbRomaji: 'dashimasu', verbMeaning: 'wyjmować / oddawać' },
+  { id: 'v16', type: 'card', kana: 'だしてください', romaji: 'dashite kudasai', meaning: 'proszę wyjąć / przynieść / oddać', verb: 'だします', verbRomaji: 'dashimasu', verbMeaning: 'wyjmować / wystawiać / oddawać' },
   { id: 'v17', type: 'card', kana: 'たってください', romaji: 'tatte kudasai', meaning: 'proszę wstać', verb: 'たちます', verbRomaji: 'tachimasu', verbMeaning: 'stać / wstawać' },
   { id: 'v18', type: 'card', kana: 'すわってください', romaji: 'suwatte kudasai', meaning: 'proszę usiąść', verb: 'すわります', verbRomaji: 'suwarimasu', verbMeaning: 'siadać / siedzieć' },
   { id: 'v19', type: 'card', kana: 'しずかにしてください', romaji: 'shizuka ni shite kudasai', meaning: 'proszę być cicho', verb: 'しずかにします', verbRomaji: 'shizuka ni shimasu', verbMeaning: 'być cicho' },
   { id: 'v20', type: 'card', kana: 'べんきょうしてください', romaji: 'benkyou shite kudasai', meaning: 'proszę się uczyć', verb: 'べんきょうします', verbRomaji: 'benkyou shimasu', verbMeaning: 'uczyć się' },
 
   // 21–22 — wzorce z sekcji „Rozumienie i odpowiedzi"
-  { id: 'v21', type: 'pattern', kana: 'わかりますか。', romaji: 'wakarimasu ka', meaning: 'Czy rozumiesz?', answers: [['わかります。', 'wakarimasu', 'rozumiem'], ['わかりません。', 'wakarimasen', 'nie rozumiem']], variants: [['わかりますね。', 'wakarimasu ne', 'rozumiesz, prawda?']] },
-  { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで（ポーランドごで）～です。', '~ wa nihongo de (poorandogo de) ~ desu', '～ po japońsku (po polsku) to ～']] },
+  { id: 'v21', type: 'pattern', kana: 'わかりますか。', romaji: 'wakarimasu ka', meaning: 'Czy rozumiesz?', answers: [['はい、わかります。', 'hai, wakarimasu', 'tak, rozumiem'], ['いいえ、わかりません。', 'iie, wakarimasen', 'nie, nie rozumiem']], variants: [['わかります。', 'wakarimasu', 'rozumiem'], ['わかりません。', 'wakarimasen', 'nie rozumiem'], ['わかりますね。', 'wakarimasu ne', 'rozumiesz, prawda?']] },
+  { id: 'v22', type: 'pattern', kana: '～は にほんごで（ポーランドごで）なんですか。', romaji: '~ wa nihongo de (poorandogo de) nan desu ka', meaning: 'Jak się mówi ～ po japońsku (po polsku)?', answers: [['～は にほんごで ～です。', '~ wa nihongo de ~ desu', '～ po japońsku to ～'], ['～は ポーランドごで ～です。', '~ wa poorandogo de ~ desu', '～ po polsku to ～']] },
 
   // 23–24 — czasowniki z tabeli 2, które nie mają osobnego polecenia w tabeli 1
   { id: 'v23', type: 'verb', kana: 'あけます', romaji: 'akemasu', meaning: 'otwierać (np. drzwi lub pudełko)' },
