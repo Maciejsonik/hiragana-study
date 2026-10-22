@@ -2217,7 +2217,7 @@ Delivered:
 - centralized settings store (`hiragana-settings`),
 - light / dark / system theme preference,
 - sound effects on/off preference,
-- default script (Hiragana / Katakana) preference,
+- default script (Hiragana / Oba / Katakana) preference,
 - migration from the legacy `hiragana-theme` / `hiragana-muted` keys,
 - pre-paint theme bootstrap,
 - Settings screen with appearance / sound / learning / data sections and an
@@ -2588,7 +2588,7 @@ prevents a light/dark flash. It performs **no writes**; migration belongs to
 `renderMenu()` is deliberately short:
 
 ```text
-script switcher  hiragana / katakana / both
+script switcher  hiragana / both / katakana
 hub summary      "Postęp" + current script + mastery strip
 tiles            Nauka · Egzamin · Powtórki
 top bar          gear → Ustawienia
@@ -2627,7 +2627,7 @@ hint showing the current kana, no donut or legend left behind, the legacy
 ```text
 Wygląd     theme: light / dark / system
 Dźwięk     sound effects: on / off
-Nauka      default script: hiragana / katakana / both
+Nauka      default script: hiragana / both / katakana
 Rysowanie  reference character while drawing: visible / hidden
 Dane       Reset Settings / Reset Progress / Clear All Data
 O aplikacji  local operation, character scope, KanjiVG attribution

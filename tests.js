@@ -1906,10 +1906,22 @@
       document.querySelectorAll('.script-switcher .script-btn').length === 3,
       String(document.querySelectorAll('.script-switcher .script-btn').length)
     );
+    ok(
+      'M23a kolejność skryptów: Hiragana, Oba, Katakana',
+      [...document.querySelectorAll('.script-switcher .script-btn')].map(button => button.dataset.script).join(',') ===
+        'hiragana,both,katakana',
+      [...document.querySelectorAll('.script-switcher .script-btn')].map(button => button.dataset.script).join(',')
+    );
 
     setScreen('settings');
     await new Promise(r => setTimeout(r, 200));
     ok('M24 Ustawienia mają wybór „Oba"', !!document.querySelector('[data-script-set="both"]'), '');
+    ok(
+      'M24a Ustawienia mają tę samą kolejność skryptów',
+      [...document.querySelectorAll('[data-script-set]')].map(button => button.dataset.scriptSet).join(',') ===
+        'hiragana,both,katakana',
+      [...document.querySelectorAll('[data-script-set]')].map(button => button.dataset.scriptSet).join(',')
+    );
 
     setScript('hiragana');
     clearProgress();

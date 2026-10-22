@@ -2042,8 +2042,8 @@ function renderMenu() {
   app.innerHTML = `
     <div class="script-switcher">
       <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
-      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
       <button class="script-btn ${state.script === 'both' ? 'active' : ''}" data-script="both">ひカ Oba</button>
+      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
     </div>
 
     <section class="hub-summary" aria-labelledby="hubSummaryLabel">
@@ -2674,8 +2674,8 @@ function renderSettings() {
           <span class="settings-label" id="scriptLabel">Domyślny skrypt</span>
           <div class="settings-pills" role="group" aria-labelledby="scriptLabel">
             ${settingsPill('hiragana', settings.script, 'ひ Hiragana', 'data-script-set', 'script-hiragana')}
-            ${settingsPill('katakana', settings.script, 'カ Katakana', 'data-script-set', 'script-katakana')}
             ${settingsPill('both', settings.script, 'ひカ Oba', 'data-script-set', 'script-both')}
+            ${settingsPill('katakana', settings.script, 'カ Katakana', 'data-script-set', 'script-katakana')}
           </div>
         </div>
       </div>
