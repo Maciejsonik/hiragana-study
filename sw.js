@@ -12,9 +12,10 @@
 
    Wersjonowanie: nazwy cache zawsze kończą się na `-v<VERSION>`.
    Po zmianie `VERSION` przeglądarka pobiera nowy sw.js, tworzy nowe
-   cache, a `activate` usuwa wszystkie pozostałe wersje. Dzięki temu
-   shell (HTML+JS+CSS+manifest) zawsze pochodzi z jednej wersji —
-   nie da się dostać nowego HTML przy starym JS.
+   cache, a `activate` usuwa pozostałe wersje WŁASNYCH cache. Dzięki
+   temu shell (HTML+JS+CSS+manifest) zawsze pochodzi z jednej wersji —
+   nie da się dostać nowego HTML przy starym JS, a cache innych aplikacji
+   na tym samym origin zostaje nietknięty.
 
    Service Worker NIGDY nie dotyka localStorage — klucze
    hiragana-settings / hiragana-progress / hiragana-exam-settings
@@ -23,9 +24,15 @@
 
 const VERSION = 'v12';
 
-const SHELL_CACHE = `shell-${VERSION}`;
-const KANJIVG_CACHE = `kanjivg-${VERSION}`;
-const FONTS_CACHE = `fonts-${VERSION}`;
+/* Prefiks `koto-` jest unikalny dla tej aplikacji, więc `activate` nie
+   może przypadkiem usunąć cache innej aplikacji z tego samego originu. */
+const SHELL_CACHE = `koto-shell-${VERSION}`;
+const KANJIVG_CACHE = `koto-kanjivg-${VERSION}`;
+const FONTS_CACHE = `koto-fonts-${VERSION}`;
+
+/* `activate` może usuwać tylko cache o tych prefiksach; reszta należy
+   do innych aplikacji na tym samym originie. */
+const CACHE_PREFIXES = ['koto-shell-', 'koto-kanjivg-', 'koto-fonts-'];
 
 /* Shell: wszystko, bez czego aplikacja się nie uruchomi. */
 const SHELL_ASSETS = [
@@ -125,7 +132,8 @@ self.addEventListener('install', event => {
 
       await mapWithConcurrency(kanjivgUrls, FETCH_CONCURRENCY, cacheOne);
 
-      const missing = (await kanjivg.keys()).map(entry => entry.url).filter(url => kanjivgUrls.indexOf(url) === -1);
+      const cached = new Set((await kanjivg.keys()).map(entry => entry.url));
+      const missing = kanjivgUrls.filter(url => !cached.has(url));
 
       if (missing.length) {
         await mapWithConcurrency(missing, 4, cacheOne);
@@ -148,7 +156,7 @@ self.addEventListener('install', event => {
 });
 
 /* =========================================================
-   ACTIVATE — usuń wszystkie nieaktualne wersje cache
+   ACTIVATE — usuń nieaktualne wersje własnych cache
    ========================================================= */
 
 self.addEventListener('activate', event => {
@@ -157,7 +165,9 @@ self.addEventListener('activate', event => {
       const keep = new Set([SHELL_CACHE, KANJIVG_CACHE, FONTS_CACHE]);
       const names = await caches.keys();
 
-      await Promise.all(names.filter(name => !keep.has(name)).map(name => caches.delete(name)));
+      const stale = names.filter(name => !keep.has(name) && CACHE_PREFIXES.some(prefix => name.startsWith(prefix)));
+
+      await Promise.all(stale.map(name => caches.delete(name)));
 
       await self.clients.claim();
     })()

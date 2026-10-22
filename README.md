@@ -94,7 +94,7 @@ Aplikacja nigdy nie wymusza automatycznego przeładowania. Gdy pojawi się nowa 
 
 Przeładowanie następuje dopiero po świadomym kliknięciu — dzięki temu trwająca sesja, np. w trakcie egzaminu, nie zostaje przerwana.
 
-Cache są wersjonowane (`shell-v1`, `kanjivg-v1`, `fonts-v1`); po aktywacji nowej wersji stare cache są usuwane.
+Cache są wersjonowane (`koto-shell-v1`, `koto-kanjivg-v1`, `koto-fonts-v1`); po aktywacji nowej wersji stare cache z przestrzeni `koto-*` są usuwane, a cache sprzed zmiany nazw pozostają nietknięte.
 
 ### Localhost a Service Worker
 

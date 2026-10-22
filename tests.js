@@ -728,11 +728,22 @@
     const version = (swSrc.match(/const VERSION = '(v\d+)'/) || [])[1];
     ok('sw.js declares VERSION as vN', !!version, version || 'brak');
     ok(
-      'cache names derive from VERSION',
-      /const SHELL_CACHE\s*=\s*`shell-\$\{VERSION\}`/.test(swSrc) &&
-        /const KANJIVG_CACHE\s*=\s*`kanjivg-\$\{VERSION\}`/.test(swSrc)
+      'cache names derive from VERSION with Koto namespace',
+      /const SHELL_CACHE\s*=\s*`koto-shell-\$\{VERSION\}`/.test(swSrc) &&
+        /const KANJIVG_CACHE\s*=\s*`koto-kanjivg-\$\{VERSION\}`/.test(swSrc) &&
+        /const FONTS_CACHE\s*=\s*`koto-fonts-\$\{VERSION\}`/.test(swSrc)
     );
     ok('activate removes old cache versions', /activate/.test(swSrc) && /delete/.test(swSrc));
+    ok(
+      'activate only touches Koto cache prefixes',
+      /const CACHE_PREFIXES = \['koto-shell-', 'koto-kanjivg-', 'koto-fonts-'\]/.test(swSrc) &&
+        /name\.startsWith\(prefix\)/.test(swSrc) &&
+        /names\.filter/.test(swSrc)
+    );
+    ok(
+      'KanjiVG retry selects expected URLs missing from cache',
+      /const cached = new Set/.test(swSrc) && /kanjivgUrls\.filter\(url => !cached\.has\(url\)\)/.test(swSrc)
+    );
 
     // pliki testowe to narzędzia deweloperskie — nigdy nie w precache
     ok('tests not precached', swSrc.indexOf('tests.js') < 0 && swSrc.indexOf('tests.html') < 0, '');

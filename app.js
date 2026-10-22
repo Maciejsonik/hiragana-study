@@ -6468,8 +6468,9 @@ function registerServiceWorker() {
         if (!installing) return;
 
         installing.addEventListener('statechange', () => {
-          // `controller` istnieje = to nie pierwsza instalacja,
-          // więc nowy SW przejmuje kontrolę dopiero po reloadzie.
+          // `controller` istnieje = to nie pierwsza instalacja. Nowy SW
+          // aktywuje się od razu (`skipWaiting`), ale strona nie jest
+          // przeładowywana automatycznie — baner tylko proponuje reload.
           if (installing.state === 'installed' && navigator.serviceWorker.controller) {
             showUpdateBanner(registration);
           }
