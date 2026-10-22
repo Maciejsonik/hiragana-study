@@ -1096,6 +1096,7 @@ Main permanent elements:
 #scriptEyebrow
 #muteToggle
 #themeToggle
+#settingsToggle
 #app
 #appNav
 ```
@@ -1113,7 +1114,8 @@ Kana hub, next to the script switcher.
 Focus mode (`body.focus-mode`) hides the navigation during `learn`, a running
 exam and an active flashcard session. It is driven by unfinished session state,
 not by `screen` alone: exam configuration and the vocabulary setup keep the
-navigation.
+navigation. The settings gear in the top bar follows the same rule, so it
+cannot interrupt a session; mute and theme remain available.
 
 Most learning/exam DOM is dynamically rendered by JavaScript.
 
@@ -2588,11 +2590,11 @@ prevents a light/dark flash. It performs **no writes**; migration belongs to
 ```text
 script switcher  hiragana / katakana / both
 hub summary      "Postęp" + current script + mastery strip
-tiles (2×2)      Nauka · Egzamin · Powtórki · Fiszki
-toolbar          Ustawienia
+tiles            Nauka · Egzamin · Powtórki
+top bar          gear → Ustawienia
 ```
 
-The four modes are `.menu-card.tile` — icon and name, **no paragraph**. The
+The three modes are `.menu-card.tile` — icon and name, **no paragraph**. The
 hub summary wraps the mastery strip in a card, so progress has a context
 instead of floating above the grid. "Nauka" is the primary tile
 (`.tile-primary`) and carries a one-line "Kontynuuj <znak>" hint. The strip
@@ -2601,18 +2603,21 @@ space, and the empty track doubles as the "new characters" share.
 "Powtórki" carries a badge with the due count, so the most time-sensitive
 mode is visible without opening it.
 
-Settings left the mode grid on purpose: it is not a way to study. It sits in
-a thin `.menu-tools` row under the tiles.
+The flashcard tile and the thin toolbar row were removed: vocabulary is a
+first-class navigation module, and Settings are reachable from the top bar.
+That leaves three study modes instead of competing entry points.
 
-The 2-column grid survives down to 320 px because a tile is just an icon and
-a word; the old single-column breakpoint existed for the paragraphs, not for
-the grid. At 320 px the menu is 221 px tall against roughly 1000 px before.
+On desktop the tiles form one three-column row. At 800 px and below they fall
+back to two columns, with "Powtórki" spanning the full second row. The
+single-column breakpoint is not needed because a tile is just an icon and a
+word.
 
-Covered in `tests.js`: four `.menu-card.tile` elements, `#settingsCard`
-inside `.menu-tools` and not inside `.menu`, the strip inside `.hub-summary`
-with the current script name, the primary `#learnCard` hint showing the
-current kana, no donut or legend left behind, the legacy `.menu-card-full`
-class still absent, and the CSS hooks (`.menu-card.tile`,
+Covered in `tests.js`: three `.menu-card.tile` elements, no `#vocabCard`, no
+`.menu-tools`, `#settingsToggle` inside `.topbar-actions` and not inside the
+menu, the gear navigating to Settings and hiding in focus mode, the strip
+inside `.hub-summary` with the current script name, the primary `#learnCard`
+hint showing the current kana, no donut or legend left behind, the legacy
+`.menu-card-full` class still absent, and the CSS hooks (`.menu-card.tile`,
 `.mastery-strip-bar`) still defined.
 
 ## Screens

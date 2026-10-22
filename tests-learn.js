@@ -1432,7 +1432,7 @@
         await wait(300);
         ok(
           'F10 wyjście z fiszek wraca do menu',
-          state.screen === 'menu' && !!document.getElementById('vocabCard'),
+          state.screen === 'menu' && !!document.getElementById('learnCard') && !document.getElementById('vocabCard'),
           state.screen
         );
 

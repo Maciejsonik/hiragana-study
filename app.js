@@ -954,6 +954,12 @@ function refreshChrome() {
     homeBtn.setAttribute('aria-label', 'Wróć do menu');
   }
 
+  const settingsToggle = document.getElementById('settingsToggle');
+  if (settingsToggle) {
+    settingsToggle.hidden = focus;
+    settingsToggle.tabIndex = focus ? -1 : 0;
+  }
+
   const nav = document.getElementById('appNav');
   if (!nav) return;
 
@@ -1956,6 +1962,22 @@ function setupMuteToggle() {
   updateMuteButton();
 }
 
+function setupSettingsToggle() {
+  const button = document.getElementById('settingsToggle');
+  if (!button) return;
+
+  button.innerHTML = icon('settings');
+  button.title = 'Ustawienia';
+  button.onclick = () => {
+    // W trakcie sesji nawigacja jest ukryta, więc gear nie może przerwać
+    // ćwiczenia. `refreshChrome()` chowa go również wizualnie.
+    if (isFocusMode()) return;
+
+    Audio.click();
+    setScreen('settings');
+  };
+}
+
 /* =========================================================
    EKRANY
 ========================================================= */
@@ -1979,6 +2001,7 @@ homeBtn.onclick = () => {
 function render() {
   createThemeToggle();
   setupMuteToggle();
+  setupSettingsToggle();
   applyTheme();
   refreshChrome();
 
@@ -2048,16 +2071,7 @@ function renderMenu() {
         <span class="tile-title">Powtórki</span>
         ${dueCount > 0 ? `<span class="tile-badge" aria-label="${dueCount} znaków do powtórki">${dueCount}</span>` : ''}
       </button>
-
-      <button class="menu-card tile" id="vocabCard">
-        <span class="menu-icon">${icon('vocab')}</span>
-        <span class="tile-title">Fiszki</span>
-      </button>
     </section>
-
-    <div class="menu-tools">
-      <button class="menu-tool" id="settingsCard">${icon('settings')} Ustawienia</button>
-    </div>
   `;
 
   document.getElementById('learnCard').onclick = () => {
@@ -2072,15 +2086,6 @@ function renderMenu() {
   document.getElementById('reviewCard').onclick = () => {
     Audio.click();
     setScreen('review');
-  };
-  document.getElementById('vocabCard').onclick = () => {
-    Audio.click();
-    state.vocab = null; // nowy zestaw za każdym wejściem
-    setScreen('vocab');
-  };
-  document.getElementById('settingsCard').onclick = () => {
-    Audio.click();
-    setScreen('settings');
   };
 
   document.querySelectorAll('[data-script]').forEach(btn => {

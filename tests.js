@@ -926,16 +926,20 @@
     setScreen('menu');
     await new Promise(r => setTimeout(r, 60));
     ok(
-      'menu has the four study tiles',
-      ['learnCard', 'examCard', 'reviewCard', 'vocabCard'].every(function (id) {
+      'menu has the three study tiles',
+      ['learnCard', 'examCard', 'reviewCard'].every(function (id) {
         const el = document.getElementById(id);
         return !!el && el.classList.contains('menu-card') && el.classList.contains('tile');
-      }) && document.querySelectorAll('.menu .menu-card.tile').length === 4,
+      }) &&
+        document.querySelectorAll('.menu .menu-card.tile').length === 3 &&
+        !document.getElementById('vocabCard'),
       String(document.querySelectorAll('.menu .menu-card').length)
     );
     ok(
-      'settings live in the toolbar, not among the study modes',
-      !!document.querySelector('.menu-tools #settingsCard') && !document.querySelector('.menu #settingsCard'),
+      'settings live in the top bar, not among the study modes',
+      !!document.querySelector('.topbar-actions #settingsToggle') &&
+        !document.querySelector('#settingsCard') &&
+        !document.querySelector('.menu-tools'),
       ''
     );
     ok(
@@ -967,7 +971,7 @@
 
     // Klasa modyfikatora karty pełnoszerokiej: `.menu-card.full`.
     // Dawniej było to osobna klasa `.menu-card-full` — pilnujemy, żeby
-    // nie wróciła. Żadna karta już jej nie używa (siatka 2×2), ale reguła
+    // nie wróciła. Żadna karta już jej nie używa, ale reguła
     // zostaje jako gotowy modyfikator.
     ok(
       'no element carries the legacy full-width class',
@@ -981,6 +985,11 @@
     ok(
       'style.css keeps .menu-card.tile and the mastery strip',
       cssText.indexOf('.menu-card.tile') >= 0 && cssText.indexOf('.mastery-strip-bar') >= 0,
+      ''
+    );
+    ok(
+      'style.css has no stale .menu-tools row',
+      cssText.indexOf('.menu-tools') < 0 && cssText.indexOf('.menu-tool') < 0,
       ''
     );
   } catch (e) {
@@ -1149,18 +1158,22 @@
 
     const learnIcon = document.querySelector('#learnCard .menu-icon svg.icon');
     const examIcon = document.querySelector('#examCard .menu-icon svg.icon');
-    const settingsIcon = document.querySelector('#settingsCard svg.icon');
+    const settingsIcon = document.querySelector('#settingsToggle svg.icon');
     const themeIcon = document.querySelector('#themeToggle svg.icon');
     const muteIcon = document.querySelector('#muteToggle svg.icon');
 
     ok('ICO1 kafelki menu używają SVG', !!learnIcon && !!examIcon, '');
-    ok('ICO2 przycisk Ustawienia używa SVG', !!settingsIcon, '');
+    ok(
+      'ICO2 gear Ustawień w górnym pasku używa SVG',
+      !!settingsIcon && !!document.querySelector('.topbar-actions #settingsToggle'),
+      ''
+    );
     ok(
       'ICO3 ikona kafelka nie jest emoji',
       !!learnIcon && document.querySelector('#learnCard .menu-icon').textContent.trim() === '',
       document.querySelector('#learnCard .menu-icon')?.textContent.trim()
     );
-    ok('ICO4 przełączniki górnego paska używają SVG', !!themeIcon && !!muteIcon, '');
+    ok('ICO4 przełączniki górnego paska używają SVG', !!themeIcon && !!muteIcon && !!settingsIcon, '');
   } catch (e) {
     ok('ikony interfejsu', false, e.message);
   }
@@ -2012,6 +2025,18 @@
     eq('NAV16 klik prowadzi do ustawień', state.screen, 'settings');
     eq('NAV17 tytuł ustawień', title(), 'Ustawienia');
     eq('NAV18 aktywna pozycja ustawień', navButton('settings').getAttribute('aria-current'), 'page');
+
+    setScreen('menu');
+    await sleep(30);
+    document.getElementById('settingsToggle').click();
+    await sleep(30);
+    eq('NAV18a gear w górnym pasku prowadzi do ustawień', state.screen, 'settings');
+    setScreen('learn');
+    await sleep(60);
+    ok('NAV18b gear jest ukryty w trybie nauki', document.getElementById('settingsToggle').hidden);
+    setScreen('menu');
+    await sleep(30);
+    ok('NAV18c gear wraca po wyjściu z sesji', !document.getElementById('settingsToggle').hidden);
 
     /* Egzamin: konfiguracja ≠ sesja. */
     setScreen('exam');
