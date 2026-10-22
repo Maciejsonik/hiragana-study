@@ -1994,6 +1994,18 @@
         'hiragana,both,katakana',
       [...document.querySelectorAll('.script-switcher .script-btn')].map(button => button.dataset.script).join(',')
     );
+    const scriptGroup = document.querySelector('.script-switcher');
+    const scriptButtons = [...document.querySelectorAll('.script-switcher .script-btn')];
+    ok(
+      'M23b wybór skryptu jest dostępny i ma stan aria-pressed',
+      scriptGroup.getAttribute('role') === 'group' &&
+        scriptGroup.getAttribute('aria-label') === 'Skrypt' &&
+        scriptButtons.every(
+          button => button.getAttribute('aria-pressed') === String(button.classList.contains('active'))
+        ) &&
+        scriptButtons.filter(button => button.getAttribute('aria-pressed') === 'true').length === 1,
+      scriptButtons.map(button => button.dataset.script + '=' + button.getAttribute('aria-pressed')).join(',')
+    );
 
     setScreen('settings');
     await new Promise(r => setTimeout(r, 200));
@@ -2209,6 +2221,15 @@
           await sleep(40);
           const overflow = doc.documentElement.scrollWidth - doc.documentElement.clientWidth;
           ok('LAYOUT nawigacja: ' + screen + ' ' + width + 'px bez overflow', overflow <= 0, 'overflow=' + overflow);
+        }
+
+        if (width === 320) {
+          win.setScreen('menu');
+          await sleep(40);
+          const tops = [...doc.querySelectorAll('.script-switcher .script-btn')].map(button =>
+            Math.round(button.getBoundingClientRect().top)
+          );
+          ok('LAYOUT script switcher 320px mieści się w jednym rzędzie', new Set(tops).size === 1, tops.join(','));
         }
 
         const nav = doc.getElementById('appNav');

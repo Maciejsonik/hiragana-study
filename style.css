@@ -3369,6 +3369,14 @@ body.focus-mode .app-shell {
     font-size: var(--text-lg);
   }
 
+  .script-btn {
+    padding: 10px 8px;
+  }
+
+  .script-switcher {
+    gap: 6px;
+  }
+
   .vocab-mode-grid,
   .vocab-setup-pair {
     grid-template-columns: 1fr;

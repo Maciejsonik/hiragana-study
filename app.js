@@ -2070,10 +2070,10 @@ function renderMenu() {
   const dueCount = dueList(Date.now()).length;
 
   app.innerHTML = `
-    <div class="script-switcher">
-      <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana">ひ Hiragana</button>
-      <button class="script-btn ${state.script === 'both' ? 'active' : ''}" data-script="both">ひカ Oba</button>
-      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana">カ Katakana</button>
+    <div class="script-switcher" role="group" aria-label="Skrypt">
+      <button class="script-btn ${state.script === 'hiragana' ? 'active' : ''}" data-script="hiragana" aria-pressed="${state.script === 'hiragana'}">ひ Hiragana</button>
+      <button class="script-btn ${state.script === 'both' ? 'active' : ''}" data-script="both" aria-pressed="${state.script === 'both'}">ひカ Oba</button>
+      <button class="script-btn ${state.script === 'katakana' ? 'active' : ''}" data-script="katakana" aria-pressed="${state.script === 'katakana'}">カ Katakana</button>
     </div>
 
     <section class="hub-summary" aria-labelledby="hubSummaryLabel">

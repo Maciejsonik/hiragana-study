@@ -2317,17 +2317,14 @@ change; **accepted** — a decision, not a bug.
 
 - **15. Retry preserving timer/limit — NOT A BUG.** "Spróbuj jeszcze raz" calls `showExamSetup()` and saves nothing, so stored settings are untouched.
 - **1. `masteryLevel()` ordering of `hard` vs `mastered` — CORRECT, no bug.** The branches are mutually exclusive given the size of `recent`. `hard` needs `errorRate >= 0.5` over the whole window; `mastered` needs the last five entries to all be correct. With `recent` capped at 6, five correct entries in the last five give a rate of 0.167, so both cannot hold. The cap is only enforced on write, never on read — nothing trims a longer array — but `git log -S` shows `entry.recent.length > 6` has existed since the initial commit, which is the same commit that introduced `recent`. A window longer than 6 is therefore unreachable except by hand-editing `localStorage` or importing data.
-- **5. Theme system branch — MINOR GAP, not a defect.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render and there is no `change` listener. With the theme set to `system`, switching the OS appearance while the app is open does not re-theme it until the next render or reload. Nothing is wrong with the branch itself.
 - **6. `mountKana().finish()` — NOT A BUG, the item rests on a wrong premise.** `mountKana()` returns `{ play, step, showAll, count }`. There is no `finish` on the returned object; `finish` is a local function inside `mountKana`, called by `step()` and `play()` when the last stroke completes, and never exposed. `player.finish` is not referenced anywhere in the app or the harnesses.
 - **7. Global keyboard listener vs text inputs — NO DEFECT FOUND.** Typed inputs attach their own `keydown` handler that calls `e.stopPropagation()` for Enter, so the global listener never sees it. Digit shortcuts are additionally guarded by `exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type'`, so typing digits into the field selects nothing. Escape reaches the global handler and returns to the menu, which is intended. Worth remembering: that guard is positional — any input added to Learn mode later will need its own handling.
+- **8. Four exam modes vs original T7 specification — NO DEFECT.** The original T7 specification described three modes, but the implementation deliberately supports four and §12 documents all of them. The fourth mode (Kana → type Romaji) is exercised by the M-series assertions in `tests.js`, so this is an intentional extension of the specification, not a discrepancy in the product.
 ## Accepted — deliberate decisions, not bugs
 
+- **5. Theme system branch — ACCEPTED, no listener added.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render; with the theme set to `system`, an OS appearance change is picked up on the next render or reload. The resolution itself is correct. A live `change` listener was considered and deliberately not added: it would add event wiring without changing any stored preference, and the current branch is correct at every render.
 - **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
 - **12. KanjiVG loaded from a CDN — ACCEPTED.** The app needs one online load before it is fully offline. Vendoring all 148 stroke SVGs would remove that dependency at the cost of a much larger repository, and KanjiVG data changes rarely. `SVG_SOURCES` tries three locations in order, and Google Fonts are cached by the service worker with a system-font stack in `style.css` as the fallback, so a single failed host does not break the app.
-## Still open, **not evaluated in this round**
-
-8. Four exam modes vs original T7 specification.
-
 ## Open, forward-looking
 
 17. Future multi-character kana representation for yōon.
@@ -2369,6 +2366,7 @@ App shell / module navigation: implemented
 Design tokens / visual system: implemented
 Shared session frame: implemented
 SVG icon set: implemented
+Kana hub: implemented
 Code splitting: NOT implemented
 Kanji: NOT implemented
 Vocabulary: data, progress store, flashcards and patterns; all 57 items implemented
@@ -2383,17 +2381,19 @@ Advanced audio / lo-fi: NOT implemented
 ### Current active task
 
 ```text
-UI modernization — phase 4: Kana hub (implemented; awaiting review)
+UI modernization — phase 4: Kana hub — COMPLETE
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
-2 (design tokens, typography, surfaces) and 3 (shared session frame plus the
-SVG icon set) are implemented. Phase 3 also fixed the live exam-options
-summary, the mastery strip with unpractised characters and the drawing-control
-groups. Phase 4 adds the hub summary card and the primary `Nauka` action.
+2 (design tokens, typography, surfaces), 3 (shared session frame plus the
+SVG icon set) and 4 (the Kana hub summary card, primary `Nauka` action,
+accessible script state and a single-row script switcher at 320 px) are
+implemented and accepted. Phase 3 also fixed the live exam-options summary,
+the mastery strip with unpractised characters and the drawing-control groups.
 The remaining UI phases are the list/detail components and Settings.
 Vocabulary, grammar and kanji plug into those archetypes instead of inventing
-their own screens.
+their own screens. No new feature work has started beyond closing the Kana
+hub; T19 is the next roadmap item.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2404,9 +2404,9 @@ and the polish are shipped (§35).
 ### Current recommended roadmap
 
 ```text
-UI phase 4 (Kana hub)
+UI phase 4 (Kana hub) — COMPLETE
 ↓
-T19 Vocabulary (module list + detail)
+T19 Vocabulary (module list + detail) — NOT STARTED
 ↓
 T16 Code splitting
 ```
@@ -2631,6 +2631,12 @@ tiles            Nauka · Egzamin · Powtórki
 top bar          gear → Ustawienia
 ```
 
+The script switcher is a labelled `role="group"`; each button carries
+`aria-pressed`, so the active script is exposed to assistive technology as
+well as through the `.active` class. At 320 px the three buttons stay on one
+row by reducing horizontal padding and gap, not by reducing their touch
+height.
+
 The three modes are `.menu-card.tile` — icon and name, **no paragraph**. The
 hub summary wraps the mastery strip in a card, so progress has a context
 instead of floating above the grid. "Nauka" is the primary tile
@@ -2653,9 +2659,11 @@ Covered in `tests.js`: three `.menu-card.tile` elements, no `#vocabCard`, no
 `.menu-tools`, `#settingsToggle` inside `.topbar-actions` and not inside the
 menu, the gear navigating to Settings and hiding in focus mode, the strip
 inside `.hub-summary` with the current script name, the primary `#learnCard`
-hint showing the current kana, no donut or legend left behind, the legacy
-`.menu-card-full` class still absent, and the CSS hooks (`.menu-card.tile`,
-`.mastery-strip-bar`) still defined.
+hint showing the current kana, the labelled script group with exactly one
+`aria-pressed="true"` button, the three script buttons sharing one row at
+320 px, no donut or legend left behind, the legacy `.menu-card-full` class
+still absent, and the CSS hooks (`.menu-card.tile`, `.mastery-strip-bar`)
+still defined.
 
 ## Screens
 
@@ -2959,8 +2967,8 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion, vocabulary data and progress
                                    store, partial-progress recovery,
                                    future-version guard, app shell,
-                                   navigation, logo, Koto branding and
-                                   the About card                        (406 assertions)
+                                   navigation, logo, Koto branding, the
+                                   About card and the Kana hub            (408 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
