@@ -2479,20 +2479,30 @@ function renderVocabTopics() {
     }
 
     app.innerHTML = `
-      <section class="vocab">
-        <div class="eyebrow">SŁOWNICTWO · TEMATY</div>
-        <h2>Tematy</h2>
-        <p class="vocab-lead">Zakres: ${VOCAB_SCOPE_LABELS[scope]}. Wybierz temat, by zobaczyć jego słownictwo i rozpocząć naukę.</p>
+      <section class="vocab vocab-hub">
+        <div class="card vocab-hub-hero">
+          <span class="vocab-hub-watermark" aria-hidden="true">題</span>
+          <div class="vocab-hub-top">
+            <div class="eyebrow"><span class="accent-dot"></span> SŁOWNICTWO · KATALOG TEMATÓW</div>
+            <div class="vocab-heading">
+              <h2>Tematy słownictwa</h2>
+              <p class="vocab-lead">Zakres: ${VOCAB_SCOPE_LABELS[scope]}. Wybierz temat, by poznać dedykowane słownictwo i rozpocząć naukę.</p>
+            </div>
+          </div>
 
-        <div class="vocab-setup-group vocab-topics-scope-group">
-          <span class="settings-label" id="vocabTopicScopeLabel">Zakres</span>
-          <div class="vocab-pills" role="group" aria-labelledby="vocabTopicScopeLabel">
-            ${VOCAB_SCOPES.map(
-              s => `
-              <button class="vocab-pill ${s === scope ? 'active' : ''}" type="button" data-vocab-topic-scope="${s}" data-focus-key="topic-scope-${s}" aria-pressed="${s === scope}">
-                ${VOCAB_SCOPE_LABELS[s]} <span class="vocab-pill-count">${vocabScopePool(s).length}</span>
-              </button>`
-            ).join('')}
+          <div class="vocab-setup-group vocab-topics-scope-group">
+            <div class="vocab-group-header">
+              <span class="settings-label" id="vocabTopicScopeLabel">${icon('list')} Zakres materiału</span>
+              <small class="vocab-group-desc">Filtruj tematy według typu kart</small>
+            </div>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabTopicScopeLabel">
+              ${VOCAB_SCOPES.map(
+                s => `
+                <button class="vocab-pill ${s === scope ? 'active' : ''}" type="button" data-vocab-topic-scope="${s}" data-focus-key="topic-scope-${s}" aria-pressed="${s === scope}">
+                  <span>${VOCAB_SCOPE_LABELS[s]}</span> <span class="vocab-pill-count">${vocabScopePool(s).length}</span>
+                </button>`
+              ).join('')}
+            </div>
           </div>
         </div>
 
@@ -2558,20 +2568,60 @@ function renderVocabTopics() {
     .join('');
 
   const content = `
-    <section class="vocab">
-      <div class="eyebrow">SŁOWNICTWO · TEMATY</div>
-      <h2>${categoryLabel(topicId)}</h2>
-      <div class="vocab-topic-meta">${pool.length} kart · ${started} rozpoczętych · trafność ${accuracyStr}</div>
-      <div class="vocab-topic-list" role="list">
-        ${rows}
+    <section class="vocab vocab-hub">
+      <div class="card vocab-hub-hero">
+        <span class="vocab-hub-watermark" aria-hidden="true">語</span>
+        <div class="vocab-hub-top">
+          <div class="eyebrow"><span class="accent-dot"></span> SŁOWNICTWO · TEMAT</div>
+          <div class="vocab-heading">
+            <h2>${categoryLabel(topicId)}</h2>
+            <p class="vocab-lead">${pool.length} kart w wybranym zakresie (${VOCAB_SCOPE_LABELS[scope]}). Sprawdź wyrażenia lub rozpocznij sesję.</p>
+          </div>
+        </div>
+
+        <div class="vocab-summary" aria-label="Podsumowanie tematu">
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('vocab')}</span>
+            <div class="vocab-summary-text">
+              <strong>${pool.length}</strong>
+              <span>kart w temacie</span>
+            </div>
+          </div>
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('target')}</span>
+            <div class="vocab-summary-text">
+              <strong>${started}</strong>
+              <span>rozpoczętych</span>
+            </div>
+          </div>
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('star')}</span>
+            <div class="vocab-summary-text">
+              <strong>${accuracyStr}</strong>
+              <span>trafność</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vocab-topic-actions">
+          <button class="btn btn-primary vocab-start" type="button" data-vocab-topic-start data-focus-key="start-topic">
+            ${icon('play')} Rozpocznij temat · ${pool.length} kart
+          </button>
+          <button class="btn btn-secondary vocab-topics-back" type="button" data-vocab-topics-back data-focus-key="back-to-topics">
+            ${icon('chevron-left')} Wróć do tematów
+          </button>
+        </div>
       </div>
-      <div class="vocab-topic-actions">
-        <button class="btn btn-primary" type="button" data-vocab-topic-start data-focus-key="start-topic">
-          ${icon('play')} Rozpocznij temat
-        </button>
-        <button class="btn btn-secondary" type="button" data-vocab-topics-back data-focus-key="back-to-topics">
-          ${icon('chevron-left')} Wróć do tematów
-        </button>
+
+      <div class="card vocab-topic-detail-card">
+        <div class="vocab-group-header">
+          <span class="settings-label">${icon('list')} Słówka w tym temacie</span>
+          <small class="vocab-group-desc">Lista kart i historia Twoich dotychczasowych odpowiedzi</small>
+        </div>
+        <div class="vocab-topic-meta">${pool.length} kart · ${started} rozpoczętych · trafność ${accuracyStr}</div>
+        <div class="vocab-topic-list" role="list">
+          ${rows}
+        </div>
       </div>
     </section>
   `;
@@ -5506,17 +5556,27 @@ function showExamSetup() {
   const settingsLabel = examOptionsLabel(settings);
 
   app.innerHTML = `
-    <section class="exam card">
+    <section class="exam exam-hub card">
+      <div class="exam-hero">
+        <span class="exam-watermark" aria-hidden="true">試</span>
+        <div class="exam-hero-top">
+          <div class="eyebrow"><span class="accent-dot"></span> EGZAMIN · テスト</div>
+          <div class="exam-heading">
+            <h2>Wybierz zakres</h2>
+            <p class="exam-lead">
+              ${scriptHint}
+              Rozwiń kategorię, aby wybrać pojedyncze rzędy, albo zaznacz całą sekcję.
+              Egzamin trwa tak długo, jak chcesz. Znaki, które sprawiają Ci trudność,
+              będą wracały częściej.
+            </p>
+          </div>
+        </div>
 
-      <div class="eyebrow">EGZAMIN</div>
-      <h2>Wybierz zakres</h2>
-
-      <p class="exam-lead">
-        ${scriptHint}
-        Rozwiń kategorię, aby wybrać pojedyncze rzędy, albo zaznacz całą sekcję.
-        Egzamin trwa tak długo, jak chcesz. Znaki, które sprawiają Ci trudność,
-        będą wracały częściej.
-      </p>
+        <div class="exam-quick">
+          <button class="btn btn-secondary" id="allGroups">${icon('check')} Wszystkie</button>
+          <button class="btn btn-secondary" id="noGroups">${icon('x')} Wyczyść</button>
+        </div>
+      </div>
 
       <div class="exam-groups" id="examGroups">
         ${sections
@@ -5552,11 +5612,6 @@ function showExamSetup() {
         `;
           })
           .join('')}
-      </div>
-
-      <div class="exam-quick">
-        <button class="btn btn-secondary" id="allGroups">Wszystkie</button>
-        <button class="btn btn-secondary" id="noGroups">Wyczyść</button>
       </div>
 
       <details class="exam-advanced" ${examAdvancedOpen ? 'open' : ''}>
