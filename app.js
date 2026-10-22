@@ -1008,6 +1008,8 @@ function isFocusMode() {
 
 function screenTitle() {
   if (state.screen === 'vocab') {
+    if (vocabTopicNav.view === 'topics') return 'Tematy';
+    if (vocabTopicNav.view === 'detail') return categoryLabel(vocabTopicNav.topic);
     if (!state.vocab) return 'Słownictwo';
     return state.vocab.finished ? 'Wynik' : 'Fiszki';
   }
@@ -2432,24 +2434,77 @@ function vocabPool(scope, category = CATEGORY_ALL) {
 }
 
 function renderVocabTopics() {
+  refreshChrome();
+
   if (vocabTopicNav.view === 'topics') {
-    const categories = categoriesIn(vocabScopePool(vocabTopicNav.scope));
-    let gridHTML = `<section class="vocab"><div class="eyebrow">SŁOWNICTWO · TEMATY</div><h2>Tematy</h2><p class="vocab-lead">Zakres: ${VOCAB_SCOPE_LABELS[vocabTopicNav.scope]}. Wybierz temat, by zobaczyć jego słownictwo i rozpocząć naukę.</p><div class="vocab-topics-grid">`;
-    for (const cat of categories) {
-      const pool = filterByCategory(vocabScopePool(vocabTopicNav.scope), cat.id);
-      const stats = pool.map(i => vocabStat(i.id));
-      const started = stats.filter(s => s.seen > 0).length;
-      const accuracyStr = stats.length
-        ? Math.round((stats.reduce((a, b) => a + b.accuracy, 0) / stats.length) * 100) + '%'
-        : '—';
-      gridHTML += `<button class="vocab-topics-card" data-vocab-topic="${cat.id}" data-focus-key="topic-${cat.id}">
-        <div class="vocab-topics-label">${categoryLabel(cat.id)}</div>
-        <div class="vocab-topics-sub">${pool.length} kart · ${started} rozpoczętych · ${accuracyStr}</div>
-      </button>`;
+    const scope = vocabTopicNav.scope || vocabSetup.scope || 'all';
+    const categories = categoriesIn(vocabScopePool(scope));
+    let cardsHTML = '';
+
+    if (categories.length === 0) {
+      cardsHTML = '<p class="vocab-lead vocab-topics-empty">Brak tematów w wybranym zakresie.</p>';
+    } else {
+      for (const cat of categories) {
+        const pool = filterByCategory(vocabScopePool(scope), cat.id);
+        const stats = pool.map(i => vocabStat(i.id));
+        const started = stats.filter(s => s.seen > 0).length;
+        const totalSeen = stats.reduce((sum, s) => sum + s.seen, 0);
+        const totalCorrect = stats.reduce((sum, s) => sum + s.correct, 0);
+        const accuracyStr = totalSeen ? Math.round((totalCorrect / totalSeen) * 100) + '%' : '—';
+
+        cardsHTML += `
+          <button class="vocab-topics-card" type="button" data-vocab-topic="${cat.id}" data-focus-key="topic-${cat.id}">
+            <div class="vocab-topics-header">
+              <span class="vocab-topics-label">${categoryLabel(cat.id)}</span>
+              <span class="vocab-pill-count">${pool.length}</span>
+            </div>
+            <div class="vocab-topics-sub">${pool.length} kart · ${started} rozpoczętych · ${accuracyStr}</div>
+          </button>
+        `;
+      }
     }
-    gridHTML +=
-      '</div><button class="btn btn-secondary vocab-topics-back" data-vocab-topics-back data-focus-key="back-from-topics">Wróć do konfiguracji</button></section>';
-    app.innerHTML = gridHTML;
+
+    app.innerHTML = `
+      <section class="vocab">
+        <div class="eyebrow">SŁOWNICTWO · TEMATY</div>
+        <h2>Tematy</h2>
+        <p class="vocab-lead">Zakres: ${VOCAB_SCOPE_LABELS[scope]}. Wybierz temat, by zobaczyć jego słownictwo i rozpocząć naukę.</p>
+
+        <div class="vocab-setup-group vocab-topics-scope-group">
+          <span class="settings-label" id="vocabTopicScopeLabel">Zakres</span>
+          <div class="vocab-pills" role="group" aria-labelledby="vocabTopicScopeLabel">
+            ${VOCAB_SCOPES.map(
+              s => `
+              <button class="vocab-pill ${s === scope ? 'active' : ''}" type="button" data-vocab-topic-scope="${s}" data-focus-key="topic-scope-${s}" aria-pressed="${s === scope}">
+                ${VOCAB_SCOPE_LABELS[s]} <span class="vocab-pill-count">${vocabScopePool(s).length}</span>
+              </button>`
+            ).join('')}
+          </div>
+        </div>
+
+        <div class="vocab-topics-grid">
+          ${cardsHTML}
+        </div>
+
+        <div class="vocab-topic-actions">
+          <button class="btn btn-secondary vocab-topics-back" type="button" data-vocab-topics-back data-focus-key="back-from-topics">
+            ${icon('chevron-left')} Wróć do konfiguracji
+          </button>
+        </div>
+      </section>
+    `;
+
+    document.querySelectorAll('[data-vocab-topic-scope]').forEach(button => {
+      button.onclick = () => {
+        Audio.click();
+        const newScope = button.dataset.vocabTopicScope;
+        vocabTopicNav.scope = newScope;
+        vocabSetup.scope = newScope;
+        renderVocabTopics();
+        app.querySelector(`[data-focus-key="topic-scope-${newScope}"]`)?.focus();
+      };
+    });
+
     document.querySelectorAll('[data-vocab-topic]').forEach(button => {
       button.onclick = () => {
         Audio.click();
@@ -2459,6 +2514,7 @@ function renderVocabTopics() {
         app.querySelector('[data-vocab-topic-start]')?.focus();
       };
     });
+
     document.querySelector('[data-vocab-topics-back]').onclick = () => {
       Audio.click();
       vocabTopicNav.view = 'setup';
@@ -2471,26 +2527,53 @@ function renderVocabTopics() {
 
   // Detail view
   const topicId = vocabTopicNav.topic;
-  const pool = filterByCategory(vocabScopePool(vocabTopicNav.scope), topicId);
+  const scope = vocabTopicNav.scope || vocabSetup.scope || 'all';
+  const pool = filterByCategory(vocabScopePool(scope), topicId);
+  const stats = pool.map(item => vocabStat(item.id));
+  const started = stats.filter(s => s.seen > 0).length;
+  const totalSeen = stats.reduce((sum, s) => sum + s.seen, 0);
+  const totalCorrect = stats.reduce((sum, s) => sum + s.correct, 0);
+  const accuracyStr = totalSeen ? Math.round((totalCorrect / totalSeen) * 100) + '%' : '—';
+
   const rows = pool
     .map(item => {
       const stat = vocabStat(item.id);
-      const seenStr = stat.seen ? stat.seen + ' / ' + Math.round(stat.accuracy * 100) + '%' : 'nie rozpoczęte';
-      return `<div class="vocab-item-row"><div><strong>${item.kana}</strong> <span class="vocab-item-romaji">${item.romaji}</span></div><div><span class="vocab-item-meaning">${item.meaning}</span></div><div class="vocab-item-stat">${seenStr}</div></div>`;
+      const seenStr = stat.seen ? `${stat.seen} powt. · ${Math.round(stat.accuracy * 100)}%` : 'nie rozpoczęte';
+      return `<div class="vocab-item-row"><div class="vocab-item-lead"><strong>${item.kana}</strong> <span class="vocab-item-romaji">${item.romaji}</span></div><div class="vocab-item-meaning-cell"><span class="vocab-item-meaning">${item.meaning}</span></div><div class="vocab-item-stat">${seenStr}</div></div>`;
     })
     .join('');
-  const content = `<section class="vocab"><div class="eyebrow">SŁOWNICTWO · TEMATY</div><h2>${categoryLabel(topicId)}</h2><div class="vocab-topic-meta">${pool.length} kart · ${rows.split('vocab-item-row').length - 1} wyświetlonych</div>${rows}<div class="vocab-topic-actions"><button class="btn btn-primary" data-vocab-topic-start>Rozpocznij temat</button><button class="btn btn-secondary" data-vocab-topics-back>Wróć do tematów</button></div></section>`;
+
+  const content = `
+    <section class="vocab">
+      <div class="eyebrow">SŁOWNICTWO · TEMATY</div>
+      <h2>${categoryLabel(topicId)}</h2>
+      <div class="vocab-topic-meta">${pool.length} kart · ${started} rozpoczętych · trafność ${accuracyStr}</div>
+      <div class="vocab-topic-list" role="list">
+        ${rows}
+      </div>
+      <div class="vocab-topic-actions">
+        <button class="btn btn-primary" type="button" data-vocab-topic-start data-focus-key="start-topic">
+          ${icon('play')} Rozpocznij temat
+        </button>
+        <button class="btn btn-secondary" type="button" data-vocab-topics-back data-focus-key="back-to-topics">
+          ${icon('chevron-left')} Wróć do tematów
+        </button>
+      </div>
+    </section>
+  `;
   app.innerHTML = content;
+
   document.querySelector('[data-vocab-topic-start]').onclick = () => {
     Audio.click();
-    const ids = vocabSessionOrder(vocabTopicNav.scope, topicId, {
+    const ids = vocabSessionOrder(scope, topicId, {
       order: vocabSetup.order,
       limit: vocabSetup.limit
     });
     vocabTopicNav.view = 'setup';
     vocabTopicNav.topic = null;
-    startVocabSession({ ids, scope: vocabTopicNav.scope, category: topicId });
+    startVocabSession({ ids, scope, category: topicId });
   };
+
   document.querySelector('[data-vocab-topics-back]').onclick = () => {
     Audio.click();
     vocabTopicNav.view = 'topics';

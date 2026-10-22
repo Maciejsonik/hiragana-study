@@ -1775,6 +1775,32 @@
         vocabTopicNav.scope === 'words',
       'cards=' + document.querySelectorAll('.vocab-topics-card').length
     );
+    ok(
+      'T19 topic folder renders scope pills',
+      document.querySelectorAll('[data-vocab-topic-scope]').length === 5 &&
+        document.querySelector('[data-vocab-topic-scope="words"]').classList.contains('active'),
+      'pills=' + document.querySelectorAll('[data-vocab-topic-scope]').length
+    );
+    document.querySelector('[data-vocab-topic-scope="all"]').click();
+    ok(
+      'T19 topic folder scope pills update scope and cards',
+      vocabTopicNav.scope === 'all' && document.querySelectorAll('.vocab-topics-card').length >= 3,
+      'scope=' + vocabTopicNav.scope + ' cards=' + document.querySelectorAll('.vocab-topics-card').length
+    );
+    vocabTopicNav.topic = 'school';
+    vocabTopicNav.view = 'detail';
+    renderVocabTopics();
+    ok(
+      'T19 detail view title matches category and has back action',
+      screenTitle() === 'Szkoła' && !!document.querySelector('[data-vocab-topics-back]'),
+      'title=' + screenTitle()
+    );
+    document.querySelector('[data-vocab-topics-back]').click();
+    ok(
+      'T19 detail back button returns to topics folder',
+      vocabTopicNav.view === 'topics' && !vocabTopicNav.topic && screenTitle() === 'Tematy',
+      'view=' + vocabTopicNav.view
+    );
     document.querySelector('[data-nav="vocab"]').click();
     ok(
       'T19 vocabulary nav returns to setup from topics',

@@ -2500,13 +2500,14 @@ module-independent taxonomy, a dedicated scope-aware topic folder with detail
 views, progress summaries and an explicit "Bez kategorii" bucket, plus the
 extension contract for T18 and T20 (§"Topic categories (layer 4)").
 
-**Where the next session picks up.** The next T19 work is UX cleanup:
-decide whether the topic folder is global or follows the selected scope,
-remove the old setup-filter path, and replace remaining inline styles and
-inline handlers in the topic views. The kanji data contract (T18) can be
-drafted on the same taxonomy in parallel. Two decisions remain deliberately
-open: whether a topic should influence the "smart" order, and whether kanji
-and vocabulary should share one session.
+**Where the next session picks up.** The T19 UX cleanup is complete:
+the topic folder respects and allows changing the selected scope directly
+via scope pills, topic cards and detail rows show robust counts and
+accuracy metrics, navigation between topics and detail views manages focus
+and topbar titles contextually, and action buttons use consistent iconography.
+Two decisions remain deliberately open: whether a topic should influence the
+"smart" order, and whether kanji and vocabulary should share one session.
+The kanji data contract (T18) can be drafted on the same taxonomy in parallel.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2519,8 +2520,9 @@ and the polish are shipped (§35).
 ```text
 UI phase 4 (Kana hub) — COMPLETE
 ↓
-T19 Vocabulary (data, progress, flashcards, topics) — SHIPPED
-   UX cleanup and scope/topic integration next
+T19 Vocabulary (data, progress, flashcards, topics, UX cleanup) — COMPLETE
+↓
+Next: Shared module dashboard & Daily Practice / Goals (T22) or Kanji (T18)
 ↓
 T16 Code splitting
 ```
@@ -3083,7 +3085,7 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    future-version guard, app shell,
                                    navigation, logo, Koto branding, the
                                    About card, the Kana hub and the topic
-                                   taxonomy                           (417 assertions)
+                                   taxonomy                           (422 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
