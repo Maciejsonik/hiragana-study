@@ -877,12 +877,6 @@ const NAV_ITEMS = [
     label: 'Słownictwo',
     screen: 'vocab',
     icon: '<rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/>'
-  },
-  {
-    id: 'settings',
-    label: 'Ustawienia',
-    screen: 'settings',
-    icon: '<path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h6M14 18h6"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="18" r="2"/>'
   }
 ];
 

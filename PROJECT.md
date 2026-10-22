@@ -1113,6 +1113,12 @@ Main permanent elements:
 is rendered once by `renderNav()` and only its active state, `aria-current`
 and focus-mode visibility are updated afterwards.
 
+`NAV_ITEMS` currently holds two modules, **Kana** and **Słownictwo**.
+**Ustawienia** are reachable only through the top-bar gear, so the rail does
+not spend a slot on a screen that is not a study mode. The free slot is the
+place for a future module such as kanji or grammar; adding one is a single
+`NAV_ITEMS` entry and a label in `MODULE_LABELS`.
+
 The top bar is contextual: `#appTitle` is the screen name (`Kana`, `Nauka`,
 `Egzamin`, `Powtórki`, `Fiszki`, `Ustawienia`) and `#scriptEyebrow` names the
 module. The script name is no longer a global page title — it lives in the

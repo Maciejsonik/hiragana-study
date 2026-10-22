@@ -2010,11 +2010,11 @@
     const title = () => document.getElementById('appTitle').textContent;
 
     ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
-    eq('NAV2 trzy pozycje nawigacji', navButtons().length, 3);
+    eq('NAV2 dwie pozycje nawigacji', navButtons().length, 2);
     deepEq(
       'NAV3 etykiety modułów',
       navButtons().map(button => button.querySelector('.app-nav-label').textContent),
-      ['Kana', 'Słownictwo', 'Ustawienia']
+      ['Kana', 'Słownictwo']
     );
     ok(
       'NAV4 ikony to inline SVG, nie emoji',
@@ -2052,11 +2052,14 @@
       JSON.stringify(vocab.cards)
     );
 
-    navButton('settings').click();
+    ok('NAV16 nawigacja nie zawiera pozycji Ustawienia', !navButton('settings'));
+    setScreen('settings');
     await sleep(30);
-    eq('NAV16 klik prowadzi do ustawień', state.screen, 'settings');
     eq('NAV17 tytuł ustawień', title(), 'Ustawienia');
-    eq('NAV18 aktywna pozycja ustawień', navButton('settings').getAttribute('aria-current'), 'page');
+    ok(
+      'NAV18 ustawienia nie mają aktywnej pozycji w nawigacji modułów',
+      navButtons().every(button => button.getAttribute('aria-current') !== 'page')
+    );
 
     setScreen('menu');
     await sleep(30);
