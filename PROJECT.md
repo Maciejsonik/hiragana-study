@@ -2025,8 +2025,12 @@ configuration. Leaving an active vocabulary session through the top-bar home
 action requires confirmation so accidental navigation cannot discard the
 session.
 
-The setup shows the effective card count, how many cards in the scope have
-been started, and the scope accuracy. "Nauka" opens a flashcard with one side
+The setup is styled as an elevated dashboard hub (`.vocab-hub`): a top hero
+module with a Japanese calligraphy watermark (`語`), integrated summary metrics
+(effective card count, started cards, accuracy) and the primary session start
+CTA, followed by tactile mode switcher cards (`Nauka` / `Test`) and two modular
+configuration panels (scope + topics catalog drawer tile, and direction +
+ordering/limit options). "Nauka" opens a flashcard with one side
 visible; "Pokaż odpowiedź" (Space/Enter) reveals the other side, romaji and the
 related card, and the learner grades themselves with "Nie wiedziałem" (1) or
 "Wiedziałem" (2). "Test" keeps the four-answer rhythm: digits 1–4 answer,

@@ -2828,11 +2828,45 @@ function renderVocabSetup() {
       : 'Cztery odpowiedzi i natychmiastowa informacja zwrotna.';
 
   app.innerHTML = `
-    <section class="vocab">
-      <div class="eyebrow">SŁOWNICTWO</div>
-      <div class="vocab-heading">
-        <h2>Fiszki</h2>
-        <p class="vocab-lead">${modeHint}</p>
+    <section class="vocab vocab-hub">
+      <div class="card vocab-hub-hero">
+        <span class="vocab-hub-watermark" aria-hidden="true">語</span>
+        <div class="vocab-hub-top">
+          <div class="eyebrow"><span class="accent-dot"></span> SŁOWNICTWO · 語彙</div>
+          <div class="vocab-heading">
+            <h2>Fiszki i słownictwo</h2>
+            <p class="vocab-lead">${modeHint}</p>
+          </div>
+        </div>
+
+        <div class="vocab-summary" aria-label="Podsumowanie wybranego zestawu">
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('vocab')}</span>
+            <div class="vocab-summary-text">
+              <strong>${count}</strong>
+              <span>kart w sesji</span>
+            </div>
+          </div>
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('target')}</span>
+            <div class="vocab-summary-text">
+              <strong>${started}</strong>
+              <span>rozpoczętych</span>
+            </div>
+          </div>
+          <div class="vocab-summary-item">
+            <span class="vocab-summary-icon" aria-hidden="true">${icon('star')}</span>
+            <div class="vocab-summary-text">
+              <strong>${accuracy}</strong>
+              <span>trafność</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary vocab-start" id="vocabStart">
+          ${icon(mode === 'learn' ? 'learn' : 'quiz')}
+          ${mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test'} · ${count} kart
+        </button>
       </div>
 
       <div class="vocab-mode-grid" role="group" aria-label="Tryb nauki">
@@ -2841,91 +2875,88 @@ function renderVocabSetup() {
           <button class="vocab-mode-card ${id === mode ? 'active' : ''}" data-vocab-mode="${id}" data-focus-key="vocab-mode-${id}" aria-pressed="${id === mode}">
             <span class="vocab-mode-icon" aria-hidden="true">${icon(id === 'learn' ? 'learn' : 'quiz')}</span>
             <span class="vocab-mode-body">
+              <span class="vocab-mode-badge">${id === 'learn' ? 'Fiszki' : 'Quiz'}</span>
               <strong>${VOCAB_MODE_LABELS[id]}</strong>
-              <small>${id === 'learn' ? 'Fiszka, odkrycie i samoocena' : 'Cztery odpowiedzi, szybki wynik'}</small>
+              <small>${id === 'learn' ? 'Odkrycie odpowiedzi i samoocena wiedzy' : 'Cztery odpowiedzi, natychmiastowy wynik'}</small>
             </span>
           </button>`
         ).join('')}
       </div>
 
-      <div class="card vocab-setup">
-        <div class="vocab-setup-group">
-          <span class="settings-label" id="vocabDirectionLabel">Kierunek</span>
-          <div class="vocab-pills" role="group" aria-labelledby="vocabDirectionLabel">
-            ${VOCAB_DIRECTIONS.map(
-              id => `
-              <button class="vocab-pill ${id === direction ? 'active' : ''}" data-vocab-direction="${id}" data-focus-key="vocab-direction-${id}" aria-pressed="${id === direction}">
-                ${VOCAB_DIRECTION_LABELS[id]}
-              </button>`
-            ).join('')}
-          </div>
-          <small class="vocab-hint">${directionHint}</small>
-        </div>
-
-        <div class="vocab-setup-group">
-          <span class="settings-label" id="vocabScopeLabel">Zakres</span>
-          <div class="vocab-pills" role="group" aria-labelledby="vocabScopeLabel">
-            ${VOCAB_SCOPES.map(
-              id => `
-              <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" data-focus-key="vocab-scope-${id}" aria-pressed="${id === scope}">
-                ${VOCAB_SCOPE_LABELS[id]} <span class="vocab-pill-count">${vocabPool(id).length}</span>
-              </button>`
-            ).join('')}
-          </div>
-        </div>
-
-        <div class="vocab-setup-group">
-          <span class="settings-label">Tematy</span>
-          <button class="btn btn-secondary vocab-topics-button" id="vocabTopicsBtn" data-focus-key="vocab-topics">${icon('folder')} Wybierz temat</button>
-          <small class="vocab-hint">Przejdź do folderu tematów, aby zobaczyć karty pogrupowane według kategorii.</small>
-        </div>
-
-        <div class="vocab-setup-pair">
+      <div class="vocab-setup-grid">
+        <div class="card vocab-setup-panel">
           <div class="vocab-setup-group">
-            <span class="settings-label" id="vocabOrderLabel">Kolejność</span>
-            <div class="vocab-pills" role="group" aria-labelledby="vocabOrderLabel">
-              ${VOCAB_ORDERS.map(
+            <div class="vocab-group-header">
+              <span class="settings-label" id="vocabScopeLabel">${icon('list')} Zakres materiału</span>
+              <small class="vocab-group-desc">Wybierz grupę słówek do ćwiczenia</small>
+            </div>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabScopeLabel">
+              ${VOCAB_SCOPES.map(
                 id => `
-                <button class="vocab-pill ${id === order ? 'active' : ''}" data-vocab-order="${id}" data-focus-key="vocab-order-${id}" aria-pressed="${id === order}">
-                  ${VOCAB_ORDER_LABELS[id]}
+                <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" data-focus-key="vocab-scope-${id}" aria-pressed="${id === scope}">
+                  <span>${VOCAB_SCOPE_LABELS[id]}</span> <span class="vocab-pill-count">${vocabPool(id).length}</span>
                 </button>`
               ).join('')}
             </div>
           </div>
 
+            <div class="vocab-setup-group vocab-topics-promo">
+              <button class="vocab-topics-tile" id="vocabTopicsBtn" data-focus-key="vocab-topics" type="button">
+                <div class="vocab-topics-tile-left">
+                  <span class="vocab-topics-tile-icon" aria-hidden="true">${icon('folder')}</span>
+                  <div class="vocab-topics-tile-body">
+                    <strong>Wybierz temat</strong>
+                    <small>Karty tematyczne: szkoła, jedzenie, transport...</small>
+                  </div>
+                </div>
+                <span class="vocab-topics-tile-arrow" aria-hidden="true">${icon('chevron-right')}</span>
+              </button>
+            </div>
+        </div>
+
+        <div class="card vocab-setup-panel">
           <div class="vocab-setup-group">
-            <span class="settings-label" id="vocabLimitLabel">Liczba kart</span>
-            <div class="vocab-pills" role="group" aria-labelledby="vocabLimitLabel">
-              ${VOCAB_LIMITS.map(
+            <div class="vocab-group-header">
+              <span class="settings-label" id="vocabDirectionLabel">${icon('review')} Kierunek nauki</span>
+            </div>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabDirectionLabel">
+              ${VOCAB_DIRECTIONS.map(
                 id => `
-                <button class="vocab-pill ${id === limit ? 'active' : ''}" data-vocab-limit="${id}" data-focus-key="vocab-limit-${id}" aria-pressed="${id === limit}">
-                  ${VOCAB_LIMIT_LABELS[id]}
+                <button class="vocab-pill ${id === direction ? 'active' : ''}" data-vocab-direction="${id}" data-focus-key="vocab-direction-${id}" aria-pressed="${id === direction}">
+                  ${VOCAB_DIRECTION_LABELS[id]}
                 </button>`
               ).join('')}
+            </div>
+            <small class="vocab-hint">${directionHint}</small>
+          </div>
+
+          <div class="vocab-setup-pair">
+            <div class="vocab-setup-group">
+              <span class="settings-label" id="vocabOrderLabel">Kolejność</span>
+              <div class="vocab-pills" role="group" aria-labelledby="vocabOrderLabel">
+                ${VOCAB_ORDERS.map(
+                  id => `
+                  <button class="vocab-pill ${id === order ? 'active' : ''}" data-vocab-order="${id}" data-focus-key="vocab-order-${id}" aria-pressed="${id === order}">
+                    ${VOCAB_ORDER_LABELS[id]}
+                  </button>`
+                ).join('')}
+              </div>
+            </div>
+
+            <div class="vocab-setup-group">
+              <span class="settings-label" id="vocabLimitLabel">Liczba kart</span>
+              <div class="vocab-pills" role="group" aria-labelledby="vocabLimitLabel">
+                ${VOCAB_LIMITS.map(
+                  id => `
+                  <button class="vocab-pill ${id === limit ? 'active' : ''}" data-vocab-limit="${id}" data-focus-key="vocab-limit-${id}" aria-pressed="${id === limit}">
+                    ${VOCAB_LIMIT_LABELS[id]}
+                  </button>`
+                ).join('')}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="vocab-summary" aria-label="Podsumowanie wybranego zestawu">
-        <div class="vocab-summary-item">
-          <strong>${count}</strong>
-          <span>kart w sesji</span>
-        </div>
-        <div class="vocab-summary-item">
-          <strong>${started}</strong>
-          <span>rozpoczętych</span>
-        </div>
-        <div class="vocab-summary-item">
-          <strong>${accuracy}</strong>
-          <span>trafność</span>
-        </div>
-      </div>
-
-      <button class="btn btn-primary vocab-start" id="vocabStart">
-        ${icon(mode === 'learn' ? 'learn' : 'quiz')}
-        ${mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test'} · ${count} kart
-      </button>
     </section>
   `;
 
