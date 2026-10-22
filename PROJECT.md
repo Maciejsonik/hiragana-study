@@ -1937,7 +1937,9 @@ carries a stable `id` (`v01`–`v24`, `n01`–`n07`, `p01`–`p06`).
 
 Meanings are **Polish**; the source worksheet glosses in English, so the table
 is a translation, not a copy. Romaji follows `scriptData` and carries no
-macrons.
+macrons (`mou`, `renshuu`, `kyoukasho`, `poorandogo`), even though the
+worksheet's pronunciation notes use `ō`, `ū` and `kyō`. The long-vowel table
+itself is a reading rule, not a vocabulary item, so it is not a card.
 
 Covered by VO1–VO7 in `tests.js`: per-type counts, stable id sequence,
 required fields, kana fields free of Latin text, romaji free of macrons,
@@ -2017,55 +2019,67 @@ suite red.
 
 ### Flashcards (layer 3)
 
-"Słownictwo" in the menu opens a **setup screen** rather than a session. Two
-choices, both session-only (they are a decision for one session, like the exam
-scope, not a stored preference):
+"Słownictwo" in the menu opens a **setup screen** rather than a session. Every
+choice is session-only (a decision for one session, like the exam scope, not a
+stored preference):
 
 ```text
-Kierunek  Japoński → znaczenie   |  Znaczenie → japoński
+Tryb      Nauka (default) | Test
+Kierunek  Japoński → znaczenie | Znaczenie → japoński
 Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (7)
           Zwroty (8) | Wszystko (57, default)
+Kolejność Inteligentna (default) | Losowa
+Liczba    Wszystkie (default) | 10 | 20
 ```
 
-The first direction shows the expression in kana and four Polish meanings —
-the same answer rhythm as the exam. The second shows the Polish meaning as a
-sentence and four kana expressions, so the kana must be recognized in the
-other direction rather than only distinguished. After the answer the options
-lock, the correct one is marked, and a `.flashcard` reveal adds romaji, the
-meaning and the related card: the source verb for an expression, the source
-expression for a verb. The last screen shows the score, "Jeszcze raz" (same
-setup) and a way back.
+The setup shows the effective card count, how many cards in the scope have
+been started, and the scope accuracy. "Nauka" opens a flashcard with one side
+visible; "Pokaż odpowiedź" (Space/Enter) reveals the other side, romaji and the
+related card, and the learner grades themselves with "Nie wiedziałem" (1) or
+"Wiedziałem" (2). "Test" keeps the four-answer rhythm: digits 1–4 answer,
+Enter advances. Both modes show the result screen, which offers "Powtórz
+błędne" when anything was missed, "Jeszcze raz" for the same setup, and "Nowy
+zestaw" back to setup. There is no separate "Wróć do menu" button: the top-bar
+home action ends the session and clears the active vocabulary state.
+
+In a test, the first direction shows the expression in kana and four Polish
+meanings; the second shows the Polish meaning as a sentence and four kana
+expressions, so the kana must be recognized in the other direction rather than
+only distinguished. After the answer the options lock, the correct one is
+marked, and a `.flashcard` reveal adds romaji, the meaning and the related card:
+the source verb for an expression, the source expression for a verb. Nouns and
+phrases show their own meaning/readings; patterns also list their answer forms.
 
 Distractors come from the **same type** as the question: infinitives
 („słuchać") never sit next to request forms („proszę słuchać"), nouns stay
 with nouns, and phrases with phrases, because those differ by grammar, not by
-meaning. The order is deterministic and derived from the store: untouched
-cards first, then the lowest accuracy, ties broken by table order.
-`vocabOptions()` generates a card's options **once** and keeps them in the
-session — otherwise every re-render after an answer would reshuffle the
-buttons under the finger. Digits 1–4 answer and Enter advances, matching the
-exam's keyboard handling.
+meaning. The default order is deterministic and derived from the store:
+untouched cards first, then the lowest accuracy, ties broken by table order.
+"Losowa" replaces it with a shuffle; "10/20" truncates the selected scope
+without ever exceeding it. `vocabOptions()` generates a card's options **once**
+and keeps them in the session — otherwise every re-render after an answer would
+reshuffle the buttons under the finger.
 
-The screen writes only through `recordVocabAnswer()`, so it changes
+Every mode writes only through `recordVocabAnswer()`, so it changes
 `hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
 `hiragana-daily`, the exam settings or the SRS schedule.
 
-Covered by F1–F14 in `tests-learn.js`: the setup screen with two directions
-and five scopes, the default `all` scope (20 + 22 + 7 + 8), the first card
-with four options, exactly one correct, a correct answer stored, the reveal
-locking the options, a wrong answer stored and marked, the summary after the
-last card, "Jeszcze raz" restarting without erasing the store, leaving back to
-the menu, the meaning→kana direction (Polish prompt, kana answers), a stored
-answer in that direction, the verb card pointing at its source expression, and
-progress under `v01-verb`. Removing the `recordVocabAnswer()` call, the
-disabled-state marking, the derived verb pool or the direction branch turns the
-suite red.
-Layout at 320 px was measured, not looked at: the setup screen is 421 px tall,
-the longest expression wraps with no horizontal overflow, and the four kana
-answers stay in their grid.
+Covered by F1–F21 in `tests-learn.js`: the setup with mode, direction, five
+scopes, order and limit; the default `all` scope (20 + 22 + 7 + 8); the default
+Nauka mode; the first test card with four options and exactly one correct; a
+stored correct answer; the reveal locking the options; a wrong answer stored
+and marked; the result screen; "Jeszcze raz" restarting without erasing the
+store; leaving through the top-bar home action; the meaning→kana direction; the
+verb card pointing at its source; progress under `v01-verb`; shuffle + limit;
+the hidden learn card; reveal + self-grade; the wrong self-grade stored; the
+result's retry action; and retrying only the missed card. Removing the
+`recordVocabAnswer()` call, the disabled-state marking, the derived verb pool,
+the mode branch or the home-state reset turns the suite red.
 
-Not verified: the screen on a real touch device, and whether the Polish
-meanings are the ones a teacher would use.
+At 390 px the setup is about 950 px tall and the learn card fits the viewport;
+at 320 px there is no horizontal overflow and the longest expressions wrap.
+Those are measurements and screenshots, not a real-device touch test. The
+Polish meanings remain an unverified translation.
 
 ---
 
@@ -2490,6 +2504,10 @@ fonts-v<N>      Google Fonts
 
 `<N>` is the `VERSION` constant in `sw.js`. Any change to `sw.js` makes the
 browser fetch it again and install a new worker, which is what drives updates.
+The current version is `v12`, bumped after the exam and vocabulary UI changes:
+without it, stale-while-revalidate could pair the new HTML with the old JS/CSS
+for one load. Activation rebuilds the KanjiVG and font caches, which is the
+accepted cost of not serving a mixed shell.
 
 On `activate` the worker deletes every cache that is not one of the three
 current ones, so stale versions cannot accumulate or be served.
@@ -2939,12 +2957,12 @@ tests.html       + tests.js        SRS / migration / queue, exam settings,
                                    completion, vocabulary data and progress
                                    store, app shell, navigation, logo,
                                    Koto branding and the About card
-                                   (378 assertions)
+                                   (395 assertions)
 tests-learn.html + tests-learn.js  learn panel / layout / motion, stroke
                                    descriptions vs KanjiVG, drawing
                                    surface and scoring (T13), vocabulary
-                                   flashcards (T19, verbs + direction),
-                                   combined-script panel                  (145 assertions)
+                                   flashcards (T19, learn + test modes),
+                                   combined-script panel                  (164 assertions)
 tests-daily.html + tests-daily.js  daily statistics (collect+read)    (170 assertions)
 ```
 

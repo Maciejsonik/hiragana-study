@@ -2026,6 +2026,7 @@ function setScreen(screen) {
 homeBtn.onclick = () => {
   Audio.click();
   stopExam();
+  state.vocab = null;
   setScreen('menu');
 };
 
@@ -2250,10 +2251,10 @@ function renderReview() {
    `hiragana-progress` (karta nie jest znakiem) ani `hiragana-daily`
    (odpowiedź na fiszkę nie jest odpowiedzią na kanę).
 
-   Kolejność jest deterministyczna i liczona z liczników: najpierw
+   Domyślna kolejność jest deterministyczna i liczona z liczników: najpierw
    karty nietknięte, potem te z najniższą trafnością, a przy remisie
-   kolejność tabeli. Bez losowości — ta sama historia daje ten sam
-   zestaw, co czyni zachowanie przewidywalnym i testowalnym.
+   kolejność tabeli. Tryb losowy celowo ją zastępuje — to wybór użytkownika,
+   a nie inny algorytm nauki.
 ========================================================= */
 
 const VOCAB_OPTIONS = 4;
@@ -2263,8 +2264,21 @@ const VOCAB_OPTIONS = 4;
    na jedną sesję, jak wybór zakresu egzaminu, a nie preferencja aplikacji.
    Dzięki temu nie ruszamy formatu `hiragana-vocab`.
 */
+const VOCAB_MODES = ['learn', 'test'];
+const VOCAB_ORDERS = ['smart', 'shuffle'];
+const VOCAB_LIMITS = [0, 10, 20];
 const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
 const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'phrases', 'all'];
+
+const VOCAB_MODE_LABELS = {
+  learn: 'Nauka',
+  test: 'Test'
+};
+
+const VOCAB_ORDER_LABELS = {
+  smart: 'Inteligentna',
+  shuffle: 'Losowa'
+};
 
 const VOCAB_DIRECTION_LABELS = {
   'kana-meaning': 'Japoński → znaczenie',
@@ -2279,9 +2293,18 @@ const VOCAB_SCOPE_LABELS = {
   all: 'Wszystko'
 };
 
+const VOCAB_LIMIT_LABELS = {
+  0: 'Wszystkie',
+  10: '10 kart',
+  20: '20 kart'
+};
+
 const vocabSetup = {
+  mode: 'learn',
   direction: 'kana-meaning',
-  scope: 'all'
+  scope: 'all',
+  order: 'smart',
+  limit: 0
 };
 
 function vocabPool(scope) {
@@ -2296,11 +2319,28 @@ function vocabItem(cardId) {
   return VOCAB_LEARN_ITEMS.find(item => item.id === cardId) || null;
 }
 
-function vocabSessionOrder(scope) {
-  return vocabPool(scope)
-    .map((item, index) => ({ id: item.id, index: index, stat: vocabStat(item.id) }))
-    .sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index)
-    .map(entry => entry.id);
+/* Limit jest tylko skróceniem wybranego zakresu — nigdy nie powiększa go
+   ponad liczbę dostępnych kart. */
+function vocabCardCount(scope, limit) {
+  const total = vocabPool(scope).length;
+  return limit > 0 ? Math.min(limit, total) : total;
+}
+
+function vocabSessionOrder(scope, { order = 'smart', limit = 0 } = {}) {
+  let entries = vocabPool(scope).map((item, index) => ({
+    id: item.id,
+    index: index,
+    stat: vocabStat(item.id)
+  }));
+
+  if (order === 'shuffle') {
+    entries = shuffle(entries);
+  } else {
+    entries.sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index);
+  }
+
+  const count = vocabCardCount(scope, limit);
+  return entries.slice(0, count).map(entry => entry.id);
 }
 
 /*
@@ -2333,14 +2373,22 @@ function vocabOptions(item, direction) {
   return shuffle([item[field], ...distractors]);
 }
 
-function startVocabSession() {
+function startVocabSession({ ids = null } = {}) {
+  const order = ids
+    ? [...ids]
+    : vocabSessionOrder(vocabSetup.scope, { order: vocabSetup.order, limit: vocabSetup.limit });
+
   state.vocab = {
+    mode: vocabSetup.mode,
     direction: vocabSetup.direction,
     scope: vocabSetup.scope,
-    order: vocabSessionOrder(vocabSetup.scope),
+    order,
     index: 0,
     correct: 0,
+    wrong: 0,
+    wrongIds: [],
     answered: false,
+    revealed: false,
     chosen: null,
     lastCorrect: false,
     options: null,
@@ -2349,25 +2397,55 @@ function startVocabSession() {
   renderVocab();
 }
 
+function recordVocabResult(session, item, correct) {
+  session.answered = true;
+  session.lastCorrect = correct;
+  if (correct) session.correct++;
+  else {
+    session.wrong++;
+    session.wrongIds.push(item.id);
+  }
+
+  recordVocabAnswer(item.id, correct);
+  if (correct) Audio.correct();
+  else Audio.wrong();
+}
+
 function answerVocab(choice) {
   const session = state.vocab;
-  if (!session || session.answered || session.finished) return;
+  if (!session || session.mode !== 'test' || session.answered || session.finished) return;
 
   const item = vocabItem(session.order[session.index]);
   if (!item) return;
 
   const expected = session.direction === 'meaning-kana' ? item.kana : item.meaning;
-  const correct = choice === expected;
-
-  session.answered = true;
   session.chosen = choice;
-  session.lastCorrect = correct;
-  if (correct) session.correct++;
+  recordVocabResult(session, item, choice === expected);
+  renderVocab();
+}
 
-  recordVocabAnswer(item.id, correct);
-  if (correct) Audio.correct();
-  else Audio.wrong();
+/*
+   Nauka jest dwustopniowa: najpierw odkrycie odpowiedzi, potem samoocena.
+   Dzięki temu karta nie udaje testu z czterema odpowiedziami, a użytkownik
+   sam decyduje, czy ją znał — bez automatycznego zgadywania.
+*/
+function revealVocab() {
+  const session = state.vocab;
+  if (!session || session.mode !== 'learn' || session.revealed || session.answered || session.finished) return;
 
+  session.revealed = true;
+  Audio.click();
+  renderVocab();
+}
+
+function gradeVocab(correct) {
+  const session = state.vocab;
+  if (!session || session.mode !== 'learn' || !session.revealed || session.answered || session.finished) return;
+
+  const item = vocabItem(session.order[session.index]);
+  if (!item) return;
+
+  recordVocabResult(session, item, correct);
   renderVocab();
 }
 
@@ -2377,6 +2455,7 @@ function nextVocab() {
 
   session.index++;
   session.answered = false;
+  session.revealed = false;
   session.chosen = null;
   session.lastCorrect = false;
   session.options = null;
@@ -2389,7 +2468,8 @@ function nextVocab() {
   renderVocab();
 }
 
-function vocabRevealHTML(item, correct) {
+/* Wspólne „skąd przyszła ta karta” dla obu trybów. */
+function vocabAnswerDetailsHTML(item) {
   const source = item.type === 'verb' && item.source ? vocabItem(item.source) : null;
   let detail = '';
 
@@ -2401,39 +2481,82 @@ function vocabRevealHTML(item, correct) {
     detail = `<div class="flash-meta">Odpowiedzi:<br>${item.answers
       .map(answer => `<b>${answer[0]}</b> (${answer[1]}) — ${answer[2]}`)
       .join('<br>')}</div>`;
+    if (item.variants) {
+      detail += `<div class="flash-meta">Warianty:<br>${item.variants
+        .map(variant => `<b>${variant[0]}</b> (${variant[1]}) — ${variant[2]}`)
+        .join('<br>')}</div>`;
+    }
   }
 
   const variant = item.alt ? `<div class="flash-meta">Wariant: <b>${item.alt}</b> (${item.altRomaji})</div>` : '';
+  return `${detail}${variant}`;
+}
 
+function vocabRevealHTML(item, correct) {
   return `
     <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
       <div class="flash-label">${correct ? '✓ Dobrze' : '✗ Poprawna odpowiedź'}</div>
       <div class="flash-kana vocab-kana">${item.kana}</div>
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
-      ${detail}
-      ${variant}
+      ${vocabAnswerDetailsHTML(item)}
       <button class="btn btn-primary" id="vocabNext">Dalej → (Enter)</button>
     </div>
   `;
 }
 
-/* Ekran wyboru: kierunek i zakres. Wejście w „Fiszki" nie zaczyna już
-   zestawu od razu — bez tego wyboru istniał tylko jeden tryb. */
+function vocabLearnAnswerHTML(item, asksKana) {
+  return `
+    <div class="vocab-learn-answer">
+      <div class="vocab-learn-label">Odpowiedź</div>
+      <div class="${asksKana ? 'question-vocab' : 'question-vocab-pl'}">${asksKana ? item.kana : item.meaning}</div>
+      <div class="flash-romaji">${item.romaji}</div>
+      ${vocabAnswerDetailsHTML(item)}
+    </div>
+  `;
+}
+
+/* Ekran wyboru: tryb, kierunek, zakres, kolejność i długość sesji. Wszystkie
+   decyzje są sesyjne, więc nie ruszają formatu `hiragana-vocab`. */
 function renderVocabSetup() {
-  const direction = vocabSetup.direction;
-  const scope = vocabSetup.scope;
-  const count = vocabPool(scope).length;
+  const { mode, direction, scope, order, limit } = vocabSetup;
+  const pool = vocabPool(scope);
+  const count = vocabCardCount(scope, limit);
+  const attempts = pool.reduce((sum, item) => sum + vocabStat(item.id).seen, 0);
+  const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
+  const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
+  const started = pool.filter(item => vocabStat(item.id).seen > 0).length;
 
   const directionHint =
     direction === 'meaning-kana'
-      ? 'Widzisz polskie znaczenie, wybierasz japońskie wyrażenie.'
-      : 'Widzisz japońskie wyrażenie, wybierasz polskie znaczenie.';
+      ? 'Widzisz polskie znaczenie, a po odkryciu lub odpowiedzi — japońskie wyrażenie.'
+      : 'Widzisz japońskie wyrażenie, a po odkryciu lub odpowiedzi — polskie znaczenie.';
+
+  const modeHint =
+    mode === 'learn'
+      ? 'Odkrywasz odpowiedź i sam decydujesz, czy ją znasz.'
+      : 'Cztery odpowiedzi i natychmiastowa informacja zwrotna.';
 
   app.innerHTML = `
     <section class="vocab">
       <div class="eyebrow">SŁOWNICTWO</div>
-      <h2>Fiszki</h2>
+      <div class="vocab-heading">
+        <h2>Fiszki</h2>
+        <p class="vocab-lead">${modeHint}</p>
+      </div>
+
+      <div class="vocab-mode-grid" role="group" aria-label="Tryb nauki">
+        ${VOCAB_MODES.map(
+          id => `
+          <button class="vocab-mode-card ${id === mode ? 'active' : ''}" data-vocab-mode="${id}" aria-pressed="${id === mode}">
+            <span class="vocab-mode-icon" aria-hidden="true">${icon(id === 'learn' ? 'learn' : 'quiz')}</span>
+            <span class="vocab-mode-body">
+              <strong>${VOCAB_MODE_LABELS[id]}</strong>
+              <small>${id === 'learn' ? 'Fiszka, odkrycie i samoocena' : 'Cztery odpowiedzi, szybki wynik'}</small>
+            </span>
+          </button>`
+        ).join('')}
+      </div>
 
       <div class="card vocab-setup">
         <div class="vocab-setup-group">
@@ -2455,45 +2578,90 @@ function renderVocabSetup() {
             ${VOCAB_SCOPES.map(
               id => `
               <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" aria-pressed="${id === scope}">
-                ${VOCAB_SCOPE_LABELS[id]}
+                ${VOCAB_SCOPE_LABELS[id]} <span class="vocab-pill-count">${vocabPool(id).length}</span>
               </button>`
             ).join('')}
           </div>
-          <small class="vocab-hint">${count} kart w tym zestawie</small>
         </div>
 
-        <button class="btn btn-primary" id="vocabStart">Rozpocznij — ${count} kart</button>
+        <div class="vocab-setup-pair">
+          <div class="vocab-setup-group">
+            <span class="settings-label" id="vocabOrderLabel">Kolejność</span>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabOrderLabel">
+              ${VOCAB_ORDERS.map(
+                id => `
+                <button class="vocab-pill ${id === order ? 'active' : ''}" data-vocab-order="${id}" aria-pressed="${id === order}">
+                  ${VOCAB_ORDER_LABELS[id]}
+                </button>`
+              ).join('')}
+            </div>
+          </div>
+
+          <div class="vocab-setup-group">
+            <span class="settings-label" id="vocabLimitLabel">Liczba kart</span>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabLimitLabel">
+              ${VOCAB_LIMITS.map(
+                id => `
+                <button class="vocab-pill ${id === limit ? 'active' : ''}" data-vocab-limit="${id}" aria-pressed="${id === limit}">
+                  ${VOCAB_LIMIT_LABELS[id]}
+                </button>`
+              ).join('')}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <button class="btn btn-secondary vocab-back" id="vocabBack">Wróć do menu</button>
+      <div class="vocab-summary" aria-label="Podsumowanie wybranego zestawu">
+        <div class="vocab-summary-item">
+          <strong>${count}</strong>
+          <span>kart w sesji</span>
+        </div>
+        <div class="vocab-summary-item">
+          <strong>${started}</strong>
+          <span>rozpoczętych</span>
+        </div>
+        <div class="vocab-summary-item">
+          <strong>${accuracy}</strong>
+          <span>trafność</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary vocab-start" id="vocabStart">
+        ${icon(mode === 'learn' ? 'learn' : 'quiz')}
+        ${mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test'} · ${count} kart
+      </button>
     </section>
   `;
 
+  const rerender = (field, value) => {
+    Audio.click();
+    vocabSetup[field] = value;
+    renderVocab();
+  };
+
+  document.querySelectorAll('[data-vocab-mode]').forEach(button => {
+    button.onclick = () => rerender('mode', button.dataset.vocabMode);
+  });
+
   document.querySelectorAll('[data-vocab-direction]').forEach(button => {
-    button.onclick = () => {
-      Audio.click();
-      vocabSetup.direction = button.dataset.vocabDirection;
-      renderVocab();
-    };
+    button.onclick = () => rerender('direction', button.dataset.vocabDirection);
   });
 
   document.querySelectorAll('[data-vocab-scope]').forEach(button => {
-    button.onclick = () => {
-      Audio.click();
-      vocabSetup.scope = button.dataset.vocabScope;
-      renderVocab();
-    };
+    button.onclick = () => rerender('scope', button.dataset.vocabScope);
+  });
+
+  document.querySelectorAll('[data-vocab-order]').forEach(button => {
+    button.onclick = () => rerender('order', button.dataset.vocabOrder);
+  });
+
+  document.querySelectorAll('[data-vocab-limit]').forEach(button => {
+    button.onclick = () => rerender('limit', Number(button.dataset.vocabLimit));
   });
 
   document.getElementById('vocabStart').onclick = () => {
     Audio.click();
     startVocabSession();
-  };
-
-  document.getElementById('vocabBack').onclick = () => {
-    Audio.click();
-    state.vocab = null;
-    setScreen('menu');
   };
 }
 
@@ -2509,6 +2677,8 @@ function renderVocab() {
 
   if (session.finished) {
     const total = session.order.length;
+    const percentage = total === 0 ? 0 : Math.round((session.correct / total) * 100);
+
     app.innerHTML = `
       <section class="vocab">
         <div class="eyebrow">SŁOWNICTWO</div>
@@ -2516,9 +2686,26 @@ function renderVocab() {
 
         <div class="card vocab-result">
           <p class="vocab-result-score">${session.correct} / ${total}</p>
+          <div class="vocab-result-bar" role="progressbar" aria-label="Skuteczność zestawu"
+            aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
+            <div style="width:${percentage}%"></div>
+          </div>
           <p>${resultText(session.correct, total, state.script, 'vocab')}</p>
-          <button class="btn btn-primary" id="vocabAgain">Jeszcze raz</button>
-          <button class="btn btn-secondary" id="vocabBack">Wróć do menu</button>
+          <div class="vocab-result-stats">
+            <span><b>${session.correct}</b> dobrze</span>
+            <span><b>${session.wrong}</b> błędnie</span>
+            <span><b>${percentage}%</b> trafności</span>
+          </div>
+
+          <div class="vocab-result-actions">
+            ${
+              session.wrongIds.length
+                ? `<button class="btn btn-primary" id="vocabRetryWrong">Powtórz błędne (${session.wrongIds.length})</button>`
+                : ''
+            }
+            <button class="btn btn-secondary" id="vocabAgain">Jeszcze raz</button>
+            <button class="btn btn-secondary" id="vocabNew">Nowy zestaw</button>
+          </div>
         </div>
       </section>
     `;
@@ -2527,10 +2714,19 @@ function renderVocab() {
       Audio.click();
       startVocabSession();
     };
-    document.getElementById('vocabBack').onclick = () => {
+
+    const retry = document.getElementById('vocabRetryWrong');
+    if (retry) {
+      retry.onclick = () => {
+        Audio.click();
+        startVocabSession({ ids: session.wrongIds });
+      };
+    }
+
+    document.getElementById('vocabNew').onclick = () => {
       Audio.click();
       state.vocab = null;
-      setScreen('menu');
+      renderVocab();
     };
     return;
   }
@@ -2542,86 +2738,157 @@ function renderVocab() {
     return;
   }
 
-  // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
-  // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
-  if (!session.options) session.options = vocabOptions(item, session.direction);
-
   const asksKana = session.direction === 'meaning-kana';
   const expected = asksKana ? item.kana : item.meaning;
-
   const total = session.order.length;
   const percentage = total === 0 ? 0 : Math.round((session.index / total) * 100);
+  const modeLabel = VOCAB_MODE_LABELS[session.mode] || 'Fiszki';
+
   const stats = `
     <span class="session-position">Karta <strong>${session.index + 1}</strong> z <strong>${total}</strong></span>
-    <div class="badge" aria-label="Poprawnie: ${session.correct}">${session.correct} ✓</div>
+    <div class="badge" aria-label="Wynik: ${session.correct} dobrze, ${session.wrong} błędnie">
+      ${session.correct} ✓ &nbsp; ${session.wrong} ✗
+    </div>
   `;
 
-  app.innerHTML = sessionFrameHTML({
-    eyebrow: 'SŁOWNICTWO',
-    title: 'Fiszki',
-    stats,
-    content: `
-      <div class="progress session-progress" role="progressbar" aria-label="Postęp zestawu"
-        aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
-        <div style="width:${percentage}%"></div>
-      </div>
+  const progress = `
+    <div class="progress session-progress" role="progressbar" aria-label="Postęp zestawu"
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}">
+      <div style="width:${percentage}%"></div>
+    </div>
+  `;
 
-      <div class="prompt">
-        <div class="polish">${asksKana ? 'Jak powiesz po japońsku:' : 'Co znaczy:'}</div>
-        ${
-          asksKana
-            ? `<div class="question question-vocab-pl">${item.meaning}</div>`
-            : `<div class="question question-vocab">${item.kana}</div>`
-        }
+  if (session.mode === 'learn') {
+    const front = asksKana ? item.meaning : item.kana;
+    const frontClass = asksKana ? 'question-vocab-pl' : 'question-vocab';
+    const sideLabel = asksKana ? 'POLSKI' : 'JAPOŃSKI';
 
-        <div class="answers ${asksKana ? '' : 'answers-text'}">
-          ${session.options
-            .map(
-              (choice, i) => `
-            <button class="answer ${asksKana ? 'answer-kana' : 'answer-text'}" data-vocab-choice="${choice}">
-              <span class="answer-key">${i + 1}</span>
-              ${choice}
-            </button>
-          `
-            )
-            .join('')}
+    app.innerHTML = sessionFrameHTML({
+      eyebrow: 'SŁOWNICTWO',
+      title: modeLabel,
+      stats,
+      content: `
+        ${progress}
+
+        <div class="vocab-learn ${session.revealed ? 'is-revealed' : ''}">
+          <div class="vocab-learn-instruction">
+            ${session.revealed ? 'Sprawdź odpowiedź i oceń, czy ją znasz.' : 'Przypomnij sobie odpowiedź, a potem ją odkryj.'}
+          </div>
+
+          <div class="vocab-learn-card">
+            <div class="vocab-learn-side">${sideLabel}</div>
+            <div class="${frontClass} vocab-learn-front">${front}</div>
+            ${
+              session.revealed
+                ? vocabLearnAnswerHTML(item, asksKana)
+                : '<div class="vocab-learn-placeholder">Odpowiedź jest ukryta</div>'
+            }
+          </div>
+
+          ${
+            !session.revealed
+              ? `<button class="btn btn-primary vocab-learn-action" id="vocabReveal">Pokaż odpowiedź <span class="key-hint">Space</span></button>`
+              : ''
+          }
+
+          ${
+            session.revealed && !session.answered
+              ? `
+                <div class="vocab-grade-actions">
+                  <button class="btn btn-danger vocab-grade-wrong" data-vocab-grade="wrong">
+                    ${icon('x')} Nie wiedziałem <span class="key-hint">1</span>
+                  </button>
+                  <button class="btn btn-primary vocab-grade-correct" data-vocab-grade="correct">
+                    ${icon('check')} Wiedziałem <span class="key-hint">2</span>
+                  </button>
+                </div>
+              `
+              : ''
+          }
+
+          ${
+            session.answered
+              ? `
+                <div class="vocab-learn-feedback ${session.lastCorrect ? 'is-correct' : 'is-wrong'}">
+                  ${session.lastCorrect ? '✓ Dobrze' : '✗ Nie tym razem'}
+                </div>
+                <button class="btn btn-primary vocab-learn-action" id="vocabNext">Dalej → <span class="key-hint">Enter</span></button>
+              `
+              : ''
+          }
+        </div>
+      `,
+      className: 'vocab-session'
+    });
+
+    const reveal = document.getElementById('vocabReveal');
+    if (reveal) reveal.onclick = revealVocab;
+
+    document.querySelectorAll('[data-vocab-grade]').forEach(button => {
+      button.onclick = () => gradeVocab(button.dataset.vocabGrade === 'correct');
+    });
+  } else {
+    // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
+    // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
+    if (!session.options) session.options = vocabOptions(item, session.direction);
+
+    app.innerHTML = sessionFrameHTML({
+      eyebrow: 'SŁOWNICTWO',
+      title: modeLabel,
+      stats,
+      content: `
+        ${progress}
+
+        <div class="prompt">
+          <div class="polish">${asksKana ? 'Jak powiesz po japońsku:' : 'Co znaczy:'}</div>
+          ${
+            asksKana
+              ? `<div class="question question-vocab-pl">${item.meaning}</div>`
+              : `<div class="question question-vocab">${item.kana}</div>`
+          }
+
+          <div class="answers ${asksKana ? '' : 'answers-text'}">
+            ${session.options
+              .map(
+                (choice, i) => `
+              <button class="answer ${asksKana ? 'answer-kana' : 'answer-text'}" data-vocab-choice="${choice}">
+                <span class="answer-key">${i + 1}</span>
+                ${choice}
+              </button>
+            `
+              )
+              .join('')}
+          </div>
+
+          <div class="feedback" id="vocabFeedback"></div>
         </div>
 
-        <div class="feedback" id="vocabFeedback"></div>
-      </div>
+        ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
+      `,
+      className: 'vocab-session'
+    });
 
-      ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
-    `,
-    footer: '<button class="btn btn-secondary" id="vocabBack">Wróć do menu</button>',
-    className: 'vocab-session'
-  });
+    document.querySelectorAll('[data-vocab-choice]').forEach(button => {
+      const choice = button.dataset.vocabChoice;
 
-  document.querySelectorAll('[data-vocab-choice]').forEach(button => {
-    const choice = button.dataset.vocabChoice;
+      if (session.answered) {
+        button.disabled = true;
+        if (choice === expected) button.classList.add('correct');
+        else if (choice === session.chosen) button.classList.add('wrong');
+        return;
+      }
 
-    if (session.answered) {
-      button.disabled = true;
-      if (choice === expected) button.classList.add('correct');
-      else if (choice === session.chosen) button.classList.add('wrong');
-      return;
+      button.onclick = () => answerVocab(choice);
+    });
+
+    const feedback = document.getElementById('vocabFeedback');
+    if (feedback && session.answered) {
+      feedback.textContent = session.lastCorrect ? 'Dobrze!' : 'Nie tym razem — poprawna odpowiedź jest niżej.';
     }
-
-    button.onclick = () => answerVocab(choice);
-  });
+  }
 
   const next = document.getElementById('vocabNext');
   if (next) next.onclick = nextVocab;
-
-  const feedback = document.getElementById('vocabFeedback');
-  if (feedback && session.answered) {
-    feedback.textContent = session.lastCorrect ? 'Dobrze!' : 'Nie tym razem — poprawna odpowiedź jest niżej.';
-  }
-
-  document.getElementById('vocabBack').onclick = () => {
-    Audio.click();
-    state.vocab = null;
-    setScreen('menu');
-  };
 }
 
 function appStorageKeys() {
@@ -5826,6 +6093,7 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && state.screen !== 'menu') {
     Audio.click();
     stopExam();
+    state.vocab = null;
     setScreen('menu');
     return;
   }
@@ -5857,19 +6125,42 @@ document.addEventListener('keydown', event => {
     }
   }
 
-  // Fiszki słownictwa: cyfry wybierają odpowiedź, Enter przechodzi dalej
+  // Fiszki słownictwa: w teście cyfry wybierają odpowiedź, a w nauce
+  // Space/Enter odkrywa kartę i 1/2 ją ocenia.
   if (state.screen === 'vocab' && state.vocab && !state.vocab.finished) {
-    if (state.vocab.answered && event.key === 'Enter') {
-      nextVocab();
-      return;
-    }
-    if (!state.vocab.answered) {
+    const vocabSession = state.vocab;
+
+    if (vocabSession.mode === 'learn') {
+      if (!vocabSession.revealed && (event.key === ' ' || event.key === 'Enter')) {
+        event.preventDefault();
+        revealVocab();
+        return;
+      }
+
+      if (vocabSession.revealed && !vocabSession.answered) {
+        if (event.key === '1') {
+          event.preventDefault();
+          gradeVocab(false);
+          return;
+        }
+        if (event.key === '2') {
+          event.preventDefault();
+          gradeVocab(true);
+          return;
+        }
+      }
+    } else if (!vocabSession.answered) {
       const num = parseInt(event.key);
       if (num >= 1 && num <= VOCAB_OPTIONS) {
         const buttons = [...document.querySelectorAll('[data-vocab-choice]')];
         if (buttons[num - 1]) buttons[num - 1].click();
         return;
       }
+    }
+
+    if (vocabSession.answered && event.key === 'Enter') {
+      nextVocab();
+      return;
     }
   }
 

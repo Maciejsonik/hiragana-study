@@ -1377,14 +1377,32 @@
         const scopeCount = scope => vocabPool(scope).length;
 
         ok(
-          'F1 wejście w fiszki pokazuje wybór kierunku i zakresu',
+          'F1 wejście w fiszki pokazuje tryb, kierunek, zakres, kolejność i limit',
           !!document.getElementById('vocabStart') &&
+            document.querySelectorAll('[data-vocab-mode]').length === 2 &&
             document.querySelectorAll('[data-vocab-direction]').length === 2 &&
-            document.querySelectorAll('[data-vocab-scope]').length === 5,
-          document.querySelectorAll('[data-vocab-direction]').length +
-            ' kierunki / ' +
+            document.querySelectorAll('[data-vocab-scope]').length === 5 &&
+            document.querySelectorAll('[data-vocab-order]').length === 2 &&
+            document.querySelectorAll('[data-vocab-limit]').length === 3 &&
+            !document.getElementById('vocabBack'),
+          document.querySelectorAll('[data-vocab-mode]').length +
+            '/' +
+            document.querySelectorAll('[data-vocab-direction]').length +
+            '/' +
             document.querySelectorAll('[data-vocab-scope]').length +
-            ' zakresy'
+            '/' +
+            document.querySelectorAll('[data-vocab-order]').length +
+            '/' +
+            document.querySelectorAll('[data-vocab-limit]').length
+        );
+
+        ok(
+          'F1b domyślnie otwiera się nauka, nie test',
+          vocabSetup.mode === 'learn' &&
+            document.querySelector('[data-vocab-mode="learn"]').classList.contains('active') &&
+            document.querySelector('[data-vocab-order="smart"]').classList.contains('active') &&
+            document.querySelector('[data-vocab-limit="0"]').classList.contains('active'),
+          vocabSetup.mode
         );
 
         ok(
@@ -1398,6 +1416,7 @@
           ['cards', 'verbs', 'words', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
+        vocabSetup.mode = 'test';
         document.getElementById('vocabStart').click();
         await wait(250);
 
@@ -1471,8 +1490,11 @@
         }
 
         ok(
-          'F8 po ostatniej karcie widać wynik zestawu',
-          state.vocab.finished && /Koniec zestawu/.test(app.textContent) && !!document.getElementById('vocabAgain'),
+          'F8 po ostatniej karcie widać wynik zestawu bez osobnego powrotu',
+          state.vocab.finished &&
+            /Koniec zestawu/.test(app.textContent) &&
+            !!document.getElementById('vocabAgain') &&
+            !document.getElementById('vocabBack'),
           app.textContent.replace(/\s+/g, ' ').slice(0, 70)
         );
 
@@ -1485,16 +1507,20 @@
           'karty=' + Object.keys(vocab.cards).length
         );
 
-        document.getElementById('vocabBack').click();
+        homeBtn.click();
         await wait(300);
         ok(
-          'F10 wyjście z fiszek wraca do menu',
-          state.screen === 'menu' && !!document.getElementById('learnCard') && !document.getElementById('vocabCard'),
+          'F10 wyjście z fiszek przez przycisk domu wraca do menu',
+          state.screen === 'menu' &&
+            state.vocab === null &&
+            !!document.getElementById('learnCard') &&
+            !document.getElementById('vocabCard'),
           state.screen
         );
 
         /* --- kierunek „znaczenie → wyrażenie" --- */
         state.vocab = null;
+        vocabSetup.mode = 'test';
         vocabSetup.direction = 'meaning-kana';
         vocabSetup.scope = 'cards';
         setScreen('vocab');
@@ -1528,6 +1554,7 @@
 
         /* --- karty czasowników --- */
         state.vocab = null;
+        vocabSetup.mode = 'test';
         vocabSetup.direction = 'kana-meaning';
         vocabSetup.scope = 'verbs';
         setScreen('vocab');
@@ -1557,8 +1584,107 @@
           JSON.stringify(vocabStat('v01-verb'))
         );
 
+        /* --- losowa kolejność i limit kart --- */
+        state.vocab = null;
+        vocabSetup.mode = 'test';
+        vocabSetup.scope = 'all';
+        vocabSetup.order = 'smart';
+        vocabSetup.limit = 0;
+        setScreen('vocab');
+        await wait(300);
+
+        document.querySelector('[data-vocab-order="shuffle"]').click();
+        await wait(80);
+        document.querySelector('[data-vocab-limit="10"]').click();
+        await wait(80);
+
+        ok(
+          'F15 wybór losowej kolejności i limitu jest widoczny w podsumowaniu',
+          vocabSetup.order === 'shuffle' &&
+            vocabSetup.limit === 10 &&
+            document.querySelector('[data-vocab-order="shuffle"]').classList.contains('active') &&
+            document.querySelector('[data-vocab-limit="10"]').classList.contains('active') &&
+            document.querySelector('.vocab-summary-item strong').textContent === '10',
+          vocabSetup.order + '/' + vocabSetup.limit
+        );
+
+        document.getElementById('vocabStart').click();
+        await wait(250);
+        ok(
+          'F16 losowa sesja ma dziesięć unikalnych kart',
+          state.vocab.order.length === 10 && new Set(state.vocab.order).size === 10,
+          state.vocab.order.join(',')
+        );
+
+        /* --- nauka: odkrycie, samoocena i powtórka błędnych --- */
+        state.vocab = null;
+        vocabSetup.mode = 'learn';
+        vocabSetup.scope = 'cards';
+        vocabSetup.order = 'smart';
+        vocabSetup.limit = 10;
+        setScreen('vocab');
+        await wait(300);
+        document.getElementById('vocabStart').click();
+        await wait(250);
+
+        const learnItem = vocabItem(state.vocab.order[0]);
+        const learnBefore = vocabStat(learnItem.id);
+        ok(
+          'F17 nauka pokazuje zakrytą fiszkę bez czterech odpowiedzi',
+          state.vocab.mode === 'learn' &&
+            !!document.getElementById('vocabReveal') &&
+            !document.getElementById('vocabNext') &&
+            !document.getElementById('vocabBack') &&
+            document.querySelectorAll('[data-vocab-choice]').length === 0,
+          state.vocab.mode
+        );
+
+        document.getElementById('vocabReveal').click();
+        await wait(150);
+        ok(
+          'F18 odkrycie pokazuje odpowiedź i dwa przyciski samooceny',
+          state.vocab.revealed &&
+            !!document.querySelector('.vocab-learn-answer') &&
+            document.querySelectorAll('[data-vocab-grade]').length === 2,
+          document.querySelector('.vocab-learn-answer')?.textContent.trim().slice(0, 40) || 'brak'
+        );
+
+        document.querySelector('[data-vocab-grade="wrong"]').click();
+        await wait(150);
+        ok(
+          'F19 samoocena „Nie wiedziałem” zapisuje błąd i pokazuje Dalej',
+          state.vocab.answered &&
+            state.vocab.wrong === 1 &&
+            vocabStat(learnItem.id).wrong === learnBefore.wrong + 1 &&
+            vocabStat(learnItem.id).seen === learnBefore.seen + 1 &&
+            !!document.getElementById('vocabNext'),
+          JSON.stringify(vocabStat(learnItem.id))
+        );
+
+        state.vocab.index = state.vocab.order.length - 1;
+        document.getElementById('vocabNext').click();
+        await wait(200);
+        ok(
+          'F20 wynik oferuje powtórkę błędnych kart',
+          state.vocab.finished &&
+            !!document.getElementById('vocabRetryWrong') &&
+            document.getElementById('vocabRetryWrong').textContent.includes('1'),
+          app.textContent.replace(/\s+/g, ' ').slice(0, 80)
+        );
+
+        document.getElementById('vocabRetryWrong').click();
+        await wait(200);
+        ok(
+          'F21 powtórka błędnych uruchamia tylko tę jedną kartę',
+          state.vocab.order.length === 1 && state.vocab.order[0] === learnItem.id && state.vocab.mode === 'learn',
+          state.vocab.order.join(',')
+        );
+
+        vocabSetup.mode = 'learn';
         vocabSetup.direction = 'kana-meaning';
         vocabSetup.scope = 'all';
+        vocabSetup.order = 'smart';
+        vocabSetup.limit = 0;
         state.vocab = null;
         setScreen('menu');
         await wait(200);
