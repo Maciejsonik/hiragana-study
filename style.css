@@ -223,7 +223,7 @@ h1 {
 }
 
 /* Tytuł jest teraz nazwą ekranu, a nie alfabetu — musi zmieścić się
-   obok powrotu i dwóch przycisków już przy 320 px. */
+   obok powrotu i trzech przycisków akcji już przy 320 px. */
 .topbar h1 {
   font-size: clamp(1.3rem, 4.2vw, 2rem);
   overflow-wrap: anywhere;
@@ -2191,7 +2191,24 @@ body.focus-mode .app-shell {
   line-height: 1.3;
   max-width: 24ch;
   margin: 8px auto 20px;
+  overflow-wrap: anywhere;
   color: var(--ink);
+}
+
+/* `.prompt .question` ma wyższą specyficzność niż same klasy fiszek.
+   Te dwa selektory (0,3,0) przywracają zamierzony rozmiar i miarę,
+   także wewnątrz mobilnego media query. */
+.prompt .question.question-vocab {
+  font-size: var(--text-3xl);
+  line-height: 1.45;
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.prompt .question.question-vocab-pl {
+  font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+  line-height: 1.3;
+  max-width: 24ch;
+  margin: 8px auto 20px;
 }
 
 .answer-kana {
@@ -3329,6 +3346,29 @@ body.focus-mode .app-shell {
 
 /* Na 320 px dwie karty trybu i para pól nie mieszczą się obok siebie. */
 @media (max-width: 360px) {
+  /* Trzy przyciski akcji zostawiają za mało miejsca na eyebrow i tytuł.
+     Odzyskujemy je z paddingu i odstępów, nie zmniejszając pól dotyku. */
+  .app-shell {
+    padding-left: var(--space-2-5);
+    padding-right: var(--space-2-5);
+  }
+
+  .topbar {
+    gap: var(--space-2);
+  }
+
+  .topbar-actions {
+    gap: var(--space-1);
+  }
+
+  .topbar .eyebrow {
+    letter-spacing: 0.12em;
+  }
+
+  .topbar h1 {
+    font-size: var(--text-lg);
+  }
+
   .vocab-mode-grid,
   .vocab-setup-pair {
     grid-template-columns: 1fr;

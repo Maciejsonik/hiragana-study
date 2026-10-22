@@ -956,6 +956,10 @@ function renderNav() {
       const target = NAV_ITEMS.find(item => item.id === button.dataset.nav);
       if (!target || state.screen === target.screen) return;
 
+      // Wejście z menu w Słownictwo zawsze zaczyna od setupu, nie od
+      // wyniku poprzedniego zestawu.
+      if (target.screen === 'vocab') state.vocab = null;
+
       Audio.click();
       setScreen(target.screen);
     };
@@ -2542,7 +2546,7 @@ function renderVocabSetup() {
       <div class="vocab-mode-grid" role="group" aria-label="Tryb nauki">
         ${VOCAB_MODES.map(
           id => `
-          <button class="vocab-mode-card ${id === mode ? 'active' : ''}" data-vocab-mode="${id}" aria-pressed="${id === mode}">
+          <button class="vocab-mode-card ${id === mode ? 'active' : ''}" data-vocab-mode="${id}" data-focus-key="vocab-mode-${id}" aria-pressed="${id === mode}">
             <span class="vocab-mode-icon" aria-hidden="true">${icon(id === 'learn' ? 'learn' : 'quiz')}</span>
             <span class="vocab-mode-body">
               <strong>${VOCAB_MODE_LABELS[id]}</strong>
@@ -2558,7 +2562,7 @@ function renderVocabSetup() {
           <div class="vocab-pills" role="group" aria-labelledby="vocabDirectionLabel">
             ${VOCAB_DIRECTIONS.map(
               id => `
-              <button class="vocab-pill ${id === direction ? 'active' : ''}" data-vocab-direction="${id}" aria-pressed="${id === direction}">
+              <button class="vocab-pill ${id === direction ? 'active' : ''}" data-vocab-direction="${id}" data-focus-key="vocab-direction-${id}" aria-pressed="${id === direction}">
                 ${VOCAB_DIRECTION_LABELS[id]}
               </button>`
             ).join('')}
@@ -2571,7 +2575,7 @@ function renderVocabSetup() {
           <div class="vocab-pills" role="group" aria-labelledby="vocabScopeLabel">
             ${VOCAB_SCOPES.map(
               id => `
-              <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" aria-pressed="${id === scope}">
+              <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" data-focus-key="vocab-scope-${id}" aria-pressed="${id === scope}">
                 ${VOCAB_SCOPE_LABELS[id]} <span class="vocab-pill-count">${vocabPool(id).length}</span>
               </button>`
             ).join('')}
@@ -2584,7 +2588,7 @@ function renderVocabSetup() {
             <div class="vocab-pills" role="group" aria-labelledby="vocabOrderLabel">
               ${VOCAB_ORDERS.map(
                 id => `
-                <button class="vocab-pill ${id === order ? 'active' : ''}" data-vocab-order="${id}" aria-pressed="${id === order}">
+                <button class="vocab-pill ${id === order ? 'active' : ''}" data-vocab-order="${id}" data-focus-key="vocab-order-${id}" aria-pressed="${id === order}">
                   ${VOCAB_ORDER_LABELS[id]}
                 </button>`
               ).join('')}
@@ -2596,7 +2600,7 @@ function renderVocabSetup() {
             <div class="vocab-pills" role="group" aria-labelledby="vocabLimitLabel">
               ${VOCAB_LIMITS.map(
                 id => `
-                <button class="vocab-pill ${id === limit ? 'active' : ''}" data-vocab-limit="${id}" aria-pressed="${id === limit}">
+                <button class="vocab-pill ${id === limit ? 'active' : ''}" data-vocab-limit="${id}" data-focus-key="vocab-limit-${id}" aria-pressed="${id === limit}">
                   ${VOCAB_LIMIT_LABELS[id]}
                 </button>`
               ).join('')}
@@ -2627,30 +2631,36 @@ function renderVocabSetup() {
     </section>
   `;
 
-  const rerender = (field, value) => {
+  const rerender = (field, value, focusKey) => {
     Audio.click();
     vocabSetup[field] = value;
     renderVocab();
+
+    // Pełny `innerHTML` gubi fokus; przywracamy go na tym samym kontrolu.
+    const target = app.querySelector(`[data-focus-key="${focusKey}"]`);
+    if (target) target.focus();
   };
 
   document.querySelectorAll('[data-vocab-mode]').forEach(button => {
-    button.onclick = () => rerender('mode', button.dataset.vocabMode);
+    button.onclick = () => rerender('mode', button.dataset.vocabMode, 'vocab-mode-' + button.dataset.vocabMode);
   });
 
   document.querySelectorAll('[data-vocab-direction]').forEach(button => {
-    button.onclick = () => rerender('direction', button.dataset.vocabDirection);
+    button.onclick = () =>
+      rerender('direction', button.dataset.vocabDirection, 'vocab-direction-' + button.dataset.vocabDirection);
   });
 
   document.querySelectorAll('[data-vocab-scope]').forEach(button => {
-    button.onclick = () => rerender('scope', button.dataset.vocabScope);
+    button.onclick = () => rerender('scope', button.dataset.vocabScope, 'vocab-scope-' + button.dataset.vocabScope);
   });
 
   document.querySelectorAll('[data-vocab-order]').forEach(button => {
-    button.onclick = () => rerender('order', button.dataset.vocabOrder);
+    button.onclick = () => rerender('order', button.dataset.vocabOrder, 'vocab-order-' + button.dataset.vocabOrder);
   });
 
   document.querySelectorAll('[data-vocab-limit]').forEach(button => {
-    button.onclick = () => rerender('limit', Number(button.dataset.vocabLimit));
+    button.onclick = () =>
+      rerender('limit', Number(button.dataset.vocabLimit), 'vocab-limit-' + button.dataset.vocabLimit);
   });
 
   document.getElementById('vocabStart').onclick = () => {
@@ -2803,7 +2813,7 @@ function renderVocab() {
           ${
             session.answered
               ? `
-                <div class="vocab-learn-feedback ${session.lastCorrect ? 'is-correct' : 'is-wrong'}">
+                <div class="vocab-learn-feedback ${session.lastCorrect ? 'is-correct' : 'is-wrong'}" role="status" aria-live="polite">
                   ${session.lastCorrect ? '✓ Dobrze' : '✗ Nie tym razem'}
                 </div>
                 <button class="btn btn-primary vocab-learn-action" id="vocabNext">Dalej → <span class="key-hint">Enter</span></button>
@@ -2854,7 +2864,7 @@ function renderVocab() {
               .join('')}
           </div>
 
-          <div class="feedback" id="vocabFeedback"></div>
+          <div class="feedback" id="vocabFeedback" role="status" aria-live="polite"></div>
         </div>
 
         ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
@@ -2919,6 +2929,7 @@ function resetProgressData() {
   progress = { version: PROGRESS_VERSION, chars: {} };
   saveProgress();
   resetVocabData();
+  state.vocab = null;
 }
 
 function resetSettings() {
@@ -2930,6 +2941,7 @@ function resetSettings() {
 
 function clearAllData() {
   stopExam();
+  state.vocab = null;
 
   appStorageKeys().forEach(key => {
     try {
@@ -4285,7 +4297,8 @@ function masteryLevel(kana) {
    ta kana" ani „co robiłem we wtorek" — i dlatego nie jest częścią
    żadnego z tamtych magazynów.
 
-   Kształt karty (`v01`–`v20`, czyli wyłącznie `type: 'card'`):
+   Kształt rekordu (`VOCAB_LEARN_ITEMS` — polecenia, czasowniki,
+   rzeczowniki, frazy i wzorce; id `v01`–`v24`, `n01`–`n07`, `p01`–`p06`):
      seen, correct, wrong  — liczniki prób
      recent               — ostatnie `VOCAB_MAX_RECENT` wyników
      last                 — znacznik czasu ostatniej odpowiedzi

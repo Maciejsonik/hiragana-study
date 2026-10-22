@@ -823,6 +823,52 @@
         ok('LAY.6 nawigacja mieści się w oknie', navAt.length === 0, navAt.join(' '));
         ok('LAY.7 przyciski kana >= 44px', minKana >= 44, 'min=' + minKana.toFixed(1));
         ok('LAY.8 fiszka zachowuje własny rozmiar glifu', flashAt.length === 0, flashAt.join(' '));
+
+        // Ekran Słownictwa ma trzy przyciski akcji i na 320 px nie może
+        // przycinać eyebrow ani tytułu. Mierzymy realny topbar, nie CSS.
+        frame.style.width = '320px';
+        await wait(240);
+        frame.contentWindow.setScreen('vocab');
+        await wait(160);
+
+        const d = frame.contentDocument;
+        const win = frame.contentWindow;
+        const eyebrow = d.getElementById('scriptEyebrow');
+        const title = d.getElementById('appTitle');
+        const actions = d.querySelector('.topbar-actions');
+        const topbarIssues = [];
+        if (!eyebrow || !title || !actions) {
+          topbarIssues.push('brak elementów topbara');
+        } else {
+          if (eyebrow.scrollWidth > eyebrow.clientWidth + 1) {
+            topbarIssues.push('eyebrow ' + eyebrow.scrollWidth + '/' + eyebrow.clientWidth);
+          }
+          if (actions.getBoundingClientRect().left < eyebrow.getBoundingClientRect().right - 0.5) {
+            topbarIssues.push('eyebrow pod akcjami');
+          }
+          if (title.getBoundingClientRect().height > 26) {
+            topbarIssues.push('tytuł ' + Math.round(title.getBoundingClientRect().height) + 'px');
+          }
+        }
+        ok('LAY.9 topbar 320 px bez przycięcia', topbarIssues.length === 0, topbarIssues.join(' '));
+
+        // Pytanie „znaczenie → wyrażenie” musi wygrać specyficznością
+        // z `.prompt .question`; inaczej przy 320 px ma 44.8 px i wychodzi.
+        const probe = d.createElement('div');
+        probe.className = 'prompt';
+        probe.style.width = '246px';
+        probe.innerHTML = '<div class="question question-vocab-pl">proszę odpowiedzieć</div>';
+        d.body.appendChild(probe);
+        const promptProbe = probe.querySelector('.question');
+        const promptStyle = win.getComputedStyle(promptProbe);
+        const fontSize = parseFloat(promptStyle.fontSize);
+        const promptOverflow = promptProbe.scrollWidth - promptProbe.clientWidth;
+        probe.remove();
+        ok(
+          'LAY.10 pytanie słownictwa 320 px ma zamierzony rozmiar i nie wystaje',
+          fontSize <= 34 && promptOverflow <= 1,
+          'font=' + fontSize + 'px overflow=' + promptOverflow
+        );
       } finally {
         holder.remove();
       }
@@ -1445,6 +1491,11 @@
           firstStat.seen === 1 && firstStat.correct === 1 && state.vocab.correct === 1,
           JSON.stringify(firstStat)
         );
+        ok(
+          'F5a feedback testu jest ogłaszany czytnikom ekranu',
+          document.getElementById('vocabFeedback')?.getAttribute('role') === 'status' &&
+            document.getElementById('vocabFeedback')?.getAttribute('aria-live') === 'polite'
+        );
 
         ok(
           'F6 po odpowiedzi widać fiszkę z romaji, a opcje są zablokowane',
@@ -1593,10 +1644,23 @@
         setScreen('vocab');
         await wait(300);
 
+        document.querySelector('[data-vocab-order="shuffle"]').focus();
         document.querySelector('[data-vocab-order="shuffle"]').click();
         await wait(80);
+        ok(
+          'F15a fokus zostaje na wybranej kolejności po przerysowaniu',
+          document.activeElement === document.querySelector('[data-vocab-order="shuffle"]'),
+          document.activeElement?.outerHTML?.slice(0, 80) || 'brak fokusu'
+        );
+
+        document.querySelector('[data-vocab-limit="10"]').focus();
         document.querySelector('[data-vocab-limit="10"]').click();
         await wait(80);
+        ok(
+          'F15b fokus zostaje na wybranym limicie po przerysowaniu',
+          document.activeElement === document.querySelector('[data-vocab-limit="10"]'),
+          document.activeElement?.outerHTML?.slice(0, 80) || 'brak fokusu'
+        );
 
         ok(
           'F15 wybór losowej kolejności i limitu jest widoczny w podsumowaniu',
@@ -1660,6 +1724,11 @@
             !!document.getElementById('vocabNext'),
           JSON.stringify(vocabStat(learnItem.id))
         );
+        ok(
+          'F19a feedback nauki jest ogłaszany czytnikom ekranu',
+          document.querySelector('.vocab-learn-feedback')?.getAttribute('role') === 'status' &&
+            document.querySelector('.vocab-learn-feedback')?.getAttribute('aria-live') === 'polite'
+        );
 
         state.vocab.index = state.vocab.order.length - 1;
         document.getElementById('vocabNext').click();
@@ -1679,6 +1748,29 @@
           state.vocab.order.length === 1 && state.vocab.order[0] === learnItem.id && state.vocab.mode === 'learn',
           state.vocab.order.join(',')
         );
+
+        // Nawigacja z menu z powrotem w Słownictwo nie może pokazać
+        // wyniku poprzedniego zestawu.
+        state.vocab.finished = true;
+        renderVocab();
+        await wait(100);
+        document.querySelector('[data-nav="kana"]').click();
+        await wait(120);
+        document.querySelector('[data-nav="vocab"]').click();
+        await wait(120);
+        ok(
+          'F22 wejście w Słownictwo z menu otwiera setup, nie stary wynik',
+          state.screen === 'vocab' && state.vocab === null && !!document.getElementById('vocabStart'),
+          state.vocab ? 'stary stan sesji' : 'setup'
+        );
+
+        state.vocab = { finished: true };
+        resetProgressData();
+        ok('F23 reset postępu czyści stan fiszek', state.vocab === null, String(state.vocab));
+
+        state.vocab = { finished: true };
+        clearAllData();
+        ok('F24 czyszczenie danych czyści stan fiszek', state.vocab === null, String(state.vocab));
 
         vocabSetup.mode = 'learn';
         vocabSetup.direction = 'kana-meaning';
