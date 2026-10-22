@@ -418,6 +418,11 @@
     migrateProgress(progress);
     ok('migration is idempotent', JSON.stringify(progress) === once, '');
 
+    // --- przyszła wersja nie może zostać obniżona ---
+    const future = migrateProgress({ version: PROGRESS_VERSION + 1, chars: { あ: JSON.parse(JSON.stringify(rich)) } });
+    eq('future progress version preserved', future.version, PROGRESS_VERSION + 1);
+    eq('future progress record preserved', future.chars['あ'].seen, rich.seen);
+
     // --- rekordy nie-obiektowe są ZACHOWANE, nie usunięte ---
     setProgress({ あ: JSON.parse(JSON.stringify(rich)), い: 5, う: null, え: 'x', お: [] }, 1);
     const kept = migrateProgress(progress);
@@ -452,12 +457,58 @@
     // --- brak version (stary zapis) ---
     try {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({ chars: { あ: rich } }));
-      eq('missing version migrated', loadProgress().version, 2);
+      const noVersion = loadProgress();
+      eq('missing version migrated', noVersion.version, 2);
+      ok('missing version still seeds SRS', typeof noVersion.chars['あ'].stage === 'number');
     } catch (e) {
       ok('missing version', false, e.message);
     }
   } catch (e) {
     ok('migration', false, e.message);
+  }
+
+  /* =====================================================
+     8b. CZĘŚCIOWE REKORDY POSTĘPU
+     ===================================================== */
+  try {
+    // Bieżąca wersja też musi przejść naprawę kształtu: wcześniejszy
+    // wczesny `return` zostawiał rekord bez `recent` i wywracał render.
+    setProgress({ あ: { seen: 5, correct: 5, wrong: 0, last: 1 } }, PROGRESS_VERSION);
+    const partial = migrateProgress(progress).chars['あ'];
+    ok('partial current record gets recent array', Array.isArray(partial.recent), JSON.stringify(partial.recent));
+    ok('partial current record gets confused object', !!partial.confused && typeof partial.confused === 'object');
+    eq('partial current record keeps seen', partial.seen, 5);
+    eq('partial current record mastery is safe', masteryLevel('あ'), 'learning');
+
+    // Rekord nie-obiektowy jest zastępowany dopiero przy zapisie odpowiedzi.
+    setProgress({ あ: 5 }, PROGRESS_VERSION);
+    let answered = true;
+    try {
+      recordAnswer('あ', true, null, 'exam');
+    } catch (e) {
+      answered = false;
+    }
+    ok(
+      'recordAnswer replaces non-object record',
+      answered && progress.chars['あ'].seen === 1 && Array.isArray(progress.chars['あ'].recent),
+      answered ? JSON.stringify(progress.chars['あ']) : 'threw'
+    );
+
+    // Rekord z brakującym `recent` jest naprawiany także bez migracji.
+    setProgress({ い: { seen: 5, correct: 4, wrong: 1, last: 1 } }, PROGRESS_VERSION);
+    let repaired = true;
+    try {
+      recordAnswer('い', true, null, 'exam');
+    } catch (e) {
+      repaired = false;
+    }
+    ok(
+      'recordAnswer repairs missing recent',
+      repaired && Array.isArray(progress.chars['い'].recent) && progress.chars['い'].recent.length === 1,
+      repaired ? JSON.stringify(progress.chars['い']) : 'threw'
+    );
+  } catch (e) {
+    ok('partial progress records', false, e.message);
   }
 
   /* =====================================================

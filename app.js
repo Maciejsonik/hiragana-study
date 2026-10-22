@@ -4077,6 +4077,29 @@ function progressStat(entry, field) {
 const isPlainInt = value => Number.isFinite(value) && Number.isInteger(value);
 
 /*
+   Naprawia kształt rekordu legacy/current bez ruszania pól SRS.
+   Częściowy rekord (np. `seen` bez `recent`) wcześniej wywracał render
+   menu i odpowiedź. Nieobiektowe wpisy nadal zostają w `chars`, ale
+   zapis odpowiedzi zastąpi je świeżym rekordem.
+*/
+function normalizeProgressRecord(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry;
+
+  if (!Number.isFinite(entry.seen) || entry.seen < 0) entry.seen = 0;
+  if (!Number.isFinite(entry.correct) || entry.correct < 0) entry.correct = 0;
+  if (!Number.isFinite(entry.wrong) || entry.wrong < 0) entry.wrong = 0;
+
+  entry.recent = Array.isArray(entry.recent)
+    ? entry.recent.slice(-6).map(value => (value === 1 || value === '1' ? 1 : 0))
+    : [];
+
+  if (!entry.confused || typeof entry.confused !== 'object' || Array.isArray(entry.confused)) entry.confused = {};
+  if (!Number.isFinite(entry.last) || entry.last < 0) entry.last = 0;
+
+  return entry;
+}
+
+/*
    Nadpisuje wyłącznie pola SRS w rekordzie, który przeszedł
    `isProgressRecord()`. Brakujące / źle typowane / ujemne / nieskończone
    wartości dostają default. `stage` spoza zakresu jest przycinany
@@ -4137,27 +4160,25 @@ function legacyStageSeed(kana) {
 }
 
 function migrateProgress(data) {
-  if (data && data.version >= PROGRESS_VERSION) return data;
-
   const chars = (data && typeof data.chars === 'object' && data.chars) || {};
+  const sourceVersion = data && Number.isFinite(Number(data.version)) ? Number(data.version) : 0;
+  const needsSrsMigration = sourceVersion < PROGRESS_VERSION;
 
   for (const kana of Object.keys(chars)) {
-    const entry = chars[kana];
+    const entry = normalizeProgressRecord(chars[kana]);
 
     // Rekord nie-obiektowy: zostaje w `chars` nietknięty, ale nie dostaje
     // pól SRS i nie wejdzie do kolejki. Nic nie kasujemy.
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
 
-    // `seen` poza zakresem → 0, żeby `progressSummary()` nigdy nie zwrócił NaN,
-    // a rekord przestał być „ćwiczonym" (`masteryLevel` → 'new').
-    if (!Number.isFinite(entry.seen) || entry.seen < 0) entry.seen = 0;
-
-    if (isProgressRecord(entry)) normalizeSrs(entry, legacyStageSeed(kana));
+    if (needsSrsMigration && isProgressRecord(entry)) normalizeSrs(entry, legacyStageSeed(kana));
     // Rekord z `seen === 0` celowo NIE dostaje pól SRS — nie był ćwiczony.
   }
 
   data.chars = chars;
-  data.version = PROGRESS_VERSION;
+  // Wersji przyszłej nie obniżamy: starsza aplikacja nie może po odczycie
+  // nowszego formatu zapisać go jako starszej wersji.
+  data.version = Math.max(sourceVersion, PROGRESS_VERSION);
   return data;
 }
 
@@ -4189,8 +4210,12 @@ function saveProgress() {
 */
 function recordAnswer(kana, correct, chosenKana, source) {
   const existing = progress.chars[kana];
-  const entry =
-    existing || (progress.chars[kana] = { seen: 0, correct: 0, wrong: 0, recent: [], confused: {}, last: 0 });
+  const hasRecord = !!(existing && typeof existing === 'object' && !Array.isArray(existing));
+  const entry = hasRecord
+    ? existing
+    : (progress.chars[kana] = { seen: 0, correct: 0, wrong: 0, recent: [], confused: {}, last: 0 });
+
+  normalizeProgressRecord(entry);
 
   entry.seen++;
   if (correct) entry.correct++;
@@ -4221,7 +4246,7 @@ function recordAnswer(kana, correct, chosenKana, source) {
   // bez pól SRS dziedziczy etap ze swojej dotychczasowej oceny, żeby migracja
   // dawała ten sam wynik niezależnie od tego, kiedy SRS zostało dodane.
   if (!hasUsableSrs(entry)) {
-    normalizeSrs(entry, existing ? legacyStageSeed(kana) : 0);
+    normalizeSrs(entry, hasRecord ? legacyStageSeed(kana) : 0);
   }
   scheduleAnswer(entry, { correct: correct, source: source, now: now });
 
@@ -4232,7 +4257,7 @@ function recordAnswer(kana, correct, chosenKana, source) {
 // odsetek błędów w ostatnich próbach (0..1)
 function errorRate(kana) {
   const entry = progress.chars[kana];
-  if (!entry || !entry.recent.length) return 0;
+  if (!entry || !Array.isArray(entry.recent) || !entry.recent.length) return 0;
   return 1 - entry.recent.reduce((a, b) => a + b, 0) / entry.recent.length;
 }
 
@@ -4241,13 +4266,14 @@ function masteryLevel(kana) {
   const entry = progress.chars[kana];
   if (!entry || !entry.seen) return 'new';
 
+  const recent = Array.isArray(entry.recent) ? entry.recent : [];
   const rate = errorRate(kana);
-  const overall = entry.correct / entry.seen;
+  const overall = progressStat(entry, 'correct') / entry.seen;
 
-  if (entry.recent.length >= 4 && rate >= 0.5) return 'hard';
-  if (entry.seen >= 10 && overall >= 0.9 && entry.recent.length >= 5 && entry.recent.slice(-5).every(r => r === 1))
+  if (recent.length >= 4 && rate >= 0.5) return 'hard';
+  if (entry.seen >= 10 && overall >= 0.9 && recent.length >= 5 && recent.slice(-5).every(r => r === 1))
     return 'mastered';
-  if (entry.recent.length >= 4 && rate === 0) return 'good';
+  if (recent.length >= 4 && rate === 0) return 'good';
   return 'learning';
 }
 
