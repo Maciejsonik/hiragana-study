@@ -325,7 +325,7 @@ body.focus-mode .app-shell {
 .icon-btn {
   width: 42px;
   height: 42px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border: var(--surface-border);
   background: var(--card-solid);
   color: var(--ink);
@@ -339,6 +339,11 @@ body.focus-mode .app-shell {
 .icon-btn:hover {
   border-color: var(--accent-hover);
   transform: translateY(-1px);
+}
+
+.icon-btn:active,
+.ghost:active {
+  transform: scale(0.95);
 }
 
 .icon-btn:focus-visible {
@@ -415,18 +420,24 @@ body.focus-mode .app-shell {
 
 .btn {
   border: 0;
-  border-radius: var(--radius-md);
-  padding: 11px 16px;
+  border-radius: var(--radius-lg);
+  padding: 11px 18px;
   cursor: pointer;
   font-weight: 750;
+  letter-spacing: -0.01em;
   transition:
     transform var(--duration-fast) var(--ease-standard),
     background var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
     opacity var(--duration-fast) var(--ease-standard);
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn:focus-visible {
@@ -437,19 +448,24 @@ body.focus-mode .app-shell {
 .btn-primary {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-dark);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .btn-secondary {
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-ink);
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  box-shadow: var(--shadow-soft);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--btn-secondary-bg) 80%, var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
 }
 
 .btn:disabled {
@@ -465,7 +481,7 @@ body.focus-mode .app-shell {
   border: var(--surface-border);
   background: var(--card-solid);
   color: var(--ink);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 9px var(--space-3-5);
   cursor: pointer;
   transition: var(--duration-fast) var(--ease-standard);
@@ -814,14 +830,39 @@ body.focus-mode .app-shell {
 }
 
 .review-empty {
-  padding: 28px 24px;
+  padding: 44px 28px;
   text-align: center;
+  max-width: 580px;
+  margin: var(--space-4) auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.review-empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-circle);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3-5);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.review-empty-icon .icon {
+  width: 26px;
+  height: 26px;
 }
 
 .review-empty-title {
   color: var(--ink);
-  font-weight: 700;
-  font-size: var(--text-lg);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
   margin: 0 0 var(--space-2);
 }
 
@@ -829,6 +870,7 @@ body.focus-mode .app-shell {
   color: var(--muted);
   line-height: 1.6;
   margin: 0 0 var(--space-5);
+  max-width: 44ch;
 }
 
 .review-list {
@@ -1290,14 +1332,26 @@ body.focus-mode .app-shell {
   gap: 15px;
 }
 
+.study-head h2 {
+  font-size: 2rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
 .badge {
   background: var(--soft);
   color: var(--accent-dark);
   border-radius: var(--radius-pill);
-  padding: 7px 11px;
+  padding: 6px 14px;
   font-size: 0.78rem;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.badge#strokeBadge {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 /* =========================================================
@@ -1331,8 +1385,11 @@ body.focus-mode .app-shell {
 
 .char-panel h3 {
   align-self: flex-start;
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3-5);
+  font-size: var(--text-2xs);
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -1375,9 +1432,34 @@ body.focus-mode .app-shell {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-2xl);
+  background-color: color-mix(in srgb, var(--card) 60%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.04);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent calc(50% - 0.5px),
+      color-mix(in srgb, var(--line) 70%, transparent) calc(50% - 0.5px),
+      color-mix(in srgb, var(--line) 70%, transparent) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(50% - 0.5px),
+      color-mix(in srgb, var(--line) 70%, transparent) calc(50% - 0.5px),
+      color-mix(in srgb, var(--line) 70%, transparent) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    );
+  background-size:
+    100% 100%,
+    100% 100%;
+  background-position: center;
   transition:
     filter var(--duration-slow) var(--ease-standard),
-    opacity var(--duration-slow) var(--ease-standard);
+    opacity var(--duration-slow) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .svg-wrap svg {
@@ -1426,6 +1508,13 @@ body.focus-mode .app-shell {
   cursor: crosshair;
   /* Palec rysuje, a nie przewija strony. */
   touch-action: none;
+}
+
+.svg-wrap.drawing {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent),
+    inset 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .svg-wrap.drawing .draw-canvas {
@@ -1548,6 +1637,7 @@ body.focus-mode .app-shell {
   color: #fff;
   font-size: 0.78rem;
   font-weight: 900;
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .order-arrow {
@@ -1562,23 +1652,27 @@ body.focus-mode .app-shell {
 }
 
 .stroke-step {
-  background: var(--card-solid);
-  border: var(--surface-border);
-  padding: var(--space-2) var(--space-2-5);
-  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
   font-size: var(--text-sm);
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
+  box-shadow: var(--shadow-soft);
+  max-width: 100%;
   transition:
     background var(--duration-quick) var(--ease-standard),
     border-color var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard),
     opacity var(--duration-quick) var(--ease-standard);
 }
 
 .stroke-step.active {
   border-color: var(--accent);
   background: var(--soft);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .stroke-step.completed {
@@ -1735,7 +1829,12 @@ body.focus-mode .app-shell {
   font-size: 2.7rem;
   font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   cursor: pointer;
-  transition: var(--duration-fast) var(--ease-standard);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
   position: relative;
 }
 
@@ -1743,6 +1842,10 @@ body.focus-mode .app-shell {
   border-color: var(--accent-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
+}
+
+.answer:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .answer:focus-visible {
@@ -1754,11 +1857,17 @@ body.focus-mode .app-shell {
   position: absolute;
   top: 8px;
   left: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--line) 60%, transparent);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--muted);
   font-family: "Inter", sans-serif;
-  opacity: 0.45;
+  opacity: 0.7;
 }
 
 .answer.correct {

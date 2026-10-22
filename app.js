@@ -2288,6 +2288,7 @@ function renderReview() {
         due.length === 0
           ? `
         <div class="review-empty card">
+          <div class="review-empty-icon" aria-hidden="true">${icon('check')}</div>
           <p class="review-empty-title">Wszystko na czas</p>
           <p>Nie ma tu żadnego znaku zaplanowanego na dziś. Nowe znaki dodasz, ćwicząc w trybie nauki.</p>
           <button class="btn btn-primary" id="reviewGoLearn">Przejdź do nauki</button>

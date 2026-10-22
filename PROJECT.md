@@ -1139,6 +1139,7 @@ Added by later phases:
 .tile-cta            one-line hint inside the primary tile
 .tile-sub            secondary description inside hub tiles
 .tile-watermark      atmospheric Japanese calligraphy background watermark
+.review-empty-icon   celebratory milestone icon badge in the review empty state
 .settings             Settings screen
 .settings-group       settings sections
 .settings-pills       segmented preference controls
