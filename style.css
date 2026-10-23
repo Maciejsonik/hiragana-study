@@ -6524,6 +6524,7 @@ body::before {
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
+  padding-bottom: var(--space-8);
   box-sizing: border-box;
   animation: fadeIn 0.25s ease-out;
 }
@@ -6910,9 +6911,8 @@ body::before {
   font-size: var(--text-md);
   font-weight: 800;
   color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .dashboard-module-desc {
@@ -6928,11 +6928,11 @@ body::before {
 /* Metrics in card */
 .dashboard-module-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-3);
   background: color-mix(in srgb, var(--card-solid) 80%, var(--line) 20%);
   border-radius: var(--radius-lg);
-  padding: var(--space-2-5) var(--space-2);
+  padding: var(--space-2-5) var(--space-3);
   margin-bottom: var(--space-3);
   position: relative;
   z-index: 1;
@@ -6943,10 +6943,11 @@ body::before {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  min-width: 0;
 }
 
 .dashboard-metric-val {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 800;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -6954,10 +6955,12 @@ body::before {
 }
 
 .dashboard-metric-lbl {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   color: var(--muted);
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
 }
 
 /* Progress bar in card */
@@ -7073,4 +7076,33 @@ body::before {
     justify-content: center;
     width: 100%;
   }
+}
+
+/* Kana Hub return button to Dashboard */
+.hub-nav-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.hub-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.hub-back-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--card-solid);
 }

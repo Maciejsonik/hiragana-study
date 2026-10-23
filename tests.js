@@ -2240,7 +2240,13 @@
     eq('NAV5 start na hubie kany', state.screen, 'menu');
     eq('NAV6 tytuł huba', title(), 'Kana');
     eq('NAV7 aktywna pozycja na hubie', navButton('kana').getAttribute('aria-current'), 'page');
-    ok('NAV8 powrót ukryty na hubie', homeBtn.classList.contains('is-hidden'));
+    ok('NAV8 powrót widoczny na hubie kany', !homeBtn.classList.contains('is-hidden'));
+    ok('NAV8a obecny przycisk powrotu do pulpitu na hubie kany', !!document.getElementById('btnKanaBackToDashboard'));
+    homeBtn.click();
+    await sleep(30);
+    eq('NAV8b kliknięcie powrotu z huba kany prowadzi do pulpitu', state.screen, 'dashboard');
+    setScreen('menu');
+    await sleep(30);
 
     /* Słownictwo — wejście przez nawigację i zachowanie magazynu. */
     const cardsBefore = JSON.stringify(vocab.cards);

@@ -1369,7 +1369,7 @@ function refreshChrome() {
   document.body.classList.toggle('focus-mode', focus);
 
   if (homeBtn) {
-    homeBtn.classList.toggle('is-hidden', state.screen === 'menu' || state.screen === 'dashboard');
+    homeBtn.classList.toggle('is-hidden', state.screen === 'dashboard');
     homeBtn.setAttribute('aria-label', 'Wróć');
   }
 
@@ -2913,6 +2913,13 @@ function renderMenu() {
           <span class="hub-kicker" id="hubSummaryLabel">Postęp</span>
           <span class="hub-script">${scriptName()}</span>
         </div>
+        <button class="hub-back-btn" id="btnKanaBackToDashboard" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Pulpit
+        </button>
         <div class="hub-streak-badge" aria-label="Seria aktywności">
           <span class="hub-streak-icon" aria-hidden="true">${icon('flame')}</span>
           <span>${streakLabel}</span>
@@ -2945,6 +2952,14 @@ function renderMenu() {
       </button>
     </section>
   `;
+
+  const btnKanaBack = document.getElementById('btnKanaBackToDashboard');
+  if (btnKanaBack) {
+    btnKanaBack.onclick = () => {
+      Audio.click();
+      setScreen('dashboard');
+    };
+  }
 
   document.getElementById('learnCard').onclick = () => {
     Audio.click();
