@@ -1867,27 +1867,22 @@ They represent the longer-term direction of Koto.
 
 ---
 
-## T18 — Kanji
+## T18 — Kanji — COMPLETE
 
 Goal:
 
 > Extend Koto from kana learning into introductory Japanese kanji learning.
 
-Potential scope:
+Implemented scope:
 
-- kanji dataset,
-- JLPT-based organization,
-- readings,
-- meanings,
-- stroke order,
-- KanjiVG animation,
-- handwriting,
-- per-kanji progress,
-- adaptive kanji questions,
-- kanji recognition,
-- example vocabulary.
-
-Kanji should build on the existing learning engine rather than create an entirely separate application.
+- **110 curated kanji**: based on *Shokyū Nihongo* (L01–L10) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
+- **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L10, N5).
+- **Interactive character catalog**: instant search by character, reading (romaji/kana) or Polish meaning; filtering by lesson and semantic category pills; responsive card grid with status indicators.
+- **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
+- **SRS flashcard review**: interval progression based on response grade (Znów / Trudne / Dobre / Łatwe) with keyboard shortcuts `1`–`4`.
+- **4-choice recognition quiz**: randomized 20-question challenge with instant visual feedback and score tracking.
+- **Isolated persistence store**: `hiragana-kanji` (version 1) in `localStorage`, decoupled from kana and vocab stores, integrated into `appStorageKeys()` and data reset lifecycle.
+- **Hierarchical navigation**: back button (`#homeBtn`) returns to previous contextual screen (Detail → Catalog → Hub → Kana menu).
 
 ---
 
@@ -2534,7 +2529,9 @@ UI phase 4 (Kana hub) — COMPLETE
 ↓
 T19 Vocabulary (data, progress, flashcards, topics, UX cleanup) — COMPLETE
 ↓
-Next: Shared module dashboard & Daily Practice / Goals (T22) or Kanji (T18)
+T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPLETE
+↓
+Next: Shared module dashboard & Daily Practice / Goals (T22) or Grammar (T20)
 ↓
 T16 Code splitting
 ```
@@ -2542,7 +2539,7 @@ T16 Code splitting
 Long-term:
 
 ```text
-T18 Kanji
+T18 Kanji (Core complete)
 T19 Vocabulary
 T20 Grammar
 T22 Daily Practice / Goals

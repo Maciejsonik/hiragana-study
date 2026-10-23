@@ -2163,12 +2163,13 @@
       PROGRESS_KEY,
       DAILY_STATS_KEY,
       VOCAB_KEY,
+      KANJI_KEY,
       LEGACY_THEME_KEY,
       LEGACY_MUTED_KEY
     ];
     ok(
-      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie siedem kluczy aplikacji',
-      keys.length === 7 && expected.every(key => keys.indexOf(key) >= 0),
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie osiem kluczy aplikacji',
+      keys.length === 8 && expected.every(key => keys.indexOf(key) >= 0),
       keys.join(', ')
     );
 
@@ -2212,11 +2213,11 @@
     const title = () => document.getElementById('appTitle').textContent;
 
     ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
-    eq('NAV2 dwie pozycje nawigacji', navButtons().length, 2);
+    eq('NAV2 trzy pozycje nawigacji', navButtons().length, 3);
     deepEq(
       'NAV3 etykiety modułów',
       navButtons().map(button => button.querySelector('.app-nav-label').textContent),
-      ['Kana', 'Słownictwo']
+      ['Kana', 'Słownictwo', 'Kanji']
     );
     ok(
       'NAV4 ikony to inline SVG, nie emoji',
@@ -2253,6 +2254,14 @@
       JSON.stringify(vocab.cards) === cardsBefore,
       JSON.stringify(vocab.cards)
     );
+
+    /* Kanji — wejście przez nawigację */
+    navButton('kanji').click();
+    await sleep(30);
+    eq('NAV15a klik prowadzi do kanji', state.screen, 'kanji');
+    eq('NAV15b tytuł huba kanji', title(), 'Kanji');
+    eq('NAV15c aktywna pozycja kanji', navButton('kanji').getAttribute('aria-current'), 'page');
+    ok('NAV15d powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
 
     ok('NAV16 nawigacja nie zawiera pozycji Ustawienia', !navButton('settings'));
     setScreen('settings');
@@ -2344,7 +2353,7 @@
         frame.style.width = width + 'px';
         await sleep(120);
 
-        for (const screen of ['menu', 'vocab', 'settings']) {
+        for (const screen of ['menu', 'vocab', 'kanji', 'settings']) {
           win.setScreen(screen);
           await sleep(40);
           const overflow = doc.documentElement.scrollWidth - doc.documentElement.clientWidth;
@@ -2423,6 +2432,75 @@
     }
   } catch (e) {
     ok('shell — układ', false, e.message);
+  }
+
+  /* =====================================================
+     T18: KANJI — DANE, MAGAZYN I WIDOKI
+     ===================================================== */
+  try {
+    ok('KJ1 KANJI_ITEMS zawiera 110 znaków', Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 110, String(KANJI_ITEMS.length));
+
+    const kanjiIds = new Set(KANJI_ITEMS.map(k => k.id));
+    eq('KJ2 unikalne ID znaków k001..k110', kanjiIds.size, 110);
+
+    const kanjiChars = new Set(KANJI_ITEMS.map(k => k.kanji));
+    eq('KJ3 unikalne glify kanji', kanjiChars.size, 110);
+
+    const lessonsPresent = ['L01', 'L02', 'L03', 'L04', 'L05', 'L06', 'L07', 'L08', 'L09', 'L10', 'N5'];
+    ok(
+      'KJ4 wszystkie 11 lekcji Shokyū Nihongo L01-L10 i N5 są obecne',
+      lessonsPresent.every(l => KANJI_ITEMS.some(k => k.lesson === l))
+    );
+
+    ok(
+      'KJ5 każdy znak ma poprawną liczbę kresek > 0',
+      KANJI_ITEMS.every(k => Number.isInteger(k.strokes) && k.strokes > 0)
+    );
+
+    ok(
+      'KJ6 każdy znak ma polskie znaczenie i tablice czytań',
+      KANJI_ITEMS.every(k => typeof k.meaning === 'string' && k.meaning.length > 0 && Array.isArray(k.onyomi) && Array.isArray(k.kunyomi))
+    );
+
+    ok(
+      'KJ7 KANJI_LESSON_WORDS zawiera 69 słówek z lekcji 1か i 2か',
+      Array.isArray(KANJI_LESSON_WORDS) && KANJI_LESSON_WORDS.length === 69,
+      String(KANJI_LESSON_WORDS.length)
+    );
+
+    // Testy magazynu hiragana-kanji
+    const testChar = '人';
+    const testItem = kanjiItem(testChar);
+    ok('KJ8 kanjiItem znajduje znak po znaku lub ID', testItem && testItem.id === 'k001' && testItem.kanji === '人');
+
+    // Czysty start
+    localStorage.removeItem(KANJI_KEY);
+    kanjiProgress = loadKanjiProgress();
+    eq('KJ9 pusty magazyn kanji ma wersję 1', kanjiProgress.version, 1);
+    eq('KJ10 początkowy stan znaku to new', kanjiStat(testChar).status, 'new');
+
+    recordKanjiAnswer(testChar, true);
+    const statAfter1 = kanjiStat(testChar);
+    eq('KJ11 po poprawnej odpowiedzi seen=1, correct=1', statAfter1.seen, 1);
+    eq('KJ12 correct=1', statAfter1.correct, 1);
+    ok('KJ13 interwał SRS został ustawiony', statAfter1.interval >= 1);
+
+    recordKanjiAnswer(testChar, false);
+    const statAfter2 = kanjiStat(testChar);
+    eq('KJ14 po błędnej odpowiedzi seen=2, wrong=1', statAfter2.seen, 2);
+    eq('KJ15 wrong=1', statAfter2.wrong, 1);
+    eq('KJ16 błędna odpowiedź resetuje interwał do 1', statAfter2.interval, 1);
+
+    ok('KJ17 nieznany znak nie tworzy rekordu', recordKanjiAnswer('xyz999', true) === false);
+
+    // Izolacja magazynów
+    ok('KJ18 zapis kanji pod dedykowanym kluczem hiragana-kanji', localStorage.getItem(KANJI_KEY) !== null);
+
+    // Czyszczenie po teście
+    localStorage.removeItem(KANJI_KEY);
+    kanjiProgress = loadKanjiProgress();
+  } catch (e) {
+    ok('T18 kanji moduł', false, e.message);
   }
 
   /* =====================================================

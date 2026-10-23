@@ -162,6 +162,8 @@ function getLookalikes() {
   return [...scriptData.hiragana.lookalikes, ...scriptData.katakana.lookalikes];
 }
 
+
+
 /* =========================================================
    USTAWIENIA — jedyne źródło prawdy dla preferencji
 
@@ -641,7 +643,9 @@ const TOPIC_CATEGORIES = {
   nature: 'Przyroda',
   transport: 'Transport',
   work: 'Praca',
-  place: 'Miejsca'
+  place: 'Miejsca',
+  number: 'Liczby',
+  direction: 'Kierunki'
 };
 
 function isKnownCategory(id) {
@@ -791,6 +795,239 @@ const VOCAB_VERB_ITEMS = [
 const VOCAB_PHRASE_ITEMS = [...VOCAB_PHRASES, ...VOCAB_PATTERNS];
 
 const VOCAB_LEARN_ITEMS = [...VOCAB_CARDS, ...VOCAB_VERB_ITEMS, ...VOCAB_WORDS, ...VOCAB_PHRASES, ...VOCAB_PATTERNS];
+
+/* =========================================================
+   DANE: KANJI (T18)
+   Zestaw z podręcznika Shokyū Nihongo (L01–L10) + dopełnienie N5.
+   ========================================================= */
+
+// prettier-ignore
+const KANJI_LESSONS = [
+  { id: 'all', label: 'Wszystkie', count: 110 },
+  { id: 'L01', label: 'L01 · Człowiek', desc: 'Podstawowe pojęcie człowieka i narodowości' },
+  { id: 'L02', label: 'L02 · Liczby i natura', desc: 'Liczebniki 1–10 000, góra i biel' },
+  { id: 'L03', label: 'L03 · Dni i żywioły', desc: 'Dni tygodnia, słońce, księżyc, ogień, woda, drzewo, złoto' },
+  { id: 'L04', label: 'L04 · Szkoła i wiek', desc: 'Nauka, uczeń, dziecko, wiek, jen' },
+  { id: 'L05', label: 'L05 · Pory roku i czas', desc: 'Wiosna, jesień, zima, świątynia, wcześnie' },
+  { id: 'L06', label: 'L06 · Położenie i zwierzęta', desc: 'Góra, dół, środek, mały, duży, koń, krowa, pies, książka' },
+  { id: 'L07', label: 'L07 · Kierunki i pogoda', desc: 'Kierunki świata, deszcz, śnieg, rzeka, ręka, niebo' },
+  { id: 'L08', label: 'L08 · Rodzina i czas', desc: 'Ojciec, matka, brat, kobieta, czas, spotkanie' },
+  { id: 'L09', label: 'L09 · Ruch i cechy', desc: 'Iść, przychodzić, odpoczywać, prąd, dużo, mało, młody' },
+  { id: 'L10', label: 'L10 · Relacje i opozycje', desc: 'Prawy, lewy, otwierać, zamykać, przyjaciel, kraj, lekarz' },
+  { id: 'N5',  label: 'N5 · Dopełnienie', desc: 'Przed, po, pojazd, szkoła, patrzeć, pisać, czytać, język' }
+];
+
+// prettier-ignore
+const KANJI_ITEMS = [
+  // L01
+  { id: 'k001', kanji: '人', meaning: 'człowiek', onyomi: ['ジン', 'ニン'], kunyomi: ['ひと'], strokes: 2, lesson: 'L01', category: 'people', grade: 'N5', examples: [{ word: '人', reading: 'ひと', meaning: 'człowiek' }, { word: '日本人', reading: 'にほんじん', meaning: 'Japończyk' }, { word: '学生', reading: 'がくせい', meaning: 'uczeń' }, { word: '外国人', reading: 'がいこくじん', meaning: 'obcokrajowiec' }] },
+
+  // L02
+  { id: 'k002', kanji: '一', meaning: 'jeden', onyomi: ['イチ', 'イツ'], kunyomi: ['ひと-つ'], strokes: 1, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '一', reading: 'いち', meaning: 'jeden' }, { word: '一つ', reading: 'ひとつ', meaning: 'jeden (sztuka)' }, { word: '一人', reading: 'ひとり', meaning: 'jedna osoba' }] },
+  { id: 'k003', kanji: '二', meaning: 'dwa', onyomi: ['ニ'], kunyomi: ['ふた-つ'], strokes: 2, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '二', reading: 'に', meaning: 'dwa' }, { word: '二つ', reading: 'ふたつ', meaning: 'dwa (sztuka)' }, { word: '二人', reading: 'ふたり', meaning: 'dwie osoby' }] },
+  { id: 'k004', kanji: '三', meaning: 'trzy', onyomi: ['サン'], kunyomi: ['みっ-つ'], strokes: 3, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '三', reading: 'さん', meaning: 'trzy' }, { word: '三つ', reading: 'みっつ', meaning: 'trzy (sztuka)' }, { word: '三人', reading: 'さんにん', meaning: 'trzy osoby' }] },
+  { id: 'k005', kanji: '四', meaning: 'cztery', onyomi: ['シ'], kunyomi: ['よ', 'よん', 'よっ-つ'], strokes: 5, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '四', reading: 'よん', meaning: 'cztery' }, { word: '四つ', reading: 'よっつ', meaning: 'cztery (sztuka)' }, { word: '四月', reading: 'しがつ', meaning: 'kwiecień' }] },
+  { id: 'k006', kanji: '五', meaning: 'pięć', onyomi: ['ゴ'], kunyomi: ['いつ-つ'], strokes: 4, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '五', reading: 'ご', meaning: 'pięć' }, { word: '五つ', reading: 'いつつ', meaning: 'pięć (sztuka)' }, { word: '五月', reading: 'ごがつ', meaning: 'maj' }] },
+  { id: 'k007', kanji: '六', meaning: 'sześć', onyomi: ['ロク'], kunyomi: ['むっ-つ'], strokes: 4, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '六', reading: 'ろく', meaning: 'sześć' }, { word: '六つ', reading: 'むっつ', meaning: 'sześć (sztuka)' }, { word: '六月', reading: 'ろくがつ', meaning: 'czerwiec' }] },
+  { id: 'k008', kanji: '七', meaning: 'siedem', onyomi: ['シチ'], kunyomi: ['なな', 'なな-つ'], strokes: 2, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '七', reading: 'なな', meaning: 'siedem' }, { word: '七つ', reading: 'ななつ', meaning: 'siedem (sztuka)' }, { word: '七月', reading: 'しちがつ', meaning: 'lipiec' }] },
+  { id: 'k009', kanji: '八', meaning: 'osiem', onyomi: ['ハチ'], kunyomi: ['やっ-つ'], strokes: 2, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '八', reading: 'はち', meaning: 'osiem' }, { word: '八つ', reading: 'やっつ', meaning: 'osiem (sztuka)' }, { word: '八月', reading: 'はちがつ', meaning: 'sierpień' }] },
+  { id: 'k010', kanji: '九', meaning: 'dziewięć', onyomi: ['キュウ', 'ク'], kunyomi: ['ここの-つ'], strokes: 2, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '九', reading: 'きゅう', meaning: 'dziewięć' }, { word: '九つ', reading: 'ここのつ', meaning: 'dziewięć (sztuka)' }, { word: '九月', reading: 'くがつ', meaning: 'wrzesień' }] },
+  { id: 'k011', kanji: '十', meaning: 'dziesięć', onyomi: ['ジュウ'], kunyomi: ['とお'], strokes: 2, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '十', reading: 'じゅう', meaning: 'dziesięć' }, { word: '十日', reading: 'とおか', meaning: 'dziesiąty dzień miesiąca' }, { word: '十月', reading: 'じゅうがつ', meaning: 'październik' }] },
+  { id: 'k012', kanji: '百', meaning: 'sto', onyomi: ['ヒャク'], kunyomi: [], strokes: 6, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '百', reading: 'ひゃく', meaning: 'sto' }, { word: '三百', reading: 'さんびゃく', meaning: 'trzysta' }, { word: '六百', reading: 'ろっぴゃく', meaning: 'sześćset' }] },
+  { id: 'k013', kanji: '千', meaning: 'tysiąc', onyomi: ['セン'], kunyomi: ['ち'], strokes: 3, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '千', reading: 'せん', meaning: 'tysiąc' }, { word: '三千', reading: 'さんぜん', meaning: 'trzy tysiące' }, { word: '千円', reading: 'せんえん', meaning: 'tysiąc jenów' }] },
+  { id: 'k014', kanji: '万', meaning: 'dziesięć tysięcy', onyomi: ['マン', 'バン'], kunyomi: [], strokes: 3, lesson: 'L02', category: 'number', grade: 'N5', examples: [{ word: '一万', reading: 'いちまん', meaning: 'dziesięć tysięcy' }, { word: '万国', reading: 'ばんこく', meaning: 'wszystkie kraje' }] },
+  { id: 'k015', kanji: '白', meaning: 'biały', onyomi: ['ハク'], kunyomi: ['しろ', 'しろ-い'], strokes: 5, lesson: 'L02', category: 'nature', grade: 'N5', examples: [{ word: '白い', reading: 'しろい', meaning: 'biały' }, { word: '白人', reading: 'はくじん', meaning: 'osoba rasy białej' }] },
+  { id: 'k016', kanji: '山', meaning: 'góra', onyomi: ['サン'], kunyomi: ['やま'], strokes: 3, lesson: 'L02', category: 'nature', grade: 'N5', examples: [{ word: '山', reading: 'やま', meaning: 'góra' }, { word: '富士山', reading: 'ふじさん', meaning: 'góra Fuji' }, { word: '火山', reading: 'かざん', meaning: 'wulkan' }] },
+
+  // L03
+  { id: 'k017', kanji: '明', meaning: 'jasny', onyomi: ['メイ', 'ミョウ'], kunyomi: ['あか-るい'], strokes: 8, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '明るい', reading: 'あかるい', meaning: 'jasny' }, { word: '明日', reading: 'あした', meaning: 'jutro' }, { word: '説明', reading: 'せつめい', meaning: 'wyjaśnienie' }] },
+  { id: 'k018', kanji: '日', meaning: 'dzień / słońce', onyomi: ['ニチ', 'ジツ'], kunyomi: ['ひ', 'か'], strokes: 4, lesson: 'L03', category: 'time', grade: 'N5', examples: [{ word: '日曜日', reading: 'にちようび', meaning: 'niedziela' }, { word: '日本', reading: 'にほん', meaning: 'Japonia' }, { word: '毎日', reading: 'まいにち', meaning: 'codziennie' }] },
+  { id: 'k019', kanji: '土', meaning: 'ziemia / sobota', onyomi: ['ド', 'ト'], kunyomi: ['つち'], strokes: 3, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '土曜日', reading: 'どようび', meaning: 'sobota' }, { word: '土地', reading: 'とち', meaning: 'ziemia / grunt' }] },
+  { id: 'k020', kanji: '月', meaning: 'księżyc / miesiąc', onyomi: ['ゲツ', 'ガツ'], kunyomi: ['つき'], strokes: 4, lesson: 'L03', category: 'time', grade: 'N5', examples: [{ word: '月曜日', reading: 'げつようび', meaning: 'poniedziałek' }, { word: '一月', reading: 'いちがつ', meaning: 'styczeń' }, { word: '今月', reading: 'こんげつ', meaning: 'ten miesiąc' }] },
+  { id: 'k021', kanji: '火', meaning: 'ogień / wtorek', onyomi: ['カ'], kunyomi: ['ひ'], strokes: 4, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '火曜日', reading: 'かようび', meaning: 'wtorek' }, { word: '火', reading: 'ひ', meaning: 'ogień' }, { word: '火山', reading: 'かざん', meaning: 'wulkan' }] },
+  { id: 'k022', kanji: '水', meaning: 'woda / środa', onyomi: ['スイ'], kunyomi: ['みず'], strokes: 4, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '水曜日', reading: 'すいようび', meaning: 'środa' }, { word: '水', reading: 'みず', meaning: 'woda' }, { word: '水泳', reading: 'すいえい', meaning: 'pływanie' }] },
+  { id: 'k023', kanji: '木', meaning: 'drzewo / czwartek', onyomi: ['モク', 'ボク'], kunyomi: ['き'], strokes: 4, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '木曜日', reading: 'もくようび', meaning: 'czwartek' }, { word: '木', reading: 'き', meaning: 'drzewo' }] },
+  { id: 'k024', kanji: '金', meaning: 'złoto / pieniądze / piątek', onyomi: ['キン', 'コン'], kunyomi: ['かね'], strokes: 8, lesson: 'L03', category: 'nature', grade: 'N5', examples: [{ word: '金曜日', reading: 'きんようび', meaning: 'piątek' }, { word: 'お金', reading: 'おかね', meaning: 'pieniądze' }, { word: '金', reading: 'きん', meaning: 'złoto' }] },
+
+  // L04
+  { id: 'k025', kanji: '子', meaning: 'dziecko', onyomi: ['シ', 'ス'], kunyomi: ['こ'], strokes: 3, lesson: 'L04', category: 'people', grade: 'N5', examples: [{ word: '子ども', reading: 'こども', meaning: 'dziecko' }, { word: '女の子', reading: 'おんなのこ', meaning: 'dziewczynka' }, { word: '男の子', reading: 'おとこのこ', meaning: 'chłopiec' }] },
+  { id: 'k026', kanji: '円', meaning: 'jen / okrąg', onyomi: ['エン'], kunyomi: ['まる-い'], strokes: 4, lesson: 'L04', category: 'number', grade: 'N5', examples: [{ word: '百円', reading: 'ひゃくえん', meaning: 'sto jenów' }, { word: '円', reading: 'えん', meaning: 'jen' }] },
+  { id: 'k027', kanji: '方', meaning: 'kierunek / osoba', onyomi: ['ホウ'], kunyomi: ['かた'], strokes: 4, lesson: 'L04', category: 'people', grade: 'N5', examples: [{ word: 'あの方', reading: 'あのかた', meaning: 'tamta osoba' }, { word: '夕方', reading: 'ゆうがた', meaning: 'wieczór' }, { word: '方法', reading: 'ほうほう', meaning: 'sposób' }] },
+  { id: 'k028', kanji: '学', meaning: 'nauka / studiowanie', onyomi: ['ガク'], kunyomi: ['まな-ぶ'], strokes: 8, lesson: 'L04', category: 'school', grade: 'N5', examples: [{ word: '学生', reading: 'がくせい', meaning: 'uczeń / student' }, { word: '学校', reading: 'がっこう', meaning: 'szkoła' }, { word: '大学', reading: 'だいがく', meaning: 'uniwersytet' }] },
+  { id: 'k029', kanji: '生', meaning: 'życie / rodzić się', onyomi: ['セイ', 'ショウ'], kunyomi: ['い-きる', 'う-まれる'], strokes: 5, lesson: 'L04', category: 'school', grade: 'N5', examples: [{ word: '先生', reading: 'せんせい', meaning: 'nauczyciel' }, { word: '学生', reading: 'がくせい', meaning: 'uczeń' }, { word: '生まれる', reading: 'うまれる', meaning: 'rodzić się' }] },
+  { id: 'k030', kanji: '才', meaning: 'wiek / lata', onyomi: ['サイ'], kunyomi: [], strokes: 3, lesson: 'L04', category: 'people', grade: 'N5', examples: [{ word: '何才', reading: 'なんさい', meaning: 'ile lat' }, { word: '二十才', reading: 'はたち', meaning: 'dwadzieścia lat' }] },
+  { id: 'k031', kanji: '年', meaning: 'rok / wiek', onyomi: ['ネン'], kunyomi: ['とし'], strokes: 6, lesson: 'L04', category: 'time', grade: 'N5', examples: [{ word: '今年', reading: 'ことし', meaning: 'ten rok' }, { word: '去年', reading: 'きょねん', meaning: 'zeszły rok' }, { word: '一年', reading: 'いちねん', meaning: 'jeden rok' }] },
+
+  // L05
+  { id: 'k032', kanji: '夕', meaning: 'wieczór', onyomi: ['セキ'], kunyomi: ['ゆう'], strokes: 3, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '夕方', reading: 'ゆうがた', meaning: 'wieczór' }, { word: '夕日', reading: 'ゆうひ', meaning: 'zachodzące słońce' }] },
+  { id: 'k033', kanji: '古', meaning: 'stary', onyomi: ['コ'], kunyomi: ['ふる-い'], strokes: 5, lesson: 'L05', category: 'nature', grade: 'N5', examples: [{ word: '古い', reading: 'ふるい', meaning: 'stary' }, { word: '中古', reading: 'ちゅうこ', meaning: 'używany' }] },
+  { id: 'k034', kanji: '寺', meaning: 'świątynia buddyjska', onyomi: ['ジ'], kunyomi: ['てら'], strokes: 6, lesson: 'L05', category: 'place', grade: 'N5', examples: [{ word: 'お寺', reading: 'おてら', meaning: 'świątynia buddyjska' }, { word: '金閣寺', reading: 'きんかくじ', meaning: 'Złoty Pawilon' }] },
+  { id: 'k035', kanji: '早', meaning: 'wczesny / szybko', onyomi: ['ソウ'], kunyomi: ['はや-い'], strokes: 6, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '早い', reading: 'はやい', meaning: 'wczesny' }, { word: '早く', reading: 'haku', meaning: 'wcześnie' }] },
+  { id: 'k036', kanji: '冬', meaning: 'zima', onyomi: ['トウ'], kunyomi: ['ふゆ'], strokes: 5, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '冬', reading: 'ふゆ', meaning: 'zima' }, { word: '冬休み', reading: 'ふゆやすみ', meaning: 'ferie zimowe' }] },
+  { id: 'k037', kanji: '春', meaning: 'wiosna', onyomi: ['シュン'], kunyomi: ['はる'], strokes: 9, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '春', reading: 'はる', meaning: 'wiosna' }, { word: '春休み', reading: 'はるやすみ', meaning: 'przerwa wiosenna' }] },
+  { id: 'k038', kanji: '秋', meaning: 'jesień', onyomi: ['シュウ'], kunyomi: ['あき'], strokes: 9, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '秋', reading: 'あき', meaning: 'jesień' }] },
+
+  // L06
+  { id: 'k039', kanji: '中', meaning: 'środek / wewnątrz', onyomi: ['チュウ'], kunyomi: ['なか'], strokes: 4, lesson: 'L06', category: 'direction', grade: 'N5', examples: [{ word: '中', reading: 'なか', meaning: 'środek' }, { word: '一日中', reading: 'いちにちじゅう', meaning: 'cały dzień' }, { word: '中国', reading: 'ちゅうごく', meaning: 'Chiny' }] },
+  { id: 'k040', kanji: '大', meaning: 'duży', onyomi: ['ダイ', 'タイ'], kunyomi: ['おお-きい'], strokes: 3, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '大きい', reading: 'おおきい', meaning: 'duży' }, { word: '大学', reading: 'だいがく', meaning: 'uniwersytet' }, { word: '大人', reading: 'おとな', meaning: 'dorosły' }] },
+  { id: 'k041', kanji: '門', meaning: 'brama', onyomi: ['モン'], kunyomi: ['かど'], strokes: 8, lesson: 'L06', category: 'place', grade: 'N5', examples: [{ word: '門', reading: 'もん', meaning: 'brama' }, { word: '専門', reading: 'せんもん', meaning: 'specjalizacja' }] },
+  { id: 'k042', kanji: '池', meaning: 'staw', onyomi: ['チ'], kunyomi: ['いけ'], strokes: 6, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '池', reading: 'いけ', meaning: 'staw' }, { word: '電池', reading: 'でんち', meaning: 'bateria' }] },
+  { id: 'k043', kanji: '小', meaning: 'mały', onyomi: ['ショウ'], kunyomi: ['ちい-さい', 'こ'], strokes: 3, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '小さい', reading: 'ちいさい', meaning: 'mały' }, { word: '小学校', reading: 'しょうがっこう', meaning: 'szkoła podstawowa' }, { word: '小鳥', reading: 'ことり', meaning: 'ptaszek' }] },
+  { id: 'k044', kanji: '外', meaning: 'na zewnątrz / obcy', onyomi: ['ガイ', 'ゲ'], kunyomi: ['そと', 'ほか'], strokes: 5, lesson: 'L06', category: 'direction', grade: 'N5', examples: [{ word: '外', reading: 'そと', meaning: 'na zewnątrz' }, { word: '外国', reading: 'がいこく', meaning: 'zagranica' }, { word: '外国人', reading: 'がいこくじん', meaning: 'obcokrajowiec' }] },
+  { id: 'k045', kanji: '上', meaning: 'góra / nad', onyomi: ['ジョウ'], kunyomi: ['うえ', 'あ-がる'], strokes: 3, lesson: 'L06', category: 'direction', grade: 'N5', examples: [{ word: '上', reading: 'うえ', meaning: 'góra / na' }, { word: '上がる', reading: 'あがる', meaning: 'wznosić się' }, { word: '上手', reading: 'じょうず', meaning: 'biegły / zdolny' }] },
+  { id: 'k046', kanji: '下', meaning: 'dół / pod', onyomi: ['カ', 'ゲ'], kunyomi: ['した', 'さ-がる'], strokes: 3, lesson: 'L06', category: 'direction', grade: 'N5', examples: [{ word: '下', reading: 'した', meaning: 'dół / pod' }, { word: '下がる', reading: 'さがる', meaning: 'opuszczać się' }, { word: '下手', reading: 'へた', meaning: 'słaby w czymś' }] },
+  { id: 'k047', kanji: '馬', meaning: 'koń', onyomi: ['バ'], kunyomi: ['うま'], strokes: 10, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '馬', reading: 'うま', meaning: 'koń' }] },
+  { id: 'k048', kanji: '牛', meaning: 'krowa / byk', onyomi: ['ギュウ'], kunyomi: ['うし'], strokes: 4, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '牛', reading: 'うし', meaning: 'krowa' }, { word: '牛乳', reading: 'ぎゅうにゅう', meaning: 'mleko' }, { word: '牛肉', reading: 'ぎゅうにく', meaning: 'wołowina' }] },
+  { id: 'k049', kanji: '犬', meaning: 'pies', onyomi: ['ケン'], kunyomi: ['いぬ'], strokes: 4, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '犬', reading: 'いぬ', meaning: 'pies' }, { word: '子犬', reading: 'こいぬ', meaning: 'szczeniak' }] },
+  { id: 'k050', kanji: '本', meaning: 'książka / źródło', onyomi: ['ホン'], kunyomi: ['もと'], strokes: 5, lesson: 'L06', category: 'school', grade: 'N5', examples: [{ word: '本', reading: 'ほん', meaning: 'książka' }, { word: '日本', reading: 'にほん', meaning: 'Japonia' }, { word: '山本', reading: 'やまもと', meaning: 'Yamamoto' }] },
+  { id: 'k051', kanji: '間', meaning: 'między / przedział czasu', onyomi: ['カン', 'ケン'], kunyomi: ['あいだ', 'ま'], strokes: 12, lesson: 'L06', category: 'time', grade: 'N5', examples: [{ word: '間', reading: 'あいだ', meaning: 'między' }, { word: '時間', reading: 'じかん', meaning: 'czas / godzina' }, { word: '間に合う', reading: 'まニアう', meaning: 'zdążyć' }] },
+
+  // L07
+  { id: 'k052', kanji: '天', meaning: 'niebo / niebiosa', onyomi: ['テン'], kunyomi: ['あめ'], strokes: 4, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '天気', reading: 'てんき', meaning: 'pogoda' }, { word: '天国', reading: 'てんごく', meaning: 'raj / niebiosa' }] },
+  { id: 'k053', kanji: '気', meaning: 'duch / energia / nastrój', onyomi: ['キ'], kunyomi: [], strokes: 6, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '天気', reading: 'てんき', meaning: 'pogoda' }, { word: '元気', reading: 'げんき', meaning: 'zdrowy / pełen energii' }, { word: '電気', reading: 'でんき', meaning: 'prąd' }] },
+  { id: 'k054', kanji: '雨', meaning: 'deszcz', onyomi: ['ウ'], kunyomi: ['あめ'], strokes: 8, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '雨', reading: 'あめ', meaning: 'deszcz' }, { word: '大雨', reading: 'おおあめ', meaning: 'ulewa' }] },
+  { id: 'k055', kanji: '川', meaning: 'rzeka', onyomi: ['セン'], kunyomi: ['かわ'], strokes: 3, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '川', reading: 'かわ', meaning: 'rzeka' }, { word: '小川', reading: 'おがわ', meaning: 'strumyk' }] },
+  { id: 'k056', kanji: '手', meaning: 'ręka', onyomi: ['シュ'], kunyomi: ['て'], strokes: 4, lesson: 'L07', category: 'body', grade: 'N5', examples: [{ word: '手', reading: 'て', meaning: 'ręka' }, { word: '上手', reading: 'じょうず', meaning: 'zdolny' }, { word: '下手', reading: 'へた', meaning: 'niezdarny' }] },
+  { id: 'k057', kanji: '東', meaning: 'wschód', onyomi: ['トウ'], kunyomi: ['ひがし'], strokes: 8, lesson: 'L07', category: 'direction', grade: 'N5', examples: [{ word: '東', reading: 'ひがし', meaning: 'wschód' }, { word: '東京', reading: 'とうきょう', meaning: 'Tokio' }, { word: '東口', reading: 'ひがしぐち', meaning: 'wyjście wschodnie' }] },
+  { id: 'k058', kanji: '林', meaning: 'lasek', onyomi: ['リン'], kunyomi: ['はやし'], strokes: 8, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '林', reading: 'はやし', meaning: 'lasek' }, { word: '小林', reading: 'こばやし', meaning: 'Kobayashi' }] },
+  { id: 'k059', kanji: '雪', meaning: 'śnieg', onyomi: ['セツ'], kunyomi: ['ゆき'], strokes: 11, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '雪', reading: 'ゆき', meaning: 'śnieg' }, { word: '大雪', reading: 'おおゆき', meaning: 'śnieżyca' }] },
+  { id: 'k060', kanji: '太', meaning: 'gruby', onyomi: ['タイ'], kunyomi: ['ふと-い'], strokes: 4, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '太い', reading: 'ふとい', meaning: 'gruby' }, { word: '太陽', reading: 'たいよう', meaning: 'słońce' }] },
+  { id: 'k061', kanji: '南', meaning: 'południe', onyomi: ['ナン'], kunyomi: ['みなみ'], strokes: 9, lesson: 'L07', category: 'direction', grade: 'N5', examples: [{ word: '南', reading: 'みなみ', meaning: 'południe' }, { word: '南口', reading: 'みなみぐち', meaning: 'wyjście południowe' }] },
+  { id: 'k062', kanji: '北', meaning: 'północ', onyomi: ['ホク'], kunyomi: ['きた'], strokes: 5, lesson: 'L07', category: 'direction', grade: 'N5', examples: [{ word: '北', reading: 'きた', meaning: 'północ' }, { word: '北海道', reading: 'ほっかいどう', meaning: 'Hokkaido' }, { word: '北口', reading: 'きたぐち', meaning: 'wyjście północne' }] },
+  { id: 'k063', kanji: '西', meaning: 'zachód', onyomi: ['セイ', 'サイ'], kunyomi: ['にし'], strokes: 6, lesson: 'L07', category: 'direction', grade: 'N5', examples: [{ word: '西', reading: 'にし', meaning: 'zachód' }, { word: '西口', reading: 'にしぐち', meaning: 'wyjście zachodnie' }] },
+
+  // L08
+  { id: 'k064', kanji: '時', meaning: 'czas / godzina', onyomi: ['ジ'], kunyomi: ['とき'], strokes: 10, lesson: 'L08', category: 'time', grade: 'N5', examples: [{ word: '時間', reading: 'じかん', meaning: 'czas' }, { word: '時', reading: 'とき', meaning: 'kiedy / czas' }, { word: '時計', reading: 'とけい', meaning: 'zegarek' }] },
+  { id: 'k065', kanji: '女', meaning: 'kobieta', onyomi: ['ジョ'], kunyomi: ['おんな'], strokes: 3, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '女の人', reading: 'おんなのひと', meaning: 'kobieta' }, { word: '女の子', reading: 'おんなのこ', meaning: 'dziewczynka' }] },
+  { id: 'k066', kanji: '会', meaning: 'spotykać / zebranie', onyomi: ['カイ'], kunyomi: ['あ-う'], strokes: 6, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '会う', reading: 'あう', meaning: 'spotykać' }, { word: '会社', reading: 'かいしゃ', meaning: 'firma' }, { word: '会話', reading: 'かいわ', meaning: 'rozmowa' }] },
+  { id: 'k067', kanji: '父', meaning: 'ojciec', onyomi: ['フ'], kunyomi: ['ちち'], strokes: 4, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '父', reading: 'ちち', meaning: 'mój ojciec' }, { word: 'お父さん', reading: 'おとうさん', meaning: 'ojciec' }] },
+  { id: 'k068', kanji: '母', meaning: 'matka', onyomi: ['ボ'], kunyomi: ['はは'], strokes: 5, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '母', reading: 'はは', meaning: 'moja matka' }, { word: 'お母さん', reading: 'おかあさん', meaning: 'matka' }] },
+  { id: 'k069', kanji: '先', meaning: 'poprzedni / przód', onyomi: ['セン'], kunyomi: ['さき'], strokes: 6, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '先生', reading: 'せんせい', meaning: 'nauczyciel' }, { word: '先週', reading: 'せんしゅう', meaning: 'ubiegły tydzień' }, { word: 'お先に', reading: 'おさきに', meaning: 'przodem / do zobaczenia' }] },
+  { id: 'k070', kanji: '兄', meaning: 'starszy brat', onyomi: ['ケイ', 'キョウ'], kunyomi: ['あに'], strokes: 5, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '兄', reading: 'あに', meaning: 'mój starszy brat' }, { word: 'お兄さん', reading: 'おにいさん', meaning: 'starszy brat' }] },
+  { id: 'k071', kanji: '別', meaning: 'inny / rozdzielać', onyomi: ['ベツ'], kunyomi: ['わか-れる'], strokes: 7, lesson: 'L08', category: 'people', grade: 'N5', examples: [{ word: '別れる', reading: 'わかれる', meaning: 'rozstawać się' }, { word: '特別', reading: 'とくべつ', meaning: 'specjalny' }] },
+
+  // L09
+  { id: 'k072', kanji: '電', meaning: 'prąd / elektryczność', onyomi: ['デン'], kunyomi: [], strokes: 13, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '電気', reading: 'でんき', meaning: 'prąd / światło' }, { word: '電車', reading: 'でんしゃ', meaning: 'pociąg' }, { word: '電話', reading: 'でんわ', meaning: 'telefon' }] },
+  { id: 'k073', kanji: '工', meaning: 'rzemiosło / inżynieria', onyomi: ['コウ', 'ク'], kunyomi: [], strokes: 3, lesson: 'L09', category: 'school', grade: 'N5', examples: [{ word: '工学', reading: 'こうがく', meaning: 'inżynieria' }, { word: '工場', reading: 'こうじょう', meaning: 'fabryka' }] },
+  { id: 'k074', kanji: '行', meaning: 'iść / jechać', onyomi: ['コウ', 'ギョウ'], kunyomi: ['い-く', 'ゆ-く'], strokes: 6, lesson: 'L09', category: 'transport', grade: 'N5', examples: [{ word: '行く', reading: 'いく', meaning: 'iść' }, { word: '旅行', reading: 'りょこう', meaning: 'podróż' }, { word: '銀行', reading: 'ぎんこう', meaning: 'bank' }] },
+  { id: 'k075', kanji: '来', meaning: 'przychodzić / przyszły', onyomi: ['ライ'], kunyomi: ['く-る'], strokes: 7, lesson: 'L09', category: 'transport', grade: 'N5', examples: [{ word: '来る', reading: 'くる', meaning: 'przychodzić' }, { word: '来週', reading: 'らいしゅう', meaning: 'przyszły tydzień' }, { word: '来年', reading: 'らいねん', meaning: 'przyszły rok' }] },
+  { id: 'k076', kanji: '休', meaning: 'odpoczywać', onyomi: ['キュウ'], kunyomi: ['やす-む'], strokes: 6, lesson: 'L09', category: 'people', grade: 'N5', examples: [{ word: '休む', reading: 'やすむ', meaning: 'odpoczywać' }, { word: '休み', reading: 'やすみ', meaning: 'odpoczynek / urlop' }, { word: '夏休み', reading: 'なつやすみ', meaning: 'wakacje' }] },
+  { id: 'k077', kanji: '多', meaning: 'dużo / liczny', onyomi: ['タ'], kunyomi: ['おお-い'], strokes: 6, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '多い', reading: 'おおい', meaning: 'dużo' }, { word: '多分', reading: 'たぶん', meaning: 'prawdopodobnie' }] },
+  { id: 'k078', kanji: '文', meaning: 'zdanie / literatura', onyomi: ['ブン', 'モン'], kunyomi: ['ふみ'], strokes: 4, lesson: 'L09', category: 'school', grade: 'N5', examples: [{ word: '文学', reading: 'ぶんがく', meaning: 'literatura' }, { word: '文法', reading: 'ぶんぽう', meaning: 'gramatyka' }, { word: '作文', reading: 'さくぶん', meaning: 'wypracowanie' }] },
+  { id: 'k079', kanji: '正', meaning: 'poprawny / prawy', onyomi: ['セイ', 'ショウ'], kunyomi: ['ただ-しい'], strokes: 5, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '正しい', reading: 'ただしい', meaning: 'poprawny' }, { word: 'お正月', reading: 'おしょうがつ', meaning: 'Nowy Rok' }] },
+  { id: 'k080', kanji: '死', meaning: 'śmierć', onyomi: ['シ'], kunyomi: ['し-ぬ'], strokes: 6, lesson: 'L09', category: 'people', grade: 'N5', examples: [{ word: '死ぬ', reading: 'しぬ', meaning: 'umierać' }, { word: '死', reading: 'し', meaning: 'śmierć' }] },
+  { id: 'k081', kanji: '広', meaning: 'szeroki / przestronny', onyomi: ['コウ'], kunyomi: ['ひろ-い'], strokes: 5, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '広い', reading: 'ひろい', meaning: 'szeroki' }, { word: '広島', reading: 'ひろしま', meaning: 'Hiroszima' }] },
+  { id: 'k082', kanji: '少', meaning: 'mało / trochę', onyomi: ['ショウ'], kunyomi: ['すく-ない', 'すこ-し'], strokes: 4, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '少ない', reading: 'すくない', meaning: 'mało' }, { word: '少し', reading: 'すこし', meaning: 'trochę' }, { word: '少年', reading: 'しょうねん', meaning: 'chłopiec' }] },
+  { id: 'k083', kanji: '若', meaning: 'młody', onyomi: ['ジャク'], kunyomi: ['わか-い'], strokes: 8, lesson: 'L09', category: 'people', grade: 'N5', examples: [{ word: '若い', reading: 'わかい', meaning: 'młody' }, { word: '若者', reading: 'わかもの', meaning: 'młodzież' }] },
+  { id: 'k084', kanji: '化', meaning: 'zmiana / przekształcenie', onyomi: ['カ', 'ケ'], kunyomi: ['ば-ける'], strokes: 4, lesson: 'L09', category: 'school', grade: 'N5', examples: [{ word: '化学', reading: 'かがく', meaning: 'chemia' }, { word: '文化', reading: 'ぶんか', meaning: 'kultura' }] },
+  { id: 'k085', kanji: '安', meaning: 'tani / spokojny', onyomi: ['アン'], kunyomi: ['やす-い'], strokes: 6, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '安い', reading: 'やすい', meaning: 'tani' }, { word: '安心', reading: 'あんしん', meaning: 'spokój ducha' }, { word: '安全', reading: 'あんぜん', meaning: 'bezpieczeństwo' }] },
+  { id: 'k086', kanji: '全', meaning: 'cały / wszystko', onyomi: ['ゼン'], kunyomi: ['まった-く'], strokes: 6, lesson: 'L09', category: 'nature', grade: 'N5', examples: [{ word: '全部', reading: 'ぜんぶ', meaning: 'wszystko' }, { word: '安全', reading: 'あんぜん', meaning: 'bezpieczny' }, { word: '全国', reading: 'ぜんこく', meaning: 'cały kraj' }] },
+
+  // L10
+  { id: 'k087', kanji: '医', meaning: 'medycyna / lekarz', onyomi: ['イ'], kunyomi: [], strokes: 7, lesson: 'L10', category: 'people', grade: 'N5', examples: [{ word: '医者', reading: 'いしゃ', meaning: 'lekarz' }, { word: '医学', reading: 'いがく', meaning: 'medycyna' }] },
+  { id: 'k088', kanji: '者', meaning: 'osoba / specjalista', onyomi: ['シャ'], kunyomi: ['もの'], strokes: 8, lesson: 'L10', category: 'people', grade: 'N5', examples: [{ word: '医者', reading: 'いしゃ', meaning: 'lekarz' }, { word: '学者', reading: 'がくしゃ', meaning: 'uczony' }, { word: '若者', reading: 'わかもの', meaning: 'młodzież' }] },
+  { id: 'k089', kanji: '言', meaning: 'mówić / słowo', onyomi: ['ゲン', 'ゴン'], kunyomi: ['い-う', 'こと'], strokes: 7, lesson: 'L10', category: 'people', grade: 'N5', examples: [{ word: '言う', reading: 'いう', meaning: 'mówić' }, { word: '言葉', reading: 'ことば', meaning: 'słowo / język' }] },
+  { id: 'k090', kanji: '反', meaning: 'przeciw / anty-', onyomi: ['ハン'], kunyomi: ['そ-る'], strokes: 4, lesson: 'L10', category: 'nature', grade: 'N5', examples: [{ word: '反対', reading: 'はんたい', meaning: 'przeciwieństwo / sprzeciw' }] },
+  { id: 'k091', kanji: '対', meaning: 'naprzeciw / para', onyomi: ['タイ', 'ツイ'], kunyomi: [], strokes: 7, lesson: 'L10', category: 'nature', grade: 'N5', examples: [{ word: '反対', reading: 'はんたい', meaning: 'przeciwny' }, { word: '対決', reading: 'たいけつ', meaning: 'konfrontacja' }] },
+  { id: 'k092', kanji: '良', meaning: 'dobry', onyomi: ['リョウ'], kunyomi: ['よ-い'], strokes: 7, lesson: 'L10', category: 'nature', grade: 'N5', examples: [{ word: '良い', reading: 'よい', meaning: 'dobry' }, { word: '仲良し', reading: 'なかよし', meaning: 'dobry przyjaciel' }] },
+  { id: 'k093', kanji: '右', meaning: 'prawy', onyomi: ['ウ', 'ユウ'], kunyomi: ['みぎ'], strokes: 5, lesson: 'L10', category: 'direction', grade: 'N5', examples: [{ word: '右', reading: 'みぎ', meaning: 'prawy' }, { word: '右手', reading: 'みぎて', meaning: 'prawa ręka' }, { word: '右側', reading: 'みぎがわ', meaning: 'prawa strona' }] },
+  { id: 'k094', kanji: '左', meaning: 'lewy', onyomi: ['サ'], kunyomi: ['ひだり'], strokes: 5, lesson: 'L10', category: 'direction', grade: 'N5', examples: [{ word: '左', reading: 'ひだり', meaning: 'lewy' }, { word: '左手', reading: 'ひだりて', meaning: 'lewa ręka' }, { word: '左右', reading: 'さゆう', meaning: 'lewo i prawo' }] },
+  { id: 'k095', kanji: '玉', meaning: 'kula / moneta / klejnot', onyomi: ['ギョク'], kunyomi: ['たま'], strokes: 5, lesson: 'L10', category: 'nature', grade: 'N5', examples: [{ word: '百円玉', reading: 'ひゃくえんだま', meaning: 'moneta 100-jenowa' }, { word: '目玉', reading: 'めだま', meaning: 'gałka oczna' }] },
+  { id: 'k096', kanji: '戸', meaning: 'drzwi', onyomi: ['コ'], kunyomi: ['と'], strokes: 4, lesson: 'L10', category: 'place', grade: 'N5', examples: [{ word: '戸', reading: 'と', meaning: 'drzwi' }, { word: '神戸', reading: 'こうべ', meaning: 'Kobe' }] },
+  { id: 'k097', kanji: '開', meaning: 'otwierać', onyomi: ['カイ'], kunyomi: ['あ-ける', 'ひら-く'], strokes: 12, lesson: 'L10', category: 'home', grade: 'N5', examples: [{ word: '開ける', reading: 'あける', meaning: 'otwierać' }, { word: '開く', reading: 'ひらく', meaning: 'otwierać (książkę)' }] },
+  { id: 'k098', kanji: '石', meaning: 'kamień', onyomi: ['セキ'], kunyomi: ['いし'], strokes: 5, lesson: 'L10', category: 'nature', grade: 'N5', examples: [{ word: '石', reading: 'いし', meaning: 'kamień' }, { word: '石油', reading: 'せきゆ', meaning: 'ropa naftowa' }] },
+  { id: 'k099', kanji: '閉', meaning: 'zamykać', onyomi: ['ヘイ'], kunyomi: ['し-める', 'と-じる'], strokes: 11, lesson: 'L10', category: 'home', grade: 'N5', examples: [{ word: '閉める', reading: 'しめる', meaning: 'zamykać' }, { word: '閉じる', reading: 'とじる', meaning: 'zamykać (książkę)' }] },
+  { id: 'k100', kanji: '友', meaning: 'przyjaciel', onyomi: ['ユウ'], kunyomi: ['とも'], strokes: 4, lesson: 'L10', category: 'people', grade: 'N5', examples: [{ word: '友達', reading: 'ともだち', meaning: 'przyjaciel' }, { word: '友人', reading: 'ゆうじん', meaning: 'przyjaciel (formalnie)' }] },
+  { id: 'k101', kanji: '国', meaning: 'kraj / państwo', onyomi: ['コク'], kunyomi: ['くに'], strokes: 8, lesson: 'L10', category: 'place', grade: 'N5', examples: [{ word: '国', reading: 'くに', meaning: 'kraj' }, { word: '外国', reading: 'がいこく', meaning: 'zagranica' }, { word: '中国', reading: 'ちゅうごく', meaning: 'Chiny' }] },
+
+  // N5 Essentials
+  { id: 'k102', kanji: '前', meaning: 'przed / z przodu', onyomi: ['ゼン'], kunyomi: ['まえ'], strokes: 9, lesson: 'N5', category: 'direction', grade: 'N5', examples: [{ word: '前', reading: 'まえ', meaning: 'przed / przód' }, { word: '名前', reading: 'なまえ', meaning: 'imię' }, { word: '午前', reading: 'ごぜん', meaning: 'przed południem' }] },
+  { id: 'k103', kanji: '後', meaning: 'po / z tyłu', onyomi: ['ゴ', 'コウ'], kunyomi: ['うし-ろ', 'あと'], strokes: 9, lesson: 'N5', category: 'direction', grade: 'N5', examples: [{ word: '後ろ', reading: 'うしろ', meaning: 'z tyłu' }, { word: '午後', reading: 'ごご', meaning: 'po południu' }, { word: '後で', reading: 'あとで', meaning: 'później' }] },
+  { id: 'k104', kanji: '車', meaning: 'samochód / pojazd', onyomi: ['シャ'], kunyomi: ['くるま'], strokes: 7, lesson: 'N5', category: 'transport', grade: 'N5', examples: [{ word: '車', reading: 'くるま', meaning: 'samochód' }, { word: '電車', reading: 'でんしゃ', meaning: 'pociąg' }, { word: '自転車', reading: 'じてんしゃ', meaning: 'rower' }] },
+  { id: 'k105', kanji: '校', meaning: 'szkoła', onyomi: ['コウ'], kunyomi: [], strokes: 10, lesson: 'N5', category: 'school', grade: 'N5', examples: [{ word: '学校', reading: 'がっこう', meaning: 'szkoła' }, { word: '高校', reading: 'こうこう', meaning: 'liceum' }] },
+  { id: 'k106', kanji: '見', meaning: 'widzieć / patrzeć', onyomi: ['ケン'], kunyomi: ['み-る'], strokes: 7, lesson: 'N5', category: 'people', grade: 'N5', examples: [{ word: '見る', reading: 'みる', meaning: 'widzieć / patrzeć' }, { word: '見せる', reading: 'みせる', meaning: 'pokazywać' }, { word: '見学', reading: 'けんがく', meaning: 'oglądanie edukacyjne' }] },
+  { id: 'k107', kanji: '書', meaning: 'pisać / pismo', onyomi: ['ショ'], kunyomi: ['か-く'], strokes: 10, lesson: 'N5', category: 'school', grade: 'N5', examples: [{ word: '書く', reading: 'かく', meaning: 'pisać' }, { word: '教科書', reading: 'きょうかしょ', meaning: 'podręcznik' }, { word: '辞書', reading: 'じしょ', meaning: 'słownik' }] },
+  { id: 'k108', kanji: '読', meaning: 'czytać', onyomi: ['ドク'], kunyomi: ['よ-む'], strokes: 14, lesson: 'N5', category: 'school', grade: 'N5', examples: [{ word: '読む', reading: 'よむ', meaning: 'czytać' }, { word: '読書', reading: 'どくしょ', meaning: 'czytanie' }] },
+  { id: 'k109', kanji: '語', meaning: 'język / słowo', onyomi: ['ゴ'], kunyomi: ['かた-る'], strokes: 14, lesson: 'N5', category: 'school', grade: 'N5', examples: [{ word: '日本語', reading: 'にほんご', meaning: 'język japoński' }, { word: '英語', reading: 'えいご', meaning: 'język angielski' }, { word: '単語', reading: 'たんご', meaning: 'słówko' }] },
+  { id: 'k110', kanji: '何', meaning: 'co / ile', onyomi: ['カ'], kunyomi: ['なに', 'なん'], strokes: 7, lesson: 'N5', category: 'nature', grade: 'N5', examples: [{ word: '何', reading: 'なに', meaning: 'co' }, { word: '何時', reading: 'なんじ', meaning: 'która godzina' }, { word: '何人', reading: 'なんにん', meaning: 'ile osób' }] }
+];
+
+// prettier-ignore
+const KANJI_LESSON_WORDS = [
+  // Słówka 1か
+  { id: 'kw01', lesson: '1ka', kana: 'がくせい', kanji: '学生', romaji: 'gakusei', meaning: 'uczeń' },
+  { id: 'kw02', lesson: '1ka', kana: 'せんせい', kanji: '先生', romaji: 'sensei', meaning: 'nauczyciel' },
+  { id: 'kw03', lesson: '1ka', kana: 'ひと', kanji: '人', romaji: 'hito', meaning: 'człowiek' },
+  { id: 'kw04', lesson: '1ka', kana: 'ほん', kanji: '本', romaji: 'hon', meaning: 'książka' },
+  { id: 'kw05', lesson: '1ka', kana: 'しんぶん', kanji: '新聞', romaji: 'shinbun', meaning: 'gazeta' },
+  { id: 'kw06', lesson: '1ka', kana: 'じどうしゃ', kanji: '自動車', romaji: 'jidousha', meaning: 'samochód' },
+  { id: 'kw07', lesson: '1ka', kana: 'くるま', kanji: '車', romaji: 'kuruma', meaning: 'samochód' },
+  { id: 'kw08', lesson: '1ka', kana: 'じてんしゃ', kanji: '自転車', romaji: 'jitensha', meaning: 'rower' },
+  { id: 'kw09', lesson: '1ka', kana: 'えいご', kanji: '英語', romaji: 'eigo', meaning: 'język angielski' },
+  { id: 'kw10', lesson: '1ka', kana: 'ちゅうごく', kanji: '中国', romaji: 'chuugoku', meaning: 'Chiny' },
+  { id: 'kw11', lesson: '1ka', kana: 'おんなのひと', kanji: '女の人', romaji: 'onna no hito', meaning: 'kobieta' },
+  { id: 'kw12', lesson: '1ka', kana: 'へや', kanji: '部屋', romaji: 'heya', meaning: 'pokój' },
+  { id: 'kw13', lesson: '1ka', kana: 'つくえ', kanji: '机', romaji: 'tsukue', meaning: 'biurko' },
+  { id: 'kw14', lesson: '1ka', kana: 'とけい', kanji: '時計', romaji: 'tokei', meaning: 'zegarek' },
+  { id: 'kw15', lesson: '1ka', kana: 'かぎ', kanji: '鍵', romaji: 'kagi', meaning: 'klucze' },
+  { id: 'kw16', lesson: '1ka', kana: 'かばん', kanji: '鞄', romaji: 'kaban', meaning: 'torba' },
+  { id: 'kw17', lesson: '1ka', kana: 'えんぴつ', kanji: '鉛筆', romaji: 'enpitsu', meaning: 'ołówek' },
+  { id: 'kw18', lesson: '1ka', kana: 'きって', kanji: '切手', romaji: 'kitte', meaning: 'znaczek pocztowy' },
+  { id: 'kw19', lesson: '1ka', kana: 'ポーランド', kanji: 'ポーランド', romaji: 'poorando', meaning: 'Polska' },
+  { id: 'kw20', lesson: '1ka', kana: 'アメリカ', kanji: 'アメリカ', romaji: 'amerika', meaning: 'USA' },
+  { id: 'kw21', lesson: '1ka', kana: 'イギリス', kanji: 'イギリス', romaji: 'igirisu', meaning: 'Anglia' },
+  { id: 'kw22', lesson: '1ka', kana: 'タイ', kanji: 'タイ', romaji: 'tai', meaning: 'Tajlandia' },
+  { id: 'kw23', lesson: '1ka', kana: 'フィリピン', kanji: 'フィリピン', romaji: 'firipin', meaning: 'Filipiny' },
+  { id: 'kw24', lesson: '1ka', kana: 'マレーシア', kanji: 'マレーシア', romaji: 'mareeshia', meaning: 'Malezja' },
+  { id: 'kw25', lesson: '1ka', kana: 'テレビ', kanji: 'テレビ', romaji: 'terebi', meaning: 'telewizor' },
+  { id: 'kw26', lesson: '1ka', kana: 'ラジオ', kanji: 'ラジオ', romaji: 'rajio', meaning: 'radio' },
+  { id: 'kw27', lesson: '1ka', kana: 'カメラ', kanji: 'カメラ', romaji: 'kamera', meaning: 'aparat fotograficzny' },
+  { id: 'kw28', lesson: '1ka', kana: 'ノート', kanji: 'ノート', romaji: 'nooto', meaning: 'zeszyt' },
+  { id: 'kw29', lesson: '1ka', kana: 'ボールペン', kanji: 'ボールペン', romaji: 'boorupen', meaning: 'długopis' },
+  { id: 'kw30', lesson: '1ka', kana: 'テープ', kanji: 'テープ', romaji: 'teepu', meaning: 'taśma klejąca' },
+  { id: 'kw31', lesson: '1ka', kana: 'レコード', kanji: 'レコード', romaji: 'rekoodo', meaning: 'płyta winylowa' },
+
+  // Słówka 2か
+  { id: 'kw32', lesson: '2ka', kana: 'やま', kanji: '山', romaji: 'yama', meaning: 'góra' },
+  { id: 'kw33', lesson: '2ka', kana: 'さかな', kanji: '魚', romaji: 'sakana', meaning: 'ryba' },
+  { id: 'kw34', lesson: '2ka', kana: 'がっこう', kanji: '学校', romaji: 'gakkou', meaning: 'szkoła' },
+  { id: 'kw35', lesson: '2ka', kana: 'きょうしつ', kanji: '教室', romaji: 'kyoushitsu', meaning: 'sala lekcyjna' },
+  { id: 'kw36', lesson: '2ka', kana: 'としょかん', kanji: '図書館', romaji: 'toshokan', meaning: 'biblioteka (budynek)' },
+  { id: 'kw37', lesson: '2ka', kana: 'としょしつ', kanji: '図書室', romaji: 'toshoshitsu', meaning: 'czytelnia / biblioteka (wnętrze)' },
+  { id: 'kw38', lesson: '2ka', kana: 'じむしつ', kanji: '事務室', romaji: 'jimushitsu', meaning: 'biuro / sekretariat' },
+  { id: 'kw39', lesson: '2ka', kana: 'しょくどう', kanji: '食堂', romaji: 'shokudou', meaning: 'stołówka' },
+  { id: 'kw40', lesson: '2ka', kana: 'たいいくかん', kanji: '体育館', romaji: 'taiikukan', meaning: 'sala gimnastyczna' },
+  { id: 'kw41', lesson: '2ka', kana: 'びょういん', kanji: '病院', romaji: 'byouin', meaning: 'szpital' },
+  { id: 'kw42', lesson: '2ka', kana: 'うち', kanji: '家', romaji: 'uchi', meaning: 'dom' },
+  { id: 'kw43', lesson: '2ka', kana: 'たてもの', kanji: '建物', romaji: 'tatemono', meaning: 'budynek' },
+  { id: 'kw44', lesson: '2ka', kana: 'にわ', kanji: '庭', romaji: 'niwa', meaning: 'ogród' },
+  { id: 'kw45', lesson: '2ka', kana: 'りょう', kanji: '寮', romaji: 'ryou', meaning: 'akademik' },
+  { id: 'kw46', lesson: '2ka', kana: 'かみ', kanji: '紙', romaji: 'kami', meaning: 'papier' },
+  { id: 'kw47', lesson: '2ka', kana: 'えん', kanji: '円', romaji: 'en', meaning: 'jen' },
+  { id: 'kw48', lesson: '2ka', kana: 'ぎゅうにゅう', kanji: '牛乳', romaji: 'gyuunyuu', meaning: 'mleko krowie' },
+  { id: 'kw49', lesson: '2ka', kana: 'おおきい', kanji: '大きい', romaji: 'ookii', meaning: 'duży' },
+  { id: 'kw50', lesson: '2ka', kana: 'ちいさい', kanji: '小さい', romaji: 'chiisai', meaning: 'mały' },
+  { id: 'kw51', lesson: '2ka', kana: 'あかるい', kanji: '明るい', romaji: 'akarui', meaning: 'jasny' },
+  { id: 'kw52', lesson: '2ka', kana: 'くらい', kanji: '暗い', romaji: 'kurai', meaning: 'ciemny' },
+  { id: 'kw53', lesson: '2ka', kana: 'あたらしい', kanji: '新しい', romaji: 'atarashii', meaning: 'nowy' },
+  { id: 'kw54', lesson: '2ka', kana: 'ふるい', kanji: '古い', romaji: 'furui', meaning: 'stary' },
+  { id: 'kw55', lesson: '2ka', kana: 'たかい', kanji: '高い', romaji: 'takai', meaning: 'wysoki / drogi' },
+  { id: 'kw56', lesson: '2ka', kana: 'ひくい', kanji: '低い', romaji: 'hikui', meaning: 'niski' },
+  { id: 'kw57', lesson: '2ka', kana: 'やすい', kanji: '安い', romaji: 'yasui', meaning: 'tani' },
+  { id: 'kw58', lesson: '2ka', kana: 'しろい', kanji: '白い', romaji: 'shiroi', meaning: 'biały' },
+  { id: 'kw59', lesson: '2ka', kana: 'くろい', kanji: '黒い', romaji: 'kuroi', meaning: 'czarny' },
+  { id: 'kw60', lesson: '2ka', kana: 'あかい', kanji: '赤い', romaji: 'akai', meaning: 'czerwony' },
+  { id: 'kw61', lesson: '2ka', kana: 'あおい', kanji: '青い', romaji: 'aoi', meaning: 'niebieski' },
+  { id: 'kw62', lesson: '2ka', kana: 'きいろい', kanji: '黄色い', romaji: 'kiiroi', meaning: 'żółty' },
+  { id: 'kw63', lesson: '2ka', kana: 'パン', kanji: 'パン', romaji: 'pan', meaning: 'chleb / pieczywo' },
+  { id: 'kw64', lesson: '2ka', kana: 'スープ', kanji: 'スープ', romaji: 'suupu', meaning: 'zupa' },
+  { id: 'kw65', lesson: '2ka', kana: 'ジュース', kanji: 'ジュース', romaji: 'juusu', meaning: 'sok' },
+  { id: 'kw66', lesson: '2ka', kana: 'レストラン', kanji: 'レストラン', romaji: 'resutoran', meaning: 'restauracja' },
+  { id: 'kw67', lesson: '2ka', kana: 'トイレ', kanji: 'トイレ', romaji: 'toire', meaning: 'toaleta' },
+  { id: 'kw68', lesson: '2ka', kana: 'クラス', kanji: 'クラス', romaji: 'kurasu', meaning: 'klasa' },
+  { id: 'kw69', lesson: '2ka', kana: 'しょっけん', kanji: '食券', romaji: 'shokken', meaning: 'kupon na jedzenie' }
+];
+
 
 /* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
@@ -967,6 +1204,12 @@ const NAV_ITEMS = [
     label: 'Słownictwo',
     screen: 'vocab',
     icon: '<rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/>'
+  },
+  {
+    id: 'kanji',
+    label: 'Kanji',
+    screen: 'kanji',
+    icon: '<path d="M4 7h16M12 7v14M7 12h10M5 18h14"/>'
   }
 ];
 
@@ -976,12 +1219,14 @@ const SCREEN_TITLES = {
   exam: 'Egzamin',
   review: 'Powtórki',
   vocab: 'Słownictwo',
+  kanji: 'Kanji',
   settings: 'Ustawienia'
 };
 
 const MODULE_LABELS = {
   kana: 'KANA',
   vocab: 'SŁOWNICTWO',
+  kanji: 'KANJI',
   settings: 'APLIKACJA'
 };
 
@@ -989,6 +1234,7 @@ const MODULE_LABELS = {
    moduł, więc nawigacja nie udaje, że są osobnymi miejscami. */
 function screenModule(screen = state.screen) {
   if (screen === 'vocab') return 'vocab';
+  if (screen === 'kanji') return 'kanji';
   if (screen === 'settings') return 'settings';
   return 'kana';
 }
@@ -1003,6 +1249,9 @@ function isFocusMode() {
   if (state.screen === 'learn') return true;
   if (state.screen === 'exam') return !!(state.exam && !state.exam.finished);
   if (state.screen === 'vocab') return !!(state.vocab && !state.vocab.finished);
+  if (state.screen === 'kanji') {
+    return !!(state.kanji && (state.kanji.mode === 'flashcard' || state.kanji.mode === 'quiz') && !state.kanji.finished);
+  }
   return false;
 }
 
@@ -1012,6 +1261,14 @@ function screenTitle() {
     if (vocabTopicNav.view === 'detail') return categoryLabel(vocabTopicNav.topic);
     if (!state.vocab) return 'Słownictwo';
     return state.vocab.finished ? 'Wynik' : 'Fiszki';
+  }
+  if (state.screen === 'kanji') {
+    if (!state.kanji || state.kanji.mode === 'hub') return 'Kanji';
+    if (state.kanji.mode === 'catalog') return 'Katalog znaków';
+    if (state.kanji.mode === 'detail') return 'Szczegóły znaku';
+    if (state.kanji.mode === 'flashcard') return state.kanji.finished ? 'Wynik' : 'Fiszki Kanji';
+    if (state.kanji.mode === 'quiz') return state.kanji.finished ? 'Wynik' : 'Quiz Kanji';
+    return 'Kanji';
   }
   return SCREEN_TITLES[state.screen] || 'Kana';
 }
@@ -1057,6 +1314,13 @@ function renderNav() {
         vocabTopicNav.scope = vocabSetup.scope;
       }
 
+      if (target.screen === 'kanji') {
+        kanjiSession.mode = 'hub';
+        kanjiSession.lesson = 'all';
+        kanjiSession.charId = null;
+        state.kanji = kanjiSession;
+      }
+
       if (state.screen === target.screen) {
         if (target.screen === 'vocab') renderVocab();
         return;
@@ -1070,6 +1334,16 @@ function renderNav() {
 
 function confirmVocabExit() {
   return !isFocusMode() || window.confirm('Czy zakończyć bieżącą sesję fiszek?');
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /* Jedno miejsce aktualizacji chromu: tytuł, etykieta modułu, powrót,
@@ -2128,12 +2402,38 @@ function setScreen(screen) {
 }
 
 homeBtn.onclick = () => {
-  if (state.screen === 'vocab' && !confirmVocabExit()) return;
   Audio.click();
+
+  if (state.screen === 'kanji') {
+    if (!confirmKanjiExit()) return;
+    const mode = state.kanji ? state.kanji.mode : 'hub';
+    if (mode === 'detail') {
+      kanjiSession.mode = 'catalog';
+      state.kanji = kanjiSession;
+      render();
+      return;
+    }
+    if (mode === 'catalog' || mode === 'flashcard' || mode === 'quiz') {
+      kanjiSession.mode = 'hub';
+      state.kanji = kanjiSession;
+      render();
+      return;
+    }
+    setScreen('menu');
+    return;
+  }
+
+  if (state.screen === 'vocab') {
+    if (!confirmVocabExit()) return;
+    stopExam();
+    state.vocab = null;
+    vocabTopicNav.view = 'setup';
+    vocabTopicNav.topic = null;
+    setScreen('menu');
+    return;
+  }
+
   stopExam();
-  state.vocab = null;
-  vocabTopicNav.view = 'setup';
-  vocabTopicNav.topic = null;
   setScreen('menu');
 };
 
@@ -2149,6 +2449,7 @@ function render() {
   if (state.screen === 'exam') renderExam();
   if (state.screen === 'review') renderReview();
   if (state.screen === 'vocab') renderVocab();
+  if (state.screen === 'kanji') renderKanji();
   if (state.screen === 'settings') renderSettings();
 }
 
@@ -3303,6 +3604,1109 @@ function renderVocab() {
   if (next) next.onclick = nextVocab;
 }
 
+/* =========================================================
+   MODUŁ KANJI (T18) — IMPLEMENTACJA UI I LOGIKI
+   ========================================================= */
+
+let kanjiSession = {
+  mode: 'hub', // 'hub' | 'catalog' | 'detail' | 'flashcard' | 'quiz'
+  lesson: 'all',
+  filter: 'all',
+  search: '',
+  charId: null,
+  items: [],
+  index: 0,
+  score: 0,
+  answers: [],
+  finished: false,
+  showBack: false,
+  options: [],
+  selected: null,
+  submitted: false,
+  drawingEnabled: false
+};
+
+function confirmKanjiExit() {
+  if (!state.kanji) return true;
+  if (state.kanji.mode !== 'flashcard' && state.kanji.mode !== 'quiz') return true;
+  if (state.kanji.finished) return true;
+  return window.confirm('Przerwać bieżącą sesję Kanji?');
+}
+
+function getKanjiSummaryStats(lesson = 'all') {
+  const items = lesson === 'all' ? KANJI_ITEMS : KANJI_ITEMS.filter(k => k.lesson === lesson);
+  const now = Date.now();
+  let seenCount = 0;
+  let masteredCount = 0;
+  let dueCount = 0;
+  let totalCorrect = 0;
+  let totalSeen = 0;
+
+  for (const item of items) {
+    const s = kanjiStat(item.id);
+    if (s.seen > 0) {
+      seenCount++;
+      totalCorrect += s.correct;
+      totalSeen += s.seen;
+      if (s.status === 'mastered') masteredCount++;
+      if (s.due > 0 && s.due <= now) dueCount++;
+    }
+  }
+
+  return {
+    total: items.length,
+    seen: seenCount,
+    mastered: masteredCount,
+    due: dueCount,
+    accuracy: totalSeen ? Math.round((totalCorrect / totalSeen) * 100) : 0
+  };
+}
+
+function startKanjiSession({ mode = 'flashcard', lesson = 'all' } = {}) {
+  let pool = lesson === 'all' ? [...KANJI_ITEMS] : KANJI_ITEMS.filter(k => k.lesson === lesson);
+  if (!pool.length) pool = [...KANJI_ITEMS];
+
+  pool = shuffle([...pool]);
+  if (mode === 'quiz' && pool.length > 20) {
+    pool = pool.slice(0, 20);
+  }
+
+  kanjiSession = {
+    mode,
+    lesson,
+    filter: 'all',
+    search: '',
+    charId: null,
+    items: pool,
+    index: 0,
+    score: 0,
+    answers: [],
+    finished: false,
+    showBack: false,
+    options: [],
+    selected: null,
+    submitted: false,
+    drawingEnabled: false
+  };
+
+  state.kanji = kanjiSession;
+  if (mode === 'quiz') {
+    setupKanjiQuizQuestion();
+  }
+  render();
+}
+
+function setupKanjiQuizQuestion() {
+  const s = kanjiSession;
+  if (!s || s.index >= s.items.length) return;
+  const current = s.items[s.index];
+
+  const others = shuffle(KANJI_ITEMS.filter(k => k.id !== current.id)).slice(0, 3);
+  const choices = shuffle([current, ...others]);
+
+  const type = Math.random() < 0.5 ? 'kanjiToMeaning' : 'meaningToKanji';
+
+  s.options = choices.map(c => ({
+    id: c.id,
+    kanji: c.kanji,
+    meaning: c.meaning,
+    onyomi: c.onyomi.join(', '),
+    kunyomi: c.kunyomi.join(', '),
+    isCorrect: c.id === current.id
+  }));
+  s.questionType = type;
+  s.selected = null;
+  s.submitted = false;
+}
+
+function renderKanji() {
+  if (!state.kanji) {
+    state.kanji = kanjiSession;
+  }
+  const mode = state.kanji.mode || 'hub';
+
+  if (mode === 'hub') renderKanjiHub();
+  else if (mode === 'catalog') renderKanjiCatalog();
+  else if (mode === 'detail') renderKanjiDetail();
+  else if (mode === 'flashcard') renderKanjiFlashcard();
+  else if (mode === 'quiz') renderKanjiQuiz();
+  else renderKanjiHub();
+}
+
+/* =========================================================
+   A. WIDOK: KANJI HUB
+   ========================================================= */
+function renderKanjiHub() {
+  const stats = getKanjiSummaryStats('all');
+
+  app.innerHTML = `
+    <div class="kanji-hub-screen animate-fade">
+      <div class="kanji-hero-card">
+        <div class="kanji-hero-watermark" aria-hidden="true">漢</div>
+        <div class="kanji-hero-content">
+          <span class="kanji-eyebrow">JAPOŃSKI · POZIOM N5 / SHOKYŪ NIHONGO</span>
+          <h1 class="kanji-hero-title">Moduł Kanji (漢字)</h1>
+          <p class="kanji-hero-desc">
+            Poznaj 110 najważniejszych znaków języka japońskiego z podręcznika Shokyū Nihongo
+            (lekcje L01–L10) oraz bazy JLPT N5. Naucz się animacji kresek, rysowania i słownictwa.
+          </p>
+
+          <div class="kanji-hero-stats">
+            <div class="kanji-stat-badge">
+              <span class="kanji-stat-num">${stats.total}</span>
+              <span class="kanji-stat-lbl">Znaków</span>
+            </div>
+            <div class="kanji-stat-badge">
+              <span class="kanji-stat-num">${stats.seen}</span>
+              <span class="kanji-stat-lbl">Poznanych</span>
+            </div>
+            <div class="kanji-stat-badge ${stats.due > 0 ? 'is-due' : ''}">
+              <span class="kanji-stat-num">${stats.due}</span>
+              <span class="kanji-stat-lbl">Do powtórki</span>
+            </div>
+            <div class="kanji-stat-badge is-mastered">
+              <span class="kanji-stat-num">${stats.mastered}</span>
+              <span class="kanji-stat-lbl">Opanowanych</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kanji-actions-grid">
+        <div class="kanji-action-card" id="btnKanjiCatalog">
+          <div class="kanji-action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            </svg>
+          </div>
+          <div class="kanji-action-info">
+            <h2 class="kanji-action-title">Katalog Znaków</h2>
+            <p class="kanji-action-desc">Przeglądaj wszystkie 110 znaków, czytania On/Kun, liczbę kresek oraz interaktywne animacje pisowni.</p>
+          </div>
+          <button class="kanji-action-btn" type="button">Otwórz katalog →</button>
+        </div>
+
+        <div class="kanji-action-card" id="btnKanjiFlashcards">
+          <div class="kanji-action-icon accent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2"/>
+              <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/>
+            </svg>
+          </div>
+          <div class="kanji-action-info">
+            <h2 class="kanji-action-title">Fiszki SRS</h2>
+            <p class="kanji-action-desc">System powtórek w odstępach czasowych (Spaced Repetition). Sprawdzaj znajomość znaczeń i czytań.</p>
+          </div>
+          <button class="kanji-action-btn accent" type="button">Rozpocznij fiszki →</button>
+        </div>
+
+        <div class="kanji-action-card" id="btnKanjiQuiz">
+          <div class="kanji-action-icon quiz">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="kanji-action-info">
+            <h2 class="kanji-action-title">Quiz Wyboru</h2>
+            <p class="kanji-action-desc">Szybki test wiedzy z 4 opcjami odpowiedzi. Rozpoznawaj znaki pod presją czasu i utrwalaj pamięć.</p>
+          </div>
+          <button class="kanji-action-btn quiz" type="button">Rozpocznij quiz →</button>
+        </div>
+      </div>
+
+      <div class="kanji-lessons-panel">
+        <div class="kanji-lessons-header">
+          <h2 class="kanji-lessons-title">Wybierz zakres lekcji</h2>
+          <span class="kanji-lessons-hint">Filtruj lub uruchom naukę wybranej lekcji</span>
+        </div>
+        <div class="kanji-lessons-grid">
+          ${KANJI_LESSONS.map(l => {
+            const lStats = getKanjiSummaryStats(l.id);
+            const count = l.id === 'all' ? KANJI_ITEMS.length : KANJI_ITEMS.filter(k => k.lesson === l.id).length;
+            const pct = count ? Math.round((lStats.seen / count) * 100) : 0;
+            return `
+              <div class="kanji-lesson-card" data-lesson="${l.id}">
+                <div class="kanji-lesson-top">
+                  <span class="kanji-lesson-tag">${l.id === 'all' ? 'Wszystko' : l.id}</span>
+                  <span class="kanji-lesson-count">${count} znaków</span>
+                </div>
+                <div class="kanji-lesson-label">${l.label}</div>
+                ${l.desc ? `<div class="kanji-lesson-desc">${l.desc}</div>` : ''}
+                <div class="kanji-lesson-progress-wrap">
+                  <div class="kanji-lesson-bar" style="width: ${pct}%"></div>
+                </div>
+                <div class="kanji-lesson-footer">
+                  <span class="kanji-lesson-progress-text">${lStats.seen}/${count} poznanych (${pct}%)</span>
+                  <span class="kanji-lesson-arrow">→</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnKanjiCatalog').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'catalog';
+    state.kanji = kanjiSession;
+    render();
+  };
+
+  document.getElementById('btnKanjiFlashcards').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode: 'flashcard', lesson: kanjiSession.lesson || 'all' });
+  };
+
+  document.getElementById('btnKanjiQuiz').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode: 'quiz', lesson: kanjiSession.lesson || 'all' });
+  };
+
+  app.querySelectorAll('[data-lesson]').forEach(card => {
+    card.onclick = () => {
+      Audio.click();
+      const lessonId = card.dataset.lesson;
+      kanjiSession.lesson = lessonId;
+      kanjiSession.mode = 'catalog';
+      state.kanji = kanjiSession;
+      render();
+    };
+  });
+}
+
+/* =========================================================
+   B. WIDOK: KATALOG ZNAKÓW
+   ========================================================= */
+function renderKanjiCatalog() {
+  const currentLesson = kanjiSession.lesson || 'all';
+  const currentCategory = kanjiSession.filter || 'all';
+  const searchQuery = (kanjiSession.search || '').trim().toLowerCase();
+
+  let filtered = KANJI_ITEMS;
+  if (currentLesson !== 'all') {
+    filtered = filtered.filter(k => k.lesson === currentLesson);
+  }
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(k => k.category === currentCategory);
+  }
+  if (searchQuery) {
+    filtered = filtered.filter(k => {
+      return (
+        k.kanji.includes(searchQuery) ||
+        k.meaning.toLowerCase().includes(searchQuery) ||
+        k.onyomi.some(on => on.toLowerCase().includes(searchQuery)) ||
+        k.kunyomi.some(kun => kun.toLowerCase().includes(searchQuery)) ||
+        (k.examples && k.examples.some(ex => ex.word.includes(searchQuery) || ex.meaning.toLowerCase().includes(searchQuery)))
+      );
+    });
+  }
+
+  const categories = [
+    { id: 'all', label: 'Wszystkie kategorie' },
+    { id: 'number', label: 'Liczby' },
+    { id: 'direction', label: 'Kierunki' },
+    { id: 'nature', label: 'Przyroda' },
+    { id: 'people', label: 'Ludzie' },
+    { id: 'school', label: 'Szkoła' },
+    { id: 'time', label: 'Czas' },
+    { id: 'place', label: 'Miejsca' },
+    { id: 'transport', label: 'Transport' }
+  ];
+
+  app.innerHTML = `
+    <div class="kanji-catalog-screen animate-fade">
+      <div class="kanji-catalog-header">
+        <button class="kanji-back-btn" id="btnBackToHub" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Menu Kanji
+        </button>
+        <div class="kanji-catalog-title-area">
+          <h1 class="kanji-catalog-title">Katalog Znaków Kanji</h1>
+          <span class="kanji-catalog-counter">Pokazano ${filtered.length} ze 110 znaków</span>
+        </div>
+        <div class="kanji-catalog-quick-actions">
+          <button class="kanji-catalog-btn accent" id="btnStartLessonFlashcards" type="button">
+            Fiszki (${filtered.length})
+          </button>
+          <button class="kanji-catalog-btn quiz" id="btnStartLessonQuiz" type="button">
+            Quiz
+          </button>
+        </div>
+      </div>
+
+      <div class="kanji-filter-bar">
+        <div class="kanji-search-wrap">
+          <svg class="kanji-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="search"
+            class="kanji-search-input"
+            id="kanjiSearchInput"
+            placeholder="Szukaj znaku, znaczenia lub czytania (np. 人, człowiek, hito, jin)…"
+            value="${escapeHtml(kanjiSession.search || '')}"
+          />
+        </div>
+
+        <div class="kanji-pills-row">
+          <span class="kanji-pills-label">Lekcja:</span>
+          <div class="kanji-pills-list">
+            ${KANJI_LESSONS.map(l => `
+              <button
+                type="button"
+                class="kanji-pill ${l.id === currentLesson ? 'active' : ''}"
+                data-filter-lesson="${l.id}"
+              >
+                ${l.id === 'all' ? 'Wszystkie' : l.id}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="kanji-pills-row">
+          <span class="kanji-pills-label">Kategoria:</span>
+          <div class="kanji-pills-list">
+            ${categories.map(c => `
+              <button
+                type="button"
+                class="kanji-pill ${c.id === currentCategory ? 'active' : ''}"
+                data-filter-cat="${c.id}"
+              >
+                ${c.label}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      ${filtered.length === 0 ? `
+        <div class="kanji-empty-state">
+          <div class="kanji-empty-glyph">無</div>
+          <h3>Brak wyników wyszukiwania</h3>
+          <p>Nie znaleziono znaków odpowiadających wybranym kryteriom filtra.</p>
+          <button class="kanji-btn-reset-filter" id="btnResetFilters" type="button">Zresetuj filtry</button>
+        </div>
+      ` : `
+        <div class="kanji-grid">
+          ${filtered.map(k => {
+            const stat = kanjiStat(k.id);
+            return `
+              <div class="kanji-card" data-kanji-id="${k.id}">
+                <div class="kanji-card-badges">
+                  <span class="kanji-card-strokes">${k.strokes} 画</span>
+                  <span class="kanji-card-lesson">${k.lesson}</span>
+                  <span class="kanji-card-status status-${stat.status}" title="Status: ${stat.status}"></span>
+                </div>
+                <div class="kanji-card-glyph font-japanese">${k.kanji}</div>
+                <div class="kanji-card-meaning">${escapeHtml(k.meaning)}</div>
+                <div class="kanji-card-readings">
+                  ${k.onyomi.length ? `<span class="kanji-card-on">${escapeHtml(k.onyomi.slice(0, 2).join('・'))}</span>` : ''}
+                  ${k.kunyomi.length ? `<span class="kanji-card-kun">${escapeHtml(k.kunyomi.slice(0, 2).join('・'))}</span>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `}
+    </div>
+  `;
+
+  document.getElementById('btnBackToHub').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+    render();
+  };
+
+  const btnStartFlashcards = document.getElementById('btnStartLessonFlashcards');
+  if (btnStartFlashcards) {
+    btnStartFlashcards.onclick = () => {
+      Audio.click();
+      startKanjiSession({ mode: 'flashcard', lesson: kanjiSession.lesson || 'all' });
+    };
+  }
+
+  const btnStartQuiz = document.getElementById('btnStartLessonQuiz');
+  if (btnStartQuiz) {
+    btnStartQuiz.onclick = () => {
+      Audio.click();
+      startKanjiSession({ mode: 'quiz', lesson: kanjiSession.lesson || 'all' });
+    };
+  }
+
+  const searchInput = document.getElementById('kanjiSearchInput');
+  if (searchInput) {
+    searchInput.oninput = () => {
+      kanjiSession.search = searchInput.value;
+      renderKanjiCatalog();
+      const updatedInput = document.getElementById('kanjiSearchInput');
+      if (updatedInput) {
+        updatedInput.focus();
+        updatedInput.setSelectionRange(updatedInput.value.length, updatedInput.value.length);
+      }
+    };
+  }
+
+  app.querySelectorAll('[data-filter-lesson]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      kanjiSession.lesson = btn.dataset.filterLesson;
+      renderKanjiCatalog();
+    };
+  });
+
+  app.querySelectorAll('[data-filter-cat]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      kanjiSession.filter = btn.dataset.filterCat;
+      renderKanjiCatalog();
+    };
+  });
+
+  const resetBtn = document.getElementById('btnResetFilters');
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      Audio.click();
+      kanjiSession.lesson = 'all';
+      kanjiSession.filter = 'all';
+      kanjiSession.search = '';
+      renderKanjiCatalog();
+    };
+  }
+
+  app.querySelectorAll('[data-kanji-id]').forEach(card => {
+    card.onclick = () => {
+      Audio.click();
+      kanjiSession.charId = card.dataset.kanjiId;
+      kanjiSession.mode = 'detail';
+      state.kanji = kanjiSession;
+      render();
+    };
+  });
+}
+
+/* =========================================================
+   C. WIDOK: KARTA SZCZEGÓŁÓW ZNAKU & ANIMACJA KANJIVG & CANVAS
+   ========================================================= */
+function renderKanjiDetail() {
+  const item = kanjiItem(kanjiSession.charId || 'k001') || KANJI_ITEMS[0];
+  const stat = kanjiStat(item.id);
+
+  // Znajdź poprzedni i następny znak w zestawie
+  const currentIndex = KANJI_ITEMS.findIndex(k => k.id === item.id);
+  const prevItem = currentIndex > 0 ? KANJI_ITEMS[currentIndex - 1] : null;
+  const nextItem = currentIndex < KANJI_ITEMS.length - 1 ? KANJI_ITEMS[currentIndex + 1] : null;
+
+  // Dopasuj słówka lekcyjne z KANJI_LESSON_WORDS zawierające ten znak
+  const matchingLessonWords = KANJI_LESSON_WORDS.filter(w => w.kanji.includes(item.kanji));
+
+  app.innerHTML = `
+    <div class="kanji-detail-screen animate-fade">
+      <div class="kanji-detail-nav">
+        <button class="kanji-back-btn" id="btnBackToCatalog" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Katalog
+        </button>
+
+        <div class="kanji-detail-step-buttons">
+          <button class="kanji-step-nav-btn" id="btnPrevKanji" type="button" ${!prevItem ? 'disabled' : ''}>
+            ← ${prevItem ? prevItem.kanji : ''}
+          </button>
+          <span class="kanji-detail-pos">${currentIndex + 1} / ${KANJI_ITEMS.length}</span>
+          <button class="kanji-step-nav-btn" id="btnNextKanji" type="button" ${!nextItem ? 'disabled' : ''}>
+            ${nextItem ? nextItem.kanji : ''} →
+          </button>
+        </div>
+      </div>
+
+      <div class="kanji-detail-layout">
+        <!-- Lewa kolumna: Scena animacji KanjiVG i płótno Canvas -->
+        <div class="kanji-stage-col">
+          <div class="kanji-stage-card">
+            <div class="kanji-svg-container" id="kanjiSvgStage">
+              <!-- mountKana i mountDrawing wstrzykują tutaj SVG i Canvas -->
+            </div>
+
+            <div class="kanji-stage-controls">
+              <button class="kanji-ctrl-btn" id="btnKanjiPlay" type="button" title="Odtwórz animację">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Odtwórz
+              </button>
+              <button class="kanji-ctrl-btn" id="btnKanjiStep" type="button" title="Kolejna kreska">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                  <polygon points="5 4 15 12 5 20 5 4"/>
+                  <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/>
+                </svg>
+                Krok
+              </button>
+              <button class="kanji-ctrl-btn" id="btnKanjiReset" type="button" title="Wszystkie kreski">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M1 4v6h6M23 20v-6h-6"/>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+                Wszystko
+              </button>
+              <button class="kanji-ctrl-btn ${kanjiSession.drawingEnabled ? 'active' : ''}" id="btnToggleDrawing" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                  <path d="M2 2l7.586 7.586"/>
+                  <circle cx="11" cy="11" r="2"/>
+                </svg>
+                ${kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj'}
+              </button>
+            </div>
+
+            <div class="kanji-drawing-panel ${kanjiSession.drawingEnabled ? 'is-visible' : 'is-hidden'}" id="kanjiDrawingBar">
+              <div class="kanji-drawing-actions">
+                <button class="kanji-draw-action-btn" id="btnDrawClear" type="button">Wyczyść</button>
+                <button class="kanji-draw-action-btn primary" id="btnDrawCheck" type="button">Sprawdź rysunek</button>
+              </div>
+              <div class="kanji-draw-feedback" id="kanjiDrawFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prawa kolumna: Informacje o znaku, czytania i przykłady -->
+        <div class="kanji-info-col">
+          <div class="kanji-info-card">
+            <div class="kanji-info-header">
+              <div class="kanji-info-badges">
+                <span class="kanji-badge-pill">${item.lesson}</span>
+                <span class="kanji-badge-pill strokes">${item.strokes} kresek (画)</span>
+                <span class="kanji-badge-pill category">${categoryLabel(item.category)}</span>
+                <span class="kanji-badge-pill status status-${stat.status}">${stat.status.toUpperCase()}</span>
+              </div>
+              <h2 class="kanji-info-meaning">${escapeHtml(item.meaning)}</h2>
+            </div>
+
+            <div class="kanji-readings-section">
+              <h3 class="kanji-section-heading">Czytania</h3>
+              <div class="kanji-readings-grid">
+                <div class="kanji-reading-box onyomi">
+                  <span class="kanji-reading-label">On'yomi (音読み)</span>
+                  <div class="kanji-reading-values">
+                    ${item.onyomi.length ? item.onyomi.map(on => `<span class="kanji-reading-tag on">${escapeHtml(on)}</span>`).join('') : '<span class="kanji-reading-none">—</span>'}
+                  </div>
+                </div>
+
+                <div class="kanji-reading-box kunyomi">
+                  <span class="kanji-reading-label">Kun'yomi (訓読み)</span>
+                  <div class="kanji-reading-values">
+                    ${item.kunyomi.length ? item.kunyomi.map(kun => `<span class="kanji-reading-tag kun">${escapeHtml(kun)}</span>`).join('') : '<span class="kanji-reading-none">—</span>'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            ${item.examples && item.examples.length ? `
+              <div class="kanji-examples-section">
+                <h3 class="kanji-section-heading">Złożenia i słownictwo (Jukugo)</h3>
+                <div class="kanji-examples-list">
+                  ${item.examples.map(ex => `
+                    <div class="kanji-example-item">
+                      <div class="kanji-example-word font-japanese">${escapeHtml(ex.word)}</div>
+                      <div class="kanji-example-reading">${escapeHtml(ex.reading)}</div>
+                      <div class="kanji-example-meaning">${escapeHtml(ex.meaning)}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${matchingLessonWords.length ? `
+              <div class="kanji-lesson-words-section">
+                <h3 class="kanji-section-heading">Słówka z podręcznika Shokyū Nihongo</h3>
+                <div class="kanji-lesson-words-list">
+                  ${matchingLessonWords.map(w => `
+                    <div class="kanji-lesson-word-item">
+                      <span class="kanji-lesson-word-badge">${w.lesson}</span>
+                      <span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>
+                      <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
+                      <span class="kanji-lesson-word-gloss">${escapeHtml(w.meaning)}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="kanji-info-actions">
+              <button class="kanji-action-btn accent" id="btnPracticeThisCard" type="button">
+                Ćwicz ten znak w fiszkach →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnBackToCatalog').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'catalog';
+    state.kanji = kanjiSession;
+    render();
+  };
+
+  const prevBtn = document.getElementById('btnPrevKanji');
+  if (prevBtn && prevItem) {
+    prevBtn.onclick = () => {
+      Audio.click();
+      kanjiSession.charId = prevItem.id;
+      renderKanjiDetail();
+    };
+  }
+
+  const nextBtn = document.getElementById('btnNextKanji');
+  if (nextBtn && nextItem) {
+    nextBtn.onclick = () => {
+      Audio.click();
+      kanjiSession.charId = nextItem.id;
+      renderKanjiDetail();
+    };
+  }
+
+  document.getElementById('btnPracticeThisCard').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode: 'flashcard', lesson: item.lesson });
+  };
+
+  // Okablowanie animacji kresek KanjiVG i Canvasu
+  const stage = document.getElementById('kanjiSvgStage');
+  const drawFeedback = document.getElementById('kanjiDrawFeedback');
+  const drawing = mountDrawing(stage);
+  drawing.setEnabled(kanjiSession.drawingEnabled);
+
+  let player = null;
+  let referencePaths = null;
+
+  mountKana(stage, item.kanji, {
+    autoplay: false,
+    overlay: drawing.canvas
+  }).then(p => {
+    player = p;
+    if (player) {
+      referencePaths = player.paths;
+      player.showAll();
+    }
+  });
+
+  document.getElementById('btnKanjiPlay').onclick = () => {
+    Audio.click();
+    if (player) player.play();
+  };
+
+  document.getElementById('btnKanjiStep').onclick = () => {
+    Audio.click();
+    if (player) player.step();
+  };
+
+  document.getElementById('btnKanjiReset').onclick = () => {
+    Audio.click();
+    if (player) player.showAll();
+  };
+
+  const toggleDrawingBtn = document.getElementById('btnToggleDrawing');
+  const drawingBar = document.getElementById('kanjiDrawingBar');
+  toggleDrawingBtn.onclick = () => {
+    Audio.click();
+    kanjiSession.drawingEnabled = !kanjiSession.drawingEnabled;
+    drawing.setEnabled(kanjiSession.drawingEnabled);
+    toggleDrawingBtn.classList.toggle('active', kanjiSession.drawingEnabled);
+    toggleDrawingBtn.textContent = kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj';
+    drawingBar.classList.toggle('is-visible', kanjiSession.drawingEnabled);
+    drawingBar.classList.toggle('is-hidden', !kanjiSession.drawingEnabled);
+  };
+
+  document.getElementById('btnDrawClear').onclick = () => {
+    Audio.click();
+    drawing.clear();
+    drawFeedback.textContent = '';
+    drawFeedback.className = 'kanji-draw-feedback';
+  };
+
+  document.getElementById('btnDrawCheck').onclick = () => {
+    Audio.click();
+    if (!referencePaths || !stage.querySelector('svg')) return;
+
+    const reference = referenceOnCanvas(stage.querySelector('svg'), drawing.canvas, referencePaths, DRAW_SAMPLES);
+    const result = scoreDrawing(
+      drawing.strokes.map(stroke => resample(stroke, DRAW_SAMPLES)),
+      reference,
+      stage.clientWidth
+    );
+
+    const verdict = drawVerdict(result);
+    drawFeedback.textContent = `${verdict} (Zgodność: ${Math.round(result.score * 100)}%)`;
+    drawFeedback.className = `kanji-draw-feedback ${result.passed ? 'passed' : 'failed'}`;
+    if (result.passed) {
+      Audio.correct();
+      recordKanjiAnswer(item.id, true);
+    } else {
+      Audio.wrong();
+    }
+  };
+}
+
+/* =========================================================
+   D. WIDOK: FISZKI KANJI (SRS)
+   ========================================================= */
+function renderKanjiFlashcard() {
+  const s = kanjiSession;
+  if (!s || s.finished || s.index >= s.items.length) {
+    renderKanjiSessionSummary('flashcard');
+    return;
+  }
+
+  const current = s.items[s.index];
+  const progressPct = Math.round(((s.index + 1) / s.items.length) * 100);
+
+  app.innerHTML = `
+    <div class="kanji-session-screen animate-fade">
+      <div class="kanji-session-header">
+        <button class="kanji-exit-btn" id="btnExitSession" type="button">
+          ✕ Przerwij
+        </button>
+        <div class="kanji-session-progress-area">
+          <span class="kanji-session-count">Karta ${s.index + 1} z ${s.items.length}</span>
+          <div class="kanji-session-bar-wrap">
+            <div class="kanji-session-bar" style="width: ${progressPct}%"></div>
+          </div>
+        </div>
+        <span class="kanji-session-lesson-badge">${current.lesson}</span>
+      </div>
+
+      <div class="kanji-flashcard-wrap">
+        <div class="kanji-flashcard ${s.showBack ? 'is-flipped' : ''}" id="kanjiCard">
+          ${!s.showBack ? `
+            <!-- Awers -->
+            <div class="kanji-card-front">
+              <span class="kanji-card-strokes-hint">${current.strokes} kresek</span>
+              <div class="kanji-card-front-glyph font-japanese">${current.kanji}</div>
+              <p class="kanji-card-front-prompt">Jakie jest znaczenie i czytanie tego znaku?</p>
+              <button class="kanji-flip-btn" id="btnFlipCard" type="button">
+                Pokaż odpowiedź (kliknij kartę lub Spacja)
+              </button>
+            </div>
+          ` : `
+            <!-- Rewers -->
+            <div class="kanji-card-back">
+              <div class="kanji-card-back-header">
+                <span class="kanji-card-back-glyph font-japanese">${current.kanji}</span>
+                <div class="kanji-card-back-title">
+                  <h2 class="kanji-card-back-meaning">${escapeHtml(current.meaning)}</h2>
+                  <span class="kanji-card-back-strokes">${current.strokes} kresek · ${categoryLabel(current.category)}</span>
+                </div>
+              </div>
+
+              <div class="kanji-card-back-readings">
+                <div class="kanji-reading-item">
+                  <span class="lbl">On'yomi:</span>
+                  <span class="val on">${current.onyomi.length ? escapeHtml(current.onyomi.join(', ')) : '—'}</span>
+                </div>
+                <div class="kanji-reading-item">
+                  <span class="lbl">Kun'yomi:</span>
+                  <span class="val kun">${current.kunyomi.length ? escapeHtml(current.kunyomi.join(', ')) : '—'}</span>
+                </div>
+              </div>
+
+              ${current.examples && current.examples.length ? `
+                <div class="kanji-card-back-examples">
+                  <span class="lbl">Przykłady:</span>
+                  <div class="kanji-back-example-tags">
+                    ${current.examples.slice(0, 3).map(ex => `
+                      <span class="kanji-back-tag">
+                        <strong>${escapeHtml(ex.word)}</strong> (${escapeHtml(ex.reading)}) — ${escapeHtml(ex.meaning)}
+                      </span>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="kanji-srs-rating-bar">
+                <span class="kanji-srs-label">Oceń swoją odpowiedź:</span>
+                <div class="kanji-srs-buttons">
+                  <button class="kanji-srs-btn srs-again" data-srs="again" type="button">
+                    <span class="srs-key">[1]</span> Powtórz
+                  </button>
+                  <button class="kanji-srs-btn srs-hard" data-srs="hard" type="button">
+                    <span class="srs-key">[2]</span> Trudne
+                  </button>
+                  <button class="kanji-srs-btn srs-good" data-srs="good" type="button">
+                    <span class="srs-key">[3]</span> Dobre
+                  </button>
+                  <button class="kanji-srs-btn srs-easy" data-srs="easy" type="button">
+                    <span class="srs-key">[4]</span> Łatwe
+                  </button>
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnExitSession').onclick = () => {
+    if (confirmKanjiExit()) {
+      Audio.click();
+      kanjiSession.mode = 'hub';
+      state.kanji = kanjiSession;
+      render();
+    }
+  };
+
+  const card = document.getElementById('kanjiCard');
+  if (card && !s.showBack) {
+    card.onclick = () => {
+      Audio.click();
+      s.showBack = true;
+      renderKanjiFlashcard();
+    };
+  }
+
+  const flipBtn = document.getElementById('btnFlipCard');
+  if (flipBtn) {
+    flipBtn.onclick = (e) => {
+      e.stopPropagation();
+      Audio.click();
+      s.showBack = true;
+      renderKanjiFlashcard();
+    };
+  }
+
+  app.querySelectorAll('[data-srs]').forEach(btn => {
+    btn.onclick = () => {
+      const rating = btn.dataset.srs;
+      const isCorrect = rating !== 'again';
+      if (isCorrect) Audio.correct();
+      else Audio.wrong();
+
+      recordKanjiAnswer(current.id, isCorrect);
+      s.answers.push({ item: current, rating, isCorrect });
+      if (isCorrect) s.score++;
+
+      s.index++;
+      s.showBack = false;
+
+      if (s.index >= s.items.length) {
+        s.finished = true;
+      }
+      renderKanjiFlashcard();
+    };
+  });
+}
+
+/* =========================================================
+   E. WIDOK: QUIZ KANJI (4 OPCJE)
+   ========================================================= */
+function renderKanjiQuiz() {
+  const s = kanjiSession;
+  if (!s || s.finished || s.index >= s.items.length) {
+    renderKanjiSessionSummary('quiz');
+    return;
+  }
+
+  const current = s.items[s.index];
+  const progressPct = Math.round(((s.index + 1) / s.items.length) * 100);
+
+  app.innerHTML = `
+    <div class="kanji-session-screen animate-fade">
+      <div class="kanji-session-header">
+        <button class="kanji-exit-btn" id="btnExitQuiz" type="button">
+          ✕ Przerwij
+        </button>
+        <div class="kanji-session-progress-area">
+          <span class="kanji-session-count">Pytanie ${s.index + 1} z ${s.items.length}</span>
+          <div class="kanji-session-bar-wrap">
+            <div class="kanji-session-bar" style="width: ${progressPct}%"></div>
+          </div>
+        </div>
+        <span class="kanji-session-score-pill">Wynik: ${s.score}/${s.index}</span>
+      </div>
+
+      <div class="kanji-quiz-card">
+        <div class="kanji-quiz-prompt">
+          ${s.questionType === 'kanjiToMeaning' ? `
+            <span class="kanji-quiz-eyebrow">Wybierz poprawne znaczenie znaku:</span>
+            <div class="kanji-quiz-glyph font-japanese">${current.kanji}</div>
+            <span class="kanji-quiz-subprompt">${current.strokes} kresek</span>
+          ` : `
+            <span class="kanji-quiz-eyebrow">Który znak Kanji odpowiada znaczeniu:</span>
+            <div class="kanji-quiz-meaning-prompt">${escapeHtml(current.meaning)}</div>
+            <span class="kanji-quiz-subprompt">Lekcja: ${current.lesson}</span>
+          `}
+        </div>
+
+        <div class="kanji-quiz-options">
+          ${s.options.map((opt, i) => {
+            let stateClass = '';
+            if (s.submitted) {
+              if (opt.isCorrect) stateClass = 'is-correct';
+              else if (s.selected === i) stateClass = 'is-wrong';
+            }
+            return `
+              <button
+                class="kanji-quiz-option-btn ${stateClass}"
+                data-option-idx="${i}"
+                type="button"
+                ${s.submitted ? 'disabled' : ''}
+              >
+                <span class="kanji-quiz-option-key">[${i + 1}]</span>
+                ${s.questionType === 'kanjiToMeaning' ? `
+                  <div class="kanji-quiz-option-content">
+                    <span class="kanji-quiz-option-main">${escapeHtml(opt.meaning)}</span>
+                    <span class="kanji-quiz-option-sub">${opt.onyomi ? escapeHtml(opt.onyomi) : ''} ${opt.kunyomi ? escapeHtml(opt.kunyomi) : ''}</span>
+                  </div>
+                ` : `
+                  <div class="kanji-quiz-option-content">
+                    <span class="kanji-quiz-option-glyph font-japanese">${opt.kanji}</span>
+                    <span class="kanji-quiz-option-sub">${opt.onyomi ? escapeHtml(opt.onyomi) : ''}</span>
+                  </div>
+                `}
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        ${s.submitted ? `
+          <div class="kanji-quiz-advance-bar">
+            <button class="kanji-action-btn accent" id="btnNextQuizQuestion" type="button">
+              ${s.index + 1 >= s.items.length ? 'Zobacz podsumowanie →' : 'Następne pytanie →'}
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnExitQuiz').onclick = () => {
+    if (confirmKanjiExit()) {
+      Audio.click();
+      kanjiSession.mode = 'hub';
+      state.kanji = kanjiSession;
+      render();
+    }
+  };
+
+  app.querySelectorAll('[data-option-idx]').forEach(btn => {
+    btn.onclick = () => {
+      if (s.submitted) return;
+      const idx = parseInt(btn.dataset.optionIdx, 10);
+      s.selected = idx;
+      s.submitted = true;
+
+      const chosen = s.options[idx];
+      const isCorrect = chosen.isCorrect;
+
+      if (isCorrect) {
+        Audio.correct();
+        s.score++;
+      } else {
+        Audio.wrong();
+      }
+
+      recordKanjiAnswer(current.id, isCorrect);
+      s.answers.push({ item: current, isCorrect, chosen });
+
+      renderKanjiQuiz();
+    };
+  });
+
+  const nextBtn = document.getElementById('btnNextQuizQuestion');
+  if (nextBtn) {
+    nextBtn.onclick = () => {
+      Audio.click();
+      s.index++;
+      if (s.index >= s.items.length) {
+        s.finished = true;
+      } else {
+        setupKanjiQuizQuestion();
+      }
+      renderKanjiQuiz();
+    };
+  }
+}
+
+/* =========================================================
+   F. WIDOK: PODSUMOWANIE SESJI KANJI
+   ========================================================= */
+function renderKanjiSessionSummary(mode) {
+  const s = kanjiSession;
+  const total = s.items.length;
+  const correct = s.score;
+  const pct = total ? Math.round((correct / total) * 100) : 0;
+
+  app.innerHTML = `
+    <div class="kanji-summary-screen animate-fade">
+      <div class="kanji-summary-card">
+        <div class="kanji-summary-trophy">${pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+        <h1 class="kanji-summary-title">
+          ${pct >= 80 ? 'Świetny wynik!' : pct >= 50 ? 'Dobra robota!' : 'Warto powtórzyć!'}
+        </h1>
+        <p class="kanji-summary-desc">
+          Ukończono sesję ${mode === 'flashcard' ? 'Fiszek Kanji' : 'Quizu Kanji'}.
+        </p>
+
+        <div class="kanji-summary-score-box">
+          <div class="kanji-summary-score-num">${correct} / ${total}</div>
+          <div class="kanji-summary-score-pct">${pct}% poprawnych odpowiedzi</div>
+        </div>
+
+        <div class="kanji-summary-items-list">
+          <h3 class="kanji-summary-items-heading">Szczegóły odpowiedzi:</h3>
+          ${s.answers.map(a => `
+            <div class="kanji-summary-item ${a.isCorrect ? 'is-correct' : 'is-wrong'}">
+              <span class="kanji-summary-item-glyph font-japanese">${a.item.kanji}</span>
+              <div class="kanji-summary-item-info">
+                <span class="kanji-summary-item-meaning">${escapeHtml(a.item.meaning)}</span>
+                <span class="kanji-summary-item-reading">${a.item.onyomi.join(', ')} / ${a.item.kunyomi.join(', ')}</span>
+              </div>
+              <span class="kanji-summary-item-badge">${a.isCorrect ? '✓' : '✗'}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="kanji-summary-actions">
+          <button class="kanji-action-btn accent" id="btnRestartSession" type="button">
+            Powtórz sesję
+          </button>
+          <button class="kanji-action-btn" id="btnSummaryBackToHub" type="button">
+            Wróć do menu Kanji
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnRestartSession').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode, lesson: s.lesson });
+  };
+
+  document.getElementById('btnSummaryBackToHub').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+    render();
+  };
+}
+
+
 function appStorageKeys() {
   return [
     SETTINGS_STORE_KEY,
@@ -3310,6 +4714,7 @@ function appStorageKeys() {
     PROGRESS_KEY,
     DAILY_STATS_KEY,
     VOCAB_KEY,
+    KANJI_KEY,
     LEGACY_THEME_KEY,
     LEGACY_MUTED_KEY
   ];
@@ -3337,7 +4742,9 @@ function resetProgressData() {
   progress = { version: PROGRESS_VERSION, chars: {} };
   saveProgress();
   resetVocabData();
+  resetKanjiData();
   state.vocab = null;
+  if (state.kanji) state.kanji.mode = 'hub';
 }
 
 function resetSettings() {
@@ -3350,6 +4757,7 @@ function resetSettings() {
 function clearAllData() {
   stopExam();
   state.vocab = null;
+  if (state.kanji) state.kanji.mode = 'hub';
 
   appStorageKeys().forEach(key => {
     try {
@@ -3363,6 +4771,7 @@ function clearAllData() {
   settings = loadSettings();
   progress = loadProgress();
   vocab = loadVocab();
+  kanjiProgress = loadKanjiProgress();
 
   state.script = settings.script;
   state.theme = settings.theme; // surowa preferencja, tak jak przy starcie
@@ -4820,10 +6229,132 @@ function vocabStat(cardId) {
   };
 }
 
+/* =========================================================
+   POSTĘPY KANJI (T18 — magazyn)
+   ------------------------------------------------------------
+   CZWARTY klucz, rozłączny z `hiragana-progress`, `hiragana-vocab` i `hiragana-daily`.
+   Klucz: `hiragana-kanji`, wersja: 1.
+========================================================= */
+
+const KANJI_KEY = 'hiragana-kanji';
+const KANJI_VERSION = 1;
+const KANJI_MAX_RECENT = 6;
+
+function kanjiItem(idOrChar) {
+  return KANJI_ITEMS.find(k => k.id === idOrChar || k.kanji === idOrChar) || null;
+}
+
+function isKanjiRecord(entry) {
+  return (
+    !!entry &&
+    typeof entry === 'object' &&
+    !Array.isArray(entry) &&
+    Number.isFinite(entry.seen) &&
+    Number.isFinite(entry.correct) &&
+    Number.isFinite(entry.wrong) &&
+    Array.isArray(entry.recent)
+  );
+}
+
+function loadKanjiProgress() {
+  const empty = { version: KANJI_VERSION, items: {} };
+  try {
+    const raw = localStorage.getItem(KANJI_KEY);
+    if (!raw) return empty;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return empty;
+    if (data.version !== KANJI_VERSION) return empty;
+    if (!data.items || typeof data.items !== 'object' || Array.isArray(data.items)) return empty;
+    return { version: KANJI_VERSION, items: data.items };
+  } catch (e) {
+    return empty;
+  }
+}
+
+let kanjiProgress = loadKanjiProgress();
+
+function saveKanjiProgress() {
+  try {
+    localStorage.setItem(KANJI_KEY, JSON.stringify(kanjiProgress));
+  } catch (e) {}
+}
+
+function recordKanjiAnswer(idOrChar, correct) {
+  const item = kanjiItem(idOrChar);
+  if (!item) return false;
+  const id = item.id;
+  if (!isKanjiRecord(kanjiProgress.items[id])) {
+    kanjiProgress.items[id] = {
+      seen: 0,
+      correct: 0,
+      wrong: 0,
+      recent: [],
+      last: 0,
+      interval: 0,
+      due: 0
+    };
+  }
+  const entry = kanjiProgress.items[id];
+  entry.seen++;
+  if (correct) entry.correct++;
+  else entry.wrong++;
+  entry.recent.push(correct ? 1 : 0);
+  if (entry.recent.length > KANJI_MAX_RECENT) entry.recent.shift();
+  entry.last = Date.now();
+
+  const DAY_MS = 86400000;
+  if (!correct) {
+    entry.interval = 1;
+    entry.due = entry.last + DAY_MS;
+  } else {
+    if (!entry.interval || entry.interval < 1) entry.interval = 1;
+    else if (entry.interval === 1) entry.interval = 3;
+    else entry.interval = Math.round(entry.interval * 2.2);
+    entry.due = entry.last + entry.interval * DAY_MS;
+  }
+
+  saveKanjiProgress();
+  return true;
+}
+
+function kanjiStat(idOrChar) {
+  const item = kanjiItem(idOrChar);
+  if (!item) return { seen: 0, correct: 0, wrong: 0, accuracy: 0, recent: [], interval: 0, due: 0, status: 'new' };
+  const entry = kanjiProgress.items[item.id];
+  const seen = entry && Number.isFinite(entry.seen) ? entry.seen : 0;
+  const correct = entry && Number.isFinite(entry.correct) ? entry.correct : 0;
+  const wrong = entry && Number.isFinite(entry.wrong) ? entry.wrong : 0;
+  const interval = entry && Number.isFinite(entry.interval) ? entry.interval : 0;
+  const due = entry && Number.isFinite(entry.due) ? entry.due : 0;
+  const recent = entry && Array.isArray(entry.recent) ? entry.recent : [];
+  let status = 'new';
+  if (seen > 0) {
+    if (interval >= 7 && (correct / seen) >= 0.8) status = 'mastered';
+    else if (wrong > correct) status = 'hard';
+    else status = 'learning';
+  }
+  return {
+    seen,
+    correct,
+    wrong,
+    accuracy: seen ? correct / seen : 0,
+    recent,
+    interval,
+    due,
+    status
+  };
+}
+
+
 /* Postęp słownictwa ma jedno wejście kasowania: „Zresetuj postęp". */
 function resetVocabData() {
   vocab = { version: VOCAB_VERSION, cards: {} };
   saveVocab();
+}
+
+function resetKanjiData() {
+  kanjiProgress = { version: KANJI_VERSION, items: {} };
+  saveKanjiProgress();
 }
 
 /*
@@ -6537,11 +8068,49 @@ function answerExam(button, question) {
 document.addEventListener('keydown', event => {
   // Escape → menu
   if (event.key === 'Escape' && state.screen !== 'menu') {
+    if (state.screen === 'kanji' && !confirmKanjiExit()) return;
     Audio.click();
     stopExam();
     state.vocab = null;
+    if (state.kanji) state.kanji.mode = 'hub';
     setScreen('menu');
     return;
+  }
+
+  // Obsługa klawiatury dla modułu Kanji (T18)
+  if (state.screen === 'kanji' && state.kanji && !state.kanji.finished) {
+    const ks = state.kanji;
+    if (ks.mode === 'flashcard') {
+      if (!ks.showBack && (event.key === ' ' || event.key === 'Enter')) {
+        event.preventDefault();
+        ks.showBack = true;
+        renderKanjiFlashcard();
+        return;
+      }
+      if (ks.showBack) {
+        if (event.key === '1') { document.querySelector('[data-srs="again"]')?.click(); return; }
+        if (event.key === '2') { document.querySelector('[data-srs="hard"]')?.click(); return; }
+        if (event.key === '3') { document.querySelector('[data-srs="good"]')?.click(); return; }
+        if (event.key === '4') { document.querySelector('[data-srs="easy"]')?.click(); return; }
+      }
+    } else if (ks.mode === 'quiz') {
+      if (!ks.submitted) {
+        const num = parseInt(event.key, 10);
+        if (num >= 1 && num <= 4) {
+          event.preventDefault();
+          document.querySelector(`[data-option-idx="${num - 1}"]`)?.click();
+          return;
+        }
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('btnNextQuizQuestion')?.click();
+        return;
+      }
+    } else if (ks.mode === 'detail') {
+      if (event.key === 'ArrowLeft') { document.getElementById('btnPrevKanji')?.click(); return; }
+      if (event.key === 'ArrowRight') { document.getElementById('btnNextKanji')?.click(); return; }
+      if (event.key === ' ') { document.getElementById('btnKanjiPlay')?.click(); return; }
+    }
   }
 
   const exam = state.exam;
