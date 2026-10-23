@@ -744,20 +744,97 @@ const VOCAB_ITEMS = [
   { id: 'v24', type: 'verb', kana: 'しめます', romaji: 'shimemasu', meaning: 'zamykać (np. drzwi)' },
 
   // Rzeczowniki i zwroty z sekcji „Przydatne rzeczowniki" oraz „Rzeczownik + を + czasownik"
-  { id: 'n01', type: 'word', category: 'people', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
-  { id: 'n02', type: 'word', kana: 'これ', romaji: 'kore', meaning: 'to' },
-  { id: 'n03', type: 'word', category: 'school', kana: 'ほん', romaji: 'hon', meaning: 'książka' },
-  { id: 'n04', type: 'word', category: 'school', kana: 'きょうかしょ', romaji: 'kyoukasho', meaning: 'podręcznik' },
-  { id: 'n05', type: 'word', category: 'school', kana: 'しゅくだい', romaji: 'shukudai', meaning: 'praca domowa' },
-  { id: 'n06', type: 'word', category: 'school', kana: 'にほんご', romaji: 'nihongo', meaning: 'język japoński' },
-  { id: 'n07', type: 'word', category: 'school', kana: 'ポーランドご', romaji: 'poorandogo', meaning: 'język polski' },
+  { id: 'n01', type: 'word', lesson: '0', category: 'people', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
+  { id: 'n02', type: 'word', lesson: '0', kana: 'これ', romaji: 'kore', meaning: 'to' },
+  { id: 'n03', type: 'word', lesson: '1ka', category: 'school', kana: 'ほん', kanji: '本', romaji: 'hon', meaning: 'książka' },
+  { id: 'n04', type: 'word', lesson: '0', category: 'school', kana: 'きょうかしょ', romaji: 'kyoukasho', meaning: 'podręcznik' },
+  { id: 'n05', type: 'word', lesson: '0', category: 'school', kana: 'しゅくだい', romaji: 'shukudai', meaning: 'praca domowa' },
+  { id: 'n06', type: 'word', lesson: '0', category: 'school', kana: 'にほんご', kanji: '日本語', romaji: 'nihongo', meaning: 'język japoński' },
+  { id: 'n07', type: 'word', lesson: '0', category: 'school', kana: 'ポーランドご', kanji: 'ポーランド語', romaji: 'poorandogo', meaning: 'język polski' },
 
-  { id: 'p01', type: 'phrase', category: 'people', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
-  { id: 'p02', type: 'phrase', category: 'people', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
-  { id: 'p03', type: 'phrase', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
-  { id: 'p04', type: 'phrase', category: 'school', kana: 'ほんを よんでください', romaji: 'hon o yonde kudasai', meaning: 'proszę przeczytać książkę' },
-  { id: 'p05', type: 'phrase', category: 'school', kana: 'きょうかしょを だしてください', romaji: 'kyoukasho o dashite kudasai', meaning: 'proszę wyjąć / przygotować podręcznik' },
-  { id: 'p06', type: 'phrase', category: 'school', kana: 'しゅくだいを だしてください', romaji: 'shukudai o dashite kudasai', meaning: 'proszę oddać pracę domową' }
+  // Słówka 1か (Lekcja 1 z Shokyū Nihongo)
+  { id: 'n08', type: 'word', lesson: '1ka', category: 'place', kana: 'マレーシア', romaji: 'mareeshia', meaning: 'Malezja' },
+  { id: 'n09', type: 'word', lesson: '1ka', category: 'school', kana: 'がくせい', kanji: '学生', romaji: 'gakusei', meaning: 'uczeń / student' },
+  { id: 'n10', type: 'word', lesson: '1ka', category: 'place', kana: 'タイ', romaji: 'tai', meaning: 'Tajlandia' },
+  { id: 'n11', type: 'word', lesson: '1ka', category: 'people', kana: 'ひと', kanji: '人', romaji: 'hito', meaning: 'człowiek' },
+  { id: 'n12', type: 'word', lesson: '1ka', category: 'place', kana: 'フィリピン', romaji: 'firipin', meaning: 'Filipiny' },
+  { id: 'n13', type: 'word', lesson: '1ka', category: 'school', kana: 'せんせい', kanji: '先生', romaji: 'sensei', meaning: 'nauczyciel' },
+  { id: 'n14', type: 'word', lesson: '1ka', category: 'people', kana: '～じん', kanji: '～人', romaji: '~jin', meaning: 'obywatel / mieszkaniec kraju' },
+  { id: 'n15', type: 'word', lesson: '1ka', category: 'home', kana: 'かぎ', kanji: '鍵', romaji: 'kagi', meaning: 'klucz / klucze' },
+  { id: 'n16', type: 'word', lesson: '1ka', category: 'home', kana: 'カメラ', romaji: 'kamera', meaning: 'aparat fotograficzny' },
+  { id: 'n17', type: 'word', lesson: '1ka', category: 'home', kana: 'かばん', kanji: '鞄', romaji: 'kaban', meaning: 'torba' },
+  { id: 'n18', type: 'word', lesson: '1ka', category: 'home', kana: 'レコード', romaji: 'rekoodo', meaning: 'płyta winylowa' },
+  { id: 'n19', type: 'word', lesson: '1ka', category: 'home', kana: 'へや', kanji: '部屋', romaji: 'heya', meaning: 'pokój' },
+  { id: 'n20', type: 'word', lesson: '1ka', category: 'place', kana: 'イギリス', romaji: 'igirisu', meaning: 'Wielka Brytania / Anglia' },
+  { id: 'n21', type: 'word', lesson: '1ka', category: 'school', kana: 'えいご', kanji: '英語', romaji: 'eigo', meaning: 'język angielski' },
+  { id: 'n22', type: 'word', lesson: '1ka', category: 'place', kana: 'ちゅうごく', kanji: '中国', romaji: 'chuugoku', meaning: 'Chiny' },
+  { id: 'n23', type: 'word', lesson: '1ka', category: 'place', kana: 'アメリカ', romaji: 'amerika', meaning: 'USA / Ameryka' },
+  { id: 'n24', type: 'word', lesson: '1ka', category: 'home', kana: 'テレビ', romaji: 'terebi', meaning: 'telewizor' },
+  { id: 'n25', type: 'word', lesson: '1ka', category: 'home', kana: 'ラジオ', romaji: 'rajio', meaning: 'radio' },
+  { id: 'n26', type: 'word', lesson: '1ka', category: 'time', kana: 'とけい', kanji: '時計', romaji: 'tokei', meaning: 'zegarek' },
+  { id: 'n27', type: 'word', lesson: '1ka', category: 'school', kana: 'しんぶん', kanji: '新聞', romaji: 'shinbun', meaning: 'gazeta' },
+  { id: 'n28', type: 'word', lesson: '1ka', category: 'school', kana: 'テープ', romaji: 'teepu', meaning: 'taśma klejąca' },
+  { id: 'n29', type: 'word', lesson: '1ka', category: 'transport', kana: 'じどうしゃ', kanji: '自動車', romaji: 'jidousha', meaning: 'samochód (pojazd)' },
+  { id: 'n30', type: 'word', lesson: '1ka', category: 'transport', kana: 'くるま', kanji: '車', romaji: 'kuruma', meaning: 'samochód / auto' },
+  { id: 'n31', type: 'word', lesson: '1ka', category: 'transport', kana: 'じてんしゃ', kanji: '自転車', romaji: 'jitensha', meaning: 'rower' },
+  { id: 'n32', type: 'word', lesson: '1ka', category: 'school', kana: 'ノート', romaji: 'nooto', meaning: 'zeszyt' },
+  { id: 'n33', type: 'word', lesson: '1ka', category: 'home', kana: 'きって', kanji: '切手', romaji: 'kitte', meaning: 'znaczek pocztowy' },
+  { id: 'n34', type: 'word', lesson: '1ka', category: 'school', kana: 'つくえ', kanji: '机', romaji: 'tsukue', meaning: 'biurko' },
+  { id: 'n35', type: 'word', lesson: '1ka', category: 'school', kana: 'ボールペン', romaji: 'boorupen', meaning: 'długopis' },
+  { id: 'n36', type: 'word', lesson: '1ka', category: 'school', kana: 'えんぴつ', kanji: '鉛筆', romaji: 'enpitsu', meaning: 'ołówek' },
+  { id: 'n37', type: 'word', lesson: '1ka', category: 'place', kana: 'ポーランド', romaji: 'poorando', meaning: 'Polska' },
+  { id: 'n38', type: 'word', lesson: '1ka', category: 'people', kana: 'おんなのひと', kanji: '女の人', romaji: 'onna no hito', meaning: 'kobieta' },
+
+  // Słówka 2か (Lekcja 2 z Shokyū Nihongo — rzeczowniki)
+  { id: 'n39', type: 'word', lesson: '2ka', category: 'place', kana: 'じむしつ', kanji: '事務室', romaji: 'jimushitsu', meaning: 'biuro / sekretariat' },
+  { id: 'n40', type: 'word', lesson: '2ka', category: 'place', kana: 'としょしつ', kanji: '図書室', romaji: 'toshoshitsu', meaning: 'czytelnia / biblioteka (wnętrze)' },
+  { id: 'n41', type: 'word', lesson: '2ka', category: 'place', kana: 'トイレ', romaji: 'toire', meaning: 'toaleta' },
+  { id: 'n42', type: 'word', lesson: '2ka', category: 'home', kana: 'うち', kanji: '家', romaji: 'uchi', meaning: 'dom' },
+  { id: 'n43', type: 'word', lesson: '2ka', category: 'drink', kana: 'ジュース', romaji: 'juusu', meaning: 'sok' },
+  { id: 'n44', type: 'word', lesson: '2ka', category: 'place', kana: 'レストラン', romaji: 'resutoran', meaning: 'restauracja' },
+  { id: 'n45', type: 'word', lesson: '2ka', category: 'food', kana: 'さかな', kanji: '魚', romaji: 'sakana', meaning: 'ryba' },
+  { id: 'n46', type: 'word', lesson: '2ka', category: 'food', kana: 'スープ', romaji: 'suupu', meaning: 'zupa' },
+  { id: 'n47', type: 'word', lesson: '2ka', category: 'place', kana: 'としょかん', kanji: '図書館', romaji: 'toshokan', meaning: 'biblioteka (budynek)' },
+  { id: 'n48', type: 'word', lesson: '2ka', category: 'school', kana: 'かみ', kanji: '紙', romaji: 'kami', meaning: 'papier' },
+  { id: 'n49', type: 'word', lesson: '2ka', category: 'food', kana: 'しょっけん', kanji: '食券', romaji: 'shokken', meaning: 'kupon na jedzenie' },
+  { id: 'n50', type: 'word', lesson: '2ka', category: 'nature', kana: 'やま', kanji: '山', romaji: 'yama', meaning: 'góra' },
+  { id: 'n51', type: 'word', lesson: '2ka', category: 'place', kana: 'たいいくかん', kanji: '体育館', romaji: 'taiikukan', meaning: 'sala gimnastyczna' },
+  { id: 'n52', type: 'word', lesson: '2ka', category: 'number', kana: 'えん', kanji: '円', romaji: 'en', meaning: 'jen' },
+  { id: 'n53', type: 'word', lesson: '2ka', category: 'food', kana: 'パン', romaji: 'pan', meaning: 'chleb / pieczywo' },
+  { id: 'n54', type: 'word', lesson: '2ka', category: 'drink', kana: 'ぎゅうにゅう', kanji: '牛乳', romaji: 'gyuunyuu', meaning: 'mleko krowie' },
+  { id: 'n55', type: 'word', lesson: '2ka', category: 'place', kana: 'がっこう', kanji: '学校', romaji: 'gakkou', meaning: 'szkoła' },
+  { id: 'n56', type: 'word', lesson: '2ka', category: 'home', kana: 'にわ', kanji: '庭', romaji: 'niwa', meaning: 'ogród' },
+  { id: 'n57', type: 'word', lesson: '2ka', category: 'place', kana: 'たてもの', kanji: '建物', romaji: 'tatemono', meaning: 'budynek' },
+  { id: 'n58', type: 'word', lesson: '2ka', category: 'place', kana: 'びょういん', kanji: '病院', romaji: 'byouin', meaning: 'szpital' },
+  { id: 'n59', type: 'word', lesson: '2ka', category: 'place', kana: 'しょくどう', kanji: '食堂', romaji: 'shokudou', meaning: 'stołówka' },
+  { id: 'n60', type: 'word', lesson: '2ka', category: 'place', kana: 'りょう', kanji: '寮', romaji: 'ryou', meaning: 'akademik' },
+  { id: 'n61', type: 'word', lesson: '2ka', category: 'place', kana: 'きょうしつ', kanji: '教室', romaji: 'kyoushitsu', meaning: 'sala lekcyjna' },
+  { id: 'n62', type: 'word', lesson: '2ka', category: 'school', kana: 'クラス', romaji: 'kurasu', meaning: 'klasa / rocznik' },
+  { id: 'n63', type: 'word', lesson: '2ka', category: 'time', kana: '～じ', kanji: '～時', romaji: '~ji', meaning: 'godzina (np. 1:00)' },
+  { id: 'n64', type: 'word', lesson: '2ka', category: 'time', kana: '～ふん', kanji: '～分', romaji: '~fun', meaning: 'minuta (np. 5 minut)' },
+
+  { id: 'p01', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
+  { id: 'p02', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
+  { id: 'p03', type: 'phrase', lesson: '0', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
+  { id: 'p04', type: 'phrase', lesson: '0', category: 'school', kana: 'ほんを よんでください', romaji: 'hon o yonde kudasai', meaning: 'proszę przeczytać książkę' },
+  { id: 'p05', type: 'phrase', lesson: '0', category: 'school', kana: 'きょうかしょを だしてください', romaji: 'kyoukasho o dashite kudasai', meaning: 'proszę wyjąć / przygotować podręcznik' },
+  { id: 'p06', type: 'phrase', lesson: '0', category: 'school', kana: 'しゅくだいを だしてください', romaji: 'shukudai o dashite kudasai', meaning: 'proszę oddać pracę domową' },
+
+  // Słówka 2か (Lekcja 2 z Shokyū Nihongo — i-przymiotniki)
+  { id: 'a01', type: 'adjective', lesson: '2ka', kana: 'あたらしい', kanji: '新しい', romaji: 'atarashii', meaning: 'nowy' },
+  { id: 'a02', type: 'adjective', lesson: '2ka', kana: 'ふるい', kanji: '古い', romaji: 'furui', meaning: 'stary' },
+  { id: 'a03', type: 'adjective', lesson: '2ka', kana: 'たかい', kanji: '高い', romaji: 'takai', meaning: 'wysoki / drogi' },
+  { id: 'a04', type: 'adjective', lesson: '2ka', kana: 'ひくい', kanji: '低い', romaji: 'hikui', meaning: 'niski' },
+  { id: 'a05', type: 'adjective', lesson: '2ka', kana: 'やすい', kanji: '安い', romaji: 'yasui', meaning: 'tani' },
+  { id: 'a06', type: 'adjective', lesson: '2ka', kana: 'おおきい', kanji: '大きい', romaji: 'ookii', meaning: 'duży' },
+  { id: 'a07', type: 'adjective', lesson: '2ka', kana: 'ちいさい', kanji: '小さい', romaji: 'chiisai', meaning: 'mały' },
+  { id: 'a08', type: 'adjective', lesson: '2ka', kana: 'あかるい', kanji: '明るい', romaji: 'akarui', meaning: 'jasny' },
+  { id: 'a09', type: 'adjective', lesson: '2ka', kana: 'くらい', kanji: '暗い', romaji: 'kurai', meaning: 'ciemny' },
+  { id: 'a10', type: 'adjective', lesson: '2ka', kana: 'しろい', kanji: '白い', romaji: 'shiroi', meaning: 'biały' },
+  { id: 'a11', type: 'adjective', lesson: '2ka', kana: 'くろい', kanji: '黒い', romaji: 'kuroi', meaning: 'czarny' },
+  { id: 'a12', type: 'adjective', lesson: '2ka', kana: 'あかい', kanji: '赤い', romaji: 'akai', meaning: 'czerwony' },
+  { id: 'a13', type: 'adjective', lesson: '2ka', kana: 'あおい', kanji: '青い', romaji: 'aoi', meaning: 'niebieski' },
+  { id: 'a14', type: 'adjective', lesson: '2ka', kana: 'きいろい', kanji: '黄色い', romaji: 'kiiroi', meaning: 'żółty' }
 ];
 
 /*
@@ -768,12 +845,13 @@ const VOCAB_ITEMS = [
 
    Identyfikator `v01-verb` jest stabilny i addytywny: `hiragana-vocab`
    kluczuje rekordy po id, więc nowy materiał nie wymaga migracji ani
-   podbicia `VOCAB_VERSION`. Rzeczowniki (`word`), zwroty (`phrase`) oraz
-   wzorce (`pattern`) są osobnymi typami, ale wszystkie należą do materiału
-   do nauki i dostają własny rekord postępu.
+   podbicia `VOCAB_VERSION`. Rzeczowniki (`word`), przymiotniki (`adjective`),
+   zwroty (`phrase`) oraz wzorce (`pattern`) są osobnymi typami, ale wszystkie
+   należą do materiału do nauki i dostają własny rekord postępu.
 */
 const VOCAB_CARDS = VOCAB_ITEMS.filter(item => item.type === 'card');
 const VOCAB_WORDS = VOCAB_ITEMS.filter(item => item.type === 'word');
+const VOCAB_ADJECTIVES = VOCAB_ITEMS.filter(item => item.type === 'adjective');
 const VOCAB_PHRASES = VOCAB_ITEMS.filter(item => item.type === 'phrase');
 const VOCAB_PATTERNS = VOCAB_ITEMS.filter(item => item.type === 'pattern');
 const VOCAB_EXTRA_VERBS = VOCAB_ITEMS.filter(item => item.type === 'verb');
@@ -785,14 +863,22 @@ const VOCAB_VERB_ITEMS = [
     kana: item.verb,
     romaji: item.verbRomaji,
     meaning: item.verbMeaning,
-    source: item.id
+    source: item.id,
+    lesson: item.lesson || '0'
   })),
   ...VOCAB_EXTRA_VERBS
 ];
 
 const VOCAB_PHRASE_ITEMS = [...VOCAB_PHRASES, ...VOCAB_PATTERNS];
 
-const VOCAB_LEARN_ITEMS = [...VOCAB_CARDS, ...VOCAB_VERB_ITEMS, ...VOCAB_WORDS, ...VOCAB_PHRASES, ...VOCAB_PATTERNS];
+const VOCAB_LEARN_ITEMS = [
+  ...VOCAB_CARDS,
+  ...VOCAB_VERB_ITEMS,
+  ...VOCAB_WORDS,
+  ...VOCAB_ADJECTIVES,
+  ...VOCAB_PHRASES,
+  ...VOCAB_PATTERNS
+];
 
 /* =========================================================
    DANE: KANJI (T18)
@@ -3124,7 +3210,7 @@ const VOCAB_MODES = ['learn', 'test'];
 const VOCAB_ORDERS = ['smart', 'shuffle'];
 const VOCAB_LIMITS = [0, 10, 20];
 const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
-const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'phrases', 'all'];
+const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'];
 
 const VOCAB_MODE_LABELS = {
   learn: 'Nauka',
@@ -3145,8 +3231,18 @@ const VOCAB_SCOPE_LABELS = {
   cards: 'Polecenia',
   verbs: 'Czasowniki',
   words: 'Rzeczowniki',
+  adjectives: 'Przymiotniki',
   phrases: 'Zwroty',
   all: 'Wszystko'
+};
+
+const VOCAB_LESSONS = ['all', '0', '1ka', '2ka'];
+
+const VOCAB_LESSON_LABELS = {
+  all: 'Wszystkie',
+  0: 'Klasa',
+  '1ka': '1か (Lekcja 1)',
+  '2ka': '2か (Lekcja 2)'
 };
 
 const VOCAB_LIMIT_LABELS = {
@@ -3162,24 +3258,33 @@ const vocabSetup = {
   mode: 'learn',
   direction: 'kana-meaning',
   scope: 'all',
+  lesson: 'all',
   category: CATEGORY_ALL,
   order: 'smart',
   limit: 0
 };
 
-/* Zbiór pojedynczego zakresu (typu) — bez filtra kategorii. */
+/* Zbiór pojedynczego zakresu (typu) — bez filtra kategorii i lekcji. */
 function vocabScopePool(scope) {
   if (scope === 'cards') return VOCAB_CARDS;
   if (scope === 'verbs') return VOCAB_VERB_ITEMS;
   if (scope === 'words') return VOCAB_WORDS;
+  if (scope === 'adjectives') return VOCAB_ADJECTIVES;
   if (scope === 'phrases') return VOCAB_PHRASE_ITEMS;
   return VOCAB_LEARN_ITEMS;
 }
 
-/* Temat zawęża zestaw do nauki. Rozpraszacze nadal biorą się z całej
-   puli typu, bo wąski temat nie może ograniczać czterech odpowiedzi. */
-function vocabPool(scope, category = CATEGORY_ALL) {
-  return filterByCategory(vocabScopePool(scope), category);
+function filterByLesson(items, lesson = 'all') {
+  if (!lesson || lesson === 'all') return items;
+  return items.filter(item => (item.lesson || '0') === lesson);
+}
+
+/* Temat i lekcja zawężają zestaw do nauki. Rozpraszacze nadal biorą się z całej
+   puli typu, bo wąski temat lub lekcja nie mogą ograniczać czterech odpowiedzi. */
+function vocabPool(scope, category = CATEGORY_ALL, lesson = vocabSetup?.lesson || 'all') {
+  const scopeItems = vocabScopePool(scope);
+  const lessonItems = filterByLesson(scopeItems, lesson);
+  return filterByCategory(lessonItems, category);
 }
 
 function renderVocabTopics() {
@@ -3388,13 +3493,13 @@ function vocabItem(cardId) {
 
 /* Limit jest tylko skróceniem wybranego zakresu — nigdy nie powiększa go
    ponad liczbę dostępnych kart. */
-function vocabCardCount(scope, category, limit) {
-  const total = vocabPool(scope, category).length;
+function vocabCardCount(scope, category, limit, lesson = vocabSetup?.lesson || 'all') {
+  const total = vocabPool(scope, category, lesson).length;
   return limit > 0 ? Math.min(limit, total) : total;
 }
 
-function vocabSessionOrder(scope, category, { order = 'smart', limit = 0 } = {}) {
-  let entries = vocabPool(scope, category).map((item, index) => ({
+function vocabSessionOrder(scope, category, { order = 'smart', limit = 0, lesson = vocabSetup?.lesson || 'all' } = {}) {
+  let entries = vocabPool(scope, category, lesson).map((item, index) => ({
     id: item.id,
     index: index,
     stat: vocabStat(item.id)
@@ -3406,7 +3511,7 @@ function vocabSessionOrder(scope, category, { order = 'smart', limit = 0 } = {})
     entries.sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index);
   }
 
-  const count = vocabCardCount(scope, category, limit);
+  const count = vocabCardCount(scope, category, limit, lesson);
   return entries.slice(0, count).map(entry => entry.id);
 }
 
@@ -3423,10 +3528,12 @@ function vocabOptions(item, direction) {
       ? 'verbs'
       : item.type === 'word'
         ? 'words'
-        : item.type === 'phrase' || item.type === 'pattern'
-          ? 'phrases'
-          : 'cards';
-  const pool = vocabPool(poolScope);
+        : item.type === 'adjective'
+          ? 'adjectives'
+          : item.type === 'phrase' || item.type === 'pattern'
+            ? 'phrases'
+            : 'cards';
+  const pool = vocabPool(poolScope, CATEGORY_ALL, 'all');
   const chosen = new Set([item[field]]);
   const distractors = [];
 
@@ -3443,18 +3550,20 @@ function vocabOptions(item, direction) {
 function startVocabSession({
   ids = null,
   scope = vocabSetup.scope,
+  lesson = vocabSetup.lesson || 'all',
   category = vocabSetup.category,
   mode = vocabSetup.mode,
   direction = vocabSetup.direction,
   order = vocabSetup.order,
   limit = vocabSetup.limit
 } = {}) {
-  const sessionOrder = ids ? [...ids] : vocabSessionOrder(scope, category, { order, limit });
+  const sessionOrder = ids ? [...ids] : vocabSessionOrder(scope, category, { order, limit, lesson });
 
   state.vocab = {
     mode,
     direction,
     scope,
+    lesson,
     category,
     order: sessionOrder,
     limit,
@@ -3563,6 +3672,10 @@ function vocabAnswerDetailsHTML(item) {
     }
   }
 
+  if (item.kanji && item.type !== 'card') {
+    detail += `<div class="flash-meta vocab-kanji-meta">Kanji: <b>${item.kanji}</b></div>`;
+  }
+
   const variant = item.alt ? `<div class="flash-meta">Wariant: <b>${item.alt}</b> (${item.altRomaji})</div>` : '';
   return `${detail}${variant}`;
 }
@@ -3594,9 +3707,9 @@ function vocabLearnAnswerHTML(item, asksKana) {
 /* Ekran wyboru: tryb, kierunek, zakres, kolejność i długość sesji. Wszystkie
    decyzje są sesyjne, więc nie ruszają formatu `hiragana-vocab`. */
 function renderVocabSetup() {
-  const { mode, direction, scope, category, order, limit } = vocabSetup;
-  const pool = vocabPool(scope, category);
-  const count = vocabCardCount(scope, category, limit);
+  const { mode, direction, scope, lesson = 'all', category, order, limit } = vocabSetup;
+  const pool = vocabPool(scope, category, lesson);
+  const count = vocabCardCount(scope, category, limit, lesson);
   const attempts = pool.reduce((sum, item) => sum + vocabStat(item.id).seen, 0);
   const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
   const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
@@ -3648,9 +3761,9 @@ function renderVocabSetup() {
           </div>
         </div>
 
-        <button class="btn btn-primary vocab-start" id="vocabStart">
+        <button class="btn btn-primary vocab-start" id="vocabStart" ${count === 0 ? 'disabled' : ''}>
           ${icon(mode === 'learn' ? 'learn' : 'quiz')}
-          ${mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test'} · ${count} kart
+          ${count === 0 ? 'Brak kart w wybranym filtrze' : (mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test') + ' · ' + count + ' ' + (count === 1 ? 'karta' : count > 1 && count < 5 ? 'karty' : 'kart')}
         </button>
       </div>
 
@@ -3672,6 +3785,21 @@ function renderVocabSetup() {
         <div class="card vocab-setup-panel">
           <div class="vocab-setup-group">
             <div class="vocab-group-header">
+              <span class="settings-label" id="vocabLessonLabel">${icon('book')} Lekcja</span>
+              <small class="vocab-group-desc">Wybierz zakres materiału</small>
+            </div>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabLessonLabel">
+              ${VOCAB_LESSONS.map(
+                id => `
+                <button class="vocab-pill ${id === lesson ? 'active' : ''}" data-vocab-lesson="${id}" data-focus-key="vocab-lesson-${id}" aria-pressed="${id === lesson}">
+                  <span>${VOCAB_LESSON_LABELS[id]}</span> <span class="vocab-pill-count">${vocabPool(scope, category, id).length}</span>
+                </button>`
+              ).join('')}
+            </div>
+          </div>
+
+          <div class="vocab-setup-group">
+            <div class="vocab-group-header">
               <span class="settings-label" id="vocabScopeLabel">${icon('list')} Zakres materiału</span>
               <small class="vocab-group-desc">Wybierz grupę słówek do ćwiczenia</small>
             </div>
@@ -3679,24 +3807,24 @@ function renderVocabSetup() {
               ${VOCAB_SCOPES.map(
                 id => `
                 <button class="vocab-pill ${id === scope ? 'active' : ''}" data-vocab-scope="${id}" data-focus-key="vocab-scope-${id}" aria-pressed="${id === scope}">
-                  <span>${VOCAB_SCOPE_LABELS[id]}</span> <span class="vocab-pill-count">${vocabPool(id).length}</span>
+                  <span>${VOCAB_SCOPE_LABELS[id]}</span> <span class="vocab-pill-count">${vocabPool(id, category, lesson).length}</span>
                 </button>`
               ).join('')}
             </div>
           </div>
 
-            <div class="vocab-setup-group vocab-topics-promo">
-              <button class="vocab-topics-tile" id="vocabTopicsBtn" data-focus-key="vocab-topics" type="button">
-                <div class="vocab-topics-tile-left">
-                  <span class="vocab-topics-tile-icon" aria-hidden="true">${icon('folder')}</span>
-                  <div class="vocab-topics-tile-body">
-                    <strong>Wybierz temat</strong>
-                    <small>Karty tematyczne: szkoła, jedzenie, transport...</small>
-                  </div>
+          <div class="vocab-setup-group vocab-topics-promo">
+            <button class="vocab-topics-tile" id="vocabTopicsBtn" data-focus-key="vocab-topics" type="button">
+              <div class="vocab-topics-tile-left">
+                <span class="vocab-topics-tile-icon" aria-hidden="true">${icon('folder')}</span>
+                <div class="vocab-topics-tile-body">
+                  <strong>Wybierz temat</strong>
+                  <small>Karty tematyczne: szkoła, jedzenie, transport...</small>
                 </div>
-                <span class="vocab-topics-tile-arrow" aria-hidden="true">${icon('chevron-right')}</span>
-              </button>
-            </div>
+              </div>
+              <span class="vocab-topics-tile-arrow" aria-hidden="true">${icon('chevron-right')}</span>
+            </button>
+          </div>
         </div>
 
         <div class="card vocab-setup-panel">
@@ -3763,6 +3891,10 @@ function renderVocabSetup() {
   document.querySelectorAll('[data-vocab-direction]').forEach(button => {
     button.onclick = () =>
       rerender('direction', button.dataset.vocabDirection, 'vocab-direction-' + button.dataset.vocabDirection);
+  });
+
+  document.querySelectorAll('[data-vocab-lesson]').forEach(button => {
+    button.onclick = () => rerender('lesson', button.dataset.vocabLesson, 'vocab-lesson-' + button.dataset.vocabLesson);
   });
 
   document.querySelectorAll('[data-vocab-scope]').forEach(button => {
@@ -3845,6 +3977,7 @@ function renderVocab() {
       startVocabSession({
         ids: session.sessionOrder || session.order,
         scope: session.scope,
+        lesson: session.lesson,
         category: session.category,
         mode: session.mode,
         direction: session.direction,
@@ -3856,7 +3989,15 @@ function renderVocab() {
     if (retry) {
       retry.onclick = () => {
         Audio.click();
-        startVocabSession({ ids: session.wrongIds });
+        startVocabSession({
+          ids: session.wrongIds,
+          scope: session.scope,
+          lesson: session.lesson,
+          category: session.category,
+          mode: session.mode,
+          direction: session.direction,
+          limit: session.limit
+        });
       };
     }
 
@@ -3913,7 +4054,7 @@ function renderVocab() {
           </div>
 
           <div class="vocab-learn-card">
-            <span class="vocab-card-watermark" aria-hidden="true">${item.kana ? item.kana.charAt(0) : '語'}</span>
+            <span class="vocab-card-watermark" aria-hidden="true">${item.kanji ? item.kanji.charAt(0) : item.kana ? item.kana.charAt(0) : '語'}</span>
             <div class="vocab-learn-side">${sideLabel}</div>
             <div class="${frontClass} vocab-learn-front">${front}</div>
             ${

@@ -1568,23 +1568,26 @@
     const kanaOnly = /^[ぁ-んァ-ヶー～（）。\s]+$/;
 
     const words = items.filter(item => item.type === 'word');
+    const adjectives = items.filter(item => item.type === 'adjective');
     const phrases = items.filter(item => item.type === 'phrase');
     const extraVerbs = items.filter(item => item.type === 'verb');
 
     ok(
-      'VO1 jest 20 poleceń, 2 wzorce, 7 rzeczowników, 6 zwrotów i 2 czasowniki',
+      'VO1 jest 20 poleceń, 2 wzorce, 64 rzeczowniki, 14 przymiotników, 6 zwrotów i 2 czasowniki',
       cards.length === 20 &&
         patterns.length === 2 &&
-        words.length === 7 &&
+        words.length === 64 &&
+        adjectives.length === 14 &&
         phrases.length === 6 &&
         extraVerbs.length === 2,
-      [cards.length, patterns.length, words.length, phrases.length, extraVerbs.length].join(' / ')
+      [cards.length, patterns.length, words.length, adjectives.length, phrases.length, extraVerbs.length].join(' / ')
     );
 
     const expectedIds = [
       ...Array.from({ length: 24 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 7 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 6 }, (_, index) => 'p' + String(index + 1).padStart(2, '0'))
+      ...Array.from({ length: 64 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 6 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 14 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
     ].join(',');
     ok(
       'VO2 identyfikatory są stabilne i uporządkowane',
@@ -1655,8 +1658,8 @@
     );
 
     ok(
-      'VO9 wszystkie 57 kart nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 57 &&
+      'VO9 wszystkie 128 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 128 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1683,9 +1686,10 @@
       vocabCard('v01-verb')?.type === 'verb' &&
         vocabCard('v21')?.type === 'pattern' &&
         vocabCard('n01')?.type === 'word' &&
+        vocabCard('a01')?.type === 'adjective' &&
         vocabCard('p01')?.type === 'phrase' &&
         vocabCard('v99') === null,
-      String(vocabCard('v21'))
+      String(vocabCard('a01')?.type)
     );
 
     /*
@@ -1709,7 +1713,8 @@
       'VO13 kategoria jest tylko tematem rzeczownika i zwrotu',
       categorised.every(item => item.type === 'word' || item.type === 'phrase') &&
         VOCAB_CARDS.every(card => !card.category) &&
-        VOCAB_VERB_ITEMS.every(verb => !verb.category),
+        VOCAB_VERB_ITEMS.every(verb => !verb.category) &&
+        VOCAB_ADJECTIVES.every(adj => !adj.category),
       categorised.map(item => item.id + ':' + item.type).join(',')
     );
 
@@ -1728,12 +1733,35 @@
 
     ok(
       'VO15 filtr kategorii zwęża zakres, a suma kategorii daje jego wielkość',
-      vocabPool('words', 'school').length === 5 &&
-        vocabPool('words', 'people').length === 1 &&
+      vocabPool('words', 'school').length === 16 &&
+        vocabPool('words', 'people').length === 4 &&
         vocabPool('words', CATEGORY_NONE).length === 1 &&
-        vocabPool('words').length === 7 &&
+        vocabPool('words').length === 64 &&
         vocabPool('words', 'school').every(item => item.category === 'school'),
       ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
+    );
+
+    const adjCard = vocabCard('a01');
+    const adjOpts = vocabOptions(adjCard, 'meaning-kana');
+    ok(
+      'VO16 opcje przymiotnika w quizie to wyłącznie inne przymiotniki',
+      adjOpts.length === 4 &&
+        adjOpts.includes(adjCard.kana) &&
+        adjOpts.every(kana => VOCAB_ADJECTIVES.some(adj => adj.kana === kana)),
+      adjOpts.join(' | ')
+    );
+
+    const l1Words = vocabPool('words', CATEGORY_ALL, '1ka');
+    const l2Words = vocabPool('words', CATEGORY_ALL, '2ka');
+    const l2Adj = vocabPool('adjectives', CATEGORY_ALL, '2ka');
+    ok(
+      'VO17 filtr lekcji poprawnie izoluje zasoby 1か i 2か',
+      l1Words.length === 32 &&
+        l2Words.length === 26 &&
+        l2Adj.length === 14 &&
+        l1Words.every(item => item.lesson === '1ka') &&
+        l2Words.every(item => item.lesson === '2ka'),
+      'L1=' + l1Words.length + ' L2=' + l2Words.length + ' Adj=' + l2Adj.length
     );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
@@ -1770,14 +1798,14 @@
     renderVocabTopics();
     ok(
       'T19 topic folder follows selected scope',
-      document.querySelectorAll('.vocab-topics-card').length === 3 &&
+      document.querySelectorAll('.vocab-topics-card').length === 11 &&
         document.querySelector('.vocab-lead').textContent.includes('Rzeczowniki') &&
         vocabTopicNav.scope === 'words',
       'cards=' + document.querySelectorAll('.vocab-topics-card').length
     );
     ok(
       'T19 topic folder renders scope pills',
-      document.querySelectorAll('[data-vocab-topic-scope]').length === 5 &&
+      document.querySelectorAll('[data-vocab-topic-scope]').length === 6 &&
         document.querySelector('[data-vocab-topic-scope="words"]').classList.contains('active'),
       'pills=' + document.querySelectorAll('[data-vocab-topic-scope]').length
     );

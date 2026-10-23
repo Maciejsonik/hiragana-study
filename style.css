@@ -2930,6 +2930,21 @@ body.focus-mode .app-shell {
   line-height: 1.5;
 }
 
+.vocab-learn-answer .vocab-kanji-meta,
+.vocab-reveal .vocab-kanji-meta {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 8%, var(--soft));
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line));
+}
+
+.vocab-kanji-meta b {
+  font-family: var(--font-japanese, inherit);
+  font-size: 1.15em;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
 .vocab-grade-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

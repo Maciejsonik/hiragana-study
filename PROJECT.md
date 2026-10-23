@@ -1901,17 +1901,18 @@ Vocabulary should eventually connect naturally with kanji and grammar.
 
 ### Status: data layer, progress store and flashcards shipped
 
-`VOCAB_ITEMS` in `app.js` holds the 37 items of the class worksheet
-"きょうしつで つかう ことば" (1): 20 request expressions, two sentence
+`VOCAB_ITEMS` in `app.js` holds 108 items: the 37 items of the class worksheet
+"きょうしつで つかう ことば" (20 request expressions, two sentence
 patterns, seven nouns, six noun + `を` + verb phrases, and two extra verbs
-(あけます, しめます) that have no separate request expression. Every item
-carries a stable `id` (`v01`–`v24`, `n01`–`n07`, `p01`–`p06`).
+`v23`, `v24`), plus the expansion from *Shokyu Nihongo* Lesson 1 (1か) and
+Lesson 2 (2か): 57 additional nouns (`n08`–`n64`) and 14 i-adjectives (`a01`–`a14`).
+Every item carries a stable `id` (`v01`–`v24`, `n01`–`n64`, `p01`–`p06`, `a01`–`a14`).
 
-Meanings are **Polish**; the source worksheet glosses in English, so the table
+Meanings are **Polish**; the source worksheet and textbook gloss in English/Japanese, so the table
 is a translation, not a copy. Romaji follows `scriptData` and carries no
-macrons (`mou`, `renshuu`, `kyoukasho`, `poorandogo`), even though the
-worksheet's pronunciation notes use `ō`, `ū` and `kyō`. The long-vowel table
-itself is a reading rule, not a vocabulary item, so it is not a card.
+macrons (`mou`, `renshuu`, `kyoukasho`, `poorandogo`, `oishii`, `chiisai`), even though traditional
+pronunciation notes use `ō`, `ū` and `kyō`. Items also carry optional `kanji` strings (e.g. `学生`, `本`, `先生`)
+which are displayed as supplementary reading hints during flashcard reveal and answer details.
 
 Covered by VO1–VO7 in `tests.js`: per-type counts, stable id sequence,
 required fields, kana fields free of Latin text, romaji free of macrons,
@@ -1934,15 +1935,15 @@ at once, so the two cannot drift apart. Ids are additive and stable
 migration and no `VOCAB_VERSION` bump. The two verbs without a request
 expression (`v23`, `v24`) are explicit `type: 'verb'` entries.
 
-`VOCAB_LEARN_ITEMS` is the 57-card list: 20 expressions, 22 verbs, 7 nouns,
-6 phrases and 2 patterns. `vocabCard()` accepts every one of those types, so
-`recordVocabAnswer('v01-verb', …)`, `recordVocabAnswer('n01', …)` and
+`VOCAB_LEARN_ITEMS` is the 128-card list: 20 expressions, 22 verbs, 64 nouns,
+14 adjectives, 6 phrases and 2 patterns. `vocabCard()` accepts every one of those types, so
+`recordVocabAnswer('v01-verb', …)`, `recordVocabAnswer('n01', …)`, `recordVocabAnswer('a01', …)` and
 `recordVocabAnswer('v21', …)` create real records, while an unknown id such as
 `v99` still returns `null`.
 
 Covered by VO8–VO11: 20 derived cards plus two explicit verbs, the
-`<id>-verb` / `source` link, 57 unique kana, the fields copied from the source
-card, and `vocabCard()` accepting all five material types while rejecting an
+`<id>-verb` / `source` link, 128 unique kana, the fields copied from the source
+card, and `vocabCard()` accepting all material types while rejecting an
 unknown id.
 
 Nothing has verified the translations against a Polish teacher; they are my
@@ -1998,8 +1999,9 @@ stored preference):
 ```text
 Tryb      Nauka (default) | Test
 Kierunek  Japoński → znaczenie | Znaczenie → japoński
-Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (7)
-          Zwroty (8) | Wszystko (57, default)
+Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (64)
+          Przymiotniki (14) | Zwroty (8) | Wszystko (128, default)
+Lekcja    Wszystkie (default) | Klasa | 1か | 2か
 Tematy    osobny folder tematów, w tym Bez kategorii
 Kolejność Inteligentna (default) | Losowa
 Liczba    Wszystkie (default) | 10 | 20
@@ -2022,7 +2024,7 @@ The setup is styled as an elevated dashboard hub (`.vocab-hub`): a top hero
 module with a Japanese calligraphy watermark (`語`), integrated summary metrics
 (effective card count, started cards, accuracy) and the primary session start
 CTA, followed by tactile mode switcher cards (`Nauka` / `Test`) and two modular
-configuration panels (scope + topics catalog drawer tile, and direction +
+configuration panels (scope + lesson pills + topics catalog drawer tile, and direction +
 ordering/limit options). "Nauka" opens a flashcard with one side
 visible; "Pokaż odpowiedź" (Space/Enter) reveals the other side, romaji and the
 related card, and the learner grades themselves with "Nie wiedziałem" (1) or
@@ -2032,7 +2034,7 @@ błędne" when anything was missed, "Jeszcze raz" for the same setup, and "Nowy
 zestaw" back to setup. There is no separate "Wróć do menu" button: the top-bar
 home action ends the session and clears the active vocabulary state. Flashcards
 feature 3D layered card surfaces (`.vocab-learn-card`) with an atmospheric
-calligraphy watermark glyph, a peek placeholder with icon and memory prompt,
+calligraphy watermark glyph (kanji initial character when present, else kana initial), a peek placeholder with icon and memory prompt,
 tactile self-grading cards with mechanical keyboard keycaps (`.key-hint`),
 and a dual-counter score pill (`.session-score-badge`).
 
@@ -2040,13 +2042,13 @@ In a test, the first direction shows the expression in kana and four Polish
 meanings; the second shows the Polish meaning as a sentence and four kana
 expressions, so the kana must be recognized in the other direction rather than
 only distinguished. After the answer the options lock, the correct one is
-marked, and a `.flashcard` reveal adds romaji, the meaning and the related card:
-the source verb for an expression, the source expression for a verb. Nouns and
+marked, and a `.flashcard` reveal adds romaji, the meaning, optional kanji form (`.vocab-kanji-meta`), and the related card:
+the source verb for an expression, the source expression for a verb. Nouns, adjectives, and
 phrases show their own meaning/readings; patterns also list their answer forms.
 
 Distractors come from the **same type** as the question: infinitives
 („słuchać") never sit next to request forms („proszę słuchać"), nouns stay
-with nouns, and phrases with phrases, because those differ by grammar, not by
+with nouns, adjectives stay strictly with adjectives (`VOCAB_ADJECTIVES`), and phrases with phrases, because those differ by grammar, not by
 meaning. The default order is deterministic and derived from the store:
 untouched cards first, then the lowest accuracy, ties broken by table order.
 "Losowa" replaces it with a shuffle; "10/20" truncates the selected scope
@@ -2484,10 +2486,9 @@ Advanced audio / lo-fi: NOT implemented
 ```text
 UI modernization — phase 4: Kana hub — COMPLETE
 Visual polish — calm Japanese learning app layer — IN PROGRESS
-Vocabulary topic axis (layer 4) — COMPLETE
-T19 Vocabulary (data, progress, flashcards, topics) — SHIPPED
-Next planned: T19 UX cleanup and scope/topic integration; continue shared
-visual language across new modules
+Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
+T19 Vocabulary (data, progress, flashcards, topics, lessons) — SHIPPED
+Next planned: Continue shared visual language across new modules; grammar (T20) or practice goals (T22)
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2500,12 +2501,14 @@ The remaining UI phases are the list/detail components and Settings.
 Vocabulary, grammar and kanji plug into those archetypes instead of inventing
 their own screens.
 
-The vocabulary module now includes its **topic axis** (layer 4): a closed,
-module-independent taxonomy, a dedicated scope-aware topic folder with detail
-views, progress summaries and an explicit "Bez kategorii" bucket, plus the
-extension contract for T18 and T20 (§"Topic categories (layer 4)").
+The vocabulary module now includes its **topic axis** (layer 4) and **lesson axis**:
+a closed, module-independent taxonomy, a dedicated scope-aware topic folder with detail
+views, progress summaries and an explicit "Bez kategorii" bucket, plus orthogonal lesson
+filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items, i-adjectives
+were introduced as 14 items with distractor isolation, and kanji writings are surfaced
+on reveals.
 
-**Where the next session picks up.** The T19 UX cleanup is complete:
+**Where the next session picks up.** The T19 vocabulary expansion and UX cleanup are complete:
 the topic folder respects and allows changing the selected scope directly
 via scope pills, topic cards and detail rows show robust counts and
 accuracy metrics, navigation between topics and detail views manages focus
@@ -2525,7 +2528,7 @@ and the polish are shipped (§35).
 ```text
 UI phase 4 (Kana hub) — COMPLETE
 ↓
-T19 Vocabulary (data, progress, flashcards, topics, UX cleanup) — COMPLETE
+T19 Vocabulary (data, progress, flashcards, topics, UX, Lessons 1 & 2 expansion) — COMPLETE
 ↓
 T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPLETE
 ↓
