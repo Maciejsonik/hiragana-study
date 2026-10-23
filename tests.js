@@ -2213,11 +2213,11 @@
     const title = () => document.getElementById('appTitle').textContent;
 
     ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
-    eq('NAV2 trzy pozycje nawigacji', navButtons().length, 3);
+    eq('NAV2 cztery pozycje nawigacji', navButtons().length, 4);
     deepEq(
       'NAV3 etykiety modułów',
       navButtons().map(button => button.querySelector('.app-nav-label').textContent),
-      ['Kana', 'Słownictwo', 'Kanji']
+      ['Pulpit', 'Kana', 'Słownictwo', 'Kanji']
     );
     ok(
       'NAV4 ikony to inline SVG, nie emoji',
@@ -2225,6 +2225,15 @@
         !/\p{Extended_Pictographic}/u.test(nav.textContent),
       nav.textContent.trim()
     );
+
+    /* Pulpit (Dashboard) — dedykowane menu główne */
+    setScreen('dashboard');
+    await sleep(30);
+    eq('DASH1 pulpit jako ekran startowy', state.screen, 'dashboard');
+    eq('DASH2 tytuł pulpitu', title(), 'Pulpit');
+    eq('DASH3 aktywna pozycja nawigacji dla pulpitu', navButton('dashboard').getAttribute('aria-current'), 'page');
+    ok('DASH4 powrót ukryty na pulpicie', homeBtn.classList.contains('is-hidden'));
+    ok('DASH5 obecne karty trzech modułów', document.querySelectorAll('.dashboard-module-card').length === 3);
 
     setScreen('menu');
     await sleep(30);
@@ -2353,7 +2362,7 @@
         frame.style.width = width + 'px';
         await sleep(120);
 
-        for (const screen of ['menu', 'vocab', 'kanji', 'settings']) {
+        for (const screen of ['dashboard', 'menu', 'vocab', 'kanji', 'settings']) {
           win.setScreen(screen);
           await sleep(40);
           const overflow = doc.documentElement.scrollWidth - doc.documentElement.clientWidth;
@@ -2438,7 +2447,11 @@
      T18: KANJI — DANE, MAGAZYN I WIDOKI
      ===================================================== */
   try {
-    ok('KJ1 KANJI_ITEMS zawiera 110 znaków', Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 110, String(KANJI_ITEMS.length));
+    ok(
+      'KJ1 KANJI_ITEMS zawiera 110 znaków',
+      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 110,
+      String(KANJI_ITEMS.length)
+    );
 
     const kanjiIds = new Set(KANJI_ITEMS.map(k => k.id));
     eq('KJ2 unikalne ID znaków k001..k110', kanjiIds.size, 110);
@@ -2459,7 +2472,10 @@
 
     ok(
       'KJ6 każdy znak ma polskie znaczenie i tablice czytań',
-      KANJI_ITEMS.every(k => typeof k.meaning === 'string' && k.meaning.length > 0 && Array.isArray(k.onyomi) && Array.isArray(k.kunyomi))
+      KANJI_ITEMS.every(
+        k =>
+          typeof k.meaning === 'string' && k.meaning.length > 0 && Array.isArray(k.onyomi) && Array.isArray(k.kunyomi)
+      )
     );
 
     ok(

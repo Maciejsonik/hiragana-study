@@ -4900,13 +4900,11 @@ body::before {
   backdrop-filter: blur(16px);
 }
 
-
 @media (prefers-reduced-motion: reduce) {
   body::before {
     display: none;
   }
 }
-
 
 /* =========================================================
    MODUŁ KANJI (T18) — STYLE
@@ -4951,7 +4949,7 @@ body::before {
   right: -15px;
   top: -35px;
   font-size: 160px;
-  font-family: var(--font-japanese, 'Noto Sans JP', sans-serif);
+  font-family: var(--font-japanese, "Noto Sans JP", sans-serif);
   font-weight: 900;
   color: var(--ink);
   opacity: 0.04;
@@ -5055,9 +5053,10 @@ body::before {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform var(--duration-fast) var(--ease-standard),
-              box-shadow var(--duration-fast) var(--ease-standard),
-              border-color var(--duration-fast) var(--ease-standard);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
   cursor: pointer;
 }
 
@@ -5120,7 +5119,10 @@ body::before {
   font-weight: 650;
   cursor: pointer;
   text-align: center;
-  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast),
+    border-color var(--duration-fast);
 }
 
 .kanji-action-btn.accent {
@@ -5191,7 +5193,10 @@ body::before {
   padding: var(--space-3) var(--space-3-5);
   background: color-mix(in srgb, var(--card-solid) 70%, transparent);
   cursor: pointer;
-  transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
+  transition:
+    border-color var(--duration-fast),
+    transform var(--duration-fast),
+    background var(--duration-fast);
 }
 
 .kanji-lesson-card:hover {
@@ -5290,7 +5295,9 @@ body::before {
   font-size: var(--text-xs);
   font-weight: 650;
   cursor: pointer;
-  transition: background var(--duration-fast), border-color var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast);
 }
 
 .kanji-back-btn:hover {
@@ -5421,7 +5428,10 @@ body::before {
   font-weight: 650;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast),
+    border-color var(--duration-fast);
 }
 
 .kanji-pill:hover {
@@ -5460,9 +5470,10 @@ body::before {
   align-items: center;
   text-align: center;
   cursor: pointer;
-  transition: transform var(--duration-fast) var(--ease-standard),
-              box-shadow var(--duration-fast) var(--ease-standard),
-              border-color var(--duration-fast) var(--ease-standard);
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
 .kanji-card:hover {
@@ -6035,7 +6046,9 @@ body::before {
   align-items: center;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
 .kanji-card-front-glyph {
@@ -6309,7 +6322,10 @@ body::before {
   font-weight: 650;
   cursor: pointer;
   text-align: left;
-  transition: transform var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
+  transition:
+    transform var(--duration-fast),
+    border-color var(--duration-fast),
+    background var(--duration-fast);
 }
 
 .kanji-quiz-option-btn:hover:not(:disabled) {
@@ -6494,5 +6510,567 @@ body::before {
   .kanji-summary-actions {
     flex-direction: row;
     justify-content: center;
+  }
+}
+
+/* =========================================================
+   PULPIT GŁÓWNY (DASHBOARD)
+========================================================= */
+
+.dashboard-screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Hero */
+.dashboard-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--card) 95%, var(--accent) 5%), var(--card));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.dashboard-hero-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -25px;
+  font-size: 8rem;
+  font-weight: 900;
+  color: var(--ink);
+  opacity: 0.03;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.dashboard-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+}
+
+.dashboard-eyebrow {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: var(--space-1);
+}
+
+.dashboard-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Activity bar (Streak + Cel dzienny + Powtórki) */
+.dashboard-activity-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-4);
+  box-sizing: border-box;
+}
+
+.dashboard-activity-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-4);
+  box-sizing: border-box;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-activity-badge:hover {
+  border-color: color-mix(in srgb, var(--line) 60%, var(--accent) 40%);
+  transform: translateY(-1px);
+}
+
+.dashboard-activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.dashboard-activity-badge.is-streak .dashboard-activity-icon {
+  background: color-mix(in srgb, #ff9800 15%, transparent);
+  color: #f57c00;
+}
+
+.dashboard-activity-badge.is-goal .dashboard-activity-icon {
+  background: color-mix(in srgb, var(--good) 15%, transparent);
+  color: var(--good);
+}
+
+.dashboard-activity-badge.is-due .dashboard-activity-icon {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.dashboard-activity-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-activity-value {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dashboard-activity-sub {
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.dashboard-activity-badge .dashboard-mini-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--line) 40%, transparent);
+  border-radius: 0;
+  margin: 0;
+}
+
+.dashboard-activity-badge .dashboard-mini-progress-fill {
+  height: 100%;
+  background: var(--good);
+  transition: width 0.3s ease;
+}
+
+/* Smart action card */
+.dashboard-smart-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  box-sizing: border-box;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.dashboard-smart-card.has-due {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--card)), var(--card));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+
+.dashboard-smart-card.all-clear {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--good) 6%, var(--card)), var(--card));
+  border-color: color-mix(in srgb, var(--good) 30%, var(--line));
+}
+
+.dashboard-smart-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3-5);
+  min-width: 0;
+}
+
+.dashboard-smart-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dashboard-smart-card.has-due .dashboard-smart-badge {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.dashboard-smart-card.all-clear .dashboard-smart-badge {
+  background: color-mix(in srgb, var(--good) 15%, transparent);
+  color: var(--good);
+}
+
+.dashboard-smart-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-smart-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.dashboard-smart-desc {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.dashboard-smart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-standard);
+  border: none;
+}
+
+.dashboard-smart-card.has-due .dashboard-smart-btn {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.dashboard-smart-card.has-due .dashboard-smart-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.dashboard-smart-card.all-clear .dashboard-smart-btn {
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.dashboard-smart-card.all-clear .dashboard-smart-btn:hover {
+  background: color-mix(in srgb, var(--card) 90%, var(--good) 10%);
+  border-color: var(--good);
+  color: var(--good);
+}
+
+/* Modules Section */
+.dashboard-modules-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3-5);
+}
+
+.dashboard-modules-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-section-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.dashboard-section-sub {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.dashboard-modules-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 900px) {
+  .dashboard-modules-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Module Card */
+.dashboard-module-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-5);
+  box-sizing: border-box;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.dashboard-module-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--line) 60%, var(--accent) 40%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-module-watermark {
+  position: absolute;
+  right: -8px;
+  bottom: -20px;
+  font-size: 7.5rem;
+  font-weight: 900;
+  color: var(--ink);
+  opacity: 0.035;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.dashboard-module-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-module-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+}
+
+.dashboard-module-icon.kana-icon {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.dashboard-module-icon.vocab-icon {
+  background: color-mix(in srgb, #00897b 12%, transparent);
+  color: #00897b;
+}
+
+.dashboard-module-icon.kanji-icon {
+  background: color-mix(in srgb, #3949ab 12%, transparent);
+  color: #3949ab;
+}
+
+.dashboard-module-headings {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dashboard-module-tag {
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.dashboard-module-name {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-module-desc {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: 1.45;
+  min-height: 2.9em;
+  position: relative;
+  z-index: 1;
+}
+
+/* Metrics in card */
+.dashboard-module-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  background: color-mix(in srgb, var(--card-solid) 80%, var(--line) 20%);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2-5) var(--space-2);
+  margin-bottom: var(--space-3);
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.dashboard-metric-val {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dashboard-metric-lbl {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Progress bar in card */
+.dashboard-progress-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--progress-bg);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-bottom: var(--space-1);
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+.dashboard-module-card[data-module-card="vocab"] .dashboard-progress-bar {
+  background: #00897b;
+}
+
+.dashboard-module-card[data-module-card="kanji"] .dashboard-progress-bar {
+  background: #3949ab;
+}
+
+.dashboard-progress-text {
+  display: block;
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  margin-bottom: var(--space-4);
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+/* Card Actions */
+.dashboard-module-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--duration-fast) var(--ease-standard);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-action-btn.primary {
+  background: var(--card-solid);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.dashboard-action-btn.primary:hover {
+  background: var(--ink);
+  color: var(--card-solid);
+  border-color: var(--ink);
+}
+
+.dashboard-action-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dashboard-chip-btn {
+  flex: 1;
+  min-width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--card) 95%, var(--line) 5%);
+  color: var(--ink);
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.dashboard-chip-btn:hover {
+  background: var(--card-solid);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .dashboard-smart-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+  .dashboard-smart-btn {
+    justify-content: center;
+    width: 100%;
   }
 }

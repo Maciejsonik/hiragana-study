@@ -162,8 +162,6 @@ function getLookalikes() {
   return [...scriptData.hiragana.lookalikes, ...scriptData.katakana.lookalikes];
 }
 
-
-
 /* =========================================================
    USTAWIENIA — jedyne źródło prawdy dla preferencji
 
@@ -1028,7 +1026,6 @@ const KANJI_LESSON_WORDS = [
   { id: 'kw69', lesson: '2ka', kana: 'しょっけん', kanji: '食券', romaji: 'shokken', meaning: 'kupon na jedzenie' }
 ];
 
-
 /* =========================================================
    DŹWIĘK (Web Audio API — bez plików zewnętrznych)
    ========================================================= */
@@ -1097,7 +1094,7 @@ const Audio = (() => {
 ========================================================= */
 
 const state = {
-  screen: 'menu',
+  screen: 'dashboard',
   script: settings.script,
   group: 'a',
   kana: 'あ',
@@ -1194,6 +1191,12 @@ function icon(name, className = 'icon') {
 */
 const NAV_ITEMS = [
   {
+    id: 'dashboard',
+    label: 'Pulpit',
+    screen: 'dashboard',
+    icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>'
+  },
+  {
     id: 'kana',
     label: 'Kana',
     screen: 'menu',
@@ -1214,6 +1217,7 @@ const NAV_ITEMS = [
 ];
 
 const SCREEN_TITLES = {
+  dashboard: 'Pulpit',
   menu: 'Kana',
   learn: 'Nauka',
   exam: 'Egzamin',
@@ -1224,6 +1228,7 @@ const SCREEN_TITLES = {
 };
 
 const MODULE_LABELS = {
+  dashboard: 'KOTO',
   kana: 'KANA',
   vocab: 'SŁOWNICTWO',
   kanji: 'KANJI',
@@ -1233,6 +1238,7 @@ const MODULE_LABELS = {
 /* Ekran → moduł. Ekrany kany (hub, nauka, egzamin, powtórki) dzielą jeden
    moduł, więc nawigacja nie udaje, że są osobnymi miejscami. */
 function screenModule(screen = state.screen) {
+  if (screen === 'dashboard') return 'dashboard';
   if (screen === 'vocab') return 'vocab';
   if (screen === 'kanji') return 'kanji';
   if (screen === 'settings') return 'settings';
@@ -1250,7 +1256,11 @@ function isFocusMode() {
   if (state.screen === 'exam') return !!(state.exam && !state.exam.finished);
   if (state.screen === 'vocab') return !!(state.vocab && !state.vocab.finished);
   if (state.screen === 'kanji') {
-    return !!(state.kanji && (state.kanji.mode === 'flashcard' || state.kanji.mode === 'quiz') && !state.kanji.finished);
+    return !!(
+      state.kanji &&
+      (state.kanji.mode === 'flashcard' || state.kanji.mode === 'quiz') &&
+      !state.kanji.finished
+    );
   }
   return false;
 }
@@ -1359,8 +1369,8 @@ function refreshChrome() {
   document.body.classList.toggle('focus-mode', focus);
 
   if (homeBtn) {
-    homeBtn.classList.toggle('is-hidden', state.screen === 'menu');
-    homeBtn.setAttribute('aria-label', 'Wróć do menu');
+    homeBtn.classList.toggle('is-hidden', state.screen === 'menu' || state.screen === 'dashboard');
+    homeBtn.setAttribute('aria-label', 'Wróć');
   }
 
   const settingsToggle = document.getElementById('settingsToggle');
@@ -2419,22 +2429,38 @@ homeBtn.onclick = () => {
       render();
       return;
     }
-    setScreen('menu');
+    setScreen('dashboard');
     return;
   }
 
   if (state.screen === 'vocab') {
+    const wasActive = !!state.vocab;
     if (!confirmVocabExit()) return;
     stopExam();
     state.vocab = null;
     vocabTopicNav.view = 'setup';
     vocabTopicNav.topic = null;
+    if (wasActive) {
+      setScreen('menu');
+    } else {
+      setScreen('dashboard');
+    }
+    return;
+  }
+
+  if (state.screen === 'menu') {
+    setScreen('dashboard');
+    return;
+  }
+
+  if (state.screen === 'learn' || state.screen === 'exam' || state.screen === 'review') {
+    stopExam();
     setScreen('menu');
     return;
   }
 
   stopExam();
-  setScreen('menu');
+  setScreen('dashboard');
 };
 
 function render() {
@@ -2444,6 +2470,7 @@ function render() {
   applyTheme();
   refreshChrome();
 
+  if (state.screen === 'dashboard') renderDashboard();
   if (state.screen === 'menu') renderMenu();
   if (state.screen === 'learn') renderLearn();
   if (state.screen === 'exam') renderExam();
@@ -2470,6 +2497,398 @@ function stopExam() {
 // więc render() po prostu wraca do ekranu setupu
 function renderExam() {
   showExamSetup();
+}
+
+/* =========================================================
+   PULPIT GŁÓWNY (DASHBOARD)
+   ========================================================= */
+
+function getKanaSummaryStats() {
+  const counts = { mastered: 0, good: 0, learning: 0, hard: 0, new: 0 };
+  const all = getAll();
+  all.forEach(c => {
+    counts[masteryLevel(c.kana)]++;
+  });
+  const seen = counts.mastered + counts.good + counts.learning + counts.hard;
+  const percent = all.length ? Math.round((counts.mastered / all.length) * 100) : 0;
+  return {
+    total: all.length,
+    mastered: counts.mastered,
+    learning: counts.learning + counts.good + counts.hard,
+    seen,
+    due: dueList().length,
+    percent
+  };
+}
+
+function getVocabSummaryStats() {
+  const cards = vocab && vocab.cards ? vocab.cards : {};
+  let seenCount = 0;
+  let masteredCount = 0;
+  for (const entry of Object.values(cards)) {
+    if (entry && entry.seen > 0) {
+      seenCount++;
+      if (entry.correct >= 3 && entry.correct / entry.seen >= 0.8) {
+        masteredCount++;
+      }
+    }
+  }
+  const total = typeof VOCAB_LEARN_ITEMS !== 'undefined' ? VOCAB_LEARN_ITEMS.length : 150;
+  const percent = total ? Math.round((masteredCount / total) * 100) : 0;
+  return {
+    total,
+    seen: seenCount,
+    mastered: masteredCount,
+    percent
+  };
+}
+
+function renderDashboard() {
+  const kana = getKanaSummaryStats();
+  const vocabStats = getVocabSummaryStats();
+  const kanji = getKanjiSummaryStats('all');
+
+  const streaks = dailyStreaks(Date.now());
+  const daily = loadDailyStats();
+  const todayKey = localDayKey(Date.now());
+  const todayRecord = daily.days && daily.days[todayKey] ? daily.days[todayKey] : null;
+  const todayAnswers = todayRecord && Number.isFinite(todayRecord.answers) ? todayRecord.answers : 0;
+  const dailyGoal = 20;
+  const goalPercent = Math.min(100, Math.round((todayAnswers / dailyGoal) * 100));
+
+  const totalDue = kana.due + kanji.due;
+
+  const hour = new Date().getHours();
+  let greeting = 'Dzień dobry';
+  if (hour < 5) greeting = 'Spokojnej nocy';
+  else if (hour >= 18) greeting = 'Dobry wieczór';
+
+  app.innerHTML = `
+    <div class="dashboard-screen animate-fade">
+      <div class="dashboard-hero">
+        <div class="dashboard-hero-watermark" aria-hidden="true">琴</div>
+        <div class="dashboard-hero-content">
+          <span class="dashboard-eyebrow">SYSTEM NAUKI KOTO · JAPOŃSKI OD PODSTAW</span>
+          <h1 class="dashboard-title">${greeting}!</h1>
+          <p class="dashboard-desc">
+            Śledź swoje postępy w trzech filarach nauki: alfabecie Kana, słownictwie tematycznym oraz znakach Kanji.
+          </p>
+
+          <div class="dashboard-activity-bar">
+            <div class="dashboard-activity-badge is-streak">
+              <span class="dashboard-activity-icon">${icon('flame')}</span>
+              <div class="dashboard-activity-info">
+                <span class="dashboard-activity-value">${streaks.current > 0 ? `${streaks.current} dni serii` : 'Zacznij serię!'}</span>
+                <span class="dashboard-activity-sub">${streaks.best > 0 ? `Rekord: ${streaks.best} dni` : 'Ucz się codziennie'}</span>
+              </div>
+            </div>
+
+            <div class="dashboard-activity-badge is-goal">
+              <span class="dashboard-activity-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+                </svg>
+              </span>
+              <div class="dashboard-activity-info">
+                <span class="dashboard-activity-value">${todayAnswers} / ${dailyGoal} ćwiczeń</span>
+                <span class="dashboard-activity-sub">Cel dzienny (${goalPercent}%)</span>
+              </div>
+              <div class="dashboard-mini-progress">
+                <div class="dashboard-mini-progress-fill" style="width: ${goalPercent}%"></div>
+              </div>
+            </div>
+
+            ${
+              totalDue > 0
+                ? `
+              <div class="dashboard-activity-badge is-due">
+                <span class="dashboard-activity-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </span>
+                <div class="dashboard-activity-info">
+                  <span class="dashboard-activity-value">${totalDue} powtórek</span>
+                  <span class="dashboard-activity-sub">Czeka w harmonogramie</span>
+                </div>
+              </div>
+            `
+                : ''
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-smart-card ${totalDue > 0 ? 'has-due' : ''}">
+        <div class="dashboard-smart-info">
+          <span class="dashboard-smart-kicker">${totalDue > 0 ? 'ZALECANA AKCJA NA DZIŚ' : 'TWÓJ KOLEJNY KROK'}</span>
+          <h2 class="dashboard-smart-title">
+            ${totalDue > 0 ? `Powtórki czekają na Ciebie (${totalDue})` : todayAnswers > 0 ? 'Świetna robota, kontynuuj naukę!' : 'Zacznij dzisiejszą sesję nauki'}
+          </h2>
+          <p class="dashboard-smart-desc">
+            ${
+              totalDue > 0
+                ? 'Algorytm SRS wyznaczył elementy wymagające powtórzenia. Utrwal wiedzę przed nauką nowego materiału.'
+                : 'Wybierz dowolny moduł poniżej lub przejdź do nauki znaków Kana, aby utrwalić kolejną partię wiedzy.'
+            }
+          </p>
+        </div>
+        <button class="dashboard-smart-btn" id="btnDashboardSmartAction" type="button">
+          ${totalDue > 0 ? (kana.due > 0 ? 'Powtórz Kanę →' : 'Powtórz Kanji →') : 'Ucz się Kany →'}
+        </button>
+      </div>
+
+      <div class="dashboard-modules-header">
+        <h2 class="dashboard-modules-title">Moduły nauki</h2>
+        <span class="dashboard-modules-hint">Przeglądaj postępy i uruchamiaj tryby</span>
+      </div>
+
+      <div class="dashboard-modules-grid">
+        <!-- MODUŁ 1: KANA -->
+        <div class="dashboard-module-card" data-module-card="kana">
+          <div class="dashboard-module-watermark" aria-hidden="true">あ</div>
+          <div class="dashboard-module-head">
+            <div class="dashboard-module-icon kana-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <path d="M12 6.5C10 4.8 7 4 4 4v14c3 0 6 .8 8 2.5 2-1.7 5-2.5 8-2.5V4c-3 0-6 .8-8 2.5Z"/><path d="M12 6.5v14"/>
+              </svg>
+            </div>
+            <div class="dashboard-module-headings">
+              <span class="dashboard-module-tag">ALFABET</span>
+              <h3 class="dashboard-module-name">Kana (Hiragana & Katakana)</h3>
+            </div>
+          </div>
+
+          <p class="dashboard-module-desc">
+            208 znaków sylabariuszy z interaktywną kolejnością kresek, audio wymowy i egzaminem.
+          </p>
+
+          <div class="dashboard-module-metrics">
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kana.mastered}</span>
+              <span class="dashboard-metric-lbl">Opanowane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kana.learning}</span>
+              <span class="dashboard-metric-lbl">W nauce</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kana.due}</span>
+              <span class="dashboard-metric-lbl">Do powtórki</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kana.total}</span>
+              <span class="dashboard-metric-lbl">Wszystkich</span>
+            </div>
+          </div>
+
+          <div class="dashboard-progress-wrap">
+            <div class="dashboard-progress-bar" style="width: ${kana.percent}%"></div>
+          </div>
+          <span class="dashboard-progress-text">${kana.mastered} z ${kana.total} opanowanych (${kana.percent}%)</span>
+
+          <div class="dashboard-module-actions">
+            <button class="dashboard-action-btn primary" id="btnDashKanaOpen" type="button">
+              Otwórz moduł Kana →
+            </button>
+            <div class="dashboard-action-chips">
+              <button class="dashboard-chip-btn" id="btnDashKanaLearn" type="button">Nauka</button>
+              <button class="dashboard-chip-btn" id="btnDashKanaExam" type="button">Egzamin</button>
+              <button class="dashboard-chip-btn" id="btnDashKanaReview" type="button">Powtórki</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODUŁ 2: SŁOWNICTWO -->
+        <div class="dashboard-module-card" data-module-card="vocab">
+          <div class="dashboard-module-watermark" aria-hidden="true">語</div>
+          <div class="dashboard-module-head">
+            <div class="dashboard-module-icon vocab-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 4h11a2 2 0 0 1 2 2v11"/>
+              </svg>
+            </div>
+            <div class="dashboard-module-headings">
+              <span class="dashboard-module-tag">SŁOWNICTWO</span>
+              <h3 class="dashboard-module-name">Słownictwo (Fiszki i Tematy)</h3>
+            </div>
+          </div>
+
+          <p class="dashboard-module-desc">
+            Kategorie tematyczne: liczebniki, kolory, czasowniki, zwroty codzienne i szkoła.
+          </p>
+
+          <div class="dashboard-module-metrics">
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${vocabStats.mastered}</span>
+              <span class="dashboard-metric-lbl">Opanowane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${vocabStats.seen}</span>
+              <span class="dashboard-metric-lbl">Poznane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">9</span>
+              <span class="dashboard-metric-lbl">Kategorii</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${vocabStats.total}</span>
+              <span class="dashboard-metric-lbl">W bazie</span>
+            </div>
+          </div>
+
+          <div class="dashboard-progress-wrap">
+            <div class="dashboard-progress-bar" style="width: ${vocabStats.percent}%"></div>
+          </div>
+          <span class="dashboard-progress-text">${vocabStats.mastered} z ${vocabStats.total} opanowanych (${vocabStats.percent}%)</span>
+
+          <div class="dashboard-module-actions">
+            <button class="dashboard-action-btn primary" id="btnDashVocabOpen" type="button">
+              Otwórz Słownictwo →
+            </button>
+            <div class="dashboard-action-chips">
+              <button class="dashboard-chip-btn" id="btnDashVocabFlashcards" type="button">Fiszki</button>
+              <button class="dashboard-chip-btn" id="btnDashVocabTopics" type="button">Katalog tematów</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODUŁ 3: KANJI -->
+        <div class="dashboard-module-card" data-module-card="kanji">
+          <div class="dashboard-module-watermark" aria-hidden="true">漢</div>
+          <div class="dashboard-module-head">
+            <div class="dashboard-module-icon kanji-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <path d="M4 7h16M12 7v14M7 12h10M5 18h14"/>
+              </svg>
+            </div>
+            <div class="dashboard-module-headings">
+              <span class="dashboard-module-tag">KANJI</span>
+              <h3 class="dashboard-module-name">Kanji (Shokyū Nihongo & N5)</h3>
+            </div>
+          </div>
+
+          <p class="dashboard-module-desc">
+            110 najważniejszych znaków z animacjami kresek, rysowaniem na canvasie, fiszkami SRS i quizem.
+          </p>
+
+          <div class="dashboard-module-metrics">
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kanji.mastered}</span>
+              <span class="dashboard-metric-lbl">Opanowane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kanji.seen}</span>
+              <span class="dashboard-metric-lbl">Poznane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kanji.due}</span>
+              <span class="dashboard-metric-lbl">Do powtórki</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${kanji.total}</span>
+              <span class="dashboard-metric-lbl">Znaków</span>
+            </div>
+          </div>
+
+          <div class="dashboard-progress-wrap">
+            <div class="dashboard-progress-bar" style="width: ${kanji.total ? Math.round((kanji.seen / kanji.total) * 100) : 0}%"></div>
+          </div>
+          <span class="dashboard-progress-text">${kanji.seen} z ${kanji.total} poznanych (${kanji.total ? Math.round((kanji.seen / kanji.total) * 100) : 0}%)</span>
+
+          <div class="dashboard-module-actions">
+            <button class="dashboard-action-btn primary" id="btnDashKanjiOpen" type="button">
+              Otwórz moduł Kanji →
+            </button>
+            <div class="dashboard-action-chips">
+              <button class="dashboard-chip-btn" id="btnDashKanjiCatalog" type="button">Katalog</button>
+              <button class="dashboard-chip-btn" id="btnDashKanjiFlashcards" type="button">Fiszki SRS</button>
+              <button class="dashboard-chip-btn" id="btnDashKanjiQuiz" type="button">Quiz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Handlery przycisków
+  const btnSmart = document.getElementById('btnDashboardSmartAction');
+  if (btnSmart) {
+    btnSmart.onclick = () => {
+      Audio.click();
+      if (totalDue > 0) {
+        if (kana.due > 0) setScreen('review');
+        else {
+          startKanjiSession({ mode: 'flashcard' });
+          setScreen('kanji');
+        }
+      } else {
+        setScreen('learn');
+      }
+    };
+  }
+
+  // Kana actions
+  document.getElementById('btnDashKanaOpen').onclick = () => {
+    Audio.click();
+    setScreen('menu');
+  };
+  document.getElementById('btnDashKanaLearn').onclick = () => {
+    Audio.click();
+    setScreen('learn');
+  };
+  document.getElementById('btnDashKanaExam').onclick = () => {
+    Audio.click();
+    setScreen('exam');
+  };
+  document.getElementById('btnDashKanaReview').onclick = () => {
+    Audio.click();
+    setScreen('review');
+  };
+
+  // Vocab actions
+  document.getElementById('btnDashVocabOpen').onclick = () => {
+    Audio.click();
+    state.vocab = null;
+    vocabTopicNav.view = 'setup';
+    setScreen('vocab');
+  };
+  document.getElementById('btnDashVocabFlashcards').onclick = () => {
+    Audio.click();
+    state.vocab = null;
+    vocabTopicNav.view = 'setup';
+    setScreen('vocab');
+  };
+  document.getElementById('btnDashVocabTopics').onclick = () => {
+    Audio.click();
+    state.vocab = null;
+    vocabTopicNav.view = 'topics';
+    setScreen('vocab');
+  };
+
+  // Kanji actions
+  document.getElementById('btnDashKanjiOpen').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+    setScreen('kanji');
+  };
+  document.getElementById('btnDashKanjiCatalog').onclick = () => {
+    Audio.click();
+    kanjiSession.mode = 'catalog';
+    state.kanji = kanjiSession;
+    setScreen('kanji');
+  };
+  document.getElementById('btnDashKanjiFlashcards').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode: 'flashcard' });
+    setScreen('kanji');
+  };
+  document.getElementById('btnDashKanjiQuiz').onclick = () => {
+    Audio.click();
+    startKanjiSession({ mode: 'quiz' });
+    setScreen('kanji');
+  };
 }
 
 /* =========================================================
@@ -3903,7 +4322,8 @@ function renderKanjiCatalog() {
         k.meaning.toLowerCase().includes(searchQuery) ||
         k.onyomi.some(on => on.toLowerCase().includes(searchQuery)) ||
         k.kunyomi.some(kun => kun.toLowerCase().includes(searchQuery)) ||
-        (k.examples && k.examples.some(ex => ex.word.includes(searchQuery) || ex.meaning.toLowerCase().includes(searchQuery)))
+        (k.examples &&
+          k.examples.some(ex => ex.word.includes(searchQuery) || ex.meaning.toLowerCase().includes(searchQuery)))
       );
     });
   }
@@ -3961,7 +4381,8 @@ function renderKanjiCatalog() {
         <div class="kanji-pills-row">
           <span class="kanji-pills-label">Lekcja:</span>
           <div class="kanji-pills-list">
-            ${KANJI_LESSONS.map(l => `
+            ${KANJI_LESSONS.map(
+              l => `
               <button
                 type="button"
                 class="kanji-pill ${l.id === currentLesson ? 'active' : ''}"
@@ -3969,14 +4390,17 @@ function renderKanjiCatalog() {
               >
                 ${l.id === 'all' ? 'Wszystkie' : l.id}
               </button>
-            `).join('')}
+            `
+            ).join('')}
           </div>
         </div>
 
         <div class="kanji-pills-row">
           <span class="kanji-pills-label">Kategoria:</span>
           <div class="kanji-pills-list">
-            ${categories.map(c => `
+            ${categories
+              .map(
+                c => `
               <button
                 type="button"
                 class="kanji-pill ${c.id === currentCategory ? 'active' : ''}"
@@ -3984,23 +4408,29 @@ function renderKanjiCatalog() {
               >
                 ${c.label}
               </button>
-            `).join('')}
+            `
+              )
+              .join('')}
           </div>
         </div>
       </div>
 
-      ${filtered.length === 0 ? `
+      ${
+        filtered.length === 0
+          ? `
         <div class="kanji-empty-state">
           <div class="kanji-empty-glyph">無</div>
           <h3>Brak wyników wyszukiwania</h3>
           <p>Nie znaleziono znaków odpowiadających wybranym kryteriom filtra.</p>
           <button class="kanji-btn-reset-filter" id="btnResetFilters" type="button">Zresetuj filtry</button>
         </div>
-      ` : `
+      `
+          : `
         <div class="kanji-grid">
-          ${filtered.map(k => {
-            const stat = kanjiStat(k.id);
-            return `
+          ${filtered
+            .map(k => {
+              const stat = kanjiStat(k.id);
+              return `
               <div class="kanji-card" data-kanji-id="${k.id}">
                 <div class="kanji-card-badges">
                   <span class="kanji-card-strokes">${k.strokes} 画</span>
@@ -4015,9 +4445,11 @@ function renderKanjiCatalog() {
                 </div>
               </div>
             `;
-          }).join('')}
+            })
+            .join('')}
         </div>
-      `}
+      `
+      }
     </div>
   `;
 
@@ -4213,36 +4645,52 @@ function renderKanjiDetail() {
               </div>
             </div>
 
-            ${item.examples && item.examples.length ? `
+            ${
+              item.examples && item.examples.length
+                ? `
               <div class="kanji-examples-section">
                 <h3 class="kanji-section-heading">Złożenia i słownictwo (Jukugo)</h3>
                 <div class="kanji-examples-list">
-                  ${item.examples.map(ex => `
+                  ${item.examples
+                    .map(
+                      ex => `
                     <div class="kanji-example-item">
                       <div class="kanji-example-word font-japanese">${escapeHtml(ex.word)}</div>
                       <div class="kanji-example-reading">${escapeHtml(ex.reading)}</div>
                       <div class="kanji-example-meaning">${escapeHtml(ex.meaning)}</div>
                     </div>
-                  `).join('')}
+                  `
+                    )
+                    .join('')}
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
 
-            ${matchingLessonWords.length ? `
+            ${
+              matchingLessonWords.length
+                ? `
               <div class="kanji-lesson-words-section">
                 <h3 class="kanji-section-heading">Słówka z podręcznika Shokyū Nihongo</h3>
                 <div class="kanji-lesson-words-list">
-                  ${matchingLessonWords.map(w => `
+                  ${matchingLessonWords
+                    .map(
+                      w => `
                     <div class="kanji-lesson-word-item">
                       <span class="kanji-lesson-word-badge">${w.lesson}</span>
                       <span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>
                       <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
                       <span class="kanji-lesson-word-gloss">${escapeHtml(w.meaning)}</span>
                     </div>
-                  `).join('')}
+                  `
+                    )
+                    .join('')}
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
 
             <div class="kanji-info-actions">
               <button class="kanji-action-btn accent" id="btnPracticeThisCard" type="button">
@@ -4392,7 +4840,9 @@ function renderKanjiFlashcard() {
 
       <div class="kanji-flashcard-wrap">
         <div class="kanji-flashcard ${s.showBack ? 'is-flipped' : ''}" id="kanjiCard">
-          ${!s.showBack ? `
+          ${
+            !s.showBack
+              ? `
             <!-- Awers -->
             <div class="kanji-card-front">
               <span class="kanji-card-strokes-hint">${current.strokes} kresek</span>
@@ -4402,7 +4852,8 @@ function renderKanjiFlashcard() {
                 Pokaż odpowiedź (kliknij kartę lub Spacja)
               </button>
             </div>
-          ` : `
+          `
+              : `
             <!-- Rewers -->
             <div class="kanji-card-back">
               <div class="kanji-card-back-header">
@@ -4424,18 +4875,27 @@ function renderKanjiFlashcard() {
                 </div>
               </div>
 
-              ${current.examples && current.examples.length ? `
+              ${
+                current.examples && current.examples.length
+                  ? `
                 <div class="kanji-card-back-examples">
                   <span class="lbl">Przykłady:</span>
                   <div class="kanji-back-example-tags">
-                    ${current.examples.slice(0, 3).map(ex => `
+                    ${current.examples
+                      .slice(0, 3)
+                      .map(
+                        ex => `
                       <span class="kanji-back-tag">
                         <strong>${escapeHtml(ex.word)}</strong> (${escapeHtml(ex.reading)}) — ${escapeHtml(ex.meaning)}
                       </span>
-                    `).join('')}
+                    `
+                      )
+                      .join('')}
                   </div>
                 </div>
-              ` : ''}
+              `
+                  : ''
+              }
 
               <div class="kanji-srs-rating-bar">
                 <span class="kanji-srs-label">Oceń swoją odpowiedź:</span>
@@ -4455,7 +4915,8 @@ function renderKanjiFlashcard() {
                 </div>
               </div>
             </div>
-          `}
+          `
+          }
         </div>
       </div>
     </div>
@@ -4481,7 +4942,7 @@ function renderKanjiFlashcard() {
 
   const flipBtn = document.getElementById('btnFlipCard');
   if (flipBtn) {
-    flipBtn.onclick = (e) => {
+    flipBtn.onclick = e => {
       e.stopPropagation();
       Audio.click();
       s.showBack = true;
@@ -4541,25 +5002,30 @@ function renderKanjiQuiz() {
 
       <div class="kanji-quiz-card">
         <div class="kanji-quiz-prompt">
-          ${s.questionType === 'kanjiToMeaning' ? `
+          ${
+            s.questionType === 'kanjiToMeaning'
+              ? `
             <span class="kanji-quiz-eyebrow">Wybierz poprawne znaczenie znaku:</span>
             <div class="kanji-quiz-glyph font-japanese">${current.kanji}</div>
             <span class="kanji-quiz-subprompt">${current.strokes} kresek</span>
-          ` : `
+          `
+              : `
             <span class="kanji-quiz-eyebrow">Który znak Kanji odpowiada znaczeniu:</span>
             <div class="kanji-quiz-meaning-prompt">${escapeHtml(current.meaning)}</div>
             <span class="kanji-quiz-subprompt">Lekcja: ${current.lesson}</span>
-          `}
+          `
+          }
         </div>
 
         <div class="kanji-quiz-options">
-          ${s.options.map((opt, i) => {
-            let stateClass = '';
-            if (s.submitted) {
-              if (opt.isCorrect) stateClass = 'is-correct';
-              else if (s.selected === i) stateClass = 'is-wrong';
-            }
-            return `
+          ${s.options
+            .map((opt, i) => {
+              let stateClass = '';
+              if (s.submitted) {
+                if (opt.isCorrect) stateClass = 'is-correct';
+                else if (s.selected === i) stateClass = 'is-wrong';
+              }
+              return `
               <button
                 class="kanji-quiz-option-btn ${stateClass}"
                 data-option-idx="${i}"
@@ -4567,29 +5033,38 @@ function renderKanjiQuiz() {
                 ${s.submitted ? 'disabled' : ''}
               >
                 <span class="kanji-quiz-option-key">[${i + 1}]</span>
-                ${s.questionType === 'kanjiToMeaning' ? `
+                ${
+                  s.questionType === 'kanjiToMeaning'
+                    ? `
                   <div class="kanji-quiz-option-content">
                     <span class="kanji-quiz-option-main">${escapeHtml(opt.meaning)}</span>
                     <span class="kanji-quiz-option-sub">${opt.onyomi ? escapeHtml(opt.onyomi) : ''} ${opt.kunyomi ? escapeHtml(opt.kunyomi) : ''}</span>
                   </div>
-                ` : `
+                `
+                    : `
                   <div class="kanji-quiz-option-content">
                     <span class="kanji-quiz-option-glyph font-japanese">${opt.kanji}</span>
                     <span class="kanji-quiz-option-sub">${opt.onyomi ? escapeHtml(opt.onyomi) : ''}</span>
                   </div>
-                `}
+                `
+                }
               </button>
             `;
-          }).join('')}
+            })
+            .join('')}
         </div>
 
-        ${s.submitted ? `
+        ${
+          s.submitted
+            ? `
           <div class="kanji-quiz-advance-bar">
             <button class="kanji-action-btn accent" id="btnNextQuizQuestion" type="button">
               ${s.index + 1 >= s.items.length ? 'Zobacz podsumowanie →' : 'Następne pytanie →'}
             </button>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     </div>
   `;
@@ -4669,7 +5144,9 @@ function renderKanjiSessionSummary(mode) {
 
         <div class="kanji-summary-items-list">
           <h3 class="kanji-summary-items-heading">Szczegóły odpowiedzi:</h3>
-          ${s.answers.map(a => `
+          ${s.answers
+            .map(
+              a => `
             <div class="kanji-summary-item ${a.isCorrect ? 'is-correct' : 'is-wrong'}">
               <span class="kanji-summary-item-glyph font-japanese">${a.item.kanji}</span>
               <div class="kanji-summary-item-info">
@@ -4678,7 +5155,9 @@ function renderKanjiSessionSummary(mode) {
               </div>
               <span class="kanji-summary-item-badge">${a.isCorrect ? '✓' : '✗'}</span>
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
 
         <div class="kanji-summary-actions">
@@ -4705,7 +5184,6 @@ function renderKanjiSessionSummary(mode) {
     render();
   };
 }
-
 
 function appStorageKeys() {
   return [
@@ -6329,7 +6807,7 @@ function kanjiStat(idOrChar) {
   const recent = entry && Array.isArray(entry.recent) ? entry.recent : [];
   let status = 'new';
   if (seen > 0) {
-    if (interval >= 7 && (correct / seen) >= 0.8) status = 'mastered';
+    if (interval >= 7 && correct / seen >= 0.8) status = 'mastered';
     else if (wrong > correct) status = 'hard';
     else status = 'learning';
   }
@@ -6344,7 +6822,6 @@ function kanjiStat(idOrChar) {
     status
   };
 }
-
 
 /* Postęp słownictwa ma jedno wejście kasowania: „Zresetuj postęp". */
 function resetVocabData() {
@@ -8088,10 +8565,22 @@ document.addEventListener('keydown', event => {
         return;
       }
       if (ks.showBack) {
-        if (event.key === '1') { document.querySelector('[data-srs="again"]')?.click(); return; }
-        if (event.key === '2') { document.querySelector('[data-srs="hard"]')?.click(); return; }
-        if (event.key === '3') { document.querySelector('[data-srs="good"]')?.click(); return; }
-        if (event.key === '4') { document.querySelector('[data-srs="easy"]')?.click(); return; }
+        if (event.key === '1') {
+          document.querySelector('[data-srs="again"]')?.click();
+          return;
+        }
+        if (event.key === '2') {
+          document.querySelector('[data-srs="hard"]')?.click();
+          return;
+        }
+        if (event.key === '3') {
+          document.querySelector('[data-srs="good"]')?.click();
+          return;
+        }
+        if (event.key === '4') {
+          document.querySelector('[data-srs="easy"]')?.click();
+          return;
+        }
       }
     } else if (ks.mode === 'quiz') {
       if (!ks.submitted) {
@@ -8107,9 +8596,18 @@ document.addEventListener('keydown', event => {
         return;
       }
     } else if (ks.mode === 'detail') {
-      if (event.key === 'ArrowLeft') { document.getElementById('btnPrevKanji')?.click(); return; }
-      if (event.key === 'ArrowRight') { document.getElementById('btnNextKanji')?.click(); return; }
-      if (event.key === ' ') { document.getElementById('btnKanjiPlay')?.click(); return; }
+      if (event.key === 'ArrowLeft') {
+        document.getElementById('btnPrevKanji')?.click();
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        document.getElementById('btnNextKanji')?.click();
+        return;
+      }
+      if (event.key === ' ') {
+        document.getElementById('btnKanjiPlay')?.click();
+        return;
+      }
     }
   }
 
