@@ -1873,8 +1873,8 @@ Goal:
 
 Implemented scope:
 
-- **110 curated kanji**: based on *Shokyū Nihongo* (L01–L10) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
-- **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L10, N5).
+- **204 curated kanji**: based on *Shokyū Nihongo* (L01–L15) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
+- **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L15, N5).
 - **Interactive character catalog**: instant search by character, reading (romaji/kana) or Polish meaning; filtering by lesson and semantic category pills; responsive card grid with status indicators.
 - **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
 - **SRS flashcard review**: interval progression based on response grade (Znów / Trudne / Dobre / Łatwe) with keyboard shortcuts `1`–`4`.
@@ -2487,8 +2487,10 @@ Advanced audio / lo-fi: NOT implemented
 UI modernization — phase 4: Kana hub — COMPLETE
 Visual polish — calm Japanese learning app layer — IN PROGRESS
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
+Kanji expansion (Lessons L11–L15, 204 kanji) — COMPLETE
+T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L15) — SHIPPED
 T19 Vocabulary (data, progress, flashcards, topics, lessons) — SHIPPED
-Next planned: Continue shared visual language across new modules; grammar (T20) or practice goals (T22)
+Next planned: Audio pronunciation (Web Speech API) or Grammar (T20)
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),

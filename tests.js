@@ -2482,20 +2482,37 @@
      ===================================================== */
   try {
     ok(
-      'KJ1 KANJI_ITEMS zawiera 110 znaków',
-      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 110,
+      'KJ1 KANJI_ITEMS zawiera 204 znaki',
+      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 204,
       String(KANJI_ITEMS.length)
     );
 
     const kanjiIds = new Set(KANJI_ITEMS.map(k => k.id));
-    eq('KJ2 unikalne ID znaków k001..k110', kanjiIds.size, 110);
+    eq('KJ2 unikalne ID znaków k001..k204', kanjiIds.size, 204);
 
     const kanjiChars = new Set(KANJI_ITEMS.map(k => k.kanji));
-    eq('KJ3 unikalne glify kanji', kanjiChars.size, 110);
+    eq('KJ3 unikalne glify kanji', kanjiChars.size, 204);
 
-    const lessonsPresent = ['L01', 'L02', 'L03', 'L04', 'L05', 'L06', 'L07', 'L08', 'L09', 'L10', 'N5'];
+    const lessonsPresent = [
+      'L01',
+      'L02',
+      'L03',
+      'L04',
+      'L05',
+      'L06',
+      'L07',
+      'L08',
+      'L09',
+      'L10',
+      'L11',
+      'L12',
+      'L13',
+      'L14',
+      'L15',
+      'N5'
+    ];
     ok(
-      'KJ4 wszystkie 11 lekcji Shokyū Nihongo L01-L10 i N5 są obecne',
+      'KJ4 wszystkie 16 lekcji Shokyū Nihongo L01-L15 i N5 są obecne',
       lessonsPresent.every(l => KANJI_ITEMS.some(k => k.lesson === l))
     );
 
@@ -2545,6 +2562,26 @@
 
     // Izolacja magazynów
     ok('KJ18 zapis kanji pod dedykowanym kluczem hiragana-kanji', localStorage.getItem(KANJI_KEY) !== null);
+
+    // Lekcje L11-L15
+    const l11_15 = ['L11', 'L12', 'L13', 'L14', 'L15'];
+    ok(
+      'KJ19 lekcje L11-L15 posiadają kompletną liczbę znaków',
+      KANJI_ITEMS.filter(k => k.lesson === 'L11').length === 19 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L12').length === 16 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L13').length === 19 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L14').length === 22 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L15').length === 25,
+      l11_15.map(l => l + '=' + KANJI_ITEMS.filter(k => k.lesson === l).length).join(' ')
+    );
+
+    ok(
+      'KJ20 każdy nowy znak ma przykłady słówek z odczytaniem',
+      KANJI_ITEMS.every(
+        k =>
+          Array.isArray(k.examples) && k.examples.length >= 2 && k.examples.every(e => e.word && e.reading && e.meaning)
+      )
+    );
 
     // Czyszczenie po teście
     localStorage.removeItem(KANJI_KEY);
