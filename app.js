@@ -3231,6 +3231,8 @@ function renderDashboard() {
   const isGoalCompleted = todayAnswers >= dailyGoal;
 
   const totalDue = kana.due + kanji.due;
+  checkAchievements();
+  const unlockedCount = Object.keys(achievements.unlocked).length;
 
   const hour = new Date().getHours();
   let greeting = 'Dzień dobry';
@@ -3269,6 +3271,14 @@ function renderDashboard() {
               </div>
               <div class="dashboard-mini-progress">
                 <div class="dashboard-mini-progress-fill" style="width: ${goalPercent}%"></div>
+              </div>
+            </div>
+
+            <div class="dashboard-activity-badge is-achievements" role="button" tabindex="0" id="btnDashboardAchievements" title="Zobacz odznaki i osiągnięcia">
+              <span class="dashboard-activity-icon">🏆</span>
+              <div class="dashboard-activity-info">
+                <span class="dashboard-activity-value">${unlockedCount} / 12</span>
+                <span class="dashboard-activity-sub">Osiągnięcia</span>
               </div>
             </div>
 
@@ -3552,6 +3562,21 @@ function renderDashboard() {
         }
       } else {
         setScreen('learn');
+      }
+    };
+  }
+
+  const btnAch = document.getElementById('btnDashboardAchievements');
+  if (btnAch) {
+    btnAch.onclick = () => {
+      Audio.click();
+      openAchievementsModal();
+    };
+    btnAch.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        Audio.click();
+        openAchievementsModal();
       }
     };
   }
@@ -5921,6 +5946,11 @@ function renderKanjiDetail() {
     const accuracy = Math.round(result.score * 100);
     drawFeedback.textContent = `${verdict} (Zgodność: ${accuracy}%, Kreski: ${drawing.strokes.length}/${referencePaths.length})`;
     drawFeedback.className = `kanji-draw-feedback ${result.passed ? 'passed' : 'failed'}`;
+
+    achievements.drawingsCount = (achievements.drawingsCount || 0) + 1;
+    saveAchievements();
+    checkAchievements();
+
     if (result.passed) {
       Audio.correct();
       recordKanjiAnswer(item.id, true);
@@ -8237,6 +8267,11 @@ function renderGrammarPractice() {
   }
 }
 
+const ACHIEVEMENTS_KEY = 'hiragana-achievements';
+const ACHIEVEMENTS_VERSION = 1;
+const BOOKMARKS_KEY = 'hiragana-bookmarks';
+const BOOKMARKS_VERSION = 1;
+
 function appStorageKeys() {
   return [
     SETTINGS_STORE_KEY,
@@ -8246,6 +8281,8 @@ function appStorageKeys() {
     VOCAB_KEY,
     KANJI_KEY,
     GRAMMAR_KEY,
+    ACHIEVEMENTS_KEY,
+    BOOKMARKS_KEY,
     LEGACY_THEME_KEY,
     LEGACY_MUTED_KEY
   ];
@@ -8385,6 +8422,8 @@ function resetProgressData() {
   resetVocabData();
   resetKanjiData();
   resetGrammarData();
+  resetAchievementsData();
+  resetBookmarksData();
   state.vocab = null;
   state.grammar = null;
   if (state.kanji) state.kanji.mode = 'hub';
@@ -8418,6 +8457,8 @@ function clearAllData() {
   vocab = loadVocab();
   kanjiProgress = loadKanjiProgress();
   grammarProgress = loadGrammar();
+  achievements = loadAchievements();
+  bookmarks = loadBookmarks();
 
   state.script = settings.script;
   state.theme = settings.theme; // surowa preferencja, tak jak przy starcie
@@ -8722,6 +8763,440 @@ function renderSettingsFocused(focusKey) {
 
   const target = app.querySelector(`[data-focus-key="${focusKey}"]`);
   if (target) target.focus();
+}
+
+/* =========================================================
+   OSIĄGNIĘCIA I KAMIENIE MILOWE (T23)
+   ------------------------------------------------------------
+   12 zdefiniowanych odznak motywacyjnych. Odznaki wspierają
+   naukę we wszystkich modułach (Kana, Słownictwo, Kanji, Gramatyka)
+   oraz nagradzają regularność bez wprowadzania presji.
+========================================================= */
+
+const ACHIEVEMENT_DEFINITIONS = [
+  {
+    id: 'first_step',
+    icon: '🌱',
+    title: 'Pierwszy Krok',
+    desc: 'Ukończ swoje pierwsze ćwiczenie w dowolnym module.',
+    target: 1,
+    check: ctx => ctx.totalAnswers >= 1,
+    progress: ctx => Math.min(ctx.totalAnswers, 1) + ' / 1'
+  },
+  {
+    id: 'hiragana_master',
+    icon: '🌸',
+    title: 'Mistrz Hiragany',
+    desc: 'Opanuj wszystkie 46 podstawowych znaków Hiragany.',
+    target: 46,
+    check: ctx => ctx.hiraganaMastered >= 46,
+    progress: ctx => Math.min(ctx.hiraganaMastered, 46) + ' / 46'
+  },
+  {
+    id: 'katakana_master',
+    icon: '⚡',
+    title: 'Mistrz Katakany',
+    desc: 'Opanuj wszystkie 46 podstawowych znaków Katakany.',
+    target: 46,
+    check: ctx => ctx.katakanaMastered >= 46,
+    progress: ctx => Math.min(ctx.katakanaMastered, 46) + ' / 46'
+  },
+  {
+    id: 'calligrapher',
+    icon: '🖌️',
+    title: 'Kaligraf',
+    desc: 'Wykonaj swój pierwszy rysunek znaku Kanji na płótnie.',
+    target: 1,
+    check: ctx => ctx.drawingsCount >= 1,
+    progress: ctx => Math.min(ctx.drawingsCount, 1) + ' / 1'
+  },
+  {
+    id: 'brush_master',
+    icon: '🎨',
+    title: 'Mistrz Pędzla',
+    desc: 'Wykonaj i oceń co najmniej 20 rysunków znaków Kanji.',
+    target: 20,
+    check: ctx => ctx.drawingsCount >= 20,
+    progress: ctx => Math.min(ctx.drawingsCount, 20) + ' / 20'
+  },
+  {
+    id: 'vocab_scholar',
+    icon: '📖',
+    title: 'Znawca Słów',
+    desc: 'Poćwicz co najmniej 30 słówek w module Słownictwa.',
+    target: 30,
+    check: ctx => ctx.vocabSeen >= 30,
+    progress: ctx => Math.min(ctx.vocabSeen, 30) + ' / 30'
+  },
+  {
+    id: 'kanji_n5_base',
+    icon: '⛩️',
+    title: 'Baza Kanji N5',
+    desc: 'Przerób w nauce co najmniej 30 znaków Kanji.',
+    target: 30,
+    check: ctx => ctx.kanjiSeen >= 30,
+    progress: ctx => Math.min(ctx.kanjiSeen, 30) + ' / 30'
+  },
+  {
+    id: 'grammarian',
+    icon: '📜',
+    title: 'Gramatyk',
+    desc: 'Opanuj co najmniej 5 zagadnień gramatycznych.',
+    target: 5,
+    check: ctx => ctx.grammarMastered >= 5,
+    progress: ctx => Math.min(ctx.grammarMastered, 5) + ' / 5'
+  },
+  {
+    id: 'perfectionist',
+    icon: '🎯',
+    title: 'Perfekcja',
+    desc: 'Ukończ sesję egzaminacyjną lub quiz ze 100% poprawnych odpowiedzi.',
+    target: 1,
+    check: ctx => ctx.perfectExams >= 1,
+    progress: ctx => Math.min(ctx.perfectExams, 1) + ' / 1'
+  },
+  {
+    id: 'streak_3',
+    icon: '🔥',
+    title: 'Regularność (3 dni)',
+    desc: 'Utrzymaj serię nauki przez co najmniej 3 dni z rzędu.',
+    target: 3,
+    check: ctx => ctx.streakDays >= 3,
+    progress: ctx => Math.min(ctx.streakDays, 3) + ' / 3 dni'
+  },
+  {
+    id: 'streak_7',
+    icon: '⭐',
+    title: 'Żelazna Wola (7 dni)',
+    desc: 'Utrzymaj serię nauki przez 7 dni z rzędu.',
+    target: 7,
+    check: ctx => ctx.streakDays >= 7,
+    progress: ctx => Math.min(ctx.streakDays, 7) + ' / 7 dni'
+  },
+  {
+    id: 'century',
+    icon: '💯',
+    title: 'Setka na Liczniku',
+    desc: 'Udziel łącznie 100 poprawnych odpowiedzi w aplikacji.',
+    target: 100,
+    check: ctx => ctx.totalCorrect >= 100,
+    progress: ctx => Math.min(ctx.totalCorrect, 100) + ' / 100'
+  }
+];
+
+function loadAchievements() {
+  try {
+    const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
+    if (!raw) return { version: ACHIEVEMENTS_VERSION, unlocked: {}, drawingsCount: 0, perfectExams: 0 };
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.unlocked === 'object') {
+      return {
+        version: ACHIEVEMENTS_VERSION,
+        unlocked: parsed.unlocked || {},
+        drawingsCount: Number(parsed.drawingsCount) || 0,
+        perfectExams: Number(parsed.perfectExams) || 0
+      };
+    }
+  } catch (e) {}
+  return { version: ACHIEVEMENTS_VERSION, unlocked: {}, drawingsCount: 0, perfectExams: 0 };
+}
+
+let achievements = loadAchievements();
+
+function saveAchievements() {
+  try {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+  } catch (e) {}
+}
+
+function resetAchievementsData() {
+  achievements = { version: ACHIEVEMENTS_VERSION, unlocked: {}, drawingsCount: 0, perfectExams: 0 };
+  saveAchievements();
+}
+
+function getAchievementContext() {
+  const daily = loadDailyStats();
+  let totalAnswers = 0;
+  let totalCorrect = 0;
+  if (daily && daily.days) {
+    Object.values(daily.days).forEach(d => {
+      totalAnswers += Number(d.answers) || 0;
+      totalCorrect += Number(d.correct) || 0;
+    });
+  }
+
+  const streaks = dailyStreaks(Date.now());
+  const streakDays = Math.max(streaks.current || 0, streaks.best || 0);
+
+  let hiraganaMastered = 0;
+  let katakanaMastered = 0;
+  const chars = (progress && progress.chars) || {};
+  const BASIC_ROMAJI = [
+    'a',
+    'i',
+    'u',
+    'e',
+    'o',
+    'ka',
+    'ki',
+    'ku',
+    'ke',
+    'ko',
+    'sa',
+    'shi',
+    'su',
+    'se',
+    'so',
+    'ta',
+    'chi',
+    'tsu',
+    'te',
+    'to',
+    'na',
+    'ni',
+    'nu',
+    'ne',
+    'no',
+    'ha',
+    'hi',
+    'fu',
+    'he',
+    'ho',
+    'ma',
+    'mi',
+    'mu',
+    'me',
+    'mo',
+    'ya',
+    'yu',
+    'yo',
+    'ra',
+    'ri',
+    'ru',
+    're',
+    'ro',
+    'wa',
+    'wo',
+    'n'
+  ];
+
+  BASIC_ROMAJI.forEach(r => {
+    const hStat = chars['h:' + r];
+    if (hStat && (hStat.level >= 5 || hStat.mastered)) hiraganaMastered++;
+    const kStat = chars['k:' + r];
+    if (kStat && (kStat.level >= 5 || kStat.mastered)) katakanaMastered++;
+  });
+
+  const vocabSeen = vocab && vocab.cards ? Object.values(vocab.cards).filter(c => c.seen > 0).length : 0;
+  const kanjiSeen =
+    kanjiProgress && kanjiProgress.items ? Object.values(kanjiProgress.items).filter(k => k.seen > 0).length : 0;
+  const grammarStats = getGrammarSummaryStats();
+  const grammarMastered = grammarStats ? grammarStats.mastered : 0;
+
+  return {
+    totalAnswers,
+    totalCorrect,
+    streakDays,
+    hiraganaMastered,
+    katakanaMastered,
+    vocabSeen,
+    kanjiSeen,
+    grammarMastered,
+    drawingsCount: achievements.drawingsCount || 0,
+    perfectExams: achievements.perfectExams || 0
+  };
+}
+
+function checkAchievements() {
+  const ctx = getAchievementContext();
+  const newlyUnlocked = [];
+
+  ACHIEVEMENT_DEFINITIONS.forEach(def => {
+    if (!achievements.unlocked[def.id] && def.check(ctx)) {
+      achievements.unlocked[def.id] = Date.now();
+      newlyUnlocked.push(def);
+    }
+  });
+
+  if (newlyUnlocked.length > 0) {
+    saveAchievements();
+    newlyUnlocked.forEach(def => {
+      showAchievementToast(def);
+    });
+  }
+
+  return achievements;
+}
+
+function openAchievementsModal() {
+  checkAchievements();
+  const ctx = getAchievementContext();
+  const unlockedCount = Object.keys(achievements.unlocked).length;
+  const totalCount = ACHIEVEMENT_DEFINITIONS.length;
+  const percent = Math.round((unlockedCount / totalCount) * 100);
+
+  let backdrop = document.getElementById('achievementsModalBackdrop');
+  if (backdrop) backdrop.remove();
+
+  backdrop = document.createElement('div');
+  backdrop.id = 'achievementsModalBackdrop';
+  backdrop.className = 'achievements-backdrop animate-fade';
+
+  const cardsHtml = ACHIEVEMENT_DEFINITIONS.map(def => {
+    const isUnlocked = !!achievements.unlocked[def.id];
+    const unlockedDate = isUnlocked ? new Date(achievements.unlocked[def.id]).toLocaleDateString('pl-PL') : null;
+    const progressText = def.progress ? def.progress(ctx) : isUnlocked ? 'Ukończono' : 'Do zdobycia';
+
+    return `
+      <div class="achievement-badge-card ${isUnlocked ? 'is-unlocked' : 'is-locked'}">
+        <div class="achievement-badge-icon-wrap">
+          <span class="achievement-badge-icon">${def.icon}</span>
+        </div>
+        <div class="achievement-badge-info">
+          <div class="achievement-badge-title">${escapeHtml(def.title)}</div>
+          <div class="achievement-badge-desc">${escapeHtml(def.desc)}</div>
+          <div class="achievement-badge-status">
+            ${
+              isUnlocked
+                ? `<span class="achievement-pill is-unlocked">${icon('check')} Zdobyto ${unlockedDate}</span>`
+                : `<span class="achievement-pill is-locked">W trakcie: ${escapeHtml(progressText)}</span>`
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  backdrop.innerHTML = `
+    <div class="achievements-modal animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="achievementsModalTitle">
+      <div class="achievements-modal-head">
+        <div class="achievements-modal-head-titles">
+          <span class="achievements-modal-eyebrow">KOTO · KAMIENIE MILOWE</span>
+          <h2 class="achievements-modal-title" id="achievementsModalTitle">Osiągnięcia (${unlockedCount} / ${totalCount})</h2>
+        </div>
+        <button class="achievements-modal-close" id="btnCloseAchievementsModal" type="button" aria-label="Zamknij osiągnięcia">
+          ${icon('x')}
+        </button>
+      </div>
+
+      <div class="achievements-modal-progress-wrap">
+        <div class="achievements-modal-progress-bar">
+          <div class="achievements-modal-progress-fill" style="width: ${percent}%"></div>
+        </div>
+        <span class="achievements-modal-progress-label">${percent}% odblokowanych odznak</span>
+      </div>
+
+      <div class="achievements-grid">
+        ${cardsHtml}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(backdrop);
+
+  const close = () => {
+    backdrop.classList.add('is-closing');
+    setTimeout(() => backdrop.remove(), 250);
+    window.removeEventListener('keydown', onKeyDown);
+  };
+
+  const onKeyDown = e => {
+    if (e.key === 'Escape') close();
+  };
+
+  backdrop.onclick = e => {
+    if (e.target === backdrop) close();
+  };
+
+  document.getElementById('btnCloseAchievementsModal').onclick = close;
+  window.addEventListener('keydown', onKeyDown);
+}
+
+function showAchievementToast(def) {
+  let container = document.getElementById('achievementToastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'achievementToastContainer';
+    container.className = 'achievement-toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast animate-slide-up';
+  toast.innerHTML = `
+    <span class="achievement-toast-icon">${def.icon}</span>
+    <div class="achievement-toast-body">
+      <div class="achievement-toast-kicker">Zdobyto osiągnięcie!</div>
+      <div class="achievement-toast-title">${escapeHtml(def.title)}</div>
+    </div>
+  `;
+  container.appendChild(toast);
+
+  try {
+    Audio.celebrate();
+  } catch (e) {}
+
+  setTimeout(() => {
+    toast.classList.add('is-hiding');
+    setTimeout(() => toast.remove(), 400);
+  }, 4500);
+}
+
+/* =========================================================
+   ZAKŁADKI I ULUBIONE / TRUDNE ZNAKI (T24)
+   ------------------------------------------------------------
+   Klucz: `hiragana-bookmarks`, wersja: 1.
+   Pozwala oznaczać gwiazdką trudne lub ulubione elementy
+   we wszystkich modułach: Kana, Słownictwo, Kanji.
+========================================================= */
+
+function loadBookmarks() {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    if (!raw) return { version: BOOKMARKS_VERSION, kana: [], kanji: [], vocab: [] };
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return {
+        version: BOOKMARKS_VERSION,
+        kana: Array.isArray(parsed.kana) ? parsed.kana : [],
+        kanji: Array.isArray(parsed.kanji) ? parsed.kanji : [],
+        vocab: Array.isArray(parsed.vocab) ? parsed.vocab : []
+      };
+    }
+  } catch (e) {}
+  return { version: BOOKMARKS_VERSION, kana: [], kanji: [], vocab: [] };
+}
+
+let bookmarks = loadBookmarks();
+
+function saveBookmarks() {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+  } catch (e) {}
+}
+
+function resetBookmarksData() {
+  bookmarks = { version: BOOKMARKS_VERSION, kana: [], kanji: [], vocab: [] };
+  saveBookmarks();
+}
+
+function isBookmarked(type, id) {
+  if (!bookmarks[type] || !Array.isArray(bookmarks[type])) return false;
+  return bookmarks[type].includes(id);
+}
+
+function toggleBookmark(type, id) {
+  if (!bookmarks[type] || !Array.isArray(bookmarks[type])) {
+    bookmarks[type] = [];
+  }
+  const idx = bookmarks[type].indexOf(id);
+  if (idx >= 0) {
+    bookmarks[type].splice(idx, 1);
+  } else {
+    bookmarks[type].push(id);
+  }
+  saveBookmarks();
+  return isBookmarked(type, id);
 }
 
 /* =========================================================
@@ -9390,6 +9865,7 @@ function recordDailyAnswer(correct, now = Date.now()) {
 
   pruneDailyStats(stats, now);
   saveDailyStats(stats);
+  checkAchievements();
 }
 
 /*
@@ -12035,6 +12511,12 @@ function renderExamResult() {
   if (percentage >= 80 && exam.total >= 3) {
     Audio.celebrate();
     spawnConfetti();
+  }
+
+  if (percentage === 100 && exam.total >= 3) {
+    achievements.perfectExams = (achievements.perfectExams || 0) + 1;
+    saveAchievements();
+    checkAchievements();
   }
 
   const mistakes = Object.entries(exam.mistakes)

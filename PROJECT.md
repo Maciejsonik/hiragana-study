@@ -2313,18 +2313,29 @@ Status: **SHIPPED** (Phase 1).
 
 ## T23 — Achievements
 
-Potential functionality:
+Status: **SHIPPED**.
 
-- first perfect exam,
-- 100 questions answered,
-- all basic hiragana learned,
-- all characters mastered,
-- long streaks,
-- handwriting milestones,
-- katakana milestones,
-- kanji milestones.
+Implemented scope:
 
-Achievements should complement learning rather than dominate the UI.
+- **12 Calming Milestone Badges (`ACHIEVEMENT_DEFINITIONS`)**:
+  - `first_step` (Pierwszy Krok): first completed exercise in any module.
+  - `hiragana_master` (Mistrz Hiragany): all 46 basic hiragana mastered.
+  - `katakana_master` (Mistrz Katakany): all 46 basic katakana mastered.
+  - `calligrapher` (Kaligraf): first kanji drawing evaluated on canvas.
+  - `brush_master` (Mistrz Pędzla): 20+ kanji drawings evaluated.
+  - `vocab_scholar` (Znawca Słów): 30+ vocabulary items practiced.
+  - `kanji_n5_base` (Baza Kanji N5): 30+ kanji items practiced.
+  - `grammarian` (Gramatyk): 5+ grammar items mastered.
+  - `perfectionist` (Perfekcja): 100% correct in an exam session.
+  - `streak_3` (Regularność - 3 dni): 3 consecutive days study streak.
+  - `streak_7` (Żelazna Wola - 7 dni): 7 consecutive days study streak.
+  - `century` (Setka na Liczniku): 100 total correct answers across the app.
+- **Storage & Isolation**: Key `hiragana-achievements`, version `1`. Registered in `appStorageKeys()`, reset on `resetProgressData()` and cleared on `clearAllData()`.
+- **Dashboard Badge & Modal Dialog**:
+  - Clickable 4th badge in `.dashboard-activity-bar` showing `[count] / 12 Osiągnięcia`.
+  - Accessible modal dialog displaying all 12 cards with unlock timestamps, progress indicators, and keyboard dismissal (Esc).
+  - Subtle non-intrusive toast notifications upon unlocking.
+- **Automated test coverage**: `ACH1`–`ACH12` in `tests.js`.
 
 ---
 

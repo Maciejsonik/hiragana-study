@@ -2218,12 +2218,14 @@
       VOCAB_KEY,
       KANJI_KEY,
       GRAMMAR_KEY,
+      ACHIEVEMENTS_KEY,
+      BOOKMARKS_KEY,
       LEGACY_THEME_KEY,
       LEGACY_MUTED_KEY
     ];
     ok(
-      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie dziewięć kluczy aplikacji',
-      keys.length === 9 && expected.every(key => keys.indexOf(key) >= 0),
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie jedenaście kluczy aplikacji',
+      keys.length === 11 && expected.every(key => keys.indexOf(key) >= 0),
       keys.join(', ')
     );
 
@@ -3315,6 +3317,95 @@
     setScreen('dashboard');
   } catch (e) {
     ok('NAV-RET / KANJI-DRAW błąd testów', false, e.message);
+  }
+
+  /* =====================================================
+     OSIĄGNIĘCIA I KAMIENIE MILOWE (T23)
+     ===================================================== */
+  try {
+    // ACH1: Komplet 12 definicji osiągnięć
+    eq('ACH1 katalog zawiera 12 zdefiniowanych odznak', ACHIEVEMENT_DEFINITIONS.length, 12);
+
+    const validDefs = ACHIEVEMENT_DEFINITIONS.every(
+      def =>
+        typeof def.id === 'string' &&
+        typeof def.icon === 'string' &&
+        typeof def.title === 'string' &&
+        typeof def.desc === 'string' &&
+        typeof def.check === 'function' &&
+        typeof def.progress === 'function'
+    );
+    ok('ACH2 wszystkie odznaki posiadają ikony, opisy, formuły check i progress', validDefs);
+
+    // ACH3: Magazyn i serializacja loadAchievements/saveAchievements
+    resetAchievementsData();
+    eq('ACH3 stan początkowy odblokowanych osiągnięć to 0', Object.keys(achievements.unlocked).length, 0);
+    achievements.unlocked.test_badge = 123456789;
+    saveAchievements();
+    const reloadedAch = loadAchievements();
+    ok('ACH4 loadAchievements poprawnie odczytuje dane z localStorage', reloadedAch.unlocked.test_badge === 123456789);
+
+    // ACH5: resetAchievementsData czyści odznaki
+    resetAchievementsData();
+    eq('ACH5 resetAchievementsData czyści odznaki', Object.keys(achievements.unlocked).length, 0);
+
+    // ACH6: checkAchievements odblokowuje First Step przy 1 odpowiedzi
+    const mockCtx1 = {
+      totalAnswers: 1,
+      totalCorrect: 1,
+      streakDays: 1,
+      hiraganaMastered: 0,
+      katakanaMastered: 0,
+      vocabSeen: 0,
+      kanjiSeen: 0,
+      grammarMastered: 0,
+      drawingsCount: 0,
+      perfectExams: 0
+    };
+    ok(
+      'ACH6 first_step jest spełniony przy 1 odpowiedzi',
+      ACHIEVEMENT_DEFINITIONS.find(d => d.id === 'first_step').check(mockCtx1)
+    );
+
+    // ACH7: checkAchievements odblokowuje Century przy 100 poprawnych
+    const mockCtx100 = { ...mockCtx1, totalCorrect: 100 };
+    ok(
+      'ACH7 century jest spełniony przy 100 poprawnych odpowiedziach',
+      ACHIEVEMENT_DEFINITIONS.find(d => d.id === 'century').check(mockCtx100)
+    );
+
+    // ACH8: checkAchievements odblokowuje Streak 3 przy 3 dniach serii
+    const mockCtxStreak = { ...mockCtx1, streakDays: 3 };
+    ok(
+      'ACH8 streak_3 jest spełniony przy 3 dniach serii',
+      ACHIEVEMENT_DEFINITIONS.find(d => d.id === 'streak_3').check(mockCtxStreak)
+    );
+
+    // ACH9: Otwarcie i zamknięcie modalu osiągnięć
+    openAchievementsModal();
+    const modalEl = document.querySelector('.achievements-modal');
+    ok('ACH9 openAchievementsModal renderuje modal w DOM', !!modalEl);
+
+    const badgeCards = document.querySelectorAll('.achievement-badge-card');
+    eq('ACH10 modal renderuje 12 kart odznak', badgeCards.length, 12);
+
+    const closeBtn = document.getElementById('btnCloseAchievementsModal');
+    if (closeBtn) closeBtn.click();
+    const backdropEl = document.getElementById('achievementsModalBackdrop');
+    ok(
+      'ACH11 kliknięcie zamknij rozpoczyna zamykanie modalu',
+      !backdropEl || backdropEl.classList.contains('is-closing')
+    );
+
+    // ACH12: Toast osiągnięcia
+    showAchievementToast(ACHIEVEMENT_DEFINITIONS[0]);
+    const toast = document.querySelector('.achievement-toast');
+    ok('ACH12 showAchievementToast renderuje toast w DOM', !!toast && toast.textContent.includes('Pierwszy Krok'));
+    if (toast) toast.remove();
+
+    resetAchievementsData();
+  } catch (e) {
+    ok('ACH moduł osiągnięć', false, e.message);
   }
 
   /* =====================================================
