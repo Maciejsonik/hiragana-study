@@ -2988,6 +2988,94 @@
   }
 
   /* =====================================================
+     KOPIA ZAPASOWA (KROK 6) — eksport i import danych JSON
+     ===================================================== */
+  try {
+    // BK1: Generowanie poprawnego obiektu kopii zapasowej
+    const backup = createBackupData();
+    ok('BK1 createBackupData tworzy obiekt z app=koto', backup && backup.app === 'koto');
+    eq('BK1a wersja kopii to 1', backup.version, 1);
+    ok(
+      'BK1b obecny znacznik czasu ISO',
+      typeof backup.exportedAt === 'string' && !isNaN(Date.parse(backup.exportedAt))
+    );
+    ok('BK1c stores jest obiektem', typeof backup.stores === 'object' && backup.stores !== null);
+
+    // BK2: Walidacja poprawnej kopii
+    const valOk = validateBackup(backup);
+    ok('BK2 validateBackup akceptuje poprawny obiekt kopii zapasowej', valOk.valid === true);
+
+    // BK3 - BK6: Walidacja błędnych danych
+    eq('BK3 odrzucenie wartości null/nie-obiektu', validateBackup(null).valid, false);
+    eq('BK4 odrzucenie pliku z innej aplikacji', validateBackup({ app: 'other', version: 1, stores: {} }).valid, false);
+    eq('BK5 odrzucenie nieobsługiwanej wersji', validateBackup({ app: 'koto', version: 0, stores: {} }).valid, false);
+    eq('BK6 odrzucenie braku obiektu stores', validateBackup({ app: 'koto', version: 1 }).valid, false);
+
+    // BK7: Przywracanie danych przez applyBackup
+    const testBackup = {
+      app: 'koto',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      stores: {
+        [PROGRESS_KEY]: { version: PROGRESS_VERSION, chars: { a: { level: 4, nextReview: 9999999 } } },
+        [VOCAB_KEY]: { version: 1, cards: { n01: { seen: 5, correct: 4 } } },
+        [KANJI_KEY]: { version: 1, items: { k01: { stage: 3, nextReview: 8888888 } } },
+        [GRAMMAR_KEY]: {
+          version: 1,
+          particles: { wa: { seen: 3, correct: 3, mastered: true } },
+          totalAnswers: 12
+        },
+        [DAILY_STATS_KEY]: { version: 1, days: { '2026-10-24': { answers: 10, correct: 9 } } },
+        [SETTINGS_STORE_KEY]: { theme: 'light', muted: true, script: 'both', hideGuide: true }
+      }
+    };
+
+    applyBackup(testBackup);
+    ok('BK7 applyBackup przywraca postęp kany', progress.chars.a && progress.chars.a.level === 4);
+    ok('BK7a applyBackup przywraca postęp słownictwa', vocab.cards.n01 && vocab.cards.n01.seen === 5);
+    ok('BK7b applyBackup przywraca postęp kanji', kanjiProgress.items.k01 && kanjiProgress.items.k01.stage === 3);
+    ok(
+      'BK7c applyBackup przywraca postęp gramatyki',
+      grammarProgress.particles.wa && grammarProgress.particles.wa.mastered === true
+    );
+    eq('BK7d applyBackup przywraca łączną liczbę ćwiczeń gramatyki', grammarProgress.totalAnswers, 12);
+    ok(
+      'BK7e applyBackup przywraca historię dni w statystykach',
+      dailyStats.days['2026-10-24'] && dailyStats.days['2026-10-24'].answers === 10
+    );
+    eq('BK7f applyBackup przywraca motyw ustawień', settings.theme, 'light');
+    eq('BK7g applyBackup przywraca stan wyciszenia', settings.muted, true);
+
+    // BK8: Odrzucenie uszkodzonej kopii bez psucia stanu
+    let threw = false;
+    try {
+      applyBackup({ app: 'bad' });
+    } catch (err) {
+      threw = true;
+    }
+    ok('BK8 applyBackup rzuca błąd przy uszkodzonym pliku', threw);
+
+    // BK9: Elementy UI w widoku Ustawień
+    setScreen('settings');
+    const backupCard = document.getElementById('backupGroup');
+    ok('BK9 sekcja kopii zapasowej obecna w Ustawieniach', !!backupCard);
+    const exportBtn = document.getElementById('btnExportBackup');
+    const importBtn = document.getElementById('btnImportBackup');
+    const importInput = document.getElementById('importBackupFile');
+    ok('BK9a przycisk eksportu obecny w DOM', !!exportBtn);
+    ok('BK9b przycisk importu obecny w DOM', !!importBtn);
+    ok('BK9c ukryty input pliku obecny w DOM', !!importInput && importInput.type === 'file');
+    eq('BK10 input akceptuje pliki JSON', importInput.getAttribute('accept'), '.json,application/json');
+
+    // Przywrócenie czystego stanu
+    resetProgressData();
+    resetSettings();
+    setScreen('menu');
+  } catch (e) {
+    ok('BK kopia zapasowa', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

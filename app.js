@@ -1476,7 +1476,11 @@ const ICONS = {
   keyboard:
     '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>',
   grammar:
-    '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>'
+    '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>',
+  download:
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  upload:
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
 };
 
 /* Jeden sposób wstawiania ikony: spójny viewBox, grubość kreski i brak
@@ -6980,6 +6984,116 @@ function appStorageKeys() {
   ];
 }
 
+const BACKUP_APP_NAME = 'koto';
+const BACKUP_SCHEMA_VERSION = 1;
+
+function createBackupData() {
+  const keys = appStorageKeys();
+  const stores = {};
+  keys.forEach(key => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw !== null) {
+        try {
+          stores[key] = JSON.parse(raw);
+        } catch (e) {
+          stores[key] = raw;
+        }
+      }
+    } catch (e) {}
+  });
+
+  return {
+    app: BACKUP_APP_NAME,
+    version: BACKUP_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    stores
+  };
+}
+
+function exportBackup() {
+  try {
+    const data = createBackupData();
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `koto-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  } catch (err) {
+    console.error('Błąd podczas eksportu kopii zapasowej:', err);
+    return false;
+  }
+}
+
+function validateBackup(data) {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Plik nie zawiera poprawnego obiektu JSON.' };
+  }
+  if (data.app !== BACKUP_APP_NAME) {
+    return { valid: false, error: 'Wybrany plik nie jest kopią zapasową aplikacji Koto.' };
+  }
+  if (typeof data.version !== 'number' || data.version < 1) {
+    return { valid: false, error: 'Nieobsługiwana wersja pliku kopii zapasowej.' };
+  }
+  if (!data.stores || typeof data.stores !== 'object') {
+    return { valid: false, error: 'Plik kopii zapasowej nie zawiera wymaganych magazynów danych.' };
+  }
+  return { valid: true };
+}
+
+function applyBackup(data) {
+  const validation = validateBackup(data);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const allowedKeys = appStorageKeys();
+
+  // Najpierw usuwamy bieżące klucze
+  allowedKeys.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {}
+  });
+
+  // Zapisujemy klucze z pliku kopii (tylko dozwolone klucze aplikacji)
+  Object.keys(data.stores).forEach(key => {
+    if (allowedKeys.includes(key)) {
+      const val = data.stores[key];
+      if (val !== undefined && val !== null) {
+        const serialized = typeof val === 'string' ? val : JSON.stringify(val);
+        try {
+          localStorage.setItem(key, serialized);
+        } catch (e) {}
+      }
+    }
+  });
+
+  // Przeładuj stan w pamięci
+  settings = loadSettings();
+  examSettings = loadExamSettings();
+  progress = loadProgress();
+  dailyStats = loadDailyStats();
+  vocab = loadVocab();
+  kanjiProgress = loadKanjiProgress();
+  grammarProgress = loadGrammar();
+
+  state.script = settings.script;
+  state.theme = settings.theme;
+  Audio.setMuted(settings.muted);
+
+  applyTheme();
+
+  return true;
+}
+
 /*
  * `data-focus-key` służy do przywracania fokusu po przerysowaniu
  * (patrz renderSettingsFocused) — dzięki niemu nie trzeba szukać po labelu.
@@ -7108,6 +7222,23 @@ function renderSettings() {
         </div>
       </div>
 
+      <div class="settings-group card" id="backupGroup">
+        <h3>Kopia zapasowa</h3>
+        <p class="settings-hint">
+          Eksportuj wszystkie swoje postępy (Kana, Słownictwo, Kanji, Gramatyka, statystyki dzienne, serie i ustawienia) do pliku JSON lub przywróć je na innym urządzeniu.
+        </p>
+        <div class="settings-actions">
+          <button class="btn btn-secondary" id="btnExportBackup" data-focus-key="export-backup">
+            ${icon('download')} Eksportuj kopię (JSON)
+          </button>
+          <button class="btn btn-secondary" id="btnImportBackup" data-focus-key="import-backup">
+            ${icon('upload')} Przywróć z pliku JSON
+          </button>
+          <input type="file" id="importBackupFile" accept=".json,application/json" style="display: none" />
+        </div>
+        <div id="backupStatusMsg" class="backup-status-msg" aria-live="polite"></div>
+      </div>
+
       <div class="settings-group card" id="aboutApp">
         <h3>O aplikacji</h3>
         <div class="about-copy">
@@ -7210,6 +7341,89 @@ function renderSettings() {
     clearAllData();
     renderSettingsFocused('clear-all');
   };
+
+  const exportBtn = document.getElementById('btnExportBackup');
+  if (exportBtn) {
+    exportBtn.onclick = () => {
+      Audio.click();
+      const ok = exportBackup();
+      const statusEl = document.getElementById('backupStatusMsg');
+      if (statusEl) {
+        if (ok) {
+          statusEl.className = 'backup-status-msg is-success';
+          statusEl.textContent = 'Kopia zapasowa została pomyślnie wyeksportowana i pobrana!';
+        } else {
+          statusEl.className = 'backup-status-msg is-error';
+          statusEl.textContent = 'Nie udało się wyeksportować kopii zapasowej.';
+        }
+      }
+    };
+  }
+
+  const importBtn = document.getElementById('btnImportBackup');
+  const importInput = document.getElementById('importBackupFile');
+  if (importBtn && importInput) {
+    importBtn.onclick = () => {
+      Audio.click();
+      importInput.value = '';
+      importInput.click();
+    };
+
+    importInput.onchange = e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('backupStatusMsg');
+
+      const reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          const validation = validateBackup(parsed);
+          if (!validation.valid) {
+            if (statusEl) {
+              statusEl.className = 'backup-status-msg is-error';
+              statusEl.textContent = validation.error;
+            }
+            return;
+          }
+
+          const dateStr = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'nieznanej daty';
+          if (
+            !confirm(
+              `Przywrócić kopię zapasową utworzoną: ${dateStr}?\n\n` +
+                'Uwaga: Wszystkie bieżące postępy na tym urządzeniu zostaną zastąpione danymi z pliku kopii.'
+            )
+          ) {
+            return;
+          }
+
+          applyBackup(parsed);
+          renderSettingsFocused('import-backup');
+
+          const newStatus = document.getElementById('backupStatusMsg');
+          if (newStatus) {
+            newStatus.className = 'backup-status-msg is-success';
+            newStatus.textContent = 'Kopia zapasowa została pomyślnie przywrócona!';
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.className = 'backup-status-msg is-error';
+            statusEl.textContent = 'Błąd odczytu pliku kopii: ' + (err.message || 'nieprawidłowy format JSON');
+          }
+        }
+      };
+
+      reader.onerror = () => {
+        if (statusEl) {
+          statusEl.className = 'backup-status-msg is-error';
+          statusEl.textContent = 'Błąd odczytu pliku z dysku.';
+        }
+      };
+
+      reader.readAsText(file);
+    };
+  }
 }
 
 /*

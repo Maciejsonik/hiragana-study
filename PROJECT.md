@@ -3097,6 +3097,28 @@ Phase 2 is described in full below. Both phases are shipped.
 
 ---
 
+### Backup & Restore (JSON export / import)
+
+Shipped in Step 6. Accessible via the **Settings (`settings`)** panel.
+
+- **Payload format**:
+  - `app`: `'koto'`,
+  - `version`: `1`,
+  - `exportedAt`: ISO 8601 timestamp string,
+  - `stores`: object mapping each storage key in `appStorageKeys()` to its current parsed or raw data.
+- **Scope**:
+  - Covers all 9 storage stores: settings (`hiragana-settings`, `hiragana-exam-settings`, legacy theme/muted), progress (`hiragana-progress`), daily stats & streaks (`hiragana-daily`), vocabulary (`hiragana-vocab`), kanji (`hiragana-kanji`), and grammar (`hiragana-grammar`).
+- **Export (`exportBackup`)**:
+  - Dynamically builds the JSON payload and triggers a download of `koto-backup-YYYY-MM-DD.json` using a Blob and temporary object URL.
+- **Import (`applyBackup`)**:
+  - Validates JSON format, `app === 'koto'`, schema version (`1`), and presence of `stores`.
+  - Rejects foreign files or corrupted data without touching `localStorage`.
+  - Prompts for explicit user confirmation with the backup creation date.
+  - Sanitizes keys: only stores recognized by `appStorageKeys()` are written to `localStorage`.
+  - Automatically reloads in-memory variables (`settings`, `examSettings`, `progress`, `dailyStats`, `vocab`, `kanjiProgress`, `grammarProgress`), reapplies themes/audio preferences, and updates the UI.
+
+---
+
 ### Phase 2 — presentation
 
 Read-only. Nothing here writes to `hiragana-daily`; the only writers remain
