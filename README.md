@@ -79,7 +79,7 @@ Aplikacja korzysta z Web App Manifest i Service Workera.
 Po pierwszym poprawnym załadowaniu online Service Worker zapisuje w Cache Storage:
 
 - **powłokę aplikacji** — `index.html`, `app.js`, `style.css`, manifest, ikony, `offline.html`,
-- **148 plików SVG z KanjiVG** (74 części hiragany + 74 części katakany — razem pokrywają wszystkie 104 znaki każdego ze skryptów, czyli 208 w sumie, wraz z kana dwuczęściowymi: dakuten, handakuten, yōon),
+- **155 plików SVG z KanjiVG** (74 części hiragany + 81 części katakany — razem pokrywają wszystkie 104 znaki hiragany oraz 147 znaków katakany, czyli 251 w sumie, wraz ze znakami dwuczęściowymi: dakuten, handakuten, yōon i specjalną katakaną dla zapożyczeń),
 - **Google Fonts** (Inter + Noto Sans JP).
 
 Od tego momentu aplikacja uruchamia się i działa bez sieci: tryb nauki (z animacją kolejności kresek), tryb egzaminu, postęp, ustawienia, motyw i dźwięk oraz moduł słownictwa z fiszkami.

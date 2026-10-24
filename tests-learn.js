@@ -125,6 +125,7 @@
         'ACC.8 category membership (が/ぎ dakuten, か basic)',
         catOf('が') === 'dakuten' && catOf('ぎ') === 'dakuten' && catOf('か') === 'basic'
       );
+      ok('ACC.9 hiragana nie renderuje pustej sekcji Special', sec('special') === null);
 
       /* =====================================================
          B. REGRESJA 1 — zwinięta sekcja nie otwiera się sama
@@ -567,6 +568,12 @@
       setScreen('learn');
       await wait(900);
       ok('UX14 Learn w katanace', state.script === 'katakana');
+      ok(
+        'UX14a katakana zawiera 147 znaków w tym sekcję Special (43 znaki)',
+        document.querySelectorAll('.sidebar [data-kana]').length === 147 &&
+          sec('special') !== null &&
+          parseInt(sec('special').querySelector('.learn-section-count').textContent.trim(), 10) === 43
+      );
       document.getElementById('quizMe').click();
       await wait(600);
       ok('UX15 alfabet zachowany po przejściu do egzaminu', state.script === 'katakana', state.script);
@@ -1860,15 +1867,20 @@
         const scriptLabels = [...document.querySelectorAll('.kana-script-label')].map(el => el.textContent.trim());
 
         ok(
-          'BOTH1 panel pokazuje 208 znaków',
-          document.querySelectorAll('.sidebar [data-kana]').length === 208,
+          'BOTH1 panel pokazuje 251 znaków',
+          document.querySelectorAll('.sidebar [data-kana]').length === 251,
           String(document.querySelectorAll('.sidebar [data-kana]').length)
         );
         ok('BOTH2 liczniki sekcji obejmują oba alfabety', bothCounts.join('/') === '92/40/10/66', bothCounts.join('/'));
-        ok('BOTH3 każda sekcja ma granicę alfabetów', scriptLabels.length === 8, String(scriptLabels.length));
         ok(
-          'BOTH4 granice to Hiragana i Katakana na przemian',
-          scriptLabels.join(',') === 'Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana',
+          'BOTH2a sekcja specjalna katakany ma 43 znaki',
+          parseInt(bothSec('special').querySelector('.learn-section-count').textContent.trim(), 10) === 43,
+          bothSec('special').querySelector('.learn-section-count').textContent.trim()
+        );
+        ok('BOTH3 każda sekcja ma granicę alfabetów', scriptLabels.length === 9, String(scriptLabels.length));
+        ok(
+          'BOTH4 granice to Hiragana i Katakana na przemian oraz Katakana dla Special',
+          scriptLabels.join(',') === 'Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana,Hiragana,Katakana,Katakana',
           scriptLabels.join(',')
         );
 

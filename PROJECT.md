@@ -232,10 +232,11 @@ Current character set:
 
 Total: **46 basic kana + ん**.
 
-This section documents the **hiragana** base dataset. Katakana follows exactly
-the same group/char structure in `scriptData.katakana` (see section 33), and
-the same sections apply to it: 46 basic + ん, dakuten, handakuten and yōon
-groups, 104 characters in total.
+This section documents the **hiragana** base dataset (104 characters in total).
+Katakana follows the same basic/dakuten/handakuten/yōon structure in
+`scriptData.katakana` (see section 33) and additionally includes 43 Special
+Katakana characters (tokushuon / rozszerzona katakana dla zapożyczeń gairaigo),
+bringing katakana to 36 groups / 147 characters in total (251 combined).
 
 ---
 
@@ -1055,6 +1056,7 @@ as an automatic offline and playback fallback. It requires **zero API keys**, ze
 and zero build steps.
 
 Key properties:
+
 - **Primary voice (Option 1):** Google Translate Japanese TTS via `new window.Audio(url)` audio streaming, providing accurate pitch accent, authentic Japanese intonation, and high fidelity across kana, vocabulary, and kanji readings.
 - **Automatic fallback:** In offline mode, on network error, or if audio playback is blocked, `Audio.speak` automatically routes to native Web Speech API (`speakSystem`, `ja-JP`, rate `0.85`).
 - **Mute synchronization:** `Audio.speak` respects `Audio.muted`. Calling `Audio.setMuted(true)` or `Audio.stop()` immediately pauses active HTML5 audio and cancels `speechSynthesis`.
@@ -1530,9 +1532,9 @@ Goal:
 Implemented functionality:
 
 - katakana dataset (`scriptData.katakana`, same group/char structure),
-- 26 groups / 104 characters, mirroring hiragana,
-- katakana stroke descriptions and counts,
-- katakana KanjiVG stroke animation,
+- 26 standard groups / 104 characters mirroring hiragana + 10 special katakana groups / 43 characters (tokushuon / loanword combinations: `ヴ`, `ヴァ`, `ティ`, `ファ`, `シェ`, `チェ`, `クヮ`, etc.), 36 groups / 147 characters total,
+- katakana stroke descriptions and counts for all 147 characters (KanjiVG-verified),
+- katakana KanjiVG stroke animation and SVG composition for composite glyphs,
 - katakana progress and mastery,
 - katakana exam questions and distractors,
 - 56 lookalike groups (vs 61 for hiragana),
@@ -1891,7 +1893,7 @@ Goal:
 
 Implemented scope:
 
-- **204 curated kanji**: based on *Shokyū Nihongo* (L01–L15) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
+- **204 curated kanji**: based on _Shokyū Nihongo_ (L01–L15) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
 - **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L15, N5).
 - **Interactive character catalog**: instant search by character, reading (romaji/kana) or Polish meaning; filtering by lesson and semantic category pills; responsive card grid with status indicators.
 - **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, blind drawing mode (`#btnToggleBlind`) to sketch characters purely from memory with post-draw template reveal, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
@@ -1922,7 +1924,7 @@ Vocabulary should eventually connect naturally with kanji and grammar.
 `VOCAB_ITEMS` in `app.js` holds 108 items: the 37 items of the class worksheet
 "きょうしつで つかう ことば" (20 request expressions, two sentence
 patterns, seven nouns, six noun + `を` + verb phrases, and two extra verbs
-`v23`, `v24`), plus the expansion from *Shokyu Nihongo* Lesson 1 (1か) and
+`v23`, `v24`), plus the expansion from _Shokyu Nihongo_ Lesson 1 (1か) and
 Lesson 2 (2か): 57 additional nouns (`n08`–`n64`) and 14 i-adjectives (`a01`–`a14`).
 Every item carries a stable `id` (`v01`–`v24`, `n01`–`n64`, `p01`–`p06`, `a01`–`a14`).
 
@@ -2082,6 +2084,7 @@ Every mode writes only through `recordVocabAnswer()`, so it changes
 
 In addition to Flashcards (`learn`) and Multiple-Choice Quiz (`test`), a third mode
 `type` ("Wpisywanie") tests active production from memory:
+
 - **`meaning-kana`**: Polish meaning is presented; user types Japanese. Accepts exact
   kana, kanji (if available), direct romaji, macron expansions (`ō` -> `ou`), and
   arbitrary romaji via a built-in transliterator (`transliterateRomajiToKana`) supporting
@@ -2212,10 +2215,12 @@ Polish meanings remain an unverified translation.
 ## T20 — Grammar
 
 ### Status
+
 - Phase 1 (N5 Particles & Cloze Training) — **COMPLETE**.
 - Phase 2 (Verbs Conjugation, Existence & Adjectives) — **COMPLETE**.
 
 ### Implemented Scope
+
 - **Data Model (`GRAMMAR_ITEMS`)**:
   - Expanded from 10 to 18 fundamental Japanese grammar items for JLPT N5 across 4 categories:
     - **Particles (`particle`, 10 items)**: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).

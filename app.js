@@ -69,7 +69,18 @@ const scriptData = {
       { id: 'yoon-g', name: 'Yōon G', shortName: 'Y G', chars: [['ギャ', 'gya'], ['ギュ', 'gyu'], ['ギョ', 'gyo']] },
       { id: 'yoon-j', name: 'Yōon J', shortName: 'Y J', chars: [['ジャ', 'ja'], ['ジュ', 'ju'], ['ジョ', 'jo']] },
       { id: 'yoon-b', name: 'Yōon B', shortName: 'Y B', chars: [['ビャ', 'bya'], ['ビュ', 'byu'], ['ビョ', 'byo']] },
-      { id: 'yoon-p', name: 'Yōon P', shortName: 'Y P', chars: [['ピャ', 'pya'], ['ピュ', 'pyu'], ['ピョ', 'pyo']] }
+      { id: 'yoon-p', name: 'Yōon P', shortName: 'Y P', chars: [['ピャ', 'pya'], ['ピュ', 'pyu'], ['ピョ', 'pyo']] },
+
+      { id: 'special-v', name: 'Special V', shortName: 'Sp V', chars: [['ヴ', 'vu'], ['ヴァ', 'va'], ['ヴィ', 'vi'], ['ヴェ', 've'], ['ヴォ', 'vo']] },
+      { id: 'special-vy', name: 'Special Vy', shortName: 'Sp Vy', chars: [['ヴャ', 'vya'], ['ヴュ', 'vyu'], ['ヴョ', 'vyo']] },
+      { id: 'special-w', name: 'Special W / Y', shortName: 'Sp W/Y', chars: [['ウィ', 'wi'], ['ウェ', 'we'], ['イェ', 'ye']] },
+      { id: 'special-f', name: 'Special F', shortName: 'Sp F', chars: [['ファ', 'fa'], ['フィ', 'fi'], ['フェ', 'fe'], ['フォ', 'fo']] },
+      { id: 'special-fy', name: 'Special Fy', shortName: 'Sp Fy', chars: [['フャ', 'fya'], ['フュ', 'fyu'], ['フョ', 'fyo']] },
+      { id: 'special-t', name: 'Special T / D', shortName: 'Sp T/D', chars: [['ティ', 'ti'], ['トゥ', 'tu'], ['ディ', 'di'], ['ドゥ', 'du']] },
+      { id: 'special-ty', name: 'Special Ty / Dy', shortName: 'Sp Ty/Dy', chars: [['テャ', 'tya'], ['テュ', 'tyu'], ['テョ', 'tyo'], ['デャ', 'dya'], ['デュ', 'dyu'], ['デョ', 'dyo']] },
+      { id: 'special-ts', name: 'Special Ts', shortName: 'Sp Ts', chars: [['ツァ', 'tsa'], ['ツィ', 'tsi'], ['ツェ', 'tse'], ['ツォ', 'tso']] },
+      { id: 'special-sh', name: 'Special Sh / J / Ch', shortName: 'Sp Sh', chars: [['シェ', 'she'], ['ジェ', 'je'], ['チェ', 'che']] },
+      { id: 'special-kw', name: 'Special Kw / Gw', shortName: 'Sp Kw', chars: [['クヮ', 'kwa'], ['クィ', 'kwi'], ['クェ', 'kwe'], ['クォ', 'kwo'], ['グヮ', 'gwa'], ['グィ', 'gwi'], ['グェ', 'gwe'], ['グォ', 'gwo']] }
     ],
     strokeText: {},
     lookalikes: []
@@ -131,7 +142,8 @@ const LEARN_CATEGORIES = [
   { id: 'basic', label: 'Basic', openByDefault: true },
   { id: 'dakuten', label: 'Dakuten' },
   { id: 'handakuten', label: 'Handakuten' },
-  { id: 'yoon', label: 'Yōon' }
+  { id: 'yoon', label: 'Yōon' },
+  { id: 'special', label: 'Special' }
 ];
 
 function learnCategoryOf(groupId) {
@@ -142,6 +154,7 @@ function learnCategoryOf(groupId) {
   if (base.startsWith('dakuten')) return 'dakuten';
   if (base.startsWith('handakuten')) return 'handakuten';
   if (base.startsWith('yoon')) return 'yoon';
+  if (base.startsWith('special')) return 'special';
   return 'basic';
 }
 
@@ -601,7 +614,70 @@ const katakanaStrokeText = {
   // Yōon P
   'ピャ': ['pierwsza kreska ピ', 'druga kreska ピ', 'kółko handakuten ピ', 'pierwsza kreska małego ャ', 'druga kreska małego ャ'],
   'ピュ': ['pierwsza kreska ピ', 'druga kreska ピ', 'kółko handakuten ピ', 'pierwsza kreska małego ュ', 'druga kreska małego ュ'],
-  'ピョ': ['pierwsza kreska ピ', 'druga kreska ピ', 'kółko handakuten ピ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ']
+  'ピョ': ['pierwsza kreska ピ', 'druga kreska ピ', 'kółko handakuten ピ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ'],
+
+  // Special Katakana: V
+  'ヴ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ'],
+  'ヴァ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ァ', 'druga kreska małego ァ'],
+  'ヴィ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'ヴェ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'ヴォ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ォ', 'druga kreska małego ォ', 'trzecia kreska małego ォ'],
+
+  // Special Katakana: Vy
+  'ヴャ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ャ', 'druga kreska małego ャ'],
+  'ヴュ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ュ', 'druga kreska małego ュ'],
+  'ヴョ': ['krótka kreska u góry ヴ', 'pionowa kreska w dół po lewej ヴ', 'długa pozioma kreska z łukiem w prawo i w dół ヴ', 'ukośna kreska dakuten ヴ', 'druga kreska dakuten ヴ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ'],
+
+  // Special Katakana: W / Y
+  'ウィ': ['krótka kreska u góry ウ', 'pionowa kreska w dół po lewej ウ', 'długa kreska z łukiem w prawo na dole ウ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'ウェ': ['krótka kreska u góry ウ', 'pionowa kreska w dół po lewej ウ', 'długa kreska z łukiem w prawo na dole ウ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'イェ': ['kreska ukośna w dół i w lewo イ', 'pionowa kreska w dół イ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+
+  // Special Katakana: F
+  'ファ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ァ', 'druga kreska małego ァ'],
+  'フィ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'フェ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'フォ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ォ', 'druga kreska małego ォ', 'trzecia kreska małego ォ'],
+
+  // Special Katakana: Fy
+  'フャ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ャ', 'druga kreska małego ャ'],
+  'フュ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ュ', 'druga kreska małego ュ'],
+  'フョ': ['kreska z załamaniem w lewo フ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ'],
+
+  // Special Katakana: T / D
+  'ティ': ['pozioma kreska u góry テ', 'dłuższa pozioma kreska pośrodku テ', 'łukowata kreska w dół i w lewo テ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'トゥ': ['pionowa kreska w dół ト', 'ukośna kreska w dół w prawo ト', 'pierwsza kreska małego ゥ', 'druga kreska małego ゥ', 'trzecia kreska małego ゥ'],
+  'ディ': ['pozioma kreska u góry デ', 'dłuższa pozioma kreska pośrodku デ', 'łukowata kreska w dół i w lewo デ', 'ukośna kreska dakuten デ', 'druga kreska dakuten デ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'ドゥ': ['pionowa kreska w dół ド', 'ukośna kreska w dół w prawo ド', 'ukośna kreska dakuten ド', 'druga kreska dakuten ド', 'pierwsza kreska małego ゥ', 'druga kreska małego ゥ', 'trzecia kreska małego ゥ'],
+
+  // Special Katakana: Ty / Dy
+  'テャ': ['pozioma kreska u góry テ', 'dłuższa pozioma kreska pośrodku テ', 'łukowata kreska w dół i w lewo テ', 'pierwsza kreska małego ャ', 'druga kreska małego ャ'],
+  'テュ': ['pozioma kreska u góry テ', 'dłuższa pozioma kreska pośrodku テ', 'łukowata kreska w dół i w lewo テ', 'pierwsza kreska małego ュ', 'druga kreska małego ュ'],
+  'テョ': ['pozioma kreska u góry テ', 'dłuższa pozioma kreska pośrodku テ', 'łukowata kreska w dół i w lewo テ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ'],
+  'デャ': ['pozioma kreska u góry デ', 'dłuższa pozioma kreska pośrodku デ', 'łukowata kreska w dół i w lewo デ', 'ukośna kreska dakuten デ', 'druga kreska dakuten デ', 'pierwsza kreska małego ャ', 'druga kreska małego ャ'],
+  'デュ': ['pozioma kreska u góry デ', 'dłuższa pozioma kreska pośrodku デ', 'łukowata kreska w dół i w lewo デ', 'ukośna kreska dakuten デ', 'druga kreska dakuten デ', 'pierwsza kreska małego ュ', 'druga kreska małego ュ'],
+  'デョ': ['pozioma kreska u góry デ', 'dłuższa pozioma kreska pośrodku デ', 'łukowata kreska w dół i w lewo デ', 'ukośna kreska dakuten デ', 'druga kreska dakuten デ', 'pierwsza kreska małego ョ', 'druga kreska małego ョ', 'trzecia kreska małego ョ'],
+
+  // Special Katakana: Ts
+  'ツァ': ['krótka kreska u góry po lewej ツ', 'druga krótka kreska pośrodku ツ', 'długa kreska z prawej w dół i w lewo ツ', 'pierwsza kreska małego ァ', 'druga kreska małego ァ'],
+  'ツィ': ['krótka kreska u góry po lewej ツ', 'druga krótka kreska pośrodku ツ', 'długa kreska z prawej w dół i w lewo ツ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'ツェ': ['krótka kreska u góry po lewej ツ', 'druga krótka kreska pośrodku ツ', 'długa kreska z prawej w dół i w lewo ツ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'ツォ': ['krótka kreska u góry po lewej ツ', 'druga krótka kreska pośrodku ツ', 'długa kreska z prawej w dół i w lewo ツ', 'pierwsza kreska małego ォ', 'druga kreska małego ォ', 'trzecia kreska małego ォ'],
+
+  // Special Katakana: Sh / J / Ch
+  'シェ': ['krótka kreska ukośna u góry シ', 'krótka kreska ukośna pośrodku シ', 'długa kreska od lewej w dół i w prawo シ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'ジェ': ['krótka kreska ukośna u góry ジ', 'krótka kreska ukośna pośrodku ジ', 'długa kreska od lewej w dół i w prawo ジ', 'ukośna kreska dakuten ジ', 'druga ukośna kreska dakuten ジ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'チェ': ['krótka kreska ukośna u góry チ', 'pozioma kreska pośrodku チ', 'łukowata kreska w dół i w lewo チ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+
+  // Special Katakana: Kw / Gw
+  'クヮ': ['kreska w lewo u góry ク', 'pozioma kreska z łukiem w dół i w lewo ク', 'pierwsza kreska małego ヮ', 'druga kreska małego ヮ'],
+  'クィ': ['kreska w lewo u góry ク', 'pozioma kreska z łukiem w dół i w lewo ク', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'クェ': ['kreska w lewo u góry ク', 'pozioma kreska z łukiem w dół i w lewo ク', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'クォ': ['kreska w lewo u góry ク', 'pozioma kreska z łukiem w dół i w lewo ク', 'pierwsza kreska małego ォ', 'druga kreska małego ォ', 'trzecia kreska małego ォ'],
+  'グヮ': ['kreska w lewo u góry グ', 'pozioma kreska z łukiem w dół i w lewo グ', 'ukośna kreska dakuten グ', 'druga kreska dakuten グ', 'pierwsza kreska małego ヮ', 'druga kreska małego ヮ'],
+  'グィ': ['kreska w lewo u góry グ', 'pozioma kreska z łukiem w dół i w lewo グ', 'ukośna kreska dakuten グ', 'druga kreska dakuten グ', 'pierwsza kreska małego ィ', 'druga kreska małego ィ'],
+  'グェ': ['kreska w lewo u góry グ', 'pozioma kreska z łukiem w dół i w lewo グ', 'ukośna kreska dakuten グ', 'druga kreska dakuten グ', 'pierwsza kreska małego ェ', 'druga kreska małego ェ', 'trzecia kreska małego ェ'],
+  'グォ': ['kreska w lewo u góry グ', 'pozioma kreska z łukiem w dół i w lewo グ', 'ukośna kreska dakuten グ', 'druga kreska dakuten グ', 'pierwsza kreska małego ォ', 'druga kreska małego ォ', 'trzecia kreska małego ォ']
 };
 
 scriptData.katakana.strokeText = katakanaStrokeText;
@@ -3028,7 +3104,7 @@ function renderDashboard() {
           </div>
 
           <p class="dashboard-module-desc">
-            208 znaków sylabariuszy z interaktywną kolejnością kresek, audio wymowy i egzaminem.
+            251 znaków sylabariuszy z interaktywną kolejnością kresek, audio wymowy i egzaminem.
           </p>
 
           <div class="dashboard-module-metrics">
@@ -7892,6 +7968,7 @@ function learnSidebarHTML() {
       // grupy w kolejności getGroups() — kolejność znaków bez zmian
       const groups = getGroups().filter(group => learnCategoryOf(group.id) === category.id);
       const count = groups.reduce((sum, group) => sum + group.chars.length, 0);
+      if (!count) return '';
 
       // W trybie `both` ta sama sekcja zawiera dwa alfabety. Bez nagłówka
       // 20 znaków hiragany przechodziłoby w 20 znaków katakany bez żadnej

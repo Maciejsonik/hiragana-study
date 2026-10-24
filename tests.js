@@ -609,7 +609,7 @@
     const hira = scriptData.hiragana.groups.flatMap(g => g.chars.map(c => c[0]));
     const kata = scriptData.katakana.groups.flatMap(g => g.chars.map(c => c[0]));
     eq('hiragana dataset size', hira.length, 104);
-    eq('katakana dataset size', kata.length, 104);
+    eq('katakana dataset size', kata.length, 147);
     eq('no kana shared between scripts', hira.filter(k => kata.includes(k)).length, 0);
     setScript('hiragana');
   } catch (e) {
@@ -1975,7 +1975,7 @@
     const groups = getGroups();
     const all = getAll();
 
-    ok('M3 both daje 52 grupy', groups.length === 52, String(groups.length));
+    ok('M3 both daje 62 grupy', groups.length === 62, String(groups.length));
     ok(
       'M4 klucze grup są unikalne',
       new Set(groups.map(group => group.key)).size === groups.length,
@@ -1983,12 +1983,12 @@
     );
     ok(
       'M5 klucze mają prefiks alfabetu',
-      groups[0].key === 'h:a' && groups[groups.length - 1].key === 'k:yoon-p',
+      groups[0].key === 'h:a' && groups[groups.length - 1].key === 'k:special-kw',
       groups[0].key + ' … ' + groups[groups.length - 1].key
     );
     ok(
-      'M6 both daje 208 unikalnych znaków',
-      all.length === 208 && new Set(all.map(character => character.kana)).size === 208,
+      'M6 both daje 251 unikalnych znaków',
+      all.length === 251 && new Set(all.map(character => character.kana)).size === 251,
       String(all.length)
     );
     ok(
@@ -2005,12 +2005,13 @@
       'M9 kategoria wynika z bazowego id, nie z prefiksu',
       learnCategoryOf('h:dakuten-k') === 'dakuten' &&
         learnCategoryOf('k:yoon-p') === 'yoon' &&
+        learnCategoryOf('k:special-v') === 'special' &&
         learnCategoryOf('h:a') === 'basic',
       learnCategoryOf('h:dakuten-k') + '/' + learnCategoryOf('k:yoon-p')
     );
     ok(
       'M10 opisy kresek obejmują oba alfabety',
-      Object.keys(getStrokeText()).length === 208 && !!getStrokeText()['あ'] && !!getStrokeText()['ア'],
+      Object.keys(getStrokeText()).length === 251 && !!getStrokeText()['あ'] && !!getStrokeText()['ア'],
       String(Object.keys(getStrokeText()).length)
     );
     ok('M11 stan startowy w both należy do hiragany', state.group === 'h:a' && state.kana === 'あ', state.group);
@@ -2178,6 +2179,29 @@
     setScreen('menu');
   } catch (e) {
     ok('tryb both', false, e.message);
+  }
+
+  /* =====================================================
+     SPECIAL KATAKANA (TOKUSHUON / ROZSZERZONA KATAKANA)
+     ===================================================== */
+  try {
+    const specialGroups = scriptData.katakana.groups.filter(g => g.id.startsWith('special-'));
+    const specialChars = specialGroups.flatMap(g => g.chars);
+    ok('SK1 liczba specjalnych grup katakany to 10', specialGroups.length === 10, String(specialGroups.length));
+    ok('SK2 liczba specjalnych znaków katakany to 43', specialChars.length === 43, String(specialChars.length));
+    ok(
+      'SK3 specjalne znaki należą do kategorii special',
+      specialGroups.every(g => learnCategoryOf(g.id) === 'special'),
+      'kategoria special'
+    );
+    const strokeKeys = Object.keys(scriptData.katakana.strokeText);
+    ok(
+      'SK4 każdy ze specjalnych znaków ma opis kresek',
+      specialChars.every(([kana]) => strokeKeys.includes(kana) && scriptData.katakana.strokeText[kana].length > 0),
+      'opisy kresek'
+    );
+  } catch (e) {
+    ok('special katakana dataset', false, e.message);
   }
 
   /* =====================================================
