@@ -2192,12 +2192,13 @@
       DAILY_STATS_KEY,
       VOCAB_KEY,
       KANJI_KEY,
+      GRAMMAR_KEY,
       LEGACY_THEME_KEY,
       LEGACY_MUTED_KEY
     ];
     ok(
-      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie osiem kluczy aplikacji',
-      keys.length === 8 && expected.every(key => keys.indexOf(key) >= 0),
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie dziewięć kluczy aplikacji',
+      keys.length === 9 && expected.every(key => keys.indexOf(key) >= 0),
       keys.join(', ')
     );
 
@@ -2241,11 +2242,11 @@
     const title = () => document.getElementById('appTitle').textContent;
 
     ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
-    eq('NAV2 cztery pozycje nawigacji', navButtons().length, 4);
+    eq('NAV2 pięć pozycji nawigacji', navButtons().length, 5);
     deepEq(
       'NAV3 etykiety modułów',
       navButtons().map(button => button.querySelector('.app-nav-label').textContent),
-      ['Pulpit', 'Kana', 'Słownictwo', 'Kanji']
+      ['Pulpit', 'Kana', 'Słownictwo', 'Kanji', 'Gramatyka']
     );
     ok(
       'NAV4 ikony to inline SVG, nie emoji',
@@ -2261,7 +2262,7 @@
     eq('DASH2 tytuł pulpitu', title(), 'Pulpit');
     eq('DASH3 aktywna pozycja nawigacji dla pulpitu', navButton('dashboard').getAttribute('aria-current'), 'page');
     ok('DASH4 powrót ukryty na pulpicie', homeBtn.classList.contains('is-hidden'));
-    ok('DASH5 obecne karty trzech modułów', document.querySelectorAll('.dashboard-module-card').length === 3);
+    ok('DASH5 obecne karty czterech modułów', document.querySelectorAll('.dashboard-module-card').length === 4);
 
     setScreen('menu');
     await sleep(30);
@@ -2305,6 +2306,14 @@
     eq('NAV15b tytuł huba kanji', title(), 'Kanji');
     eq('NAV15c aktywna pozycja kanji', navButton('kanji').getAttribute('aria-current'), 'page');
     ok('NAV15d powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
+
+    /* Gramatyka — wejście przez nawigację */
+    navButton('grammar').click();
+    await sleep(30);
+    eq('NAV15e klik prowadzi do gramatyki', state.screen, 'grammar');
+    eq('NAV15f tytuł huba gramatyki', title(), 'Gramatyka');
+    eq('NAV15g aktywna pozycja gramatyki', navButton('grammar').getAttribute('aria-current'), 'page');
+    ok('NAV15h powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
 
     ok('NAV16 nawigacja nie zawiera pozycji Ustawienia', !navButton('settings'));
     setScreen('settings');
@@ -2841,6 +2850,141 @@
     setScreen('menu');
   } catch (e) {
     ok('TY nowe tryby ćwiczeń', false, e.message);
+  }
+
+  /* =====================================================
+     GRAMATYKA (T20) — partykuły N5, baza wiedzy i quizy luk
+     ===================================================== */
+  try {
+    // GR1: Komplet 10 partykuł w bazie
+    eq('GR1 baza partykuł zawiera dokładnie 10 pozycji', GRAMMAR_ITEMS.length, 10);
+
+    // GR2: Każda partykuła ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
+    const validItems = GRAMMAR_ITEMS.every(item => {
+      const hasFields =
+        typeof item.id === 'string' &&
+        typeof item.kana === 'string' &&
+        typeof item.romaji === 'string' &&
+        typeof item.label === 'string' &&
+        typeof item.pattern === 'string' &&
+        typeof item.description === 'string';
+      const hasExamples =
+        Array.isArray(item.examples) &&
+        item.examples.length >= 3 &&
+        item.examples.every(ex => ex.japanese && ex.romaji && ex.polish);
+      const hasQuestions =
+        Array.isArray(item.questions) &&
+        item.questions.length >= 3 &&
+        item.questions.every(
+          q =>
+            q.sentence &&
+            q.full &&
+            q.polish &&
+            q.answer === item.kana &&
+            Array.isArray(q.distractors) &&
+            q.distractors.length >= 3 &&
+            q.explanation
+        );
+      return hasFields && hasExamples && hasQuestions;
+    });
+    ok('GR2 wszystkie partykuły mają kompletne pola, przykłady i pytania cloze', validItems);
+
+    // GR3: Magazyn i serializacja loadGrammar/saveGrammar
+    resetGrammarData();
+    eq('GR3 stan początkowy magazynu gramatyki', grammarProgress.totalAnswers, 0);
+    grammarProgress.totalAnswers = 5;
+    saveGrammar();
+    const reloaded = loadGrammar();
+    eq('GR4 loadGrammar poprawnie deserializuje dane z localStorage', reloaded.totalAnswers, 5);
+
+    // GR4 & GR5: recordGrammarAnswer i statystyki mastery
+    recordGrammarAnswer('wa', true);
+    recordGrammarAnswer('wa', true);
+    recordGrammarAnswer('wa', true);
+    const waStat = grammarParticleStat('wa');
+    ok(
+      'GR5 recordGrammarAnswer awansuje partykułę do mastered',
+      waStat.seen === 3 && waStat.correct === 3 && waStat.mastered === true
+    );
+
+    const stats = getGrammarSummaryStats();
+    eq('GR6 getGrammarSummaryStats poprawnie zlicza opanowane partykuły', stats.mastered, 1);
+    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 10);
+
+    // GR8: Inicjalizacja sesji quizu startGrammarPractice
+    startGrammarPractice();
+    ok(
+      'GR8 startGrammarPractice tworzy sesję z 10 pytaniami',
+      grammarSession.practice && grammarSession.practice.questions.length === 10
+    );
+    eq('GR9 sesja quizu posiada stan początkowy', grammarSession.practice.index, 0);
+    ok(
+      'GR10 każde pytanie w sesji ma 4 warianty odpowiedzi',
+      grammarSession.practice.questions[0].options.length === 4
+    );
+
+    // GR11: Odpowiedź w quizie answerGrammarPractice
+    const currentQ = grammarSession.practice.questions[0];
+    answerGrammarPractice(currentQ.answer);
+    ok(
+      'GR11 answerGrammarPractice oznacza poprawną odpowiedź i zwiększa wynik',
+      grammarSession.practice.answered === true && grammarSession.practice.score === 1
+    );
+
+    // GR12: Przejście do kolejnego pytania i zakończenie sesji
+    nextGrammarQuestion();
+    eq('GR12 nextGrammarQuestion przesuwa indeks pytania', grammarSession.practice.index, 1);
+    eq('GR13 stan pytania jest resetowany na nowym pytaniu', grammarSession.practice.answered, false);
+
+    // Szybkie ukończenie pozostałych pytań
+    while (grammarSession.practice.index < grammarSession.practice.questions.length) {
+      answerGrammarPractice(grammarSession.practice.questions[grammarSession.practice.index].answer);
+      nextGrammarQuestion();
+    }
+    ok(
+      'GR14 sesja zostaje oznaczona jako zakończona po przejściu wszystkich pytań',
+      grammarSession.practice.finished === true
+    );
+
+    // GR15: Renderowanie ekranu hub gramatyki
+    const backBtn = document.getElementById('btnGrammarSummaryBack');
+    if (backBtn) backBtn.click();
+    else {
+      grammarSession.mode = 'hub';
+      grammarSession.practice = null;
+      render();
+    }
+    const particleCards = document.querySelectorAll('.grammar-particle-card');
+    eq('GR15 ekran hub gramatyki renderuje 10 kart partykuł', particleCards.length, 10);
+
+    // GR16: Nawigacja do widoku szczegółowego partykuły
+    const firstCard = particleCards[0];
+    if (firstCard) firstCard.click();
+    eq('GR16 kliknięcie karty partykuły przełącza tryb na detail', grammarSession.mode, 'detail');
+    const formulaEl = document.querySelector('.grammar-pattern-formula');
+    ok('GR17 widok szczegółowy renderuje wzorzec gramatyczny', !!formulaEl && formulaEl.textContent.length > 0);
+
+    // GR18: Rozpoczęcie ćwiczenia dla pojedynczej partykuły
+    const practiceDetailBtn = document.getElementById('btnPracticeThisParticle');
+    if (practiceDetailBtn) practiceDetailBtn.click();
+    eq('GR18 przycisk ćwiczenia w detail przełącza sesję w practice dla partykuły', grammarSession.mode, 'practice');
+    ok(
+      'GR19 sesja ćwiczenia posiada pytania powiązane z wybraną partykułą',
+      grammarSession.practice && grammarSession.practice.questions.length > 0
+    );
+
+    // GR20: resetProgressData i czyszczenie
+    resetProgressData();
+    eq('GR20 resetProgressData resetuje statystyki gramatyki', grammarProgress.totalAnswers, 0);
+
+    // Przywrócenie stanu
+    grammarSession.mode = 'hub';
+    grammarSession.particleId = null;
+    grammarSession.practice = null;
+    state.grammar = null;
+    setScreen('menu');
+  } catch (e) {
+    ok('GR moduł gramatyki', false, e.message);
   }
 
   /* =====================================================

@@ -1474,7 +1474,9 @@ const ICONS = {
     '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
   play: '<path d="m7 4 13 8-13 8Z"/>',
   keyboard:
-    '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>'
+    '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>',
+  grammar:
+    '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>'
 };
 
 /* Jeden sposób wstawiania ikony: spójny viewBox, grubość kreski i brak
@@ -1518,6 +1520,12 @@ const NAV_ITEMS = [
     label: 'Kanji',
     screen: 'kanji',
     icon: '<path d="M4 7h16M12 7v14M7 12h10M5 18h14"/>'
+  },
+  {
+    id: 'grammar',
+    label: 'Gramatyka',
+    screen: 'grammar',
+    icon: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>'
   }
 ];
 
@@ -1529,6 +1537,7 @@ const SCREEN_TITLES = {
   review: 'Powtórki',
   vocab: 'Słownictwo',
   kanji: 'Kanji',
+  grammar: 'Gramatyka',
   settings: 'Ustawienia'
 };
 
@@ -1537,6 +1546,7 @@ const MODULE_LABELS = {
   kana: 'KANA',
   vocab: 'SŁOWNICTWO',
   kanji: 'KANJI',
+  grammar: 'GRAMATYKA',
   settings: 'APLIKACJA'
 };
 
@@ -1546,6 +1556,7 @@ function screenModule(screen = state.screen) {
   if (screen === 'dashboard') return 'dashboard';
   if (screen === 'vocab') return 'vocab';
   if (screen === 'kanji') return 'kanji';
+  if (screen === 'grammar') return 'grammar';
   if (screen === 'settings') return 'settings';
   return 'kana';
 }
@@ -1567,6 +1578,9 @@ function isFocusMode() {
       !state.kanji.finished
     );
   }
+  if (state.screen === 'grammar') {
+    return !!(state.grammar && state.grammar.mode === 'practice' && !state.grammar.finished);
+  }
   return false;
 }
 
@@ -1584,6 +1598,17 @@ function screenTitle() {
     if (state.kanji.mode === 'flashcard') return state.kanji.finished ? 'Wynik' : 'Fiszki Kanji';
     if (state.kanji.mode === 'quiz') return state.kanji.finished ? 'Wynik' : 'Quiz Kanji';
     return 'Kanji';
+  }
+  if (state.screen === 'grammar') {
+    if (!state.grammar || state.grammar.mode === 'hub') return 'Gramatyka';
+    if (state.grammar.mode === 'detail') {
+      const p = grammarItem(state.grammar.particleId);
+      return p ? `Partykuła ${p.kana}` : 'Szczegóły partykuły';
+    }
+    if (state.grammar.mode === 'practice') {
+      return state.grammar.practice && state.grammar.practice.finished ? 'Wynik' : 'Trening luk';
+    }
+    return 'Gramatyka';
   }
   return SCREEN_TITLES[state.screen] || 'Kana';
 }
@@ -1636,8 +1661,16 @@ function renderNav() {
         state.kanji = kanjiSession;
       }
 
+      if (target.screen === 'grammar') {
+        grammarSession.mode = 'hub';
+        grammarSession.particleId = null;
+        grammarSession.practice = null;
+        state.grammar = grammarSession;
+      }
+
       if (state.screen === target.screen) {
         if (target.screen === 'vocab') renderVocab();
+        if (target.screen === 'grammar') renderGrammar();
         return;
       }
 
@@ -2753,6 +2786,27 @@ homeBtn.onclick = () => {
     return;
   }
 
+  if (state.screen === 'grammar') {
+    if (state.grammar && state.grammar.mode === 'practice' && !state.grammar.finished) {
+      if (!confirm('Czy na pewno chcesz przerwać ćwiczenia gramatyki?')) return;
+    }
+    if (state.grammar && state.grammar.mode === 'detail') {
+      grammarSession.mode = 'hub';
+      state.grammar = grammarSession;
+      render();
+      return;
+    }
+    if (state.grammar && state.grammar.mode === 'practice') {
+      grammarSession.mode = 'hub';
+      state.grammar = grammarSession;
+      render();
+      return;
+    }
+    state.grammar = null;
+    setScreen('dashboard');
+    return;
+  }
+
   if (state.screen === 'menu') {
     setScreen('dashboard');
     return;
@@ -2782,6 +2836,7 @@ function render() {
   if (state.screen === 'review') renderReview();
   if (state.screen === 'vocab') renderVocab();
   if (state.screen === 'kanji') renderKanji();
+  if (state.screen === 'grammar') renderGrammar();
   if (state.screen === 'settings') renderSettings();
 }
 
@@ -2852,6 +2907,7 @@ function renderDashboard() {
   const kana = getKanaSummaryStats();
   const vocabStats = getVocabSummaryStats();
   const kanji = getKanjiSummaryStats('all');
+  const grammarStats = getGrammarSummaryStats();
 
   const streaks = dailyStreaks(Date.now());
   const daily = loadDailyStats();
@@ -2876,7 +2932,7 @@ function renderDashboard() {
           <span class="dashboard-eyebrow">SYSTEM NAUKI KOTO · JAPOŃSKI OD PODSTAW</span>
           <h1 class="dashboard-title">${greeting}!</h1>
           <p class="dashboard-desc">
-            Śledź swoje postępy w trzech filarach nauki: alfabecie Kana, słownictwie tematycznym oraz znakach Kanji.
+            Śledź swoje postępy w czterech filarach nauki: alfabecie Kana, słownictwie, znakach Kanji oraz gramatyce.
           </p>
 
           <div class="dashboard-activity-bar">
@@ -3112,6 +3168,60 @@ function renderDashboard() {
             </div>
           </div>
         </div>
+
+        <!-- MODUŁ 4: GRAMATYKA -->
+        <div class="dashboard-module-card" data-module-card="grammar">
+          <div class="dashboard-module-watermark" aria-hidden="true">文</div>
+          <div class="dashboard-module-head">
+            <div class="dashboard-module-icon grammar-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>
+              </svg>
+            </div>
+            <div class="dashboard-module-headings">
+              <span class="dashboard-module-tag">GRAMATYKA</span>
+              <h3 class="dashboard-module-name">Gramatyka (Partykuły N5)</h3>
+            </div>
+          </div>
+
+          <p class="dashboard-module-desc">
+            10 kluczowych partykuł języka japońskiego, schematy zdań i interaktywny trening uzupełniania luk.
+          </p>
+
+          <div class="dashboard-module-metrics">
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${grammarStats.mastered}</span>
+              <span class="dashboard-metric-lbl">Opanowane</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${grammarStats.learning}</span>
+              <span class="dashboard-metric-lbl">W nauce</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${grammarStats.total}</span>
+              <span class="dashboard-metric-lbl">Partykuł</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${grammarStats.totalAnswers}</span>
+              <span class="dashboard-metric-lbl">Ćwiczeń</span>
+            </div>
+          </div>
+
+          <div class="dashboard-progress-wrap">
+            <div class="dashboard-progress-bar" style="width: ${grammarStats.percent}%"></div>
+          </div>
+          <span class="dashboard-progress-text">${grammarStats.mastered} z ${grammarStats.total} opanowanych (${grammarStats.percent}%)</span>
+
+          <div class="dashboard-module-actions">
+            <button class="dashboard-action-btn primary" id="btnDashGrammarOpen" type="button">
+              Otwórz Gramatykę →
+            </button>
+            <div class="dashboard-action-chips">
+              <button class="dashboard-chip-btn" id="btnDashGrammarGuide" type="button">Przewodnik</button>
+              <button class="dashboard-chip-btn" id="btnDashGrammarPractice" type="button">Trening luk</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -3193,6 +3303,25 @@ function renderDashboard() {
     Audio.click();
     startKanjiSession({ mode: 'quiz' });
     setScreen('kanji');
+  };
+
+  // Grammar actions
+  document.getElementById('btnDashGrammarOpen').onclick = () => {
+    Audio.click();
+    grammarSession.mode = 'hub';
+    state.grammar = grammarSession;
+    setScreen('grammar');
+  };
+  document.getElementById('btnDashGrammarGuide').onclick = () => {
+    Audio.click();
+    grammarSession.mode = 'hub';
+    state.grammar = grammarSession;
+    setScreen('grammar');
+  };
+  document.getElementById('btnDashGrammarPractice').onclick = () => {
+    Audio.click();
+    startGrammarPractice();
+    setScreen('grammar');
   };
 }
 
@@ -5860,6 +5989,983 @@ function renderKanjiSessionSummary(mode) {
   };
 }
 
+/* =========================================================
+   T20 — MODUŁ GRAMATYKI (JAPANESE GRAMMAR & PARTICLES)
+   ========================================================= */
+
+const GRAMMAR_KEY = 'hiragana-grammar';
+const GRAMMAR_VERSION = 1;
+
+// prettier-ignore
+const GRAMMAR_ITEMS = [
+  {
+    id: 'wa',
+    kana: 'は',
+    romaji: 'wa',
+    label: 'Temat zdania (Topic)',
+    pattern: '[Rzeczownik] は [Opis / Cecha] です',
+    description: 'Wskazuje temat wypowiedzi („jeśli chodzi o...”, „co do...”). Wymawiana jako „wa”, lecz zapisywana znakiem hiragany は (ha). Oddziela to, o czym mówimy, od reszty orzeczenia.',
+    notes: 'Uwaga na wymowę i pisownię: czytamy „wa”, ale piszemy „は”. Częsty dylemat は vs が: は skupia uwagę na tym, co następuje PO partykule (orzeczeniu), natomiast が kładzie nacisk na podmiot PRZED nią.',
+    examples: [
+      { japanese: 'わたしは がくせいです。', romaji: 'Watashi wa gakusei desu.', polish: 'Ja jestem studentem/uczniem.' },
+      { japanese: 'これは にほんごの ほんです。', romaji: 'Kore wa nihongo no hon desu.', polish: 'To jest książka do japońskiego.' },
+      { japanese: 'たなかさんは せんせいです。', romaji: 'Tanaka-san wa sensei desu.', polish: 'Pan Tanaka jest nauczycielem.' }
+    ],
+    questions: [
+      {
+        sentence: 'わたし [?] がくせいです。',
+        full: 'わたしは がくせいです。',
+        polish: 'Ja jestem studentem/uczniem.',
+        answer: 'は',
+        distractors: ['が', 'を', 'に'],
+        explanation: 'Partykuła は (wa) wskazuje temat zdania: „O mnie mowa – jestem studentem”.'
+      },
+      {
+        sentence: 'これ [?] ほんです。',
+        full: 'これは ほんです。',
+        polish: 'To jest książka.',
+        answer: 'は',
+        distractors: ['も', 'で', 'へ'],
+        explanation: 'Partykuła は (wa) definiuje temat wypowiedzi: „Jeśli chodzi o to – to jest książka”.'
+      },
+      {
+        sentence: 'たなかさん [?] せんせいです。',
+        full: 'たなかさんは せんせいです。',
+        polish: 'Pan Tanaka jest nauczycielem.',
+        answer: 'は',
+        distractors: ['を', 'に', 'と'],
+        explanation: 'Partykuła は (wa) oznacza temat: „Pan Tanaka jest nauczycielem”.'
+      }
+    ]
+  },
+  {
+    id: 'ka',
+    kana: 'か',
+    romaji: 'ka',
+    label: 'Pytanie (Question marker)',
+    pattern: '[Zdanie twierdzące] + か',
+    description: 'Stawiana na samym końcu zdania przekształca je w pytanie. W języku japońskim pełni rolę znaku zapytania w stylu uprzejmym (zastępuje lub uzupełnia znak „?”).',
+    notes: 'W stylu formalnym (z desu / masu) nie zmienia się szyk wyrazów w zdaniu – wystarczy dodać „か” na końcu.',
+    examples: [
+      { japanese: 'それは くるまですか。', romaji: 'Sore wa kuruma desu ka.', polish: 'Czy to jest samochód?' },
+      { japanese: 'おげんきですか。', romaji: 'O-genki desu ka.', polish: 'Jak się masz? (Czy czujesz się dobrze?)' },
+      { japanese: 'いま なんじですか。', romaji: 'Ima nanji desu ka.', polish: 'Która jest teraz godzina?' }
+    ],
+    questions: [
+      {
+        sentence: 'それは くるまです [?]。',
+        full: 'それは くるまですか。',
+        polish: 'Czy to jest samochód?',
+        answer: 'か',
+        distractors: ['は', 'ね', 'よ'],
+        explanation: 'Partykuła か na końcu zdania tworzy pytanie: „Czy to jest samochód?”.'
+      },
+      {
+        sentence: 'おげんきです [?]。',
+        full: 'おげんきですか。',
+        polish: 'Jak się masz? (Czy u Ciebie wszystko dobrze?)',
+        answer: 'か',
+        distractors: ['の', 'も', 'を'],
+        explanation: 'Końcówka か zamienia uprzejme stwierdzenie w pytanie o samopoczucie.'
+      },
+      {
+        sentence: 'いま なんじです [?]。',
+        full: 'いま なんじですか。',
+        polish: 'Która jest teraz godzina?',
+        answer: 'か',
+        distractors: ['が', 'に', 'と'],
+        explanation: 'Pytania szczegółowe ze słówkami pytającymi (nanji - która godzina) również kończymy partykułą か.'
+      }
+    ]
+  },
+  {
+    id: 'no',
+    kana: 'の',
+    romaji: 'no',
+    label: 'Przynależność i modyfikator (Possessive)',
+    pattern: '[Rzeczownik A] の [Rzeczownik B]',
+    description: 'Łączy dwa rzeczowniki. Najczęściej wyraża przynależność (odpowiednik dopełniacza: czyj? czego?), ale także pochodzenie, materiał lub rodzaj (np. „książka do japońskiego”).',
+    notes: 'Szyk jest odwrotny niż po polsku: najpierw właściciel/określenie, potem の, a na końcu rzeczownik określany (np. watashi no kaban = moja torba).',
+    examples: [
+      { japanese: 'これは わたしの かばんです。', romaji: 'Kore wa watashi no kaban desu.', polish: 'To jest moja torba.' },
+      { japanese: 'にほんごの ほん。', romaji: 'Nihongo no hon.', polish: 'Książka do języka japońskiego.' },
+      { japanese: 'とうきょうの だいがく。', romaji: 'Toukyou no daigaku.', polish: 'Uniwersytet w Tokio.' }
+    ],
+    questions: [
+      {
+        sentence: 'これは わたし [?] かばんです。',
+        full: 'これは わたしの かばんです。',
+        polish: 'To jest moja torba.',
+        answer: 'の',
+        distractors: ['は', 'を', 'に'],
+        explanation: 'Partykuła の wyraża przynależność: わたし の かばん = moja torba (torba należąca do mnie).'
+      },
+      {
+        sentence: 'にほんご [?] ほんを よみます。',
+        full: 'にほんごの ほんを よみます。',
+        polish: 'Czytam książkę do japońskiego.',
+        answer: 'の',
+        distractors: ['と', 'で', 'も'],
+        explanation: 'の łączy rzeczowniki: にほんご の ほん = książka do japońskiego.'
+      },
+      {
+        sentence: 'だれ [?] かさですか。',
+        full: 'だれの かさですか。',
+        polish: 'Czyj to jest parasol?',
+        answer: 'の',
+        distractors: ['か', 'は', 'が'],
+        explanation: 'だれ の = czyj / czyja / czyje. だれの かさ = czyj parasol.'
+      }
+    ]
+  },
+  {
+    id: 'mo',
+    kana: 'も',
+    romaji: 'mo',
+    label: 'Włączenie (Also / Too)',
+    pattern: '[Rzeczownik] も [Cecha / Czasownik]',
+    description: 'Odpowiednik polskiego „też”, „również”, „także”. Zastępuje partykuły は (wa) oraz を (o) po dodaniu nowego elementu spełniającego ten sam warunek.',
+    notes: 'Nigdy nie łączymy „は も” ani „を も” – partykuła も całkowicie je zastępuje.',
+    examples: [
+      { japanese: 'わたしも がくせいです。', romaji: 'Watashi mo gakusei desu.', polish: 'Ja też jestem studentem.' },
+      { japanese: 'これも 100えんです。', romaji: 'Kore mo hyakuen desu.', polish: 'To też kosztuje 100 jenów.' },
+      { japanese: 'すずきさんも きました。', romaji: 'Suzuki-san mo kimashita.', polish: 'Pan Suzuki też przyszedł.' }
+    ],
+    questions: [
+      {
+        sentence: 'たなかさんは がくせいです。わたし [?] がくせいです。',
+        full: 'たなかさんは がくせいです。わたしも がくせいです。',
+        polish: 'Pan Tanaka jest studentem. Ja też jestem studentem.',
+        answer: 'も',
+        distractors: ['は', 'の', 'を'],
+        explanation: 'も oznacza „również/też”: skoro pan Tanaka jest studentem, ja TEŻ nim jestem.'
+      },
+      {
+        sentence: 'これは 100えんです。それ [?] 100えんです。',
+        full: 'これは 100えんです。それも 100えんです。',
+        polish: 'To kosztuje 100 jenów. Tamto też kosztuje 100 jenów.',
+        answer: 'も',
+        distractors: ['が', 'で', 'に'],
+        explanation: 'Partykuła も zastępuje は i wskazuje, że druga rzecz również kosztuje 100 jenów.'
+      },
+      {
+        sentence: 'おちゃを のみます。みず [?] のみます。',
+        full: 'おちゃを のみます。みずも のみます。',
+        polish: 'Piję herbatę. Wodę też piję.',
+        answer: 'も',
+        distractors: ['を', 'へ', 'と'],
+        explanation: 'Piję herbatę, a wodę TEŻ piję – partykuła も zastępuje partykułę biernika を.'
+      }
+    ]
+  },
+  {
+    id: 'o',
+    kana: 'を',
+    romaji: 'o',
+    label: 'Dopełnienie bliższe (Direct Object)',
+    pattern: '[Rzeczownik] を [Czasownik przechodni]',
+    description: 'Wskazuje bezpośredni obiekt czynności (kogo? co? – biernik). Wymawiana jako „o”, lecz zapisywana wyłącznie specjalnym znakiem hiragany を (wo).',
+    notes: 'Znak を służy we współczesnym japońskim niemal wyłącznie jako ta jedna partykuła gramatyczna.',
+    examples: [
+      { japanese: 'みずを のみます。', romaji: 'Mizu o nomimasu.', polish: 'Piję wodę.' },
+      { japanese: 'ほんを よみます。', romaji: 'Hon o yomimasu.', polish: 'Czytam książkę.' },
+      { japanese: 'あさごはんを たべます。', romaji: 'Asagohan o tabemasu.', polish: 'Jem śniadanie.' }
+    ],
+    questions: [
+      {
+        sentence: 'みず [?] のみます。',
+        full: 'みずを のみます。',
+        polish: 'Piję wodę.',
+        answer: 'を',
+        distractors: ['は', 'が', 'で'],
+        explanation: 'Partykuła を (pisana を, wymawiana o) łączy dopełnienie z czynnością: pić (co?) wodę.'
+      },
+      {
+        sentence: 'ほん [?] よみます。',
+        full: 'ほんを よみます。',
+        polish: 'Czytam książkę.',
+        answer: 'を',
+        distractors: ['に', 'へ', 'と'],
+        explanation: 'Biernik (kogo? co?): czytać książkę -> ほん を よみます.'
+      },
+      {
+        sentence: 'テレビ [?] みます。',
+        full: 'テレビを みます。',
+        polish: 'Oglądam telewizję.',
+        answer: 'を',
+        distractors: ['で', 'の', 'も'],
+        explanation: 'Oglądać (co?) telewizję -> テレビ を みます.'
+      }
+    ]
+  },
+  {
+    id: 'ni',
+    kana: 'に',
+    romaji: 'ni',
+    label: 'Czas, cel i miejsce istnienia (Target / Time)',
+    pattern: '[Czas] に [Czynność] / [Miejsce] に [います/あります/いきます]',
+    description: 'Wskazuje konkretny punkt w czasie (np. o 7:00), cel/kierunek przemieszczania się (do szkoły) lub statyczne miejsce pobytu/istnienia (w pokoju).',
+    notes: 'Partykuły に używamy przy konkretnych godzinach i dniach tygodnia (7じに, げつようびに), ale NIE używamy przy określeniach względnych (np. kyou - dzisiaj, ashita - jutro).',
+    examples: [
+      { japanese: '7じに おきます。', romaji: 'Shichiji ni okimasu.', polish: 'Wstaję o siódmej.' },
+      { japanese: 'がっこうに いきます。', romaji: 'Gakkou ni ikimasu.', polish: 'Idę do szkoły.' },
+      { japanese: 'へやに ねこが います。', romaji: 'Heya ni neko ga imasu.', polish: 'W pokoju jest kot.' }
+    ],
+    questions: [
+      {
+        sentence: '7じ [?] おきます。',
+        full: '7じに おきます。',
+        polish: 'Wstaję o siódmej.',
+        answer: 'に',
+        distractors: ['で', 'を', 'は'],
+        explanation: 'Partykuła に oznacza konkretny punkt w czasie: o której godzinie -> 7じ に (o 7:00).'
+      },
+      {
+        sentence: 'がっこう [?] いきます。',
+        full: 'がっこうに いきます。',
+        polish: 'Idę do szkoły.',
+        answer: 'に',
+        distractors: ['で', 'を', 'の'],
+        explanation: 'Partykuła に wskazuje cel ruchu z czasownikami ikimasu/kimasu: iść (dokąd?) do szkoły.'
+      },
+      {
+        sentence: 'きょうしつ [?] せんせいが います。',
+        full: 'きょうしつに せんせいが います。',
+        polish: 'W klasie jest nauczyciel.',
+        answer: 'に',
+        distractors: ['で', 'へ', 'と'],
+        explanation: 'Z czasownikiem istnienia (imasu/arimasu) miejsce pobytu oznaczamy partykułą に.'
+      }
+    ]
+  },
+  {
+    id: 'de',
+    kana: 'で',
+    romaji: 'de',
+    label: 'Miejsce akcji i narzędzie (Action location / Means)',
+    pattern: '[Miejsce] で [Akcja] / [Środek] で [Czynność]',
+    description: 'Wskazuje miejsce, w którym dynamicznie odbywa się dana czynność (np. uczyć się w bibliotece), albo narzędzie, metodę, środek transportu i język (np. autobusem, pałeczkami, po japońsku).',
+    notes: 'Różnica に vs で: に to statyczne istnienie (gdzie ktoś jest), a で to miejsce dynamicznego działania (gdzie ktoś coś robi).',
+    examples: [
+      { japanese: 'としょかんで べんきょうします。', romaji: 'Toshokan de benkyou shimasu.', polish: 'Uczę się w bibliotece.' },
+      { japanese: 'バスで いきます。', romaji: 'Basu de ikimasu.', polish: 'Jadę autobusem.' },
+      { japanese: 'はしで たべます。', romaji: 'Hashi de tabemasu.', polish: 'Jem pałeczkami.' }
+    ],
+    questions: [
+      {
+        sentence: 'としょかん [?] べんきょうします。',
+        full: 'としょかんで べんきょうします。',
+        polish: 'Uczę się w bibliotece.',
+        answer: 'で',
+        distractors: ['に', 'を', 'へ'],
+        explanation: 'Partykuła で oznacza miejsce wykonywania czynności (uczę się GDZIE? w bibliotece).'
+      },
+      {
+        sentence: 'バス [?] いきます。',
+        full: 'バスで いきます。',
+        polish: 'Jadę autobusem.',
+        answer: 'で',
+        distractors: ['に', 'を', 'と'],
+        explanation: 'Partykuła で wskazuje środek transportu / narzędzie: jadę (czym?) autobusem.'
+      },
+      {
+        sentence: 'にほんご [?] はなします。',
+        full: 'にほんごで はなします。',
+        polish: 'Rozmawiam po japońsku.',
+        answer: 'で',
+        distractors: ['は', 'の', 'に'],
+        explanation: 'Partykuła で określa język / sposób wypowiedzi: rozmawiać (za pomocą czego?) po japońsku.'
+      }
+    ]
+  },
+  {
+    id: 'e',
+    kana: 'へ',
+    romaji: 'e',
+    label: 'Kierunek ruchu (Direction)',
+    pattern: '[Miejsce / Cel] へ [Czasownik ruchu]',
+    description: 'Wskazuje kierunek przemieszczania się („w kierunku”, „w stronę”). Wymawiana jako „e”, lecz zapisywana znakiem hiragany へ (he).',
+    notes: 'W kontekście czasowników ruchu (ikimasu, kimasu, kaerimasu) partykuły へ oraz に są często stosowane zamiennie. へ kładzie większy akcent na kierunek drogi.',
+    examples: [
+      { japanese: 'うちへ かえります。', romaji: 'Uchi e kaerimasu.', polish: 'Wracam do domu.' },
+      { japanese: 'にほんへ いきます。', romaji: 'Nihon e ikimasu.', polish: 'Jadę do Japonii.' },
+      { japanese: 'きょうとへ いきました。', romaji: 'Kyouto e ikimashita.', polish: 'Pojechałem do Kioto.' }
+    ],
+    questions: [
+      {
+        sentence: 'うち [?] かえります。',
+        full: 'うちへ かえります。',
+        polish: 'Wracam do domu.',
+        answer: 'へ',
+        distractors: ['で', 'を', 'の'],
+        explanation: 'Partykuła へ (pisana へ, czytana e) wskazuje kierunek ruchu: wracam (dokąd?) w stronę domu.'
+      },
+      {
+        sentence: 'にほん [?] いきます。',
+        full: 'にほんへ いきます。',
+        polish: 'Jadę do Japonii.',
+        answer: 'へ',
+        distractors: ['で', 'を', 'と'],
+        explanation: 'Kierunek podróży z czasownikiem ikimasu: jadę do Japonii -> にほん へ いきます.'
+      },
+      {
+        sentence: 'どこ [?] いきますか。',
+        full: 'どこへ いきますか。',
+        polish: 'Dokąd idziesz?',
+        answer: 'へ',
+        distractors: ['で', 'は', 'を'],
+        explanation: 'Pytanie o kierunek: Dokąd idziesz? -> どこ へ いきますか.'
+      }
+    ]
+  },
+  {
+    id: 'to',
+    kana: 'と',
+    romaji: 'to',
+    label: 'Spójnik „i” oraz towarzysz (With / And)',
+    pattern: '[Rzeczownik A] と [Rzeczownik B] / [Osoba] と [Czynność]',
+    description: 'Łączy rzeczowniki w wyczerpujące wyliczenie („i”, „oraz”) lub wskazuje osobę, z którą wspólnie wykonuje się daną czynność („z kimś”).',
+    notes: 'Partykuła と służy do wyczerpującego wymieniania (A i B i nikt więcej). W odróżnieniu od polskiego „i”, と łączy TYLKO rzeczowniki, nigdy całe zdania.',
+    examples: [
+      { japanese: 'ペンと ノート。', romaji: 'Pen to nooto.', polish: 'Długopis i notes.' },
+      { japanese: 'ともだちと はなします。', romaji: 'Tomodachi to hanashimasu.', polish: 'Rozmawiam z przyjacielem.' },
+      { japanese: 'かぞくと ごはんを たべます。', romaji: 'Kazoku to gohan o tabemasu.', polish: 'Jem posiłek z rodziną.' }
+    ],
+    questions: [
+      {
+        sentence: 'ペン [?] ノートが あります。',
+        full: 'ペンと ノートが あります。',
+        polish: 'Jest długopis i zeszyt.',
+        answer: 'と',
+        distractors: ['の', 'に', 'で'],
+        explanation: 'Partykuła と łączy dwa rzeczowniki: długopis ORAZ zeszyt.'
+      },
+      {
+        sentence: 'ともだち [?] えいがを みます。',
+        full: 'ともだちと えいがを みます。',
+        polish: 'Oglądam film z przyjacielem.',
+        answer: 'と',
+        distractors: ['を', 'へ', 'に'],
+        explanation: 'Partykuła と oznacza towarzysza czynności: oglądam film Z przyjacielem.'
+      },
+      {
+        sentence: 'だれ [?] いきますか。',
+        full: 'だれと いきますか。',
+        polish: 'Z kim idziesz?',
+        answer: 'と',
+        distractors: ['で', 'を', 'は'],
+        explanation: 'Pytanie o towarzysza: Z kim idziesz? -> だれ と いきますか.'
+      }
+    ]
+  },
+  {
+    id: 'ga',
+    kana: 'が',
+    romaji: 'ga',
+    label: 'Podmiot i istnienie (Subject / Senses)',
+    pattern: '[Rzeczownik] が [あります/います/すきです]',
+    description: 'Wskazuje gramatyczny podmiot zdania. Obowiązkowa przy czasownikach istnienia (arimasu, imasu), przymiotnikach upodobań (suki, kirai) i umiejętności (jouzu, heta).',
+    notes: 'Kluczowa reguła: z czasownikami あります / います to, co istnieje, ZAWSZE oznaczamy przez が (np. ねこが います). Podobnie z suki desu: すしが すきです (lubię sushi).',
+    examples: [
+      { japanese: 'いぬが います。', romaji: 'Inu ga imasu.', polish: 'Jest pies (znajduje się tu pies).' },
+      { japanese: 'すしが すきです。', romaji: 'Sushi ga suki desu.', polish: 'Lubię sushi.' },
+      { japanese: 'じかんが ありません。', romaji: 'Jikan ga arimasen.', polish: 'Nie ma czasu.' }
+    ],
+    questions: [
+      {
+        sentence: 'ねこ [?] います。',
+        full: 'ねこが います。',
+        polish: 'Jest kot.',
+        answer: 'が',
+        distractors: ['を', 'に', 'で'],
+        explanation: 'Przy czasowniku istnienia istoty żywej (います) podmiot oznaczamy partykułą が.'
+      },
+      {
+        sentence: 'すし [?] すきです。',
+        full: 'すしが すきです。',
+        polish: 'Lubię sushi.',
+        answer: 'が',
+        distractors: ['を', 'は', 'の'],
+        explanation: 'Z przymiotnikiem すき (lubiany) obiekt upodobania łączy się za pomocą が (lubię sushi).'
+      },
+      {
+        sentence: 'じかん [?] ありません。',
+        full: 'じかんが ありません。',
+        polish: 'Nie ma czasu.',
+        answer: 'が',
+        distractors: ['を', 'に', 'へ'],
+        explanation: 'Przy czasowniku braku/nieistnienia (ありません) rzecz oznaczamy partykułą が.'
+      }
+    ]
+  }
+];
+
+let grammarProgress = loadGrammar();
+
+function loadGrammar() {
+  try {
+    const raw = localStorage.getItem(GRAMMAR_KEY);
+    if (!raw) return { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.version === GRAMMAR_VERSION && typeof parsed.particles === 'object') {
+      return parsed;
+    }
+  } catch (e) {}
+  return { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+}
+
+function saveGrammar() {
+  try {
+    localStorage.setItem(GRAMMAR_KEY, JSON.stringify(grammarProgress));
+  } catch (e) {}
+}
+
+function resetGrammarData() {
+  grammarProgress = { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+  saveGrammar();
+}
+
+function grammarItem(id) {
+  return GRAMMAR_ITEMS.find(item => item.id === id);
+}
+
+function grammarParticleStat(id) {
+  if (!grammarProgress.particles[id]) {
+    grammarProgress.particles[id] = { seen: 0, correct: 0, wrong: 0, mastered: false };
+  }
+  return grammarProgress.particles[id];
+}
+
+function recordGrammarAnswer(particleId, isCorrect) {
+  const stat = grammarParticleStat(particleId);
+  stat.seen++;
+  if (isCorrect) stat.correct++;
+  else stat.wrong++;
+
+  if (stat.correct >= 3 && stat.correct / stat.seen >= 0.8) {
+    stat.mastered = true;
+  } else if (stat.wrong >= 2 && stat.correct / stat.seen < 0.7) {
+    stat.mastered = false;
+  }
+
+  grammarProgress.totalAnswers = (grammarProgress.totalAnswers || 0) + 1;
+  grammarProgress.lastPracticed = Date.now();
+  saveGrammar();
+}
+
+function getGrammarSummaryStats() {
+  let mastered = 0;
+  let learning = 0;
+  let unpracticed = 0;
+
+  GRAMMAR_ITEMS.forEach(p => {
+    const stat = grammarProgress.particles[p.id];
+    if (stat && stat.mastered) mastered++;
+    else if (stat && stat.seen > 0) learning++;
+    else unpracticed++;
+  });
+
+  const total = GRAMMAR_ITEMS.length;
+  const percent = total ? Math.round((mastered / total) * 100) : 0;
+  const totalAnswers = grammarProgress.totalAnswers || 0;
+
+  return { mastered, learning, unpracticed, total, percent, totalAnswers };
+}
+
+const grammarSession = {
+  mode: 'hub',
+  particleId: null,
+  practice: null
+};
+
+function startGrammarPractice({ particleId = null } = {}) {
+  let pool = [];
+  if (particleId) {
+    const p = grammarItem(particleId);
+    if (p && p.questions) {
+      pool = p.questions.map(q => ({ ...q, particleId: p.id }));
+    }
+  } else {
+    GRAMMAR_ITEMS.forEach(p => {
+      if (p.questions) {
+        p.questions.forEach(q => pool.push({ ...q, particleId: p.id }));
+      }
+    });
+  }
+
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, 10);
+
+  const prepared = selected.map(q => {
+    const opts = [q.answer, ...q.distractors].sort(() => Math.random() - 0.5);
+    return {
+      ...q,
+      options: opts
+    };
+  });
+
+  state.screen = 'grammar';
+  grammarSession.mode = 'practice';
+  grammarSession.particleId = particleId;
+  grammarSession.practice = {
+    questions: prepared,
+    index: 0,
+    score: 0,
+    answered: false,
+    chosen: null,
+    isCorrect: false,
+    finished: false
+  };
+
+  state.grammar = grammarSession;
+  render();
+}
+
+function answerGrammarPractice(choice) {
+  const s = grammarSession.practice;
+  if (!s || s.answered || s.finished) return;
+
+  const currentQ = s.questions[s.index];
+  if (!currentQ) return;
+
+  s.chosen = choice;
+  s.isCorrect = choice === currentQ.answer;
+  s.answered = true;
+
+  if (s.isCorrect) {
+    s.score++;
+    Audio.correct();
+  } else {
+    Audio.wrong();
+  }
+
+  recordGrammarAnswer(currentQ.particleId, s.isCorrect);
+  render();
+}
+
+function nextGrammarQuestion() {
+  const s = grammarSession.practice;
+  if (!s || !s.answered) return;
+
+  s.index++;
+  s.answered = false;
+  s.chosen = null;
+  s.isCorrect = false;
+
+  if (s.index >= s.questions.length) {
+    s.finished = true;
+    Audio.celebrate();
+  }
+
+  render();
+}
+
+function renderGrammar() {
+  if (!state.grammar) {
+    grammarSession.mode = 'hub';
+    state.grammar = grammarSession;
+  }
+
+  if (state.grammar.mode === 'detail') {
+    renderGrammarDetail(state.grammar.particleId);
+  } else if (state.grammar.mode === 'practice') {
+    renderGrammarPractice();
+  } else {
+    renderGrammarHub();
+  }
+}
+
+function renderGrammarHub() {
+  const stats = getGrammarSummaryStats();
+
+  app.innerHTML = `
+    <div class="grammar-screen animate-fade">
+      <div class="grammar-hero">
+        <div class="grammar-hero-watermark" aria-hidden="true">助</div>
+        <div class="grammar-hero-content">
+          <span class="grammar-eyebrow">GRAMATYKA JAPOŃSKA · N5</span>
+          <h1 class="grammar-title">Partykuły i Schematy Zdań</h1>
+          <p class="grammar-desc">
+            Partykuły (助詞 - joshi) stanowią szkielet gramatyczny języka japońskiego.
+            Opanuj 10 kluczowych partykuł, poznaj schematy składniowe i trenuj uzupełnianie luk.
+          </p>
+
+          <div class="grammar-activity-bar">
+            <div class="grammar-stat-chip">
+              <span class="grammar-stat-val">${stats.mastered} / ${stats.total}</span>
+              <span class="grammar-stat-lbl">Opanowane partykuły</span>
+            </div>
+            <div class="grammar-stat-chip">
+              <span class="grammar-stat-val">${stats.learning}</span>
+              <span class="grammar-stat-lbl">W trakcie nauki</span>
+            </div>
+            <div class="grammar-stat-chip">
+              <span class="grammar-stat-val">${stats.totalAnswers}</span>
+              <span class="grammar-stat-lbl">Rozwiązanych ćwiczeń</span>
+            </div>
+            <div class="grammar-stat-chip progress-chip">
+              <span class="grammar-stat-val">${stats.percent}%</span>
+              <div class="grammar-mini-progress">
+                <div class="grammar-mini-progress-fill" style="width: ${stats.percent}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grammar-hero-actions">
+            <button class="btn btn-primary grammar-hero-btn" id="btnStartGrammarCloze" type="button">
+              ${icon('quiz')} Rozpocznij trening luk (10 pytań)
+            </button>
+            <button class="btn btn-secondary grammar-hero-btn" id="btnScrollToParticles" type="button">
+              ${icon('list')} Przewodnik po partykułach
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grammar-section-header" id="grammarParticlesSection">
+        <h2 class="grammar-section-title">Katalog 10 fundamentalnych partykuł</h2>
+        <span class="grammar-section-hint">Kliknij partykułę, aby otworzyć szczegóły, reguły i przykłady</span>
+      </div>
+
+      <div class="grammar-particle-grid">
+        ${GRAMMAR_ITEMS.map(p => {
+          const stat = grammarParticleStat(p.id);
+          const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
+          const badgeText = stat.mastered ? 'Opanowana' : stat.seen > 0 ? 'W nauce' : 'Nowa';
+
+          return `
+            <div class="grammar-particle-card" data-particle-id="${p.id}" tabindex="0" role="button" aria-label="Partykuła ${p.kana}">
+              <div class="grammar-card-head">
+                <div class="grammar-card-kana font-japanese">${p.kana}</div>
+                <div class="grammar-card-headings">
+                  <span class="grammar-card-romaji">${p.romaji}</span>
+                  <h3 class="grammar-card-label">${escapeHtml(p.label)}</h3>
+                </div>
+                <span class="grammar-card-badge ${badgeClass}">${badgeText}</span>
+              </div>
+              <div class="grammar-card-pattern">
+                <code>${escapeHtml(p.pattern)}</code>
+              </div>
+              <p class="grammar-card-snippet">
+                ${escapeHtml(p.description)}
+              </p>
+              <div class="grammar-card-footer">
+                <span class="grammar-card-link">Szczegóły i przykłady →</span>
+                <span class="grammar-card-score">${stat.seen > 0 ? `Trafność: ${stat.seen ? Math.round((stat.correct / stat.seen) * 100) : 0}% (${stat.correct}/${stat.seen})` : 'Niećwiczona'}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnStartGrammarCloze').onclick = () => {
+    Audio.click();
+    startGrammarPractice();
+  };
+
+  document.getElementById('btnScrollToParticles').onclick = () => {
+    Audio.click();
+    const section = document.getElementById('grammarParticlesSection');
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  document.querySelectorAll('[data-particle-id]').forEach(card => {
+    const open = () => {
+      Audio.click();
+      grammarSession.mode = 'detail';
+      grammarSession.particleId = card.dataset.particleId;
+      state.grammar = grammarSession;
+      render();
+    };
+    card.onclick = open;
+    card.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
+    };
+  });
+}
+
+function renderGrammarDetail(particleId = (state.grammar && state.grammar.particleId) || grammarSession.particleId) {
+  const p = grammarItem(particleId);
+  if (!p) {
+    grammarSession.mode = 'hub';
+    if (state.grammar) state.grammar.mode = 'hub';
+    renderGrammarHub();
+    return;
+  }
+
+  const stat = grammarParticleStat(p.id);
+  const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
+  const badgeText = stat.mastered ? 'Opanowana' : stat.seen > 0 ? 'W nauce' : 'Nowa';
+
+  app.innerHTML = `
+    <div class="grammar-detail-screen animate-fade">
+      <div class="grammar-detail-nav">
+        <button class="btn btn-secondary btn-sm" id="btnGrammarBackToHub" type="button">
+          ${icon('chevron-left')} Wróć do listy partykuł
+        </button>
+      </div>
+
+      <div class="grammar-detail-card card">
+        <div class="grammar-detail-head">
+          <div class="grammar-detail-kana-wrap">
+            <span class="grammar-detail-kana font-japanese">${p.kana}</span>
+            <button class="btn-speak" data-speak="${escapeHtml(p.kana)}" type="button" title="Odsłuchaj ${p.kana}" aria-label="Odsłuchaj ${p.kana}">
+              ${icon('volume')}
+            </button>
+          </div>
+          <div class="grammar-detail-meta">
+            <div class="grammar-detail-eyebrow">PARTYKUŁA JAPOŃSKA · ROMAJI: ${p.romaji.toUpperCase()}</div>
+            <h1 class="grammar-detail-title">${escapeHtml(p.label)}</h1>
+            <span class="grammar-card-badge ${badgeClass}">${badgeText} · ${stat.seen > 0 ? `Trafność: ${stat.seen ? Math.round((stat.correct / stat.seen) * 100) : 0}% (${stat.correct}/${stat.seen})` : 'Brak prób'}</span>
+          </div>
+        </div>
+
+        <div class="grammar-pattern-box">
+          <div class="grammar-box-kicker">Wzór zdania / Struktura składniowa:</div>
+          <div class="grammar-pattern-formula"><code>${escapeHtml(p.pattern)}</code></div>
+        </div>
+
+        <div class="grammar-detail-section">
+          <h2 class="grammar-section-subtitle">Rola gramatyczna i opis</h2>
+          <p class="grammar-detail-text">${escapeHtml(p.description)}</p>
+        </div>
+
+        ${
+          p.notes
+            ? `
+          <div class="grammar-pitfalls-box">
+            <div class="grammar-pitfalls-title">⚠️ Ważna uwaga / Częste pułapki:</div>
+            <p class="grammar-pitfalls-text">${escapeHtml(p.notes)}</p>
+          </div>
+        `
+            : ''
+        }
+
+        <div class="grammar-examples-section">
+          <h2 class="grammar-section-subtitle">Przykłady zdań z wymową audio</h2>
+          <div class="grammar-examples-list">
+            ${p.examples
+              .map(
+                ex => `
+              <div class="grammar-example-item">
+                <div class="grammar-example-content">
+                  <div class="grammar-example-jp font-japanese">${escapeHtml(ex.japanese)}</div>
+                  <div class="grammar-example-romaji">${escapeHtml(ex.romaji)}</div>
+                  <div class="grammar-example-pl">${escapeHtml(ex.polish)}</div>
+                </div>
+                <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(ex.japanese)}" type="button" title="Odsłuchaj zdanie" aria-label="Odsłuchaj zdanie">
+                  ${icon('volume')}
+                </button>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+
+        <div class="grammar-detail-footer">
+          <button class="btn btn-primary" id="btnPracticeThisParticle" type="button">
+            ${icon('quiz')} Ćwicz tę partykułę (trening dedykowany)
+          </button>
+          <button class="btn btn-secondary" id="btnGrammarBackToHubBottom" type="button">
+            Wróć do listy
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const back = () => {
+    Audio.click();
+    grammarSession.mode = 'hub';
+    state.grammar = grammarSession;
+    render();
+  };
+
+  document.getElementById('btnGrammarBackToHub').onclick = back;
+  document.getElementById('btnGrammarBackToHubBottom').onclick = back;
+  document.getElementById('btnPracticeThisParticle').onclick = () => {
+    Audio.click();
+    startGrammarPractice({ particleId: p.id });
+  };
+}
+
+function renderGrammarPractice() {
+  const s = grammarSession.practice;
+  if (!s) {
+    grammarSession.mode = 'hub';
+    renderGrammarHub();
+    return;
+  }
+
+  if (s.finished) {
+    const total = s.questions.length;
+    const correct = s.score;
+    const pct = total ? Math.round((correct / total) * 100) : 0;
+
+    app.innerHTML = `
+      <div class="grammar-summary-screen animate-fade">
+        <div class="grammar-summary-card card">
+          <div class="grammar-summary-trophy">${pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+          <h1 class="grammar-summary-title">
+            ${pct >= 80 ? 'Wspaniale!' : pct >= 50 ? 'Dobra robota!' : 'Warto poćwiczyć jeszcze raz!'}
+          </h1>
+          <p class="grammar-summary-desc">
+            Ukończono trening luk gramatycznych.
+          </p>
+
+          <div class="grammar-summary-score-box">
+            <div class="grammar-summary-score-num">${correct} / ${total}</div>
+            <div class="grammar-summary-score-pct">${pct}% poprawnych odpowiedzi</div>
+          </div>
+
+          <div class="grammar-summary-actions">
+            <button class="btn btn-primary" id="btnGrammarRestartPractice" type="button">
+              Powtórz trening luk
+            </button>
+            <button class="btn btn-secondary" id="btnGrammarSummaryBack" type="button">
+              Wróć do Gramatyki
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btnGrammarRestartPractice').onclick = () => {
+      Audio.click();
+      startGrammarPractice({ particleId: grammarSession.particleId });
+    };
+    document.getElementById('btnGrammarSummaryBack').onclick = () => {
+      Audio.click();
+      grammarSession.mode = 'hub';
+      state.grammar = grammarSession;
+      render();
+    };
+    return;
+  }
+
+  const q = s.questions[s.index];
+  const total = s.questions.length;
+  const currentNum = s.index + 1;
+  const pct = Math.round(((currentNum - 1) / total) * 100);
+
+  const clozeDisplay = s.answered
+    ? escapeHtml(q.sentence).replace(
+        '[?]',
+        `<span class="grammar-cloze-filled ${s.isCorrect ? 'is-correct' : 'is-wrong'}">${escapeHtml(s.chosen)}</span>`
+      )
+    : escapeHtml(q.sentence).replace('[?]', '<span class="grammar-cloze-gap">?</span>');
+
+  const stats = `
+    <span class="session-position">Pytanie <strong>${currentNum}</strong> z <strong>${total}</strong></span>
+    <div class="badge session-score-badge" aria-label="Wynik: ${s.score} poprawnych">
+      <span class="score-correct">${s.score} ✓</span>
+    </div>
+  `;
+
+  const progress = `
+    <div class="session-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+      <div class="session-progress-fill" style="width: ${pct}%"></div>
+    </div>
+  `;
+
+  app.innerHTML = sessionFrameHTML({
+    eyebrow: 'GRAMATYKA JAPOŃSKA',
+    title: 'Trening uzupełniania luk',
+    stats,
+    content: `
+      ${progress}
+
+      <div class="prompt grammar-cloze-prompt">
+        <div class="polish">Uzupełnij brakującą partykułę w zdaniu:</div>
+
+        <div class="grammar-cloze-sentence-wrap">
+          <div class="grammar-cloze-sentence font-japanese">${clozeDisplay}</div>
+          <button class="btn-speak" data-speak="${escapeHtml(q.full)}" type="button" title="Odsłuchaj pełne zdanie" aria-label="Odsłuchaj pełne zdanie">
+            ${icon('volume')}
+          </button>
+        </div>
+
+        <div class="grammar-cloze-translation">
+          ${escapeHtml(q.polish)}
+        </div>
+
+        <div class="grammar-choices-grid">
+          ${q.options
+            .map((opt, i) => {
+              let stateClass = '';
+              if (s.answered) {
+                if (opt === q.answer) stateClass = 'choice-correct';
+                else if (opt === s.chosen) stateClass = 'choice-wrong';
+                else stateClass = 'choice-disabled';
+              }
+              return `
+                <button class="grammar-choice-btn font-japanese ${stateClass}" data-grammar-choice="${escapeHtml(opt)}" ${s.answered ? 'disabled' : ''} type="button">
+                  <span class="grammar-choice-idx">${i + 1}</span>
+                  <span class="grammar-choice-kana">${escapeHtml(opt)}</span>
+                </button>
+              `;
+            })
+            .join('')}
+        </div>
+
+        ${
+          s.answered
+            ? `
+          <div class="grammar-feedback-box animate-fade ${s.isCorrect ? 'is-correct' : 'is-wrong'}" role="status" aria-live="polite">
+            <div class="grammar-feedback-status">
+              ${s.isCorrect ? '✓ Poprawnie!' : `✗ Niepoprawnie — poprawna partykuła: <strong>${escapeHtml(q.answer)}</strong>`}
+            </div>
+            <div class="grammar-feedback-explanation">
+              ${escapeHtml(q.explanation)}
+            </div>
+            <button class="btn btn-primary grammar-next-btn" id="btnGrammarNext" type="button" autofocus>
+              Dalej (Enter) →
+            </button>
+          </div>
+        `
+            : ''
+        }
+      </div>
+    `,
+    className: 'grammar-session'
+  });
+
+  if (!s.answered) {
+    document.querySelectorAll('[data-grammar-choice]').forEach(btn => {
+      btn.onclick = () => answerGrammarPractice(btn.dataset.grammarChoice);
+    });
+
+    const onKey = e => {
+      const idx = parseInt(e.key, 10);
+      if (idx >= 1 && idx <= q.options.length) {
+        e.preventDefault();
+        window.removeEventListener('keydown', onKey);
+        answerGrammarPractice(q.options[idx - 1]);
+      }
+    };
+    window.addEventListener('keydown', onKey, { once: true });
+  } else {
+    const nextBtn = document.getElementById('btnGrammarNext');
+    if (nextBtn) {
+      nextBtn.onclick = () => nextGrammarQuestion();
+      const onEnter = e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          window.removeEventListener('keydown', onEnter);
+          nextGrammarQuestion();
+        }
+      };
+      window.addEventListener('keydown', onEnter, { once: true });
+    }
+  }
+}
+
 function appStorageKeys() {
   return [
     SETTINGS_STORE_KEY,
@@ -5868,6 +6974,7 @@ function appStorageKeys() {
     DAILY_STATS_KEY,
     VOCAB_KEY,
     KANJI_KEY,
+    GRAMMAR_KEY,
     LEGACY_THEME_KEY,
     LEGACY_MUTED_KEY
   ];
@@ -5896,7 +7003,9 @@ function resetProgressData() {
   saveProgress();
   resetVocabData();
   resetKanjiData();
+  resetGrammarData();
   state.vocab = null;
+  state.grammar = null;
   if (state.kanji) state.kanji.mode = 'hub';
 }
 
@@ -5910,6 +7019,7 @@ function resetSettings() {
 function clearAllData() {
   stopExam();
   state.vocab = null;
+  state.grammar = null;
   if (state.kanji) state.kanji.mode = 'hub';
 
   appStorageKeys().forEach(key => {
@@ -5925,6 +7035,7 @@ function clearAllData() {
   progress = loadProgress();
   vocab = loadVocab();
   kanjiProgress = loadKanjiProgress();
+  grammarProgress = loadGrammar();
 
   state.script = settings.script;
   state.theme = settings.theme; // surowa preferencja, tak jak przy starcie

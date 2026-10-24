@@ -2211,17 +2211,45 @@ Polish meanings remain an unverified translation.
 
 ## T20 — Grammar
 
-Potential functionality:
+### Status
+- Phase 1 (N5 Particles & Cloze Training) — **COMPLETE**.
 
-- basic Japanese grammar concepts,
-- particles,
-- sentence patterns,
-- examples,
-- recognition exercises,
-- sentence construction,
-- grammar quizzes.
-
-This should be treated as a much larger learning-system expansion than a simple additional quiz mode.
+### Implemented Scope
+- **Data Model (`GRAMMAR_ITEMS`)**:
+  - 10 fundamental Japanese particles for JLPT N5: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
+  - Each particle provides:
+    - Japanese character & romaji pronunciation,
+    - Polish descriptive label and syntactic role,
+    - Formula / syntax box (`pattern`),
+    - Detailed grammatical explanation (`description`),
+    - Pitfalls / common mistakes advice box (`notes`),
+    - 3 authentic example sentences with Japanese, romaji, Polish translation, and TTS audio (`examples`),
+    - 3 contextual cloze test questions with missing slot `[?]`, full sentence, Polish translation, 3 distractors, and grammatical explanation (`questions`).
+- **Storage & Isolation (`hiragana-grammar`)**:
+  - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
+  - Tracks per-particle metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
+  - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`.
+- **UI Architecture (`renderGrammar`)**:
+  - **Hub (`hub`)**:
+    - Header with stats chips (mastered count, in-progress count, total answers, mini-progress percentage bar),
+    - Actions: start cloze training (10 randomized questions) or scroll to particles guide,
+    - Responsive grid of 10 particle cards with mastery badges (`Nowa`, `W nauce`, `Opanowana`), syntax formulas, summaries, and accuracy scores.
+  - **Detail View (`detail`)**:
+    - Particle symbol with speaker audio button,
+    - Structural sentence formula box,
+    - Grammatical role explanation,
+    - Warning / pitfall callout box,
+    - 3 example sentences with audio pronunciation buttons,
+    - Action button to launch targeted cloze practice specifically for that particle.
+  - **Practice View (`practice`)**:
+    - Interactive cloze quiz with highlighted missing slot `[ ? ]`,
+    - Polish sentence translation and audio pronunciation button,
+    - 4 multiple-choice options with keyboard shortcuts (1–4),
+    - Animated feedback callout explaining the exact grammatical rule,
+    - Score summary screen with trophy celebration.
+- **App Shell & Dashboard**:
+  - 5th nav bar item (`Gramatyka`) in `NAV_ITEMS`,
+  - Moduł 4: Gramatyka card on Dashboard (`.dashboard-modules-grid`) with live metrics and direct actions.
 
 ---
 
@@ -2569,7 +2597,9 @@ T19 Vocabulary (data, progress, flashcards, topics, UX, Lessons 1 & 2 expansion)
 ↓
 T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPLETE
 ↓
-Next: Shared module dashboard & Daily Practice / Goals (T22) or Grammar (T20)
+T20 Grammar (Phase 1: 10 N5 particles, formulas, pitfall callouts, examples with audio, cloze practice) — COMPLETE
+↓
+Next: Daily Practice / Goals (T22) or Achievements (T23)
 ↓
 T16 Code splitting
 ```
