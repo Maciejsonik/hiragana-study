@@ -2261,12 +2261,18 @@ body.focus-mode .app-shell {
   height: 20px;
 }
 
-/* Tryb nauki i testu — dotykowe kafelki z odznakami */
+/* Tryb nauki, testu i wpisywania — dotykowe kafelki z odznakami */
 .vocab-mode-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-3);
   margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  .vocab-mode-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .vocab-mode-card {
@@ -3108,6 +3114,79 @@ body.focus-mode .app-shell {
 .vocab-feedback-icon .icon {
   width: 20px;
   height: 20px;
+}
+
+/* =========================================================
+   TRYB WPISYWANIA SŁOWNICTWA (VOCAB TYPED MODE)
+========================================================= */
+
+.vocab-type-prompt {
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+}
+
+.vocab-type-input-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  align-items: center;
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+.vocab-input {
+  font-family: inherit;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+  max-width: 420px;
+  min-width: 240px;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--card-solid);
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color var(--duration-quick) var(--ease-standard),
+    background var(--duration-quick) var(--ease-standard),
+    box-shadow var(--duration-quick) var(--ease-standard);
+}
+
+.vocab-input.font-japanese {
+  font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 1.45rem;
+}
+
+.vocab-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.vocab-input.input-correct {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 8%, var(--card-solid));
+}
+
+.vocab-input.input-wrong {
+  border-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 8%, var(--card-solid));
+}
+
+.vocab-type-feedback {
+  min-height: 28px;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  margin-top: var(--space-2);
+}
+
+.vocab-type-feedback .feedback-correct {
+  color: var(--good);
+}
+
+.vocab-type-feedback .feedback-wrong {
+  color: var(--bad);
 }
 
 /* =========================================================
@@ -5778,6 +5857,23 @@ body::before {
 
 .kanji-draw-feedback.failed {
   color: var(--bad);
+}
+
+/* Ślepy szkic kanji (z pamięci) */
+#kanjiSvgStage.is-blind svg {
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-standard);
+  pointer-events: none;
+}
+
+#kanjiSvgStage.is-blind.revealed svg {
+  opacity: 0.95;
+}
+
+.kanji-draw-action-btn.active {
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Detail Info Card */

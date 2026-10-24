@@ -1894,7 +1894,7 @@ Implemented scope:
 - **204 curated kanji**: based on *Shokyū Nihongo* (L01–L15) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
 - **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L15, N5).
 - **Interactive character catalog**: instant search by character, reading (romaji/kana) or Polish meaning; filtering by lesson and semantic category pills; responsive card grid with status indicators.
-- **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
+- **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, blind drawing mode (`#btnToggleBlind`) to sketch characters purely from memory with post-draw template reveal, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
 - **SRS flashcard review**: interval progression based on response grade (Znów / Trudne / Dobre / Łatwe) with keyboard shortcuts `1`–`4`.
 - **4-choice recognition quiz**: randomized 20-question challenge with instant visual feedback and score tracking.
 - **Isolated persistence store**: `hiragana-kanji` (version 1) in `localStorage`, decoupled from kana and vocab stores, integrated into `appStorageKeys()` and data reset lifecycle.
@@ -2077,6 +2077,21 @@ reshuffle the buttons under the finger.
 Every mode writes only through `recordVocabAnswer()`, so it changes
 `hiragana-vocab` and nothing else. It does not touch `hiragana-progress`,
 `hiragana-daily`, the exam settings or the SRS schedule.
+
+### Typed mode (`type`)
+
+In addition to Flashcards (`learn`) and Multiple-Choice Quiz (`test`), a third mode
+`type` ("Wpisywanie") tests active production from memory:
+- **`meaning-kana`**: Polish meaning is presented; user types Japanese. Accepts exact
+  kana, kanji (if available), direct romaji, macron expansions (`ō` -> `ou`), and
+  arbitrary romaji via a built-in transliterator (`transliterateRomajiToKana`) supporting
+  sokuon (e.g. `gakkou` -> `がっこう`), yōon (`sho` -> `しょ`), and double consonants.
+- **`kana-meaning`**: Japanese kana is presented with an audio pronunciation button;
+  user types the Polish meaning. Tolerates missing Polish diacritics (`ł` -> `l`, `ą` -> `a`, etc.),
+  normalizes punctuation, and matches against all synonyms (including expressions in parentheses
+  and comma-separated alternatives).
+- Results submit with the Enter key or button, provide immediate visual feedback, and
+  record progress through `recordVocabResult()`.
 
 ### Topic categories (layer 4)
 
@@ -2507,8 +2522,9 @@ Visual polish — calm Japanese learning app layer — IN PROGRESS
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
 Kanji expansion (Lessons L11–L15, 204 kanji) — COMPLETE
 Audio pronunciation (Google Translate TTS ja-JP + Web Speech fallback across Kana, Vocab, Kanji) — COMPLETE
+Practice modes (Vocab typed keyboard input + Kanji blind drawing from memory) — COMPLETE
 T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L15) — SHIPPED
-T19 Vocabulary (data, progress, flashcards, topics, lessons) — SHIPPED
+T19 Vocabulary (data, progress, flashcards, topics, lessons, typed mode) — SHIPPED
 Next planned: Grammar (T20) or Exam Typed Mode extensions
 ```
 

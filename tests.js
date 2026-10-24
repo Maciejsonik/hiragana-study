@@ -2749,6 +2749,101 @@
   }
 
   /* =====================================================
+     TY. NOWE TRYBY ĆWICZEŃ: WPISYWANIE SŁOWNICTWA I ŚLEPY KANJI
+     ===================================================== */
+  try {
+    ok('TY1 VOCAB_MODES zawiera tryb wpisywania (type)', VOCAB_MODES.includes('type'));
+    ok('TY2 etykieta trybu wpisywania istnieje', VOCAB_MODE_LABELS.type === 'Wpisywanie');
+
+    // Test transliteracji romaji -> kana
+    ok('TY3 transliteracja neko -> ねこ', transliterateRomajiToKana('neko') === 'ねこ');
+    ok(
+      'TY4 transliteracja podwójnej spółgłoski (sokuon) gakkou -> がっこう',
+      transliterateRomajiToKana('gakkou') === 'がっこう'
+    );
+    ok('TY5 transliteracja yōon i n: shokken -> しょっけん', transliterateRomajiToKana('shokken') === 'しょっけん');
+
+    // Test dopasowywania japońskiego dla słownictwa
+    const testVocab = {
+      id: 'test_neko',
+      kana: 'ねこ',
+      romaji: 'neko',
+      kanji: '猫',
+      meaning: 'kot, kotek'
+    };
+    ok('TY6 matchVocabJapanese dopasowuje dokładne kana', matchVocabJapanese('ねこ', testVocab) === true);
+    ok('TY7 matchVocabJapanese dopasowuje romaji', matchVocabJapanese('neko', testVocab) === true);
+    ok('TY8 matchVocabJapanese dopasowuje kanji', matchVocabJapanese('猫', testVocab) === true);
+    ok('TY9 matchVocabJapanese odrzuca błędne słowo', matchVocabJapanese('inu', testVocab) === false);
+
+    // Test dopasowywania znaczenia (język polski, synonimy, brak diakrytyków)
+    ok('TY10 matchVocabMeaning dopasowuje dokładne znaczenie', matchVocabMeaning('kot', 'kot') === true);
+    ok('TY11 matchVocabMeaning dopasowuje synonim po przecinku', matchVocabMeaning('kotek', 'kot, kotek') === true);
+    ok('TY12 matchVocabMeaning dopasowuje synonim z nawiasu', matchVocabMeaning('wc', 'toaleta (wc)') === true);
+    ok('TY13 matchVocabMeaning toleruje brak polskich znaków', matchVocabMeaning('zolty', 'żółty') === true);
+    ok(
+      'TY14 matchVocabMeaning toleruje brak znaków w synonimach',
+      matchVocabMeaning('uczen', 'uczeń, student') === true
+    );
+
+    // Test sesji wpisywania słownictwa
+    startVocabSession({
+      ids: ['v01'],
+      mode: 'type',
+      direction: 'meaning-kana'
+    });
+    ok('TY15 sesja słownictwa startuje w trybie type', state.vocab && state.vocab.mode === 'type');
+
+    const itemV01 = vocabItem('v01');
+    answerVocabTyped(itemV01 ? itemV01.romaji : 'test');
+    ok(
+      'TY16 answerVocabTyped ocenia poprawną odpowiedź',
+      state.vocab.answered === true && state.vocab.lastCorrect === true
+    );
+    ok('TY17 licznik poprawnych odpowiedzi zwiększony', state.vocab.correct === 1);
+
+    nextVocab();
+    ok('TY18 nextVocab resetuje typedValue', state.vocab.typedValue === '');
+
+    // Test ślepego rysowania Kanji
+    setScreen('kanji');
+    kanjiSession.mode = 'detail';
+    kanjiSession.detailKanji = 'k01';
+    kanjiSession.drawingBlind = true;
+    renderKanjiDetail();
+
+    const stage = document.getElementById('kanjiSvgStage');
+    ok(
+      'TY19 stage kanji otrzymuje klasę is-blind przy aktywnym drawingBlind',
+      stage && stage.classList.contains('is-blind')
+    );
+
+    const toggleBlindBtn = document.getElementById('btnToggleBlind');
+    ok('TY20 przycisk btnToggleBlind istnieje w panelu rysowania kanji', !!toggleBlindBtn);
+
+    // Kliknięcie sprawdź rysunek odsłania wzór (.revealed)
+    const checkBtn = document.getElementById('btnDrawCheck');
+    if (checkBtn) checkBtn.click();
+    ok(
+      'TY21 sprawdzenie rysunku w trybie ślepym dodaje klasę revealed do wzorca',
+      stage && stage.classList.contains('revealed')
+    );
+
+    // Kliknięcie wyczyść usuwa klasę revealed
+    const clearBtn = document.getElementById('btnDrawClear');
+    if (clearBtn) clearBtn.click();
+    ok('TY22 wyczyszczenie rysunku usuwa klasę revealed', stage && !stage.classList.contains('revealed'));
+
+    // Przywrócenie stanu
+    kanjiSession.drawingBlind = false;
+    kanjiSession.mode = 'hub';
+    state.vocab = null;
+    setScreen('menu');
+  } catch (e) {
+    ok('TY nowe tryby ćwiczeń', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

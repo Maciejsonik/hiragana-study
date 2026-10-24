@@ -1472,7 +1472,9 @@ const ICONS = {
   list: '<line x1="3" y1="5" x2="18" y2="5"/><line x1="3" y1="9" x2="18" y2="9"/><line x1="3" y1="13" x2="18" y2="13"/>',
   folder:
     '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
-  play: '<path d="m7 4 13 8-13 8Z"/>'
+  play: '<path d="m7 4 13 8-13 8Z"/>',
+  keyboard:
+    '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="10" y1="12" x2="10.01" y2="12"/><line x1="14" y1="12" x2="14.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>'
 };
 
 /* Jeden sposób wstawiania ikony: spójny viewBox, grubość kreski i brak
@@ -3423,7 +3425,7 @@ const VOCAB_OPTIONS = 4;
    na jedną sesję, jak wybór zakresu egzaminu, a nie preferencja aplikacji.
    Dzięki temu nie ruszamy formatu `hiragana-vocab`.
 */
-const VOCAB_MODES = ['learn', 'test'];
+const VOCAB_MODES = ['learn', 'test', 'type'];
 const VOCAB_ORDERS = ['smart', 'shuffle'];
 const VOCAB_LIMITS = [0, 10, 20];
 const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
@@ -3431,7 +3433,8 @@ const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all']
 
 const VOCAB_MODE_LABELS = {
   learn: 'Nauka',
-  test: 'Test'
+  test: 'Test',
+  type: 'Wpisywanie'
 };
 
 const VOCAB_ORDER_LABELS = {
@@ -3764,6 +3767,163 @@ function vocabOptions(item, direction) {
   return shuffle([item[field], ...distractors]);
 }
 
+/* Mapowanie romaji na hiragana dla wpisywania z klawiatury */
+const ROMAJI_TO_HIRA = (() => {
+  const map = {};
+  if (typeof scriptData !== 'undefined' && scriptData.hiragana && scriptData.hiragana.groups) {
+    scriptData.hiragana.groups.forEach(g => {
+      g.chars.forEach(([k, r]) => {
+        map[r] = k;
+      });
+    });
+  }
+  // Dodatkowe warianty transkrypcji (Hepburn / Kunrei)
+  map['si'] = 'し';
+  map['ti'] = 'ち';
+  map['tu'] = 'つ';
+  map['hu'] = 'ふ';
+  map['zi'] = 'じ';
+  map['di'] = 'ぢ';
+  map['du'] = 'づ';
+  return map;
+})();
+
+function transliterateRomajiToKana(text) {
+  if (!text) return '';
+  let res = '';
+  let i = 0;
+  const s = text.toLowerCase();
+  while (i < s.length) {
+    const three = s.slice(i, i + 3);
+    if (ROMAJI_TO_HIRA[three]) {
+      res += ROMAJI_TO_HIRA[three];
+      i += 3;
+      continue;
+    }
+    const two = s.slice(i, i + 2);
+    if (two === 'nn') {
+      res += 'ん';
+      i += 2;
+      continue;
+    }
+    if (ROMAJI_TO_HIRA[two]) {
+      res += ROMAJI_TO_HIRA[two];
+      i += 2;
+      continue;
+    }
+    // Sokuon: podwójna spółgłoska
+    if (s[i] === s[i + 1] && s[i] !== 'n' && !'aeiou'.includes(s[i])) {
+      res += 'っ';
+      i += 1;
+      continue;
+    }
+    const one = s[i];
+    if (ROMAJI_TO_HIRA[one]) {
+      res += ROMAJI_TO_HIRA[one];
+      i += 1;
+      continue;
+    }
+    res += s[i];
+    i += 1;
+  }
+  return res;
+}
+
+function matchVocabJapanese(typed, item) {
+  if (!typed || !item) return false;
+  const clean = s =>
+    (s || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s\-_・]/g, '');
+  const t = clean(typed);
+  if (!t) return false;
+
+  const normKana = clean(item.kana);
+  const normRomaji = clean(item.romaji);
+  const normKanji = clean(item.kanji);
+
+  // Bezpośrednie dopasowanie kana, romaji lub kanji
+  if (t === normKana || t === normRomaji || (normKanji && t === normKanji)) return true;
+
+  // Normalizacja makronów
+  const expandMacron = s =>
+    s.replace(/ō/g, 'ou').replace(/ū/g, 'uu').replace(/ā/g, 'aa').replace(/ē/g, 'ee').replace(/ī/g, 'ii');
+
+  if (expandMacron(t) === expandMacron(normRomaji)) return true;
+
+  // Transliteracja romaji -> kana
+  const transliterated = clean(transliterateRomajiToKana(t));
+  if (transliterated === normKana) return true;
+
+  // Warianty alternatywne
+  if (item.alt && clean(item.alt) === t) return true;
+  if (item.altRomaji && clean(item.altRomaji) === t) return true;
+
+  return false;
+}
+
+function matchVocabMeaning(typed, meaning) {
+  if (!typed || !meaning) return false;
+  const clean = s =>
+    (s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const strip = s =>
+    (s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ł/g, 'l')
+      .replace(/Ł/g, 'L');
+
+  const t = clean(typed);
+  if (!t) return false;
+  const tStrip = strip(t);
+
+  const m = clean(meaning);
+  const mStrip = strip(m);
+
+  if (t === m || tStrip === mStrip) return true;
+
+  const candidates = [];
+  // Całość bez zawartości nawiasów
+  const noParens = clean(meaning.replace(/\([^)]*\)/g, ' '));
+  if (noParens) candidates.push(noParens);
+  // Całość ze słowami z nawiasów
+  const flatParens = clean(meaning.replace(/[()]/g, ' '));
+  if (flatParens) candidates.push(flatParens);
+
+  // Części rozdzielone przecinkami, średnikami, ukośnikami
+  meaning.split(/[,;/]+/).forEach(part => {
+    const pClean = clean(part);
+    if (pClean) candidates.push(pClean);
+    const pNoParens = clean(part.replace(/\([^)]*\)/g, ' '));
+    if (pNoParens) candidates.push(pNoParens);
+  });
+
+  // Zawartość wewnątrz nawiasów
+  const parenMatches = meaning.match(/\(([^)]+)\)/g);
+  if (parenMatches) {
+    parenMatches.forEach(pm => {
+      const inside = clean(pm.replace(/[()]/g, ' '));
+      if (inside) candidates.push(inside);
+      inside.split(/[,;/]+/).forEach(p => {
+        const pc = clean(p);
+        if (pc) candidates.push(pc);
+      });
+    });
+  }
+
+  for (const cand of candidates) {
+    if (cand === t || strip(cand) === tStrip) return true;
+  }
+
+  return false;
+}
+
 function startVocabSession({
   ids = null,
   scope = vocabSetup.scope,
@@ -3825,6 +3985,23 @@ function answerVocab(choice) {
   renderVocab();
 }
 
+function answerVocabTyped(typed) {
+  const session = state.vocab;
+  if (!session || session.mode !== 'type' || session.answered || session.finished) return;
+
+  const item = vocabItem(session.order[session.index]);
+  if (!item) return;
+
+  session.typedValue = (typed || '').trim();
+  const asksKana = session.direction === 'meaning-kana';
+  const correct = asksKana
+    ? matchVocabJapanese(session.typedValue, item)
+    : matchVocabMeaning(session.typedValue, item.meaning);
+
+  recordVocabResult(session, item, correct);
+  renderVocab();
+}
+
 /*
    Nauka jest dwustopniowa: najpierw odkrycie odpowiedzi, potem samoocena.
    Dzięki temu karta nie udaje testu z czterema odpowiedziami, a użytkownik
@@ -3860,6 +4037,7 @@ function nextVocab() {
   session.chosen = null;
   session.lastCorrect = false;
   session.options = null;
+  session.typedValue = '';
 
   if (session.index >= session.order.length) {
     session.finished = true;
@@ -3946,7 +4124,9 @@ function renderVocabSetup() {
   const modeHint =
     mode === 'learn'
       ? 'Odkrywasz odpowiedź i sam decydujesz, czy ją znasz.'
-      : 'Cztery odpowiedzi i natychmiastowa informacja zwrotna.';
+      : mode === 'type'
+        ? 'Wpisujesz odpowiedź z pamięci — po japońsku lub po polsku.'
+        : 'Cztery odpowiedzi i natychmiastowa informacja zwrotna.';
 
   app.innerHTML = `
     <section class="vocab vocab-hub">
@@ -3985,8 +4165,8 @@ function renderVocabSetup() {
         </div>
 
         <button class="btn btn-primary vocab-start" id="vocabStart" ${count === 0 ? 'disabled' : ''}>
-          ${icon(mode === 'learn' ? 'learn' : 'quiz')}
-          ${count === 0 ? 'Brak kart w wybranym filtrze' : (mode === 'learn' ? 'Zacznij naukę' : 'Zacznij test') + ' · ' + count + ' ' + (count === 1 ? 'karta' : count > 1 && count < 5 ? 'karty' : 'kart')}
+          ${icon(mode === 'learn' ? 'learn' : mode === 'type' ? 'keyboard' : 'quiz')}
+          ${count === 0 ? 'Brak kart w wybranym filtrze' : (mode === 'learn' ? 'Zacznij naukę' : mode === 'type' ? 'Zacznij wpisywanie' : 'Zacznij test') + ' · ' + count + ' ' + (count === 1 ? 'karta' : count > 1 && count < 5 ? 'karty' : 'kart')}
         </button>
       </div>
 
@@ -3994,11 +4174,11 @@ function renderVocabSetup() {
         ${VOCAB_MODES.map(
           id => `
           <button class="vocab-mode-card ${id === mode ? 'active' : ''}" data-vocab-mode="${id}" data-focus-key="vocab-mode-${id}" aria-pressed="${id === mode}">
-            <span class="vocab-mode-icon" aria-hidden="true">${icon(id === 'learn' ? 'learn' : 'quiz')}</span>
+            <span class="vocab-mode-icon" aria-hidden="true">${icon(id === 'learn' ? 'learn' : id === 'type' ? 'keyboard' : 'quiz')}</span>
             <span class="vocab-mode-body">
-              <span class="vocab-mode-badge">${id === 'learn' ? 'Fiszki' : 'Quiz'}</span>
+              <span class="vocab-mode-badge">${id === 'learn' ? 'Fiszki' : id === 'type' ? 'Klawiatura' : 'Quiz'}</span>
               <strong>${VOCAB_MODE_LABELS[id]}</strong>
-              <small>${id === 'learn' ? 'Odkrycie odpowiedzi i samoocena wiedzy' : 'Cztery odpowiedzi, natychmiastowy wynik'}</small>
+              <small>${id === 'learn' ? 'Odkrycie odpowiedzi i samoocena wiedzy' : id === 'type' ? 'Wpisywanie odpowiedzi z pamięci' : 'Cztery odpowiedzi, natychmiastowy wynik'}</small>
             </span>
           </button>`
         ).join('')}
@@ -4345,6 +4525,74 @@ function renderVocab() {
     document.querySelectorAll('[data-vocab-grade]').forEach(button => {
       button.onclick = () => gradeVocab(button.dataset.vocabGrade === 'correct');
     });
+  } else if (session.mode === 'type') {
+    const promptLabel = asksKana ? 'Jak powiesz / napiszesz po japońsku:' : 'Co znaczy:';
+    const placeholder = asksKana
+      ? 'Wpisz romaji lub kana (np. ' + (item.romaji || '...') + ')'
+      : 'Wpisz polskie znaczenie...';
+
+    app.innerHTML = sessionFrameHTML({
+      eyebrow: 'SŁOWNICTWO',
+      title: modeLabel,
+      stats,
+      content: `
+        ${progress}
+
+        <div class="prompt vocab-type-prompt">
+          <div class="polish">${promptLabel}</div>
+          ${
+            asksKana
+              ? `<div class="question question-vocab-pl">${item.meaning}</div>`
+              : `<div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                  <div class="question question-vocab">${item.kana}</div>
+                  <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
+                </div>`
+          }
+
+          <div class="type-input-wrap vocab-type-input-wrap">
+            <input type="text" id="vocabTypedInput" class="vocab-input ${asksKana ? 'font-japanese' : ''} ${session.answered ? (session.lastCorrect ? 'input-correct' : 'input-wrong') : ''}"
+                   autocomplete="off" autofocus placeholder="${placeholder}"
+                   value="${escapeHtml(session.typedValue || '')}"
+                   ${session.answered ? 'disabled' : ''}>
+            <button class="btn btn-primary" id="vocabTypedCheck" ${session.answered ? 'disabled' : ''}>
+              Sprawdź (Enter)
+            </button>
+          </div>
+
+          <div class="feedback vocab-type-feedback" id="vocabFeedback" role="status" aria-live="polite">
+            ${
+              session.answered
+                ? session.lastCorrect
+                  ? `<div class="feedback-correct">✓ Dobrze!</div>`
+                  : `<div class="feedback-wrong">✗ Niepoprawnie — poprawna odpowiedź poniżej.</div>`
+                : ''
+            }
+          </div>
+        </div>
+
+        ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
+      `,
+      className: 'vocab-session'
+    });
+
+    const input = document.getElementById('vocabTypedInput');
+    const checkBtn = document.getElementById('vocabTypedCheck');
+
+    if (input && !session.answered) {
+      setTimeout(() => input.focus(), 30);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          answerVocabTyped(input.value);
+        }
+      });
+    }
+
+    if (checkBtn && !session.answered) {
+      checkBtn.onclick = () => {
+        answerVocabTyped(input.value);
+      };
+    }
   } else {
     // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
     // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
@@ -4991,6 +5239,9 @@ function renderKanjiDetail() {
 
             <div class="kanji-drawing-panel ${kanjiSession.drawingEnabled ? 'is-visible' : 'is-hidden'}" id="kanjiDrawingBar">
               <div class="kanji-drawing-actions">
+                <button class="kanji-draw-action-btn ${kanjiSession.drawingBlind ? 'active' : ''}" id="btnToggleBlind" type="button" title="Przełącz widoczność wzoru znaku">
+                  ${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Ślepy szkic (ukryj wzór)' : 'Wzór widoczny'}
+                </button>
                 <button class="kanji-draw-action-btn" id="btnDrawClear" type="button">Wyczyść</button>
                 <button class="kanji-draw-action-btn primary" id="btnDrawCheck" type="button">Sprawdź rysunek</button>
               </div>
@@ -5172,15 +5423,38 @@ function renderKanjiDetail() {
     drawingBar.classList.toggle('is-hidden', !kanjiSession.drawingEnabled);
   };
 
+  stage.classList.toggle('is-blind', !!kanjiSession.drawingBlind);
+  stage.classList.remove('revealed');
+
+  const toggleBlindBtn = document.getElementById('btnToggleBlind');
+  if (toggleBlindBtn) {
+    toggleBlindBtn.onclick = () => {
+      Audio.click();
+      kanjiSession.drawingBlind = !kanjiSession.drawingBlind;
+      stage.classList.toggle('is-blind', !!kanjiSession.drawingBlind);
+      stage.classList.remove('revealed');
+      toggleBlindBtn.classList.toggle('active', kanjiSession.drawingBlind);
+      toggleBlindBtn.innerHTML = `${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Ślepy szkic (ukryj wzór)' : 'Wzór widoczny'}`;
+      drawFeedback.textContent = kanjiSession.drawingBlind ? 'Rysuj znak z pamięci bez podglądu kresek.' : '';
+      drawFeedback.className = 'kanji-draw-feedback';
+    };
+  }
+
   document.getElementById('btnDrawClear').onclick = () => {
     Audio.click();
     drawing.clear();
-    drawFeedback.textContent = '';
+    stage.classList.remove('revealed');
+    drawFeedback.textContent = kanjiSession.drawingBlind ? 'Rysuj znak z pamięci bez podglądu kresek.' : '';
     drawFeedback.className = 'kanji-draw-feedback';
   };
 
   document.getElementById('btnDrawCheck').onclick = () => {
     Audio.click();
+    if (kanjiSession.drawingBlind) {
+      stage.classList.add('revealed');
+      if (player) player.showAll();
+    }
+
     if (!referencePaths || !stage.querySelector('svg')) return;
 
     const reference = referenceOnCanvas(stage.querySelector('svg'), drawing.canvas, referencePaths, DRAW_SAMPLES);
@@ -5191,7 +5465,8 @@ function renderKanjiDetail() {
     );
 
     const verdict = drawVerdict(result);
-    drawFeedback.textContent = `${verdict} (Zgodność: ${Math.round(result.score * 100)}%)`;
+    const accuracy = Math.round(result.score * 100);
+    drawFeedback.textContent = `${verdict} (Zgodność: ${accuracy}%, Kreski: ${drawing.strokes.length}/${referencePaths.length})`;
     drawFeedback.className = `kanji-draw-feedback ${result.passed ? 'passed' : 'failed'}`;
     if (result.passed) {
       Audio.correct();

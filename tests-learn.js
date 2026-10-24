@@ -1425,7 +1425,7 @@
         ok(
           'F1 wejście w fiszki pokazuje tryb, kierunek, zakres, kolejność i limit',
           !!document.getElementById('vocabStart') &&
-            document.querySelectorAll('[data-vocab-mode]').length === 2 &&
+            document.querySelectorAll('[data-vocab-mode]').length === 3 &&
             document.querySelectorAll('[data-vocab-direction]').length === 2 &&
             document.querySelectorAll('[data-vocab-lesson]').length === 4 &&
             document.querySelectorAll('[data-vocab-scope]').length === 6 &&
