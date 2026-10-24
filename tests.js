@@ -2856,10 +2856,10 @@
      GRAMATYKA (T20) — partykuły N5, baza wiedzy i quizy luk
      ===================================================== */
   try {
-    // GR1: Komplet 10 partykuł w bazie
-    eq('GR1 baza partykuł zawiera dokładnie 10 pozycji', GRAMMAR_ITEMS.length, 10);
+    // GR1: Komplet 18 zagadnień w bazie
+    eq('GR1 baza gramatyki zawiera 18 pozycji', GRAMMAR_ITEMS.length, 18);
 
-    // GR2: Każda partykuła ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
+    // GR2: Każde zagadnienie ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
     const validItems = GRAMMAR_ITEMS.every(item => {
       const hasFields =
         typeof item.id === 'string' &&
@@ -2880,14 +2880,16 @@
             q.sentence &&
             q.full &&
             q.polish &&
-            q.answer === item.kana &&
+            typeof q.answer === 'string' &&
+            q.answer.length > 0 &&
             Array.isArray(q.distractors) &&
             q.distractors.length >= 3 &&
+            !q.distractors.includes(q.answer) &&
             q.explanation
         );
       return hasFields && hasExamples && hasQuestions;
     });
-    ok('GR2 wszystkie partykuły mają kompletne pola, przykłady i pytania cloze', validItems);
+    ok('GR2 wszystkie zagadnienia mają kompletne pola, przykłady i pytania cloze', validItems);
 
     // GR3: Magazyn i serializacja loadGrammar/saveGrammar
     resetGrammarData();
@@ -2909,7 +2911,7 @@
 
     const stats = getGrammarSummaryStats();
     eq('GR6 getGrammarSummaryStats poprawnie zlicza opanowane partykuły', stats.mastered, 1);
-    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 10);
+    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 6);
 
     // GR8: Inicjalizacja sesji quizu startGrammarPractice
     startGrammarPractice();
@@ -2947,6 +2949,7 @@
     );
 
     // GR15: Renderowanie ekranu hub gramatyki
+    grammarSession.category = 'all';
     const backBtn = document.getElementById('btnGrammarSummaryBack');
     if (backBtn) backBtn.click();
     else {
@@ -2955,7 +2958,7 @@
       render();
     }
     const particleCards = document.querySelectorAll('.grammar-particle-card');
-    eq('GR15 ekran hub gramatyki renderuje 10 kart partykuł', particleCards.length, 10);
+    eq('GR15 ekran hub gramatyki renderuje 18 kart w widoku ogólnym', particleCards.length, 18);
 
     // GR16: Nawigacja do widoku szczegółowego partykuły
     const firstCard = particleCards[0];
@@ -2977,9 +2980,42 @@
     resetProgressData();
     eq('GR20 resetProgressData resetuje statystyki gramatyki', grammarProgress.totalAnswers, 0);
 
+    // GR21-GR23: Filtrowanie kart wg kategorii
+    grammarSession.mode = 'hub';
+    grammarSession.category = 'particle';
+    renderGrammarHub();
+    const particleCardsFiltered = document.querySelectorAll('.grammar-particle-card');
+    eq('GR21 filtr partykuł renderuje 10 kart', particleCardsFiltered.length, 10);
+
+    grammarSession.category = 'verb';
+    renderGrammarHub();
+    const verbCardsFiltered = document.querySelectorAll('.grammar-particle-card');
+    eq('GR22 filtr czasowników i istnienia renderuje 6 kart', verbCardsFiltered.length, 6);
+
+    grammarSession.category = 'adjective';
+    renderGrammarHub();
+    const adjCardsFiltered = document.querySelectorAll('.grammar-particle-card');
+    eq('GR23 filtr przymiotników renderuje 2 karty', adjCardsFiltered.length, 2);
+
+    // GR24-GR25: startGrammarPractice z filtrem kategorii
+    startGrammarPractice({ category: 'verb' });
+    const allVerbQ = grammarSession.practice.questions.every(q => {
+      const it = grammarItem(q.particleId);
+      return it && (it.category === 'verb' || it.category === 'existence');
+    });
+    ok('GR24 quiz dla kategorii czasowników zawiera wyłącznie pytania o czasowniki i istnienie', allVerbQ);
+
+    startGrammarPractice({ category: 'adjective' });
+    const allAdjQ = grammarSession.practice.questions.every(q => {
+      const it = grammarItem(q.particleId);
+      return it && it.category === 'adjective';
+    });
+    ok('GR25 quiz dla kategorii przymiotników zawiera wyłącznie pytania o przymiotniki', allAdjQ);
+
     // Przywrócenie stanu
     grammarSession.mode = 'hub';
     grammarSession.particleId = null;
+    grammarSession.category = 'all';
     grammarSession.practice = null;
     state.grammar = null;
     setScreen('menu');

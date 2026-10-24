@@ -7542,6 +7542,67 @@ body::before {
   gap: var(--space-2);
 }
 
+/* Pigułki kategorii gramatycznych */
+.grammar-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: 100%;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.grammar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.grammar-pill:hover {
+  border-color: #d84315;
+  background: color-mix(in srgb, var(--card) 94%, #d84315 6%);
+}
+
+.grammar-pill.active {
+  border-color: #d84315;
+  background: color-mix(in srgb, var(--card) 88%, #d84315 12%);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px #d84315;
+}
+
+.grammar-pill:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grammar-pill-count {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--card-solid) 80%, var(--line) 20%);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.grammar-pill.active .grammar-pill-count {
+  background: #d84315;
+  color: #fff;
+}
+
 .grammar-section-header {
   margin-top: var(--space-2);
 }
@@ -7619,6 +7680,18 @@ body::before {
   background: color-mix(in srgb, #d84315 10%, transparent);
   border-radius: var(--radius-lg);
   flex-shrink: 0;
+}
+
+.grammar-card-kana.is-long {
+  width: auto;
+  min-width: 50px;
+  max-width: 110px;
+  padding: 0 var(--space-2);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grammar-card-headings {
@@ -7751,11 +7824,24 @@ body::before {
   flex-shrink: 0;
 }
 
+.grammar-detail-kana-wrap.is-long {
+  width: auto;
+  min-width: 80px;
+  max-width: 240px;
+  padding: 0 var(--space-3);
+}
+
 .grammar-detail-kana {
   font-size: 3.5rem;
   font-weight: 900;
   color: #d84315;
   line-height: 1;
+}
+
+.grammar-detail-kana.is-long {
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .grammar-detail-kana-wrap .btn-speak {
@@ -7973,7 +8059,7 @@ body::before {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-3);
-  max-width: 440px;
+  max-width: 520px;
   margin: 0 auto var(--space-4);
 }
 
@@ -7981,19 +8067,25 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   background: var(--card-solid);
   border: 2px solid var(--line);
   border-radius: var(--radius-xl);
-  padding: var(--space-3) var(--space-4);
-  font-size: 1.5rem;
+  padding: var(--space-3) var(--space-3);
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--ink);
   cursor: pointer;
+  white-space: nowrap;
+  min-height: 58px;
   transition:
     border-color var(--duration-fast) var(--ease-standard),
     background var(--duration-fast) var(--ease-standard),
     transform var(--duration-fast) var(--ease-standard);
+}
+
+.grammar-choice-kana {
+  white-space: nowrap;
 }
 
 .grammar-choice-btn:hover:not(:disabled) {

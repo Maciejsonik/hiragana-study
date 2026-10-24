@@ -2213,38 +2213,37 @@ Polish meanings remain an unverified translation.
 
 ### Status
 - Phase 1 (N5 Particles & Cloze Training) — **COMPLETE**.
+- Phase 2 (Verbs Conjugation, Existence & Adjectives) — **COMPLETE**.
 
 ### Implemented Scope
 - **Data Model (`GRAMMAR_ITEMS`)**:
-  - 10 fundamental Japanese particles for JLPT N5: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
-  - Each particle provides:
-    - Japanese character & romaji pronunciation,
-    - Polish descriptive label and syntactic role,
-    - Formula / syntax box (`pattern`),
-    - Detailed grammatical explanation (`description`),
-    - Pitfalls / common mistakes advice box (`notes`),
-    - 3 authentic example sentences with Japanese, romaji, Polish translation, and TTS audio (`examples`),
-    - 3 contextual cloze test questions with missing slot `[?]`, full sentence, Polish translation, 3 distractors, and grammatical explanation (`questions`).
+  - Expanded from 10 to 18 fundamental Japanese grammar items for JLPT N5 across 4 categories:
+    - **Particles (`particle`, 10 items)**: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
+    - **Verb Conjugation (`verb`, 4 items)**: `v_masu` (〜ます), `v_masen` (〜ません), `v_mashita` (〜ました), `v_masendeshita` (〜ませんでした).
+    - **Existence (`existence`, 2 items)**: `arimasu` (ある / あります – inanimate), `imasu` (いる / います – animate).
+    - **Adjectives (`adjective`, 2 items)**: `adj_i` (〜い / 〜くない – i-keiyoushi), `adj_na` (〜な / 〜です – na-keiyoushi).
+  - 54 authentic example sentences with audio pronunciation and 54 cloze questions with rule explanations.
 - **Storage & Isolation (`hiragana-grammar`)**:
   - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
-  - Tracks per-particle metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
-  - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`.
+  - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
+  - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
-    - Header with stats chips (mastered count, in-progress count, total answers, mini-progress percentage bar),
-    - Actions: start cloze training (10 randomized questions) or scroll to particles guide,
-    - Responsive grid of 10 particle cards with mastery badges (`Nowa`, `W nauce`, `Opanowana`), syntax formulas, summaries, and accuracy scores.
+    - Header with stats chips (mastered count out of 18, in-progress count, total answers, mini-progress percentage bar),
+    - Category pills (`all`: 18, `particle`: 10, `verb`: 6, `adjective`: 2) with active states and badge counters,
+    - Responsive grid of grammar cards with mastery badges, syntax formulas, summaries, and accuracy scores,
+    - Adaptive typography with `.is-long` modifier for multi-character tags.
   - **Detail View (`detail`)**:
-    - Particle symbol with speaker audio button,
+    - Symbol badge with audio button using clean speakable Japanese (without tildes),
     - Structural sentence formula box,
-    - Grammatical role explanation,
-    - Warning / pitfall callout box,
+    - Grammatical role explanation and pitfalls / common mistakes callout box,
     - 3 example sentences with audio pronunciation buttons,
-    - Action button to launch targeted cloze practice specifically for that particle.
+    - Action button to launch targeted cloze practice specifically for that item.
   - **Practice View (`practice`)**:
     - Interactive cloze quiz with highlighted missing slot `[ ? ]`,
     - Polish sentence translation and audio pronunciation button,
-    - 4 multiple-choice options with keyboard shortcuts (1–4),
+    - 4 multiple-choice options with keyboard shortcuts (1–4) and line-wrap protection,
+    - Filterable by category (`category: 'verb'`, `category: 'adjective'`, etc.),
     - Animated feedback callout explaining the exact grammatical rule,
     - Score summary screen with trophy celebration.
 - **App Shell & Dashboard**:

@@ -1607,7 +1607,10 @@ function screenTitle() {
     if (!state.grammar || state.grammar.mode === 'hub') return 'Gramatyka';
     if (state.grammar.mode === 'detail') {
       const p = grammarItem(state.grammar.particleId);
-      return p ? `Partykuła ${p.kana}` : 'Szczegóły partykuły';
+      if (!p) return 'Szczegóły zagadnienia';
+      const cat = p.category || 'particle';
+      const prefix = cat === 'particle' ? 'Partykuła' : cat === 'adjective' ? 'Przymiotnik' : 'Czasownik';
+      return `${prefix} ${p.kana}`;
     }
     if (state.grammar.mode === 'practice') {
       return state.grammar.practice && state.grammar.practice.finished ? 'Wynik' : 'Trening luk';
@@ -6401,6 +6404,342 @@ const GRAMMAR_ITEMS = [
         explanation: 'Przy czasowniku braku/nieistnienia (ありません) rzecz oznaczamy partykułą が.'
       }
     ]
+  },
+  {
+    id: 'v_masu',
+    category: 'verb',
+    kana: '〜ます',
+    speakKana: 'ます',
+    romaji: '-masu',
+    label: 'Czas teraźniejszy/przyszły twierdzący',
+    pattern: '[Rdzeń czasownika] + ます',
+    description: 'Wyraża czynność wykonywaną regularnie, nawykowo lub czynność, która nastąpi w przyszłości w uprzejmym stylu formalnym (teineigo). Język japoński nie posiada osobnego czasu przyszłego — czas teraźniejszy (ます) pełni obie te role zależnie od kontekstu.',
+    notes: 'Forma ます jest formą uprzejmą używaną w rozmowach z nieznajomymi, przełożonymi, nauczycielami oraz w codziennej uprzejmej komunikacji. Tworzy się ją przez dodanie ます do tematu czasownika (np. たべ・ます, のみ・ます, かき・ます).',
+    examples: [
+      { japanese: 'まいにち にほんごを べんきょうします。', romaji: 'Mainichi nihongo o benkyou shimasu.', polish: 'Codziennie uczę się japońskiego.' },
+      { japanese: 'あした としょかんへ いきます。', romaji: 'Ashita toshokan e ikimasu.', polish: 'Jutro pójdę do biblioteki.' },
+      { japanese: 'あさごはんを たべます。', romaji: 'Asagohan o tabemasu.', polish: 'Jem śniadanie.' }
+    ],
+    questions: [
+      {
+        sentence: 'あした ともだちと えいがを [?]。',
+        full: 'あした ともだちと えいがを みます。',
+        polish: 'Jutro z przyjacielem obejrzę film.',
+        answer: 'みます',
+        distractors: ['みました', 'みません', 'みませんでした'],
+        explanation: 'Okolicznik czasu „あした” (jutro) wskazuje na czynność przyszłą twierdzącą, więc poprawna forma to みます (obejrzę).'
+      },
+      {
+        sentence: 'まいにち みずを [?]。',
+        full: 'まいにち みずを のみます。',
+        polish: 'Codziennie piję wodę.',
+        answer: 'のみます',
+        distractors: ['のみました', 'のみませんでした', 'のまない'],
+        explanation: 'Nawykowa czynność codzienna (まいにち) w czasie teraźniejszym uprzejmym wymaga końcówki 〜ます (のみます).'
+      },
+      {
+        sentence: 'わたしは 6じに [?]。',
+        full: 'わたしは 6じに おきます。',
+        polish: 'Wstaję o 6:00.',
+        answer: 'おきます',
+        distractors: ['おきました', 'おきませんでした', 'おき'],
+        explanation: 'Czynność rutynowa w czasie teraźniejszym twierdzącym w stylu uprzejmym przyjmuje formę おきます.'
+      }
+    ]
+  },
+  {
+    id: 'v_masen',
+    category: 'verb',
+    kana: '〜ません',
+    speakKana: 'ません',
+    romaji: '-masen',
+    label: 'Czas teraźniejszy/przyszły przeczący',
+    pattern: '[Rdzeń czasownika] + ません',
+    description: 'Oznacza przeczenie czynności teraźniejszej, nawykowej lub przyszłej w stylu uprzejmym („nie robię”, „nie zrobię”). Zastępuje twierdzącą końcówkę 〜ます końcówką 〜ません.',
+    notes: 'Pamiętaj, że w japońskim zaprzecza się końcówkę czasownika na końcu zdania, a nie całe orzeczenie osobnym słówkiem typu „nie”. Nie używamy polskiego „nie” przed czasownikiem — zamiast たべます mówimy たべません.',
+    examples: [
+      { japanese: 'あさ コーヒーを のみません。', romaji: 'Asa koohii o nomimasen.', polish: 'Rano nie piję kawy.' },
+      { japanese: 'きょうは どこへも いきません。', romaji: 'Kyou wa doko e mo ikimasen.', polish: 'Dzisiaj nigdzie nie idę.' },
+      { japanese: 'わたしは にくを たべません。', romaji: 'Watashi wa niku o tabemasen.', polish: 'Nie jem mięsa.' }
+    ],
+    questions: [
+      {
+        sentence: 'わたしは おさけを [?]。',
+        full: 'わたしは おさけを のみません。',
+        polish: 'Nie piję alkoholu.',
+        answer: 'のみません',
+        distractors: ['のみます', 'のみました', 'のみませんでした'],
+        explanation: 'Przeczenie czynności nawykowej w czasie teraźniejszym uprzejmym tworzy końcówka 〜ません (のみません).'
+      },
+      {
+        sentence: 'あしたは がっこうへ [?]。やすみです。',
+        full: 'あしたは がっこうへ いきません。やすみです。',
+        polish: 'Jutro nie idę do szkoły. Jest wolne.',
+        answer: 'いきません',
+        distractors: ['いきます', 'いきました', 'いかない'],
+        explanation: 'Czynność przyszła przecząca („jutro nie idę”) przyjmuje formę いきません.'
+      },
+      {
+        sentence: 'あさごはんを [?]。おなかが すきました。',
+        full: 'あさごはんを たべません。おなかが すきました。',
+        polish: 'Nie jem śniadania. Zgłodniałem.',
+        answer: 'たべません',
+        distractors: ['たべます', 'たべました', 'たべる'],
+        explanation: 'Przeczenie teraźniejsze w stylu uprzejmym wymaga formy たべません.'
+      }
+    ]
+  },
+  {
+    id: 'v_mashita',
+    category: 'verb',
+    kana: '〜ました',
+    speakKana: 'ました',
+    romaji: '-mashita',
+    label: 'Czas przeszły twierdzący',
+    pattern: '[Rdzeń czasownika] + ました',
+    description: 'Oznacza czynność zakończoną w przeszłości („zrobiłem / zrobiłam”) w uprzejmym stylu formalnym. Zastępuje teraźniejszą końcówkę 〜ます formą 〜ました.',
+    notes: 'Wymowa końcówki: samogłoska „i” w „shita” jest często bezdźwięczna (szeptana) w naturalnym japońskim, brzmiąc niemal jak „masz-ta”. Zwróć uwagę na okoliczniki przeszłości w zdaniu, takie jak きのう (wczoraj), けさ (dziś rano), せんしゅう (w zeszłym tygodniu).',
+    examples: [
+      { japanese: 'きのう 8じかん ねました。', romaji: 'Kinou hachi-jikan nemashita.', polish: 'Wczoraj spałem 8 godzin.' },
+      { japanese: 'けさ パンを たべました。', romaji: 'Kesa pan o tabemashita.', polish: 'Dziś rano zjadłem pieczywo.' },
+      { japanese: 'せんしゅう きょうとへ いきました。', romaji: 'Senshuu Kyouto e ikimashita.', polish: 'W zeszłym tygodniu pojechałem do Kioto.' }
+    ],
+    questions: [
+      {
+        sentence: 'きのうの ばん、テレビを [?]。',
+        full: 'きのうの ばん、テレビを みました。',
+        polish: 'Wczoraj wieczorem oglądałem telewizję.',
+        answer: 'みました',
+        distractors: ['みます', 'みません', 'みませんでした'],
+        explanation: 'Czynność z przeszłości („きのうの ばん” – wczoraj wieczorem) twierdząca wymaga końcówki 〜ました (みました).'
+      },
+      {
+        sentence: 'さっき としょかんで ほんを [?]。',
+        full: 'さっき としょかんで ほんを よみました。',
+        polish: 'Przed chwilą przeczytałem książkę w bibliotece.',
+        answer: 'よみました',
+        distractors: ['よみます', 'よみません', 'よむ'],
+        explanation: 'Określenie „さっき” (przed chwilą) wskazuje na czas przeszły dokonany twierdzący: よみました.'
+      },
+      {
+        sentence: 'きのう 7じに [?]。',
+        full: 'きのう 7じに おきました。',
+        polish: 'Wczoraj wstałem o 7:00.',
+        answer: 'おきました',
+        distractors: ['おきます', 'おきません', 'おき'],
+        explanation: 'Zdarzenie z wczoraj (きのう) w czasie przeszłym twierdzącym przyjmuje formę おきました.'
+      }
+    ]
+  },
+  {
+    id: 'v_masendeshita',
+    category: 'verb',
+    kana: '〜ませんでした',
+    speakKana: 'ませんでした',
+    romaji: '-masendeshita',
+    label: 'Czas przeszły przeczący',
+    pattern: '[Rdzeń czasownika] + ませんでした',
+    description: 'Oznacza czynność, która nie miała miejsca w przeszłości („nie zrobiłem / nie zrobiłam”) w uprzejmym stylu formalnym. Powstaje przez dodanie przeszłego wariantu でした do formy przeczącej ません.',
+    notes: 'Długa, ale niezwykle regularna końcówka: rdzeń + ませんでした. Jest to formalne zaprzeczenie czasu przeszłego. W mowie potocznej odpowiada jej końcówka 〜なかった (nakatta).',
+    examples: [
+      { japanese: 'きのう べんきょうしませんでした。', romaji: 'Kinou benkyou shimasendeshita.', polish: 'Wczoraj się nie uczyłem.' },
+      { japanese: 'けさ なにも たべませんでした。', romaji: 'Kesa nani mo tabemasendeshita.', polish: 'Dziś rano niczego nie zjadłem.' },
+      { japanese: 'にちようびは どこへも いきませんでした。', romaji: 'Nichiyoubi wa doko e mo ikimasendeshita.', polish: 'W niedzielę nigdzie nie pojechałem.' }
+    ],
+    questions: [
+      {
+        sentence: 'きのうは いそがしくて、あさごはんを [?]。',
+        full: 'きのうは いそがしくて、あさごはんを たべませんでした。',
+        polish: 'Wczoraj byłem zajęty i nie zjadłem śniadania.',
+        answer: 'たべませんでした',
+        distractors: ['たべません', 'たべました', 'たべます'],
+        explanation: 'Przeczenie czynności zakończonej w przeszłości (きのう – wczoraj) wymaga formy 〜ませんでした (たべませんでした).'
+      },
+      {
+        sentence: 'せんしゅうの テストを [?]。',
+        full: 'せんしゅうの テストを うけませんでした。',
+        polish: 'Nie pisałem testu w zeszłym tygodniu.',
+        answer: 'うけませんでした',
+        distractors: ['うけます', 'うけました', 'うけません'],
+        explanation: 'Czynność z przeszłości (せんしゅう – w zeszłym tygodniu) w formie przeczącej to うけませんでした.'
+      },
+      {
+        sentence: 'ゆうべは なにも [?]。',
+        full: 'ゆうべは なにも のみませんでした。',
+        polish: 'Wczorajszej nocy niczego nie piłem.',
+        answer: 'のみませんでした',
+        distractors: ['のみません', 'のみました', 'のみます'],
+        explanation: 'Czas przeszły przeczący (ゆうべ – wczoraj wieczorem/w nocy) w połączeniu z なにも (nic) wymaga końcówki 〜ませんでした.'
+      }
+    ]
+  },
+  {
+    id: 'arimasu',
+    category: 'existence',
+    kana: 'あります',
+    speakKana: 'あります',
+    romaji: 'arimasu',
+    label: 'Istnienie rzeczy i roślin (ある)',
+    pattern: '[Miejsce] に [Rzecz nieożywiona / roślina] が あります',
+    description: 'Wyraża istnienie, znajdowanie się lub posiadanie rzeczy nieożywionych, przedmiotów, budynków, roślin oraz pojęć abstrakcyjnych (np. czasu, pieniędzy, wydarzeń). Formą przeczącą jest ありません (nie ma).',
+    notes: 'Kluczowa zasada N5: あります stosujemy do rzeczy, które nie poruszają się z własnej woli (książki, samochody, drzewa, kwiaty, czas, pieniądze). Nawet żywe rośliny (drzewa, kwiaty) używają あります! Do ludzi i zwierząt stosujemy います.',
+    examples: [
+      { japanese: 'つくえの うえに ほんが あります。', romaji: 'Tsukue no ue ni hon ga arimasu.', polish: 'Na biurku jest książka.' },
+      { japanese: 'へやに テレビが あります。', romaji: 'Heya ni terebi ga arimasu.', polish: 'W pokoju jest telewizor.' },
+      { japanese: 'きょうは じかんが ありません。', romaji: 'Kyou wa jikan ga arimasen.', polish: 'Dzisiaj nie mam czasu.' }
+    ],
+    questions: [
+      {
+        sentence: 'あそこに くるまが [?]。',
+        full: 'あそこに くるまが あります。',
+        polish: 'Tam stoi samochód.',
+        answer: 'あります',
+        distractors: ['います', 'でした', 'します'],
+        explanation: 'Samochód (くるま) to rzecz nieożywiona, dlatego jego obecność opisujemy czasownikiem あります, a nie います.'
+      },
+      {
+        sentence: 'こうえんに おおきな きが [?]。',
+        full: 'こうえんに おおきな きが あります。',
+        polish: 'W parku jest duże drzewo.',
+        answer: 'あります',
+        distractors: ['います', 'いらっしゃいます', 'です'],
+        explanation: 'Drzewo (き) to roślina — w języku japońskim rośliny łączą się z czasownikiem あります.'
+      },
+      {
+        sentence: 'いま おかねが [?]。',
+        full: 'いま おかねが ありません。',
+        polish: 'Teraz nie mam pieniędzy.',
+        answer: 'ありません',
+        distractors: ['いません', 'ないでした', 'でした'],
+        explanation: 'Brak rzeczy nieożywionej lub pojęcia (pieniądze – おかね) wyraża przeczenie ありません.'
+      }
+    ]
+  },
+  {
+    id: 'imasu',
+    category: 'existence',
+    kana: 'います',
+    speakKana: 'います',
+    romaji: 'imasu',
+    label: 'Istnienie istot żywych (いる)',
+    pattern: '[Miejsce] に [Osoba / Zwierzę] が います',
+    description: 'Wyraża obecność, znajdowanie się lub istnienie istot żywych poruszających się samodzielnie: ludzi, zwierząt, ryb, owadów. Formą przeczącą jest いません (nie ma / nie jest obecny).',
+    notes: 'Niezwykle częsty błąd początkujących: mylenie あります i います. Pamiętaj: pies, kot, uczeń, rodzina -> zawsze います / いません. Jeśli masz wątpliwość: czy istota ma własną wolę poruszania się? Jeśli tak, użyj います.',
+    examples: [
+      { japanese: 'にわに ねこが います。', romaji: 'Niwa ni neko ga imasu.', polish: 'W ogrodzie jest kot.' },
+      { japanese: 'きょうしつに せんせいが います。', romaji: 'Kyoushitsu ni sensei ga imasu.', polish: 'W klasie jest nauczyciel.' },
+      { japanese: 'いま へやに だれも いません。', romaji: 'Ima heya ni dare mo imasen.', polish: 'Teraz w pokoju nikogo nie ma.' }
+    ],
+    questions: [
+      {
+        sentence: 'あそこに かわいい いぬが [?]。',
+        full: 'あそこに かわいい いぬが います。',
+        polish: 'Tam jest uroczy pies.',
+        answer: 'います',
+        distractors: ['あります', 'です', 'します'],
+        explanation: 'Pies (いぬ) to zwierzę (istota żywa), dlatego jego obecność opisujemy za pomocą います.'
+      },
+      {
+        sentence: 'きょうしつに がくせいが 10にん [?]。',
+        full: 'きょうしつに がくせいが 10にん います。',
+        polish: 'W klasie jest 10 uczniów.',
+        answer: 'います',
+        distractors: ['あります', 'でした', 'なります'],
+        explanation: 'Uczniowie (がくせい) to ludzie, więc poprawnym czasownikiem istnienia jest います.'
+      },
+      {
+        sentence: 'いけに さかなが [?]。',
+        full: 'いけに さかなが います。',
+        polish: 'W stawie są ryby.',
+        answer: 'います',
+        distractors: ['あります', 'ある', 'だ'],
+        explanation: 'Ryby (さかな) są istotami żywymi poruszającymi się, więc używamy います.'
+      }
+    ]
+  },
+  {
+    id: 'adj_i',
+    category: 'adjective',
+    kana: '〜い / 〜くない',
+    speakKana: 'たかい',
+    romaji: 'i-keiyoushi',
+    label: 'Przymiotniki typu I (koniugacja)',
+    pattern: '[Przymiotnik-i] - い + くないです / かったです',
+    description: 'Przymiotniki kończące się na sylabę 〜い (np. たかい, やすい, あたらしい). Odmieniają się same przez zmianę końcowego „い”: przeczenie to 〜くないです, czas przeszły to 〜かったです, a przeszły przeczący to 〜くなかったです.',
+    notes: 'Najważniejszy wyjątek w N5: przymiotnik いい (dobry) w odmianie ZAWSZE zmienia rdzeń na よい: よくないです (nie jest dobry), よかったです (był dobry), よくなかったです (nie był dobry). Nigdy nie mów „いくない”!',
+    examples: [
+      { japanese: 'この くるまは あたらしいです。', romaji: 'Kono kuruma wa atarashii desu.', polish: 'Ten samochód jest nowy.' },
+      { japanese: 'きのうの テストは むずかしくなかったです。', romaji: 'Kinou no tesuto wa muzukashikunakatta desu.', polish: 'Wczorajszy test nie był trudny.' },
+      { japanese: 'てんきが よかったです。', romaji: 'Tenki ga yokatta desu.', polish: 'Pogoda była dobra.' }
+    ],
+    questions: [
+      {
+        sentence: 'この レストランは [?]。とても やすいです。',
+        full: 'この レストランは たかくないです。とても やすいです。',
+        polish: 'Ta restauracja nie jest droga. Jest bardzo tania.',
+        answer: 'たかくないです',
+        distractors: ['たかいじゃないです', 'たかかったです', 'たかいでした'],
+        explanation: 'Przeczenie przymiotnika-i (たかい) tworzy się przez zamianę końcowego -い na -くないです (たかくないです).'
+      },
+      {
+        sentence: 'きのうの えいがは とても [?]。',
+        full: 'きのうの えいがは とても おもしろかったです。',
+        polish: 'Wczorajszy film był bardzo ciekawy.',
+        answer: 'おもしろかったです',
+        distractors: ['おもしろいです', 'おもしろいでした', 'おもしろくないです'],
+        explanation: 'Czas przeszły twierdzący od przymiotnika-i (きのう – wczoraj) tworzy końcówka -かったです (おもしろかったです).'
+      },
+      {
+        sentence: 'きょうは てんきが [?]。あめが ふっています。',
+        full: 'きょうは てんきが よくないです。あめが ふっています。',
+        polish: 'Dzisiaj pogoda nie jest dobra. Pada deszcz.',
+        answer: 'よくないです',
+        distractors: ['いくないです', 'いいじゃないです', 'よかったです'],
+        explanation: 'Wyjątek: przymiotnik いい (dobry) w przeczeniu przyjmuje formę よくないです (nie: ikunai).'
+      }
+    ]
+  },
+  {
+    id: 'adj_na',
+    category: 'adjective',
+    kana: '〜な / 〜です',
+    speakKana: 'しずかな',
+    romaji: 'na-keiyoushi',
+    label: 'Przymiotniki typu NA (koniugacja)',
+    pattern: '[Przymiotnik-na] な + [Rzeczownik] / [Przymiotnik-na] です',
+    description: 'Przymiotniki łączące się z rzeczownikiem za pomocą łącznika 〜な (np. しずかな まち – ciche miasto). Jako orzeczenie na końcu zdania odmieniają się identycznie jak rzeczowniki za pomocą łącznika です: です / じゃありません / でした / じゃありませんでした.',
+    notes: 'Uwaga na pułapkę: przymiotniki きれい (piękny/czysty) oraz ゆうめい (sławny) kończą się fonetycznie na „-i”, ale gramatycznie są przymiotnikami typu NA! Dlatego mówimy: きれいな まち, きれいじゃありません (nie: kireikunai!).',
+    examples: [
+      { japanese: 'ここは しずかな へやです。', romaji: 'Koko wa shizuka na heya desu.', polish: 'Tutaj jest cichy pokój.' },
+      { japanese: 'この まちは にぎやかじゃありません。', romaji: 'Kono machi wa nigiyaka ja arimasen.', polish: 'To miasto nie jest tętniące życiem / głośne.' },
+      { japanese: 'きょうとは ゆうめいな まちです。', romaji: 'Kyouto wa yuumei na machi desu.', polish: 'Kioto to słynne miasto.' }
+    ],
+    questions: [
+      {
+        sentence: 'ここは とても [?] まちです。',
+        full: 'ここは とても しずかな まちです。',
+        polish: 'Tutaj jest bardzo ciche miasto.',
+        answer: 'しずかな',
+        distractors: ['しずかい', 'しずか', 'しずかで'],
+        explanation: 'Przymiotnik-na przed rzeczownikiem (まち – miasto) wymaga łącznika な (しずかな まち).'
+      },
+      {
+        sentence: 'かのじょは とても [?] ひとです。',
+        full: 'かのじょは とても きれいな ひとです。',
+        polish: 'Ona jest bardzo piękną osobą.',
+        answer: 'きれいな',
+        distractors: ['きれいい', 'きれいに', 'きれい'],
+        explanation: 'Pułapka: きれい to przymiotnik-na (mimo zapisu i wymowy), więc łączy się z rzeczownikiem przez な (きれいな ひと).'
+      },
+      {
+        sentence: 'むかし この まちは [?]。いまは にぎやかです。',
+        full: 'むかし この まちは しずかでした。いまは にぎやかです。',
+        polish: 'Dawniej to miasto było ciche. Teraz tętni życiem.',
+        answer: 'しずかでした',
+        distractors: ['しずかかったです', 'しずかでしたくない', 'しずかです'],
+        explanation: 'Czas przeszły twierdzący przymiotnika-na (むかし – dawniej) tworzy forma でした (しずかでした).'
+      }
+    ]
   }
 ];
 
@@ -6479,10 +6818,11 @@ function getGrammarSummaryStats() {
 const grammarSession = {
   mode: 'hub',
   particleId: null,
+  category: 'all',
   practice: null
 };
 
-function startGrammarPractice({ particleId = null } = {}) {
+function startGrammarPractice({ particleId = null, category = grammarSession.category || 'all' } = {}) {
   let pool = [];
   if (particleId) {
     const p = grammarItem(particleId);
@@ -6491,7 +6831,10 @@ function startGrammarPractice({ particleId = null } = {}) {
     }
   } else {
     GRAMMAR_ITEMS.forEach(p => {
-      if (p.questions) {
+      const cat = p.category || 'particle';
+      const matches =
+        category === 'all' || cat === category || (category === 'verb' && (cat === 'verb' || cat === 'existence'));
+      if (matches && p.questions) {
         p.questions.forEach(q => pool.push({ ...q, particleId: p.id }));
       }
     });
@@ -6511,6 +6854,7 @@ function startGrammarPractice({ particleId = null } = {}) {
   state.screen = 'grammar';
   grammarSession.mode = 'practice';
   grammarSession.particleId = particleId;
+  grammarSession.category = category;
   grammarSession.practice = {
     questions: prepared,
     index: 0,
@@ -6518,7 +6862,9 @@ function startGrammarPractice({ particleId = null } = {}) {
     answered: false,
     chosen: null,
     isCorrect: false,
-    finished: false
+    finished: false,
+    particleId,
+    category
   };
 
   state.grammar = grammarSession;
@@ -6581,23 +6927,43 @@ function renderGrammar() {
 
 function renderGrammarHub() {
   const stats = getGrammarSummaryStats();
+  const activeCat = grammarSession.category || 'all';
+
+  const countAll = GRAMMAR_ITEMS.length;
+  const countParticles = GRAMMAR_ITEMS.filter(p => !p.category || p.category === 'particle').length;
+  const countVerbs = GRAMMAR_ITEMS.filter(p => p.category === 'verb' || p.category === 'existence').length;
+  const countAdjectives = GRAMMAR_ITEMS.filter(p => p.category === 'adjective').length;
+
+  const filteredItems = GRAMMAR_ITEMS.filter(p => {
+    const cat = p.category || 'particle';
+    if (activeCat === 'all') return true;
+    if (activeCat === 'particle') return cat === 'particle';
+    if (activeCat === 'verb') return cat === 'verb' || cat === 'existence';
+    if (activeCat === 'adjective') return cat === 'adjective';
+    return true;
+  });
+
+  let sectionTitle = `Katalog zagadnień gramatycznych (${filteredItems.length})`;
+  if (activeCat === 'particle') sectionTitle = `Partykuły japońskie (${countParticles})`;
+  else if (activeCat === 'verb') sectionTitle = `Koniugacja czasowników i istnienie (${countVerbs})`;
+  else if (activeCat === 'adjective') sectionTitle = `Przymiotniki typu I oraz NA (${countAdjectives})`;
 
   app.innerHTML = `
     <div class="grammar-screen animate-fade">
       <div class="grammar-hero">
-        <div class="grammar-hero-watermark" aria-hidden="true">助</div>
+        <div class="grammar-hero-watermark" aria-hidden="true">文</div>
         <div class="grammar-hero-content">
           <span class="grammar-eyebrow">GRAMATYKA JAPOŃSKA · N5</span>
-          <h1 class="grammar-title">Partykuły i Schematy Zdań</h1>
+          <h1 class="grammar-title">Partykuły, Czasowniki i Przymiotniki</h1>
           <p class="grammar-desc">
-            Partykuły (助詞 - joshi) stanowią szkielet gramatyczny języka japońskiego.
-            Opanuj 10 kluczowych partykuł, poznaj schematy składniowe i trenuj uzupełnianie luk.
+            Kluczowe zagadnienia gramatyczne poziomu N5.
+            Opanuj 10 partykuł (助詞), formy czasowników (~masu, istnienie) i przymiotniki (i/na) oraz trenuj uzupełnianie zdań.
           </p>
 
           <div class="grammar-activity-bar">
             <div class="grammar-stat-chip">
               <span class="grammar-stat-val">${stats.mastered} / ${stats.total}</span>
-              <span class="grammar-stat-lbl">Opanowane partykuły</span>
+              <span class="grammar-stat-lbl">Opanowane zagadnienia</span>
             </div>
             <div class="grammar-stat-chip">
               <span class="grammar-stat-val">${stats.learning}</span>
@@ -6620,29 +6986,46 @@ function renderGrammarHub() {
               ${icon('quiz')} Rozpocznij trening luk (10 pytań)
             </button>
             <button class="btn btn-secondary grammar-hero-btn" id="btnScrollToParticles" type="button">
-              ${icon('list')} Przewodnik po partykułach
+              ${icon('list')} Przeglądaj katalog
             </button>
           </div>
         </div>
       </div>
 
+      <div class="grammar-category-pills" role="tablist" aria-label="Kategorie gramatyczne">
+        <button class="grammar-pill ${activeCat === 'all' ? 'active' : ''}" data-cat="all" role="tab" type="button">
+          Wszystko <span class="grammar-pill-count">${countAll}</span>
+        </button>
+        <button class="grammar-pill ${activeCat === 'particle' ? 'active' : ''}" data-cat="particle" role="tab" type="button">
+          Partykuły <span class="grammar-pill-count">${countParticles}</span>
+        </button>
+        <button class="grammar-pill ${activeCat === 'verb' ? 'active' : ''}" data-cat="verb" role="tab" type="button">
+          Czasowniki i istnienie <span class="grammar-pill-count">${countVerbs}</span>
+        </button>
+        <button class="grammar-pill ${activeCat === 'adjective' ? 'active' : ''}" data-cat="adjective" role="tab" type="button">
+          Przymiotniki <span class="grammar-pill-count">${countAdjectives}</span>
+        </button>
+      </div>
+
       <div class="grammar-section-header" id="grammarParticlesSection">
-        <h2 class="grammar-section-title">Katalog 10 fundamentalnych partykuł</h2>
-        <span class="grammar-section-hint">Kliknij partykułę, aby otworzyć szczegóły, reguły i przykłady</span>
+        <h2 class="grammar-section-title">${sectionTitle}</h2>
+        <span class="grammar-section-hint">Kliknij pozycję, aby otworzyć szczegóły, reguły i przykłady</span>
       </div>
 
       <div class="grammar-particle-grid">
-        ${GRAMMAR_ITEMS.map(p => {
-          const stat = grammarParticleStat(p.id);
-          const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
-          const badgeText = stat.mastered ? 'Opanowana' : stat.seen > 0 ? 'W nauce' : 'Nowa';
+        ${filteredItems
+          .map(p => {
+            const stat = grammarParticleStat(p.id);
+            const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
+            const badgeText = stat.mastered ? 'Opanowane' : stat.seen > 0 ? 'W nauce' : 'Nowe';
+            const isLong = p.kana.length > 3;
 
-          return `
-            <div class="grammar-particle-card" data-particle-id="${p.id}" tabindex="0" role="button" aria-label="Partykuła ${p.kana}">
+            return `
+            <div class="grammar-particle-card" data-particle-id="${p.id}" tabindex="0" role="button" aria-label="Zagadnienie ${escapeHtml(p.kana)}">
               <div class="grammar-card-head">
-                <div class="grammar-card-kana font-japanese">${p.kana}</div>
+                <div class="grammar-card-kana font-japanese ${isLong ? 'is-long' : ''}">${p.kana}</div>
                 <div class="grammar-card-headings">
-                  <span class="grammar-card-romaji">${p.romaji}</span>
+                  <span class="grammar-card-romaji">${escapeHtml(p.romaji)}</span>
                   <h3 class="grammar-card-label">${escapeHtml(p.label)}</h3>
                 </div>
                 <span class="grammar-card-badge ${badgeClass}">${badgeText}</span>
@@ -6655,18 +7038,19 @@ function renderGrammarHub() {
               </p>
               <div class="grammar-card-footer">
                 <span class="grammar-card-link">Szczegóły i przykłady →</span>
-                <span class="grammar-card-score">${stat.seen > 0 ? `Trafność: ${stat.seen ? Math.round((stat.correct / stat.seen) * 100) : 0}% (${stat.correct}/${stat.seen})` : 'Niećwiczona'}</span>
+                <span class="grammar-card-score">${stat.seen > 0 ? `Trafność: ${stat.seen ? Math.round((stat.correct / stat.seen) * 100) : 0}% (${stat.correct}/${stat.seen})` : 'Niećwiczone'}</span>
               </div>
             </div>
           `;
-        }).join('')}
+          })
+          .join('')}
       </div>
     </div>
   `;
 
   document.getElementById('btnStartGrammarCloze').onclick = () => {
     Audio.click();
-    startGrammarPractice();
+    startGrammarPractice({ category: grammarSession.category });
   };
 
   document.getElementById('btnScrollToParticles').onclick = () => {
@@ -6674,6 +7058,14 @@ function renderGrammarHub() {
     const section = document.getElementById('grammarParticlesSection');
     if (section) section.scrollIntoView({ behavior: 'smooth' });
   };
+
+  document.querySelectorAll('[data-cat]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      grammarSession.category = btn.dataset.cat;
+      renderGrammarHub();
+    };
+  });
 
   document.querySelectorAll('[data-particle-id]').forEach(card => {
     const open = () => {
@@ -6704,26 +7096,28 @@ function renderGrammarDetail(particleId = (state.grammar && state.grammar.partic
 
   const stat = grammarParticleStat(p.id);
   const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
-  const badgeText = stat.mastered ? 'Opanowana' : stat.seen > 0 ? 'W nauce' : 'Nowa';
+  const badgeText = stat.mastered ? 'Opanowane' : stat.seen > 0 ? 'W nauce' : 'Nowe';
+  const speakText = p.speakKana || p.kana.replace(/[〜~]/g, '').split('/')[0].trim();
+  const isLong = p.kana.length > 3;
 
   app.innerHTML = `
     <div class="grammar-detail-screen animate-fade">
       <div class="grammar-detail-nav">
         <button class="btn btn-secondary btn-sm" id="btnGrammarBackToHub" type="button">
-          ${icon('chevron-left')} Wróć do listy partykuł
+          ${icon('chevron-left')} Wróć do listy zagadnień
         </button>
       </div>
 
       <div class="grammar-detail-card card">
         <div class="grammar-detail-head">
-          <div class="grammar-detail-kana-wrap">
-            <span class="grammar-detail-kana font-japanese">${p.kana}</span>
-            <button class="btn-speak" data-speak="${escapeHtml(p.kana)}" type="button" title="Odsłuchaj ${p.kana}" aria-label="Odsłuchaj ${p.kana}">
+          <div class="grammar-detail-kana-wrap ${isLong ? 'is-long' : ''}">
+            <span class="grammar-detail-kana font-japanese ${isLong ? 'is-long' : ''}">${p.kana}</span>
+            <button class="btn-speak" data-speak="${escapeHtml(speakText)}" type="button" title="Odsłuchaj ${escapeHtml(p.kana)}" aria-label="Odsłuchaj ${escapeHtml(p.kana)}">
               ${icon('volume')}
             </button>
           </div>
           <div class="grammar-detail-meta">
-            <div class="grammar-detail-eyebrow">PARTYKUŁA JAPOŃSKA · ROMAJI: ${p.romaji.toUpperCase()}</div>
+            <div class="grammar-detail-eyebrow">GRAMATYKA JAPOŃSKA · N5 · ${escapeHtml(p.romaji.toUpperCase())}</div>
             <h1 class="grammar-detail-title">${escapeHtml(p.label)}</h1>
             <span class="grammar-card-badge ${badgeClass}">${badgeText} · ${stat.seen > 0 ? `Trafność: ${stat.seen ? Math.round((stat.correct / stat.seen) * 100) : 0}% (${stat.correct}/${stat.seen})` : 'Brak prób'}</span>
           </div>
@@ -6774,7 +7168,7 @@ function renderGrammarDetail(particleId = (state.grammar && state.grammar.partic
 
         <div class="grammar-detail-footer">
           <button class="btn btn-primary" id="btnPracticeThisParticle" type="button">
-            ${icon('quiz')} Ćwicz tę partykułę (trening dedykowany)
+            ${icon('quiz')} Ćwicz to zagadnienie (trening dedykowany)
           </button>
           <button class="btn btn-secondary" id="btnGrammarBackToHubBottom" type="button">
             Wróć do listy
@@ -6842,7 +7236,10 @@ function renderGrammarPractice() {
 
     document.getElementById('btnGrammarRestartPractice').onclick = () => {
       Audio.click();
-      startGrammarPractice({ particleId: grammarSession.particleId });
+      startGrammarPractice({
+        particleId: s.particleId || grammarSession.particleId,
+        category: s.category || grammarSession.category
+      });
     };
     document.getElementById('btnGrammarSummaryBack').onclick = () => {
       Audio.click();
@@ -6886,7 +7283,7 @@ function renderGrammarPractice() {
       ${progress}
 
       <div class="prompt grammar-cloze-prompt">
-        <div class="polish">Uzupełnij brakującą partykułę w zdaniu:</div>
+        <div class="polish">Uzupełnij lukę w zdaniu:</div>
 
         <div class="grammar-cloze-sentence-wrap">
           <div class="grammar-cloze-sentence font-japanese">${clozeDisplay}</div>
@@ -6923,7 +7320,7 @@ function renderGrammarPractice() {
             ? `
           <div class="grammar-feedback-box animate-fade ${s.isCorrect ? 'is-correct' : 'is-wrong'}" role="status" aria-live="polite">
             <div class="grammar-feedback-status">
-              ${s.isCorrect ? '✓ Poprawnie!' : `✗ Niepoprawnie — poprawna partykuła: <strong>${escapeHtml(q.answer)}</strong>`}
+              ${s.isCorrect ? '✓ Poprawnie!' : `✗ Niepoprawnie — poprawna odpowiedź: <strong>${escapeHtml(q.answer)}</strong>`}
             </div>
             <div class="grammar-feedback-explanation">
               ${escapeHtml(q.explanation)}
