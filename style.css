@@ -7168,9 +7168,15 @@ body::before {
 }
 
 @keyframes pulse-speak {
-  0% { transform: scale(0.95); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .btn-speak svg,
@@ -7258,11 +7264,11 @@ body::before {
 .kanji-example-item .btn-speak {
   position: absolute;
   right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
 }
 
 .kanji-example-item .btn-speak:hover {
-  transform: translateY(-50%) scale(1.08);
+  transform: scale(1.08);
 }
-

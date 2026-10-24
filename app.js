@@ -1229,6 +1229,7 @@ const KANJI_LESSON_WORDS = [
 const Audio = (() => {
   let ctx = null;
   let muted = settings.muted;
+  let currentAudio = null;
 
   function getCtx() {
     if (!ctx) {
@@ -1257,6 +1258,97 @@ const Audio = (() => {
     }
   }
 
+  function stopPlayback() {
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      } catch (e) {}
+      currentAudio = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+  }
+
+  function getTtsUrl(text) {
+    return 'https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=' + encodeURIComponent(text);
+  }
+
+  function speakSystem(text, { lang = 'ja-JP', rate = 0.85 } = {}) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return false;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = lang;
+      utter.rate = rate;
+      if (window.speechSynthesis.getVoices) {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const jaVoice =
+          voices.find(v => v.lang === 'ja-JP' || v.lang === 'ja_JP') ||
+          voices.find(v => v.lang && v.lang.startsWith('ja'));
+        if (jaVoice) {
+          try {
+            utter.voice = jaVoice;
+          } catch (err) {}
+        }
+      }
+      window.speechSynthesis.speak(utter);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function speak(text, { lang = 'ja-JP', rate = 0.85, forceSystem = false } = {}) {
+    if (muted || !text) return false;
+    stopPlayback();
+
+    if (forceSystem) {
+      return speakSystem(text, { lang, rate });
+    }
+
+    // Głos japoński Google Translate TTS (wysoka jakość, naturalna wymowa)
+    if (typeof window !== 'undefined' && typeof window.Audio !== 'undefined') {
+      try {
+        const url = getTtsUrl(text);
+        const audio = new window.Audio(url);
+        currentAudio = audio;
+
+        audio.onerror = () => {
+          if (currentAudio === audio) {
+            currentAudio = null;
+            speakSystem(text, { lang, rate });
+          }
+        };
+
+        audio.onended = () => {
+          if (currentAudio === audio) {
+            currentAudio = null;
+          }
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            // W razie braku sieci lub blokady autoplay przechodzimy na Web Speech API
+            if (currentAudio === audio) {
+              currentAudio = null;
+              speakSystem(text, { lang, rate });
+            }
+          });
+        }
+        return true;
+      } catch (err) {
+        return speakSystem(text, { lang, rate });
+      }
+    }
+
+    return speakSystem(text, { lang, rate });
+  }
+
   return {
     correct() {
       tone(523.25, 0.12, 'sine', 0.22);
@@ -1275,47 +1367,25 @@ const Audio = (() => {
       tone(783.99, 0.15, 'sine', 0.18, 0.24);
       tone(1046.5, 0.25, 'sine', 0.22, 0.36);
     },
-    speak(text, { lang = 'ja-JP', rate = 0.85 } = {}) {
-      if (muted || !text) return false;
-      if (typeof window === 'undefined' || !window.speechSynthesis) return false;
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = lang;
-        utter.rate = rate;
-        if (window.speechSynthesis.getVoices) {
-          const voices = window.speechSynthesis.getVoices() || [];
-          const jaVoice =
-            voices.find(v => v.lang === 'ja-JP' || v.lang === 'ja_JP') ||
-            voices.find(v => v.lang && v.lang.startsWith('ja'));
-          if (jaVoice) {
-            try {
-              utter.voice = jaVoice;
-            } catch (err) {}
-          }
-        }
-        window.speechSynthesis.speak(utter);
-        return true;
-      } catch (e) {
-        return false;
-      }
+    speak,
+    speakSystem,
+    getTtsUrl,
+    stop() {
+      stopPlayback();
     },
     isSpeaking() {
-      return (
-        typeof window !== 'undefined' &&
-        !!window.speechSynthesis &&
-        window.speechSynthesis.speaking
-      );
+      const audioSpeaking = !!(currentAudio && !currentAudio.paused && !currentAudio.ended);
+      const synthSpeaking =
+        typeof window !== 'undefined' && !!window.speechSynthesis && window.speechSynthesis.speaking;
+      return audioSpeaking || !!synthSpeaking;
     },
     get muted() {
       return muted;
     },
     setMuted(value) {
       muted = !!value;
-      if (muted && typeof window !== 'undefined' && window.speechSynthesis) {
-        try {
-          window.speechSynthesis.cancel();
-        } catch (e) {}
+      if (muted) {
+        stopPlayback();
       }
       return muted;
     }
@@ -9217,7 +9287,7 @@ function resultText(score, total, script = state.script, kind = 'exam') {
 })();
 
 /* =========================================================
-   WYMOWA AUDIO (Web Speech API — delegacja [data-speak])
+   WYMOWA AUDIO (Google Translate TTS + Web Speech API — delegacja [data-speak])
 ========================================================= */
 
 document.addEventListener('click', e => {

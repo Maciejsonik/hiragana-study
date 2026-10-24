@@ -1023,7 +1023,10 @@ correct()
 wrong()
 click()
 celebrate()
-speak(text, { lang = 'ja-JP', rate = 0.85 })
+speak(text, { lang = 'ja-JP', rate = 0.85, forceSystem = false })
+speakSystem(text, options)
+getTtsUrl(text)
+stop()
 isSpeaking()
 ```
 
@@ -1037,19 +1040,24 @@ wrong()
 click()
 celebrate()
 speak(text, options)
+speakSystem(text, options)
+getTtsUrl(text)
+stop()
 isSpeaking()
 ```
 
 ### Current state
 
-The audio system combines Web Audio API synthesized tones for UI feedback and the
-native **Web Speech API** (`window.speechSynthesis`) for natural Japanese pronunciation.
-It requires **zero external MP3 files**, dependencies, or network downloads.
+The audio system combines Web Audio API synthesized tones for UI feedback, **Google Translate TTS**
+(`https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=...`) for authentic,
+high-quality natural Japanese pronunciation, and the native **Web Speech API** (`window.speechSynthesis`)
+as an automatic offline and playback fallback. It requires **zero API keys**, zero dependencies,
+and zero build steps.
 
 Key properties:
-- **Speech synthesis language:** `ja-JP` (prioritizes native voices such as Kyoko or Otoya if available in `getVoices()`).
-- **Cadence:** `rate = 0.85` for learner-friendly clarity.
-- **Mute synchronization:** `Audio.speak` respects `Audio.muted`. Calling `Audio.setMuted(true)` immediately invokes `speechSynthesis.cancel()`.
+- **Primary voice (Option 1):** Google Translate Japanese TTS via `new window.Audio(url)` audio streaming, providing accurate pitch accent, authentic Japanese intonation, and high fidelity across kana, vocabulary, and kanji readings.
+- **Automatic fallback:** In offline mode, on network error, or if audio playback is blocked, `Audio.speak` automatically routes to native Web Speech API (`speakSystem`, `ja-JP`, rate `0.85`).
+- **Mute synchronization:** `Audio.speak` respects `Audio.muted`. Calling `Audio.setMuted(true)` or `Audio.stop()` immediately pauses active HTML5 audio and cancels `speechSynthesis`.
 - **Global event delegation:** Click delegation for `[data-speak]` triggers audio playback throughout Kana learn, Vocab flashcards/prompts, and Kanji reading/jukugo details. Keyboard shortcuts `S` and `V` trigger pronunciation in active study cards.
 
 Future audio work should **extend the existing system rather than replace it unnecessarily**.
@@ -2498,7 +2506,7 @@ UI modernization — phase 4: Kana hub — COMPLETE
 Visual polish — calm Japanese learning app layer — IN PROGRESS
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
 Kanji expansion (Lessons L11–L15, 204 kanji) — COMPLETE
-Audio pronunciation (Web Speech API ja-JP across Kana, Vocab, Kanji) — COMPLETE
+Audio pronunciation (Google Translate TTS ja-JP + Web Speech fallback across Kana, Vocab, Kanji) — COMPLETE
 T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L15) — SHIPPED
 T19 Vocabulary (data, progress, flashcards, topics, lessons) — SHIPPED
 Next planned: Grammar (T20) or Exam Typed Mode extensions

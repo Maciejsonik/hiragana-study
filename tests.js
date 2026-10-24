@@ -2591,18 +2591,70 @@
   }
 
   /* =====================================================
-     AU. JAPOŃSKA WYMOWA AUDIO (Web Speech API)
+     AU. JAPOŃSKA WYMOWA AUDIO (Google Translate TTS + Web Speech API)
      ===================================================== */
   try {
     ok('AU1 Audio.speak jest funkcją', typeof Audio.speak === 'function');
     ok('AU2 Audio.isSpeaking jest funkcją', typeof Audio.isSpeaking === 'function');
+    ok('AU3 Audio.getTtsUrl jest funkcją', typeof Audio.getTtsUrl === 'function');
+    ok('AU4 Audio.speakSystem jest funkcją', typeof Audio.speakSystem === 'function');
 
     // Test wyciszenia
     const prevMuted = Audio.muted;
     Audio.setMuted(true);
-    ok('AU3 Audio.speak zwraca false gdy muted=true', Audio.speak('あ') === false);
+    ok('AU5 Audio.speak zwraca false gdy muted=true', Audio.speak('あ') === false);
 
-    // Spying na metodach speechSynthesis dla testów
+    // Test generowania adresu URL Google Translate TTS (Opcja 1)
+    const ttsUrl = Audio.getTtsUrl('ねこ');
+    ok(
+      'AU6 Audio.getTtsUrl generuje poprawny URL z parametrem tl=ja i zakodowanym tekstem',
+      ttsUrl.includes('translate.google.com/translate_tts') &&
+        ttsUrl.includes('tl=ja') &&
+        ttsUrl.includes(encodeURIComponent('ねこ'))
+    );
+
+    // Test odtwarzania przez Audio (Google Translate TTS)
+    let playedUrl = null;
+    let audioPlayCalled = false;
+    let audioPaused = false;
+    const origAudio = window.Audio;
+
+    function MockAudio(src) {
+      playedUrl = src;
+      this.src = src;
+      this.paused = false;
+      this.ended = false;
+      this.play = function () {
+        audioPlayCalled = true;
+        return Promise.resolve();
+      };
+      this.pause = function () {
+        audioPaused = true;
+        this.paused = true;
+      };
+    }
+
+    window.Audio = MockAudio;
+    Audio.setMuted(false);
+    const speakRes = Audio.speak('ねこ');
+    ok('AU7 Audio.speak uruchamia odtwarzanie Google Translate TTS', speakRes === true && audioPlayCalled === true);
+    ok(
+      'AU8 Audio.speak tworzy instancję Audio ze wskazanym adresem TTS',
+      playedUrl &&
+        playedUrl.includes('translate.google.com/translate_tts') &&
+        playedUrl.includes(encodeURIComponent('ねこ'))
+    );
+    ok('AU9 Audio.isSpeaking zwraca true w trakcie aktywnego odtwarzania audio', Audio.isSpeaking() === true);
+
+    // Wyciszenie zatrzymuje audio
+    Audio.setMuted(true);
+    ok('AU10 Audio.setMuted(true) zatrzymuje trwające audio', audioPaused === true);
+    ok('AU11 Audio.isSpeaking po wyciszeniu zwraca false', Audio.isSpeaking() === false);
+
+    // Przywrócenie Audio
+    window.Audio = origAudio;
+
+    // Test fallbacku do Web Speech API (speakSystem oraz forceSystem)
     const ss = window.speechSynthesis;
     let spokenUtter = null;
     let cancelled = false;
@@ -2628,22 +2680,38 @@
     Audio.setMuted(false);
     cancelled = false;
     spokenUtter = null;
-    const res = Audio.speak('ねこ');
-    ok('AU4 Audio.speak zwraca true przy aktywnym speech', res === true);
-    ok('AU5 Audio.speak anulowało poprzednią mowę przed startem', cancelled === true);
+    const sysRes = Audio.speak('ねこ', { forceSystem: true });
+    ok('AU12 Audio.speak z forceSystem zwraca true przy aktywnym speech', sysRes === true);
+    ok('AU13 Audio.speak anulowało poprzednią mowę przed startem', cancelled === true);
     ok(
-      'AU6 utterance ma język ja-JP i tekst ねこ',
+      'AU14 utterance ma język ja-JP i tekst ねこ',
       spokenUtter && spokenUtter.lang === 'ja-JP' && spokenUtter.text === 'ねこ'
     );
-    ok(
-      'AU7 utterance ma właściwe tempo mowy 0.85',
-      spokenUtter && Math.abs(spokenUtter.rate - 0.85) < 0.01
-    );
+    ok('AU15 utterance ma właściwe tempo mowy 0.85', spokenUtter && Math.abs(spokenUtter.rate - 0.85) < 0.01);
 
-    // Wyciszenie anuluje mowę
+    // Test automatycznego fallbacku przy odrzuceniu play() w Audio
+    function ErrorAudio(src) {
+      this.src = src;
+      this.play = function () {
+        return Promise.reject(new Error('Autoplay blocked'));
+      };
+    }
+    window.Audio = ErrorAudio;
+    cancelled = false;
+    spokenUtter = null;
+    Audio.setMuted(false);
+    Audio.speak('いぬ');
+    await Promise.resolve(); // oczekiwanie na microtask Promise.catch
+    ok(
+      'AU16 Audio.speak automatycznie przechodzi na Web Speech API po błędzie odtwarzacza',
+      spokenUtter && spokenUtter.text === 'いぬ'
+    );
+    window.Audio = origAudio;
+
+    // Wyciszenie anuluje mowę syntetyzatora
     cancelled = false;
     Audio.setMuted(true);
-    ok('AU8 Audio.setMuted(true) anuluje trwającą syntezę', cancelled === true);
+    ok('AU17 Audio.setMuted(true) anuluje trwającą syntezę Web Speech', cancelled === true);
 
     // Przywrócenie stanu Audio i speechSynthesis
     Audio.setMuted(prevMuted);
@@ -2657,7 +2725,7 @@
     setScreen('learn');
     const speakKanaBtn = document.getElementById('speakKana');
     ok(
-      'AU9 #speakKana istnieje w widoku nauki kana',
+      'AU18 #speakKana istnieje w widoku nauki kana',
       !!speakKanaBtn && speakKanaBtn.getAttribute('data-speak') === state.kana
     );
 
@@ -2668,7 +2736,7 @@
     renderKanjiDetail();
     const kanjiSpeaks = document.querySelectorAll('.kanji-detail-screen [data-speak]');
     ok(
-      'AU10 widok detali kanji posiada przyciski [data-speak] dla czytań i złożeń',
+      'AU19 widok detali kanji posiada przyciski [data-speak] dla czytań i złożeń',
       kanjiSpeaks.length >= 3,
       'znaleziono ' + kanjiSpeaks.length
     );
