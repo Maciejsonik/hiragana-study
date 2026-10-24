@@ -8164,6 +8164,7 @@ function renderGrammarHub() {
             </div>
             <div class="grammar-stat-chip progress-chip">
               <span class="grammar-stat-val">${stats.percent}%</span>
+              <span class="grammar-stat-lbl">Całkowity postęp</span>
               <div class="grammar-mini-progress">
                 <div class="grammar-mini-progress-fill" style="width: ${stats.percent}%"></div>
               </div>
