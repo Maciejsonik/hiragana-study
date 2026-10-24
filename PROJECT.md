@@ -2218,30 +2218,34 @@ Polish meanings remain an unverified translation.
 
 - Phase 1 (N5 Particles & Cloze Training) — **COMPLETE**.
 - Phase 2 (Verbs Conjugation, Existence & Adjectives) — **COMPLETE**.
+- Phase 3 (Te-form, Requests, State/Continuous, Permission/Prohibition, Ta-form, Experience, Negative Past) — **COMPLETE**.
 
 ### Implemented Scope
 
 - **Data Model (`GRAMMAR_ITEMS`)**:
-  - Expanded from 10 to 18 fundamental Japanese grammar items for JLPT N5 across 4 categories:
+  - Expanded from 18 to 25 fundamental Japanese grammar items for JLPT N5 across 4 categories:
     - **Particles (`particle`, 10 items)**: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
-    - **Verb Conjugation (`verb`, 4 items)**: `v_masu` (〜ます), `v_masen` (〜ません), `v_mashita` (〜ました), `v_masendeshita` (〜ませんでした).
-    - **Existence (`existence`, 2 items)**: `arimasu` (ある / あります – inanimate), `imasu` (いる / います – animate).
+    - **Verb Conjugation & Forms (`verb`, 11 items + 2 existence)**:
+      - Polite forms: `v_masu` (〜ます), `v_masen` (〜ません), `v_mashita` (〜ました), `v_masendeshita` (〜ませんでした).
+      - Existence: `arimasu` (ある / あります – inanimate), `imasu` (いる / います – animate).
+      - Te-forms & requests: `te_form` (〜て / 〜で), `te_kudasai` (〜てください), `te_imasu` (〜ています), `te_mo_ii` (〜てもいい / 〜てはいけません).
+      - Ta-forms & experience: `ta_form` (〜た / 〜だ), `ta_koto_ga_aru` (〜た ことがあります), `v_nakatta` (〜なかった / 〜ませんでした).
     - **Adjectives (`adjective`, 2 items)**: `adj_i` (〜い / 〜くない – i-keiyoushi), `adj_na` (〜な / 〜です – na-keiyoushi).
-  - 54 authentic example sentences with audio pronunciation and 54 cloze questions with rule explanations.
+  - 75 authentic example sentences with audio pronunciation and 75 cloze questions with rule explanations.
 - **Storage & Isolation (`hiragana-grammar`)**:
   - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
   - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
   - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
-    - Header with stats chips (mastered count out of 18, in-progress count, total answers, mini-progress percentage bar),
-    - Category pills (`all`: 18, `particle`: 10, `verb`: 6, `adjective`: 2) with active states and badge counters,
+    - Header with stats chips (mastered count out of 25, in-progress count, total answers, mini-progress percentage bar),
+    - Category pills (`all`: 25, `particle`: 10, `verb`: 13 — "Czasowniki i formy", `adjective`: 2) with active states and badge counters,
     - Responsive grid of grammar cards with mastery badges, syntax formulas, summaries, and accuracy scores,
     - Adaptive typography with `.is-long` modifier for multi-character tags.
   - **Detail View (`detail`)**:
     - Symbol badge with audio button using clean speakable Japanese (without tildes),
     - Structural sentence formula box,
-    - Grammatical role explanation and pitfalls / common mistakes callout box,
+    - Grammatical role explanation, conjugation rules (Godan/Ichidan/Irregular), and pitfalls / common mistakes callout box,
     - 3 example sentences with audio pronunciation buttons,
     - Action button to launch targeted cloze practice specifically for that item.
   - **Practice View (`practice`)**:

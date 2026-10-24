@@ -2880,8 +2880,15 @@
      GRAMATYKA (T20) — partykuły N5, baza wiedzy i quizy luk
      ===================================================== */
   try {
-    // GR1: Komplet 18 zagadnień w bazie
-    eq('GR1 baza gramatyki zawiera 18 pozycji', GRAMMAR_ITEMS.length, 18);
+    // GR1: Komplet 25 zagadnień w bazie (faza 1 + 2 + 3)
+    eq('GR1 baza gramatyki zawiera 25 pozycji', GRAMMAR_ITEMS.length, 25);
+
+    // GR1a: Komplet zagadnień fazy 3
+    const phase3Ids = ['te_form', 'te_kudasai', 'te_imasu', 'te_mo_ii', 'ta_form', 'ta_koto_ga_aru', 'v_nakatta'];
+    ok(
+      'GR1a faza 3 gramatyki zawiera komplet 7 form czasownikowych',
+      phase3Ids.every(id => GRAMMAR_ITEMS.some(item => item.id === id && item.category === 'verb'))
+    );
 
     // GR2: Każde zagadnienie ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
     const validItems = GRAMMAR_ITEMS.every(item => {
@@ -2935,7 +2942,7 @@
 
     const stats = getGrammarSummaryStats();
     eq('GR6 getGrammarSummaryStats poprawnie zlicza opanowane partykuły', stats.mastered, 1);
-    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 6);
+    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 4);
 
     // GR8: Inicjalizacja sesji quizu startGrammarPractice
     startGrammarPractice();
@@ -2982,7 +2989,7 @@
       render();
     }
     const particleCards = document.querySelectorAll('.grammar-particle-card');
-    eq('GR15 ekran hub gramatyki renderuje 18 kart w widoku ogólnym', particleCards.length, 18);
+    eq('GR15 ekran hub gramatyki renderuje 25 kart w widoku ogólnym', particleCards.length, 25);
 
     // GR16: Nawigacja do widoku szczegółowego partykuły
     const firstCard = particleCards[0];
@@ -3014,7 +3021,7 @@
     grammarSession.category = 'verb';
     renderGrammarHub();
     const verbCardsFiltered = document.querySelectorAll('.grammar-particle-card');
-    eq('GR22 filtr czasowników i istnienia renderuje 6 kart', verbCardsFiltered.length, 6);
+    eq('GR22 filtr czasowników i form renderuje 13 kart', verbCardsFiltered.length, 13);
 
     grammarSession.category = 'adjective';
     renderGrammarHub();
@@ -3219,18 +3226,39 @@
     const ex = rect.left + rect.width * 0.7;
     const ey = rect.top + rect.height * 0.7;
 
-    drawCanvas.dispatchEvent(new PointerEvent('pointerdown', {
-      bubbles: true, cancelable: true, isPrimary: true,
-      clientX: sx, clientY: sy, button: 0, buttons: 1
-    }));
-    drawCanvas.dispatchEvent(new PointerEvent('pointermove', {
-      bubbles: true, cancelable: true, isPrimary: true,
-      clientX: ex, clientY: ey, button: 0, buttons: 1
-    }));
-    drawCanvas.dispatchEvent(new PointerEvent('pointerup', {
-      bubbles: true, cancelable: true, isPrimary: true,
-      clientX: ex, clientY: ey, button: 0, buttons: 0
-    }));
+    drawCanvas.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        cancelable: true,
+        isPrimary: true,
+        clientX: sx,
+        clientY: sy,
+        button: 0,
+        buttons: 1
+      })
+    );
+    drawCanvas.dispatchEvent(
+      new PointerEvent('pointermove', {
+        bubbles: true,
+        cancelable: true,
+        isPrimary: true,
+        clientX: ex,
+        clientY: ey,
+        button: 0,
+        buttons: 1
+      })
+    );
+    drawCanvas.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        cancelable: true,
+        isPrimary: true,
+        clientX: ex,
+        clientY: ey,
+        button: 0,
+        buttons: 0
+      })
+    );
 
     // Sprawdzenie oceny rysunku
     const checkBtn = document.getElementById('btnDrawCheck');
@@ -3246,7 +3274,10 @@
     // Wyłączenie rysowania
     toggleDrawing.click();
     await sleep(20);
-    ok('KD8 ponowne kliknięcie wyłącza klasę drawing i chowa pasek', !stage.classList.contains('drawing') && drawingBar.classList.contains('is-hidden'));
+    ok(
+      'KD8 ponowne kliknięcie wyłącza klasę drawing i chowa pasek',
+      !stage.classList.contains('drawing') && drawingBar.classList.contains('is-hidden')
+    );
 
     setScreen('dashboard');
   } catch (e) {

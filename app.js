@@ -6947,6 +6947,300 @@ const GRAMMAR_ITEMS = [
         explanation: 'Czas przeszły twierdzący przymiotnika-na (むかし – dawniej) tworzy forma でした (しずかでした).'
       }
     ]
+  },
+  {
+    id: 'te_form',
+    category: 'verb',
+    kana: '〜て / 〜で',
+    speakKana: 'たべて',
+    romaji: 'te-kei',
+    label: 'Forma łącząca czasowników (〜て / 〜で)',
+    pattern: '[Czasownik w formie te]: rdzeń + て / で',
+    description: 'Forma 〜て (te-kei) to jedna z najważniejszych form w języku japońskim. Służy do łączenia czynności w czasie („robię A, a potem B”), tworzenia próśb (〜てください), czynności trwających (〜ています) oraz konstrukcji zezwolenia (〜てもいい). Odmiana zależy od grupy czasownika (Ichidan, Godan, Nieregularne).',
+    notes: 'Zasady tworzenia formy te:\n• Grupa II (Ichidan): odrzuć る i dodaj て (たべる → たべて, みる → みて).\n• Grupa III (Nieregularne): する → して, くる → きて.\n• Grupa I (Godan): końcówki u, tsu, ru → って (かう → かって, まつ → まって); mu, bu, nu → んで (のむ → のんで, よむ → よんで); ku → いて (きく → きいて); gu → いで (およぐ → およいで); su → して (はなす → はなして).\n★ WAŻNY WYJĄTEK: czasownik いく (iść) odmienia się nieregularnie na いって (nie: iite)!',
+    examples: [
+      { japanese: 'あさ おきて、コーヒーを のみます。', romaji: 'Asa okite, koohii o nomimasu.', polish: 'Rano wstaję i piję kawę (łączenie czynności).' },
+      { japanese: 'ほんを よんで、ねました。', romaji: 'Hon o yonde, nemashita.', polish: 'Przeczytałem książkę i poszedłem spać.' },
+      { japanese: 'ぎんこうへ いって、おかねを だします。', romaji: 'Ginkou e itte, okane o dashimasu.', polish: 'Pójdę do banku i wypłacę pieniądze (wyjątek: いく → いって).' }
+    ],
+    questions: [
+      {
+        sentence: 'あさ 7じに [?]、あさごはんを たべます。',
+        full: 'あさ 7じに おきて、あさごはんを たべます。',
+        polish: 'Rano wstaję o 7:00 i jem śniadanie.',
+        answer: 'おきて',
+        distractors: ['おきます', 'おきた', 'おきって'],
+        explanation: 'Łączenie czynności w czasie wymaga formy -te. Czasownik おきる to grupa II (Ichidan), więc odrzucamy る i dodajemy て: おきて.'
+      },
+      {
+        sentence: 'きょうは としょかんへ [?]、べんきょうします。',
+        full: 'きょうは としょかんへ いって、べんきょうします。',
+        polish: 'Dzisiaj pójdę do biblioteki i będę się uczyć.',
+        answer: 'いって',
+        distractors: ['いいて', 'いきて', 'いった'],
+        explanation: 'Wyjątek formy te: czasownik いく (iść) tworzy formę いって (z geminatą って, a nie iite).'
+      },
+      {
+        sentence: 'ジュースを [?]、パンを たべました。',
+        full: 'ジュースを のんで、パンを たべました。',
+        polish: 'Napiłem się soku i zjadłem chleb.',
+        answer: 'のんで',
+        distractors: ['のみて', 'のって', 'のんだ'],
+        explanation: 'Czasownik のむ (pić, grupa I z końcówką む) w formie -te przyjmuje końcówkę んで: のんで.'
+      }
+    ]
+  },
+  {
+    id: 'te_kudasai',
+    category: 'verb',
+    kana: '〜てください',
+    speakKana: 'みてください',
+    romaji: 'te kudasai',
+    label: 'Uprzejme prośby i polecenia (〜てください)',
+    pattern: '[Czasownik-te] + ください',
+    description: 'Konstrukcja służąca do uprzejmej prośby lub życzliwego polecenia: „proszę (coś zrobić)”. Tworzy się ją przez dodanie ください (kudasai) do formy 〜て czasownika.',
+    notes: 'Używane wobec osób równych statusem lub gdy udzielamy instrukcji (np. w sklepie, na lekcji: „proszę posłuchać”, „proszę napisać”). Wobec przełożonych lub osób starszych w formalnym keigo stosuje się jeszcze wyższe formy, ale 〜てください to standardowy uprzejmy zwrot na poziomie N5.',
+    examples: [
+      { japanese: 'ここに なまえを かいてください。', romaji: 'Koko ni namae o kaite kudasai.', polish: 'Proszę tutaj napisać swoje nazwisko / imię.' },
+      { japanese: 'ちょっと まってください。', romaji: 'Chotto matte kudasai.', polish: 'Proszę chwilę poczekać.' },
+      { japanese: 'CDを きいてください。', romaji: 'CD o kiite kudasai.', polish: 'Proszę posłuchać płyty CD.' }
+    ],
+    questions: [
+      {
+        sentence: 'すこし [?] ください。すぐ もどります。',
+        full: 'すこし まってください。すぐ もどります。',
+        polish: 'Proszę chwilę poczekać. Zaraz wracam.',
+        answer: 'まって',
+        distractors: ['まちて', 'まつて', 'また'],
+        explanation: 'Czasownik まつ (czekać) to grupa I z końcówką つ, która w formie -te przechodzi w って: まってください.'
+      },
+      {
+        sentence: 'ゆっくり [?] ください。',
+        full: 'ゆっくり はなしてください。',
+        polish: 'Proszę mówić powoli.',
+        answer: 'はなして',
+        distractors: ['はなすて', 'はなしてで', 'はなした'],
+        explanation: 'Czasownik はなす (mówić) w formie te przyjmuje końcówkę して: はなしてください.'
+      },
+      {
+        sentence: 'この えいがを [?] ください。とても おもしろいです。',
+        full: 'この えいがを みてください。とても おもしろいです。',
+        polish: 'Proszę obejrzeć ten film. Jest bardzo ciekawy.',
+        answer: 'みて',
+        distractors: ['みるて', 'みって', 'みた'],
+        explanation: 'Czasownik みる (oglądać, grupa II) odrzuca る i przyjmuje て: みてください.'
+      }
+    ]
+  },
+  {
+    id: 'te_imasu',
+    category: 'verb',
+    kana: '〜ています',
+    speakKana: 'たべています',
+    romaji: 'te imasu',
+    label: 'Czynności trwające i stan (〜ています)',
+    pattern: '[Czasownik-te] + います / いません',
+    description: 'Konstrukcja wyrażająca dwa kluczowe znaczenia: 1) czynność odbywającą się w tej chwili (odpowiednik angielskiego Present Continuous: „właśnie jem/czytam”), oraz 2) stan trwający jako rezultat wcześniejszej czynności (np. mieszkanie w danym mieście, małżeństwo, posiadanie wiedzy).',
+    notes: 'Kluczowe czasowniki stanu w N5:\n• すんでいます (すむ → mieszkam w...)\n• しっています (しる → znam / wiem; uwaga: przeczenie to しりません, nie shitteimasen!)\n• けっこんしています (jestem w związku małżeńskim)\n• もっています (posiadam / mam przy sobie).',
+    examples: [
+      { japanese: 'いま にほんごを べんきょうしています。', romaji: 'Ima nihongo o benkyou shite imasu.', polish: 'W tej chwili uczę się japońskiego (czynność trwająca).' },
+      { japanese: 'わたしは とうきょうに すんでいます。', romaji: 'Watashi wa Toukyou ni sunde imasu.', polish: 'Mieszkam w Tokio (trwały stan/rezultat).' },
+      { japanese: 'たなかさんは くるまを もっています。', romaji: 'Tanaka-san wa kuruma o motte imasu.', polish: 'Pan Tanaka ma (posiada) samochód.' }
+    ],
+    questions: [
+      {
+        sentence: 'いま なにを [?] いますか。',
+        full: 'いま なにを して いますか。',
+        polish: 'Co teraz robisz (w tej chwili)?',
+        answer: 'して',
+        distractors: ['する', 'した', 'し'],
+        explanation: 'Pytanie o trwającą czynność wymaga formy -te czasownika: する → して いますか.'
+      },
+      {
+        sentence: 'わたしは きょうとに [?] います。',
+        full: 'わたしは きょうとに すんで います。',
+        polish: 'Mieszkam w Kioto.',
+        answer: 'すんで',
+        distractors: ['すみて', 'すむで', 'すんだ'],
+        explanation: 'Czasownik すむ (mieszkać) w formie te przyjmuje んで: すんでいます wyraża stan zamieszkiwania w danym miejscu.'
+      },
+      {
+        sentence: 'あ、あめが [?] いますよ。',
+        full: 'あ、あめが ふって いますよ。',
+        polish: 'O, pada deszcz!',
+        answer: 'ふって',
+        distractors: ['ふりて', 'ふて', 'ふった'],
+        explanation: 'Czasownik ふる (padać) ma końcówkę る z grupy I, więc w formie te daje ふって: ふっています (właśnie pada).'
+      }
+    ]
+  },
+  {
+    id: 'te_mo_ii',
+    category: 'verb',
+    kana: '〜てもいい',
+    speakKana: 'はいってもいい',
+    romaji: 'te mo ii',
+    label: 'Pozwolenie i zakaz (〜てもいい / 〜てはいけません)',
+    pattern: '[Czasownik-te] + もいいですか / はいけません',
+    description: '〜てもいいですか (te mo ii desu ka) służy do pytania o pozwolenie: „Czy mogę...? / Czy wolno mi...?”. Odpowiedź twierdząca to 〜てもいいです („możesz / wolno ci”). Z kolei konstrukcja 〜てはいけません (te wa ikemasen) oznacza bezwzględny zakaz: „nie wolno ci / nie można”.',
+    notes: 'W mowie potocznej ですか jest często pomijane z intonacją pytającą: 〜てもいい？ W przeczeniu pamiętaj: „は” w 〜てはいけません wymawia się „wa”, ponieważ pełni rolę partykuły tematu po formie te.',
+    examples: [
+      { japanese: 'しゃしんを とっても いいですか。', romaji: 'Shashin o totte mo ii desu ka.', polish: 'Czy wolno mi zrobić zdjęcie?' },
+      { japanese: 'ここで たばこを すっては いけません。', romaji: 'Koko de tabako o sutte wa ikemasen.', polish: 'Tutaj nie wolno palić papierosów (zakaz).' },
+      { japanese: 'へやに はいっても いいですよ。', romaji: 'Heya ni haitte mo ii desu yo.', polish: 'Możesz wejść do pokoju (udzielenie pozwolenia).' }
+    ],
+    questions: [
+      {
+        sentence: 'ここで しゃしんを [?] も いいですか。',
+        full: 'ここで しゃしんを とっても いいですか。',
+        polish: 'Czy mogę tutaj zrobić zdjęcie?',
+        answer: 'とって',
+        distractors: ['とりて', 'とるて', 'とった'],
+        explanation: 'Pozwolenie wymaga formy -te + もいいですか. Czasownik とる (robić zdjęcie) w formie te to とって.'
+      },
+      {
+        sentence: 'びじゅつかんで えに さわっては [?]。',
+        full: 'びじゅつかんで えに さわっては いけません。',
+        polish: 'W muzeum sztuki nie wolno dotykać obrazów.',
+        answer: 'いけません',
+        distractors: ['いいです', 'ありません', 'いません'],
+        explanation: 'Wyrażenie bezwzględnego zakazu („nie wolno”) tworzy konstrukcja 〜てはいけません.'
+      },
+      {
+        sentence: 'この みずを [?] も いいですか。',
+        full: 'この みずを のんでも いいですか。',
+        polish: 'Czy mogę napić się tej wody?',
+        answer: 'のんで',
+        distractors: ['のみて', 'のむで', 'のんて'],
+        explanation: 'Czasownik のむ (pić) w formie te przyjmuje końcówkę んで: のんでもいいですか.'
+      }
+    ]
+  },
+  {
+    id: 'ta_form',
+    category: 'verb',
+    kana: '〜た / 〜だ',
+    speakKana: 'たべた',
+    romaji: 'ta-kei',
+    label: 'Czas przeszły prosty / potoczny (〜た / 〜だ)',
+    pattern: '[Czasownik w formie ta]: zamień て na た / で na だ',
+    description: 'Forma 〜た (ta-kei) to czas przeszły dokonany w stylu prostym (potocznym / futsuutai). Odpowiada uprzejmej formie 〜ました. Zasady tworzenia formy ta są DOKŁADNIE IDENTYCZNE jak formy te: wszędzie tam, gdzie wstawia się て, wstawiamy た, a zamiast で – だ (np. たべて → たべた, のんで → のんだ).',
+    notes: 'Forma ta jest fundamentem wielu konstrukcji gramatycznych poziomu N5/N4:\n• 〜た ことがあります (doświadczenie: „kiedyś już to robiłem”)\n• 〜た あとで (po zrobieniu czegoś)\n• 〜たり 〜たり します (wyliczanie czynności).\nWyjątek: いく → いった (jak itte).',
+    examples: [
+      { japanese: 'きのう えいがを みた。', romaji: 'Kinou eiga o mita.', polish: 'Wczoraj obejrzałem film (styl potoczny = mimashita).' },
+      { japanese: 'あさごはんを たべた？', romaji: 'Asagohan o tabeta?', polish: 'Jadłeś śniadanie? (pytanie w stylu swobodnym).' },
+      { japanese: 'せんしゅう ともだちと あそんだ。', romaji: 'Senshuu tomodachi to asonda.', polish: 'W zeszłym tygodniu spotkałem się / bawiłem z przyjaciółmi.' }
+    ],
+    questions: [
+      {
+        sentence: 'きのう なにを [?]？',
+        full: 'きのう なにを たべた？',
+        polish: 'Co wczoraj jadłeś? (styl swobodny)',
+        answer: 'たべた',
+        distractors: ['たべて', 'たべだ', 'たべ'],
+        explanation: 'Czasownik たべる (grupa II) w czasie przeszłym prostym przyjmuje formę たべた (końcówka -ta jak -te: たべて → たべta).'
+      },
+      {
+        sentence: 'きょねん にほんへ [?]。',
+        full: 'きょねん にほんへ いった。',
+        polish: 'W zeszłym roku pojechałem do Japonii.',
+        answer: 'いった',
+        distractors: ['いいた', 'いきた', 'いくた'],
+        explanation: 'Czasownik いく (iść/jechać) to wyjątek: odmienia się na いった (podobnie jak forma te: いって).'
+      },
+      {
+        sentence: 'きのうは たくさん [?]。',
+        full: 'きのうは たくさん のんだ。',
+        polish: 'Wczoraj dużo wypiłem.',
+        answer: 'のんだ',
+        distractors: ['のんた', 'のみた', 'のむた'],
+        explanation: 'Czasowniki kończące się na む (のむ) w formie -te mają んで, a w formie -ta przyjmują końcówkę んだ: のんだ.'
+      }
+    ]
+  },
+  {
+    id: 'ta_koto_ga_aru',
+    category: 'verb',
+    kana: '〜た ことが ある',
+    speakKana: 'いったことがある',
+    romaji: 'ta koto ga aru',
+    label: 'Doświadczenie życiowe (〜た ことがあります)',
+    pattern: '[Czasownik-ta] + ことが あります / ありません',
+    description: 'Konstrukcja służąca do mówienia o życiowych doświadczeniach: „zdarzyło mi się już kiedyś (coś zrobić)” lub „miałem okazję (coś zrobić)”. Przeczenie: 〜た ことが ありません oznacza „nigdy w życiu tego nie robiłem”.',
+    notes: 'Uwaga: konstrukcji tej NIE używa się do zwykłych, rutynowych czynności z wczoraj czy z dziś (np. „zjadłem obiad”). Służy wyłącznie do mówienia o unikalnych doświadczeniach w perspektywie całego dotychczasowego życia (np. byłem w Japonii, jadłem sushi, wspiąłem się na Fudżi).',
+    examples: [
+      { japanese: 'にほんへ いった ことが あります。', romaji: 'Nihon e itta koto ga arimasu.', polish: 'Byłem kiedyś w Japonii (mam takie doświadczenie życiowe).' },
+      { japanese: 'すしを たべた ことが ありますか。', romaji: 'Sushi o tabeta koto ga arimasu ka.', polish: 'Czy kiedykolwiek jadłeś sushi?' },
+      { japanese: 'ふじさんに のぼった ことが ありません。', romaji: 'Fuji-san ni nobotta koto ga arimasen.', polish: 'Nigdy nie wspinałem się na górę Fudżi.' }
+    ],
+    questions: [
+      {
+        sentence: 'にほんへ [?] ことが ありますか。',
+        full: 'にほんへ いった ことが ありますか。',
+        polish: 'Czy kiedykolwiek byłeś w Japonii?',
+        answer: 'いった',
+        distractors: ['いく', 'いって', 'いきたい'],
+        explanation: 'Konstrukcja doświadczenia życiowego wymaga czasownika w czasie przeszłym prostym (forma -ta): いく → いった ことがあります.'
+      },
+      {
+        sentence: 'さしみを [?] ことが ありません。',
+        full: 'さしみを たべた ことが ありません。',
+        polish: 'Nigdy nie jadłem sashimi.',
+        answer: 'たべた',
+        distractors: ['たべる', 'たべて', 'たべない'],
+        explanation: 'Przeczenie doświadczenia również łączy się z formą -ta czasownika: たべた ことが ありません (nigdy nie jadłem).'
+      },
+      {
+        sentence: 'きもの（着物）を [?] ことが あります。',
+        full: 'きもの（着物）を きた ことが あります。',
+        polish: 'Miałem okazję nosić kimono.',
+        answer: 'きた',
+        distractors: ['きる', 'きて', 'きった'],
+        explanation: 'Czasownik きる (nosić ubranie, grupa II) w formie ta to きた: きた ことがあります.'
+      }
+    ]
+  },
+  {
+    id: 'v_nakatta',
+    category: 'verb',
+    kana: '〜なかった',
+    speakKana: 'いかなかった',
+    romaji: 'nakatta',
+    label: 'Czas przeszły przeczący (〜なかった / 〜ませんでした)',
+    pattern: '[Czasownik w formie nai] - い + かった (styl potoczny)',
+    description: 'Czas przeszły przeczący wyrażający „nie zrobiłem czegoś”. W stylu uprzejmym jest to 〜ませんでした (v_masendeshita). W stylu prostym (potocznym) tworzy się go od formy przeczącej 〜ない (nai-kei), zamieniając końcowe い na かった: 〜なかった (np. いかない → いかなかった, たべない → たべなかった).',
+    notes: 'Odmiana formy nai i nakatta:\n• Grupa I (Godan): samogłoska u → a + なかった (いく → いかない → いかなかった, かく → かかなかった, のむ → のまなかった).\n• Grupa II (Ichidan): odrzuć る + なかった (たべる → たべなかった, みる → みなかった).\n• Grupa III: する → しなかった, くる → こなかった.\n★ Wyjątek: czasownik ある (być / mieć) w przeczeniu to po prostu ない, a w czasie przeszłym なかった (nie: aranakatta)!',
+    examples: [
+      { japanese: 'きのうは どこへも いかなかった。', romaji: 'Kinou wa doko e mo ikanakatta.', polish: 'Wczoraj nigdzie nie poszedłem (styl potoczny).' },
+      { japanese: 'あさごはんを たべなかった。', romaji: 'Asagohan o tabenakatta.', polish: 'Nie zjadłem śniadania.' },
+      { japanese: 'きのうは べんきょうしなかった。', romaji: 'Kinou wa benkyou shinakatta.', polish: 'Wczoraj się nie uczyłem (suru → shinakatta).' }
+    ],
+    questions: [
+      {
+        sentence: 'きのうは あめだったから、でかけ[?]。',
+        full: 'きのうは あめだったから、でかけなかった。',
+        polish: 'Ponieważ wczoraj padał deszcz, nie wyszedłem z domu.',
+        answer: 'なかった',
+        distractors: ['ない', 'ませんでした', 'なくて'],
+        explanation: 'Czas przeszły przeczący w stylu potocznym od でかける (grupa II) to でかけ + なかった.'
+      },
+      {
+        sentence: 'きのうは なにも [?]。',
+        full: 'きのうは なにも たべなかった。',
+        polish: 'Wczoraj nic nie zjadłem.',
+        answer: 'たべなかった',
+        distractors: ['たべない', 'たべた', 'たべなくて'],
+        explanation: 'Wczoraj (きのう) + なにも (nic) wymaga czasu przeszłego przeczącego: たべなかった.'
+      },
+      {
+        sentence: 'じかんが [?] から、テレビを みませんでした。',
+        full: 'じかんが なかった から、テレビを みませんでした。',
+        polish: 'Ponieważ nie miałem czasu, nie oglądałem telewizji.',
+        answer: 'なかった',
+        distractors: ['あらなかった', 'ない', 'なくて'],
+        explanation: 'Czasownik ある (mieć / istnieć) odmienia się nieregularnie: przeczenie to ない, a w czasie przeszłym なかった (forma aranai/aranakatta nie istnieje!).'
+      }
+    ]
   }
 ];
 
@@ -7152,7 +7446,7 @@ function renderGrammarHub() {
 
   let sectionTitle = `Katalog zagadnień gramatycznych (${filteredItems.length})`;
   if (activeCat === 'particle') sectionTitle = `Partykuły japońskie (${countParticles})`;
-  else if (activeCat === 'verb') sectionTitle = `Koniugacja czasowników i istnienie (${countVerbs})`;
+  else if (activeCat === 'verb') sectionTitle = `Koniugacja czasowników i formy (${countVerbs})`;
   else if (activeCat === 'adjective') sectionTitle = `Przymiotniki typu I oraz NA (${countAdjectives})`;
 
   app.innerHTML = `
@@ -7164,7 +7458,7 @@ function renderGrammarHub() {
           <h1 class="grammar-title">Partykuły, Czasowniki i Przymiotniki</h1>
           <p class="grammar-desc">
             Kluczowe zagadnienia gramatyczne poziomu N5.
-            Opanuj 10 partykuł (助詞), formy czasowników (~masu, istnienie) i przymiotniki (i/na) oraz trenuj uzupełnianie zdań.
+            Opanuj partykuły (助詞), formy czasowników (ます, て, た, istnienie) i przymiotniki (i/na) oraz trenuj uzupełnianie zdań.
           </p>
 
           <div class="grammar-activity-bar">
@@ -7207,7 +7501,7 @@ function renderGrammarHub() {
           Partykuły <span class="grammar-pill-count">${countParticles}</span>
         </button>
         <button class="grammar-pill ${activeCat === 'verb' ? 'active' : ''}" data-cat="verb" role="tab" type="button">
-          Czasowniki i istnienie <span class="grammar-pill-count">${countVerbs}</span>
+          Czasowniki i formy <span class="grammar-pill-count">${countVerbs}</span>
         </button>
         <button class="grammar-pill ${activeCat === 'adjective' ? 'active' : ''}" data-cat="adjective" role="tab" type="button">
           Przymiotniki <span class="grammar-pill-count">${countAdjectives}</span>
