@@ -2911,11 +2911,27 @@ function setupSettingsToggle() {
 }
 
 /* =========================================================
-   EKRANY
+   EKRANY I NAWIGACJA
 ========================================================= */
 
-function setScreen(screen) {
-  state.screen = screen;
+const screenHistory = [];
+
+function setScreen(screen, { isBack = false } = {}) {
+  if (state.screen !== screen) {
+    if (!isBack) {
+      if (['dashboard', 'menu', 'vocab', 'kanji', 'grammar'].includes(screen)) {
+        if (screen === 'dashboard') {
+          screenHistory.length = 0;
+        } else {
+          screenHistory.length = 0;
+          screenHistory.push('dashboard');
+        }
+      } else {
+        screenHistory.push(state.screen);
+      }
+    }
+    state.screen = screen;
+  }
   render();
 
   // animacja wejścia
@@ -2942,7 +2958,8 @@ homeBtn.onclick = () => {
       render();
       return;
     }
-    setScreen('dashboard');
+    const target = screenHistory.pop() || 'dashboard';
+    setScreen(target, { isBack: true });
     return;
   }
 
@@ -2956,7 +2973,8 @@ homeBtn.onclick = () => {
     if (wasActive) {
       setScreen('menu');
     } else {
-      setScreen('dashboard');
+      const target = screenHistory.pop() || 'dashboard';
+      setScreen(target, { isBack: true });
     }
     return;
   }
@@ -2978,23 +2996,33 @@ homeBtn.onclick = () => {
       return;
     }
     state.grammar = null;
-    setScreen('dashboard');
+    const target = screenHistory.pop() || 'dashboard';
+    setScreen(target, { isBack: true });
     return;
   }
 
   if (state.screen === 'menu') {
-    setScreen('dashboard');
+    const target = screenHistory.pop() || 'dashboard';
+    setScreen(target, { isBack: true });
     return;
   }
 
   if (state.screen === 'learn' || state.screen === 'exam' || state.screen === 'review') {
     stopExam();
-    setScreen('menu');
+    const target = screenHistory.pop() || 'menu';
+    setScreen(target, { isBack: true });
+    return;
+  }
+
+  if (state.screen === 'settings') {
+    const target = screenHistory.pop() || 'dashboard';
+    setScreen(target, { isBack: true });
     return;
   }
 
   stopExam();
-  setScreen('dashboard');
+  const target = screenHistory.pop() || 'dashboard';
+  setScreen(target, { isBack: true });
 };
 
 function render() {
@@ -3576,8 +3604,7 @@ function renderMenu() {
   };
   document.getElementById('examCard').onclick = () => {
     Audio.click();
-    state.screen = 'exam';
-    showExamSetup();
+    setScreen('exam');
   };
   document.getElementById('reviewCard').onclick = () => {
     Audio.click();
@@ -5685,6 +5712,10 @@ function renderKanjiDetail() {
   const drawFeedback = document.getElementById('kanjiDrawFeedback');
   const drawing = mountDrawing(stage);
   drawing.setEnabled(kanjiSession.drawingEnabled);
+  drawing.onChange = () => {
+    drawFeedback.textContent = kanjiSession.drawingBlind ? 'Rysuj znak z pamięci bez podglądu kresek.' : '';
+    drawFeedback.className = 'kanji-draw-feedback';
+  };
 
   let player = null;
   let referencePaths = null;
@@ -5722,7 +5753,15 @@ function renderKanjiDetail() {
     kanjiSession.drawingEnabled = !kanjiSession.drawingEnabled;
     drawing.setEnabled(kanjiSession.drawingEnabled);
     toggleDrawingBtn.classList.toggle('active', kanjiSession.drawingEnabled);
-    toggleDrawingBtn.textContent = kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj';
+    toggleDrawingBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        <path d="M2 2l7.586 7.586"/>
+        <circle cx="11" cy="11" r="2"/>
+      </svg>
+      ${kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj'}
+    `;
     drawingBar.classList.toggle('is-visible', kanjiSession.drawingEnabled);
     drawingBar.classList.toggle('is-hidden', !kanjiSession.drawingEnabled);
   };
@@ -11114,14 +11153,9 @@ function answerExam(button, question) {
 ========================================================= */
 
 document.addEventListener('keydown', event => {
-  // Escape → menu
-  if (event.key === 'Escape' && state.screen !== 'menu') {
-    if (state.screen === 'kanji' && !confirmKanjiExit()) return;
-    Audio.click();
-    stopExam();
-    state.vocab = null;
-    if (state.kanji) state.kanji.mode = 'hub';
-    setScreen('menu');
+  // Escape → powrót
+  if (event.key === 'Escape' && state.screen !== 'dashboard') {
+    homeBtn.click();
     return;
   }
 
@@ -11389,8 +11423,7 @@ function renderExamResult() {
 
   document.getElementById('backToMenu').onclick = () => {
     Audio.click();
-    stopExam();
-    setScreen('menu');
+    homeBtn.click();
   };
 }
 

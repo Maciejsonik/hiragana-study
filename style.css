@@ -1542,20 +1542,24 @@ body.focus-mode .app-shell {
   touch-action: none;
 }
 
-.svg-wrap.drawing {
+.svg-wrap.drawing,
+.kanji-svg-container.drawing {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent),
     inset 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
-.svg-wrap.drawing .draw-canvas {
+.svg-wrap.drawing .draw-canvas,
+.kanji-svg-container.drawing .draw-canvas,
+.drawing .draw-canvas {
   visibility: visible;
 }
 
 /* W trybie rysowania znak zostaje jako blada podkładka do obrysowania. */
-.svg-wrap.drawing svg {
-  opacity: 0.16;
+.svg-wrap.drawing svg,
+.kanji-svg-container.drawing:not(.is-blind) svg {
+  opacity: 0.2;
 }
 
 /* Ustawienie „Znak wzorcowy" → Ukryty: w trybie rysowania znak znika
@@ -1598,6 +1602,7 @@ body.focus-mode .app-shell {
   gap: var(--space-2);
   padding: 7px 12px;
   border-radius: var(--radius-pill);
+  pointer-events: none;
   background: var(--card-solid);
   border: var(--surface-border);
   box-shadow: var(--shadow-pop);
@@ -5851,6 +5856,10 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.kanji-drawing-panel.is-hidden {
+  display: none;
 }
 
 .kanji-drawing-actions {

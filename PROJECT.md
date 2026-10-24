@@ -1899,8 +1899,8 @@ Implemented scope:
 - **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, blind drawing mode (`#btnToggleBlind`) to sketch characters purely from memory with post-draw template reveal, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
 - **SRS flashcard review**: interval progression based on response grade (Znów / Trudne / Dobre / Łatwe) with keyboard shortcuts `1`–`4`.
 - **4-choice recognition quiz**: randomized 20-question challenge with instant visual feedback and score tracking.
-- **Isolated persistence store**: `hiragana-kanji` (version 1) in `localStorage`, decoupled from kana and vocab stores, integrated into `appStorageKeys()` and data reset lifecycle.
-- **Hierarchical navigation**: back button (`#homeBtn`) returns to previous contextual screen (Detail → Catalog → Hub → Kana menu).
+- **Hierarchical navigation**: back button (`#homeBtn`) and Escape key track screen history to return to the caller context (e.g. Dashboard if opened from Dashboard, Learn if opened from Learn, or module hub).
+- **Kanji drawing surface**: `.kanji-svg-container.drawing` controls canvas visibility, faint stroke guidance, stroke-by-stroke evaluation, and blind memory mode.
 
 ---
 

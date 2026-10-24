@@ -3136,6 +3136,124 @@
   }
 
   /* =====================================================
+     HISTORIA NAWIGACJI I RYSOWANIE KANJI (NAV-RET & KANJI-DRAW)
+     ===================================================== */
+  try {
+    // 1. Nawigacja powrotu: Pulpit -> Nauka -> Powrót
+    setScreen('dashboard');
+    await sleep(20);
+    document.getElementById('btnDashKanaLearn').click();
+    await sleep(30);
+    eq('RET1a wejście z pulpitu w naukę', state.screen, 'learn');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET1b powrót z nauki wraca na pulpit', state.screen, 'dashboard');
+
+    // 2. Nawigacja powrotu: Pulpit -> Egzamin -> Powrót
+    document.getElementById('btnDashKanaExam').click();
+    await sleep(30);
+    eq('RET2a wejście z pulpitu w egzamin', state.screen, 'exam');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET2b powrót z egzaminu wraca na pulpit', state.screen, 'dashboard');
+
+    // 3. Nawigacja powrotu: Pulpit -> Powtórka -> Powrót
+    document.getElementById('btnDashKanaReview').click();
+    await sleep(30);
+    eq('RET3a wejście z pulpitu w powtórkę', state.screen, 'review');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET3b powrót z powtórki wraca na pulpit', state.screen, 'dashboard');
+
+    // 4. Nawigacja powrotu: Menu Kana -> Nauka -> Egzamin (quizMe) -> Powrót -> Powrót
+    setScreen('menu');
+    await sleep(20);
+    setScreen('learn');
+    await sleep(30);
+    document.getElementById('quizMe').click();
+    await sleep(30);
+    eq('RET4a quizMe prowadzi do egzaminu', state.screen, 'exam');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET4b powrót z egzaminu prowadzi do nauki', state.screen, 'learn');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET4c powrót z nauki prowadzi do menu kany', state.screen, 'menu');
+
+    // 5. Nawigacja powrotu: Kanji -> Ustawienia -> Powrót
+    setScreen('kanji');
+    await sleep(20);
+    document.getElementById('settingsToggle').click();
+    await sleep(30);
+    eq('RET5a otwarcie ustawień z kanji', state.screen, 'settings');
+    homeBtn.click();
+    await sleep(30);
+    eq('RET5b powrót z ustawień wraca do kanji', state.screen, 'kanji');
+
+    // 6. Rysowanie w kanji
+    kanjiSession.charId = 'k01';
+    kanjiSession.mode = 'detail';
+    state.kanji = kanjiSession;
+    renderKanjiDetail();
+    await sleep(50);
+
+    const toggleDrawing = document.getElementById('btnToggleDrawing');
+    const drawingBar = document.getElementById('kanjiDrawingBar');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const stage = document.getElementById('kanjiSvgStage');
+
+    ok('KD1 przycisk rysowania w szczegółach kanji jest obecny', !!toggleDrawing);
+    ok('KD2 canvas obecny w etapie znaku', !!drawCanvas);
+    ok('KD3 pasek rysowania początkowo schowany', drawingBar && drawingBar.classList.contains('is-hidden'));
+
+    toggleDrawing.click();
+    await sleep(30);
+    ok('KD4 po kliknięciu rysuj etap uzyskuje klasę drawing', stage.classList.contains('drawing'));
+    ok('KD5 stan kanjiSession ma włączone rysowanie', kanjiSession.drawingEnabled);
+    ok('KD6 pasek rysowania staje się widoczny', drawingBar.classList.contains('is-visible'));
+
+    // Symulacja narysowania kreski
+    const rect = drawCanvas.getBoundingClientRect();
+    const sx = rect.left + rect.width * 0.3;
+    const sy = rect.top + rect.height * 0.3;
+    const ex = rect.left + rect.width * 0.7;
+    const ey = rect.top + rect.height * 0.7;
+
+    drawCanvas.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, cancelable: true, isPrimary: true,
+      clientX: sx, clientY: sy, button: 0, buttons: 1
+    }));
+    drawCanvas.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true, cancelable: true, isPrimary: true,
+      clientX: ex, clientY: ey, button: 0, buttons: 1
+    }));
+    drawCanvas.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, cancelable: true, isPrimary: true,
+      clientX: ex, clientY: ey, button: 0, buttons: 0
+    }));
+
+    // Sprawdzenie oceny rysunku
+    const checkBtn = document.getElementById('btnDrawCheck');
+    const feedback = document.getElementById('kanjiDrawFeedback');
+    checkBtn.click();
+    await sleep(30);
+    ok('KD7 ocena rysunku kanji generuje komunikat zwrotny', feedback.textContent.length > 0);
+
+    // Czyszczenie
+    document.getElementById('btnDrawClear').click();
+    await sleep(20);
+
+    // Wyłączenie rysowania
+    toggleDrawing.click();
+    await sleep(20);
+    ok('KD8 ponowne kliknięcie wyłącza klasę drawing i chowa pasek', !stage.classList.contains('drawing') && drawingBar.classList.contains('is-hidden'));
+
+    setScreen('dashboard');
+  } catch (e) {
+    ok('NAV-RET / KANJI-DRAW błąd testów', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();
