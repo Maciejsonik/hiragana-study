@@ -1462,14 +1462,14 @@
         );
 
         ok(
-          'F2 domyślny zakres to wszystko: 20 poleceń, 22 czasowniki, 64 rzeczowniki, 14 przymiotników i 8 zwrotów',
+          'F2 domyślny zakres to wszystko: 20 poleceń, 22 czasowniki, 134 rzeczowniki, 20 przymiotników i 8 zwrotów',
           vocabSetup.scope === 'all' &&
             scopeCount('cards') === 20 &&
             scopeCount('verbs') === 22 &&
-            scopeCount('words') === 64 &&
-            scopeCount('adjectives') === 14 &&
+            scopeCount('words') === 134 &&
+            scopeCount('adjectives') === 20 &&
             scopeCount('phrases') === 8 &&
-            scopeCount('all') === 128,
+            scopeCount('all') === 204,
           ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
@@ -1539,7 +1539,7 @@
 
         // Przechodzimy przez resztę zestawu, żeby zobaczyć ekran wyniku.
         let guard = 0;
-        while (state.vocab && !state.vocab.finished && guard++ < 200) {
+        while (state.vocab && !state.vocab.finished && guard++ < 300) {
           const item = vocabItem(state.vocab.order[state.vocab.index]);
           const right = [...document.querySelectorAll('[data-vocab-choice]')].find(
             button => button.dataset.vocabChoice === item.meaning

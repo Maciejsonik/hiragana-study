@@ -889,6 +889,90 @@ const VOCAB_ITEMS = [
   { id: 'n63', type: 'word', lesson: '2ka', category: 'time', kana: '～じ', kanji: '～時', romaji: '~ji', meaning: 'godzina (np. 1:00)' },
   { id: 'n64', type: 'word', lesson: '2ka', category: 'time', kana: '～ふん', kanji: '～分', romaji: '~fun', meaning: 'minuta (np. 5 minut)' },
 
+  // Dni tygodnia (z Shokyū Nihongo L03)
+  { id: 'n65', type: 'word', lesson: '2ka', category: 'time', kana: 'にちようび', kanji: '日曜日', romaji: 'nichiyoubi', meaning: 'niedziela' },
+  { id: 'n66', type: 'word', lesson: '2ka', category: 'time', kana: 'げつようび', kanji: '月曜日', romaji: 'getsuyoubi', meaning: 'poniedziałek' },
+  { id: 'n67', type: 'word', lesson: '2ka', category: 'time', kana: 'かようび', kanji: '火曜日', romaji: 'kayoubi', meaning: 'wtorek' },
+  { id: 'n68', type: 'word', lesson: '2ka', category: 'time', kana: 'すいようび', kanji: '水曜日', romaji: 'suiyoubi', meaning: 'środa' },
+  { id: 'n69', type: 'word', lesson: '2ka', category: 'time', kana: 'もくようび', kanji: '木曜日', romaji: 'mokuyoubi', meaning: 'czwartek' },
+  { id: 'n70', type: 'word', lesson: '2ka', category: 'time', kana: 'きんようび', kanji: '金曜日', romaji: 'kinyoubi', meaning: 'piątek' },
+  { id: 'n71', type: 'word', lesson: '2ka', category: 'time', kana: 'どようび', kanji: '土曜日', romaji: 'doyoubi', meaning: 'sobota' },
+
+  // Czas i pory roku (z Shokyū Nihongo L03, L05, L08)
+  { id: 'n72', type: 'word', lesson: '2ka', category: 'time', kana: 'きょう', kanji: '今日', romaji: 'kyou', meaning: 'dzisiaj' },
+  { id: 'n73', type: 'word', lesson: '2ka', category: 'time', kana: 'あした', kanji: '明日', romaji: 'ashita', meaning: 'jutro' },
+  { id: 'n74', type: 'word', lesson: '2ka', category: 'time', kana: 'きのう', kanji: '昨日', romaji: 'kinou', meaning: 'wczoraj' },
+  { id: 'n75', type: 'word', lesson: '2ka', category: 'time', kana: 'いま', kanji: '今', romaji: 'ima', meaning: 'teraz' },
+  { id: 'n76', type: 'word', lesson: '2ka', category: 'time', kana: 'あさ', kanji: '朝', romaji: 'asa', meaning: 'rano / poranek' },
+  { id: 'n77', type: 'word', lesson: '2ka', category: 'time', kana: 'ひる', kanji: '昼', romaji: 'hiru', meaning: 'południe / dzień' },
+  { id: 'n78', type: 'word', lesson: '2ka', category: 'time', kana: 'よる', kanji: '夜', romaji: 'yoru', meaning: 'noc' },
+  { id: 'n79', type: 'word', lesson: '2ka', category: 'time', kana: 'ばん', kanji: '晩', romaji: 'ban', meaning: 'wieczór' },
+  { id: 'n80', type: 'word', lesson: '2ka', category: 'time', kana: 'ゆうがた', kanji: '夕方', romaji: 'yuugata', meaning: 'późne popołudnie' },
+  { id: 'n81', type: 'word', lesson: '2ka', category: 'time', kana: 'はる', kanji: '春', romaji: 'haru', meaning: 'wiosna' },
+  { id: 'n82', type: 'word', lesson: '2ka', category: 'time', kana: 'なつ', kanji: '夏', romaji: 'natsu', meaning: 'lato' },
+  { id: 'n83', type: 'word', lesson: '2ka', category: 'time', kana: 'あき', kanji: '秋', romaji: 'aki', meaning: 'jesień' },
+  { id: 'n84', type: 'word', lesson: '2ka', category: 'time', kana: 'ふゆ', kanji: '冬', romaji: 'fuyu', meaning: 'zima' },
+  { id: 'n85', type: 'word', lesson: '2ka', category: 'time', kana: 'やすみ', kanji: '休み', romaji: 'yasumi', meaning: 'odpoczynek / wakacje' },
+
+  // Liczby (z Shokyū Nihongo L02)
+  { id: 'n86', type: 'word', lesson: '2ka', category: 'number', kana: 'いち', kanji: '一', romaji: 'ichi', meaning: 'jeden' },
+  { id: 'n87', type: 'word', lesson: '2ka', category: 'number', kana: 'に', kanji: '二', romaji: 'ni', meaning: 'dwa' },
+  { id: 'n88', type: 'word', lesson: '2ka', category: 'number', kana: 'さん', kanji: '三', romaji: 'san', meaning: 'trzy' },
+  { id: 'n89', type: 'word', lesson: '2ka', category: 'number', kana: 'よん', kanji: '四', romaji: 'yon', meaning: 'cztery' },
+  { id: 'n90', type: 'word', lesson: '2ka', category: 'number', kana: 'ご', kanji: '五', romaji: 'go', meaning: 'pięć' },
+  { id: 'n91', type: 'word', lesson: '2ka', category: 'number', kana: 'ろく', kanji: '六', romaji: 'roku', meaning: 'sześć' },
+  { id: 'n92', type: 'word', lesson: '2ka', category: 'number', kana: 'なな', kanji: '七', romaji: 'nana', meaning: 'siedem' },
+  { id: 'n93', type: 'word', lesson: '2ka', category: 'number', kana: 'はち', kanji: '八', romaji: 'hachi', meaning: 'osiem' },
+  { id: 'n94', type: 'word', lesson: '2ka', category: 'number', kana: 'きゅう', kanji: '九', romaji: 'kyuu', meaning: 'dziewięć' },
+  { id: 'n95', type: 'word', lesson: '2ka', category: 'number', kana: 'じゅう', kanji: '十', romaji: 'juu', meaning: 'dziesięć' },
+  { id: 'n96', type: 'word', lesson: '2ka', category: 'number', kana: 'ひゃく', kanji: '百', romaji: 'hyaku', meaning: 'sto' },
+  { id: 'n97', type: 'word', lesson: '2ka', category: 'number', kana: 'せん', kanji: '千', romaji: 'sen', meaning: 'tysiąc' },
+  { id: 'n98', type: 'word', lesson: '2ka', category: 'number', kana: 'まん', kanji: '万', romaji: 'man', meaning: 'dziesięć tysięcy' },
+
+  // Rodzina i ludzie (z Shokyū Nihongo L04, L08)
+  { id: 'n99', type: 'word', lesson: '2ka', category: 'people', kana: 'おとうさん', kanji: 'お父さん', romaji: 'otousan', meaning: 'ojciec (czyjś)' },
+  { id: 'n100', type: 'word', lesson: '2ka', category: 'people', kana: 'ちち', kanji: '父', romaji: 'chichi', meaning: '(mój) ojciec' },
+  { id: 'n101', type: 'word', lesson: '2ka', category: 'people', kana: 'おかあさん', kanji: 'お母さん', romaji: 'okaasan', meaning: 'matka (czyjaś)' },
+  { id: 'n102', type: 'word', lesson: '2ka', category: 'people', kana: 'はは', kanji: '母', romaji: 'haha', meaning: '(moja) matka' },
+  { id: 'n103', type: 'word', lesson: '2ka', category: 'people', kana: 'おにいさん', kanji: 'お兄さん', romaji: 'oniisan', meaning: 'starszy brat (czyjś)' },
+  { id: 'n104', type: 'word', lesson: '2ka', category: 'people', kana: 'あに', kanji: '兄', romaji: 'ani', meaning: '(mój) starszy brat' },
+  { id: 'n105', type: 'word', lesson: '2ka', category: 'people', kana: 'おねえさん', kanji: 'お姉さん', romaji: 'oneesan', meaning: 'starsza siostra (czyjaś)' },
+  { id: 'n106', type: 'word', lesson: '2ka', category: 'people', kana: 'あね', kanji: '姉', romaji: 'ane', meaning: '(moja) starsza siostra' },
+  { id: 'n107', type: 'word', lesson: '2ka', category: 'people', kana: 'こども', kanji: '子ども', romaji: 'kodomo', meaning: 'dziecko / dzieci' },
+  { id: 'n108', type: 'word', lesson: '2ka', category: 'people', kana: 'おとこのひと', kanji: '男の人', romaji: 'otoko no hito', meaning: 'mężczyzna' },
+  { id: 'n109', type: 'word', lesson: '2ka', category: 'people', kana: 'おとこのこ', kanji: '男の子', romaji: 'otoko no ko', meaning: 'chłopiec' },
+  { id: 'n110', type: 'word', lesson: '2ka', category: 'people', kana: 'おんなのこ', kanji: '女の子', romaji: 'onna no ko', meaning: 'dziewczynka' },
+  { id: 'n111', type: 'word', lesson: '2ka', category: 'people', kana: 'ともだち', kanji: '友だち', romaji: 'tomodachi', meaning: 'przyjaciel / kolega' },
+
+  // Zwierzęta i natura (z Shokyū Nihongo L06, L07)
+  { id: 'n112', type: 'word', lesson: '2ka', category: 'nature', kana: 'いぬ', kanji: '犬', romaji: 'inu', meaning: 'pies' },
+  { id: 'n113', type: 'word', lesson: '2ka', category: 'nature', kana: 'ねこ', kanji: '猫', romaji: 'neko', meaning: 'kot' },
+  { id: 'n114', type: 'word', lesson: '2ka', category: 'nature', kana: 'とり', kanji: '鳥', romaji: 'tori', meaning: 'ptak' },
+  { id: 'n115', type: 'word', lesson: '2ka', category: 'nature', kana: 'うま', kanji: '馬', romaji: 'uma', meaning: 'koń' },
+  { id: 'n116', type: 'word', lesson: '2ka', category: 'nature', kana: 'うし', kanji: '牛', romaji: 'ushi', meaning: 'krowa' },
+  { id: 'n117', type: 'word', lesson: '2ka', category: 'nature', kana: 'てんき', kanji: '天気', romaji: 'tenki', meaning: 'pogoda' },
+  { id: 'n118', type: 'word', lesson: '2ka', category: 'nature', kana: 'あめ', kanji: '雨', romaji: 'ame', meaning: 'deszcz' },
+  { id: 'n119', type: 'word', lesson: '2ka', category: 'nature', kana: 'ゆき', kanji: '雪', romaji: 'yuki', meaning: 'śnieg' },
+  { id: 'n120', type: 'word', lesson: '2ka', category: 'nature', kana: 'かわ', kanji: '川', romaji: 'kawa', meaning: 'rzeka' },
+  { id: 'n121', type: 'word', lesson: '2ka', category: 'nature', kana: 'いけ', kanji: '池', romaji: 'ike', meaning: 'staw' },
+  { id: 'n122', type: 'word', lesson: '2ka', category: 'nature', kana: 'はやし', kanji: '林', romaji: 'hayashi', meaning: 'lasek' },
+
+  // Kierunki i pozycje (z Shokyū Nihongo L06, L07)
+  { id: 'n123', type: 'word', lesson: '2ka', category: 'direction', kana: 'うえ', kanji: '上', romaji: 'ue', meaning: 'na / góra / nad' },
+  { id: 'n124', type: 'word', lesson: '2ka', category: 'direction', kana: 'した', kanji: '下', romaji: 'shita', meaning: 'pod / dół' },
+  { id: 'n125', type: 'word', lesson: '2ka', category: 'direction', kana: 'なか', kanji: '中', romaji: 'naka', meaning: 'w / wewnątrz / środek' },
+  { id: 'n126', type: 'word', lesson: '2ka', category: 'direction', kana: 'そと', kanji: '外', romaji: 'soto', meaning: 'na zewnątrz / poza' },
+  { id: 'n127', type: 'word', lesson: '2ka', category: 'direction', kana: 'あいだ', kanji: '間', romaji: 'aida', meaning: 'pomiędzy / między' },
+  { id: 'n128', type: 'word', lesson: '2ka', category: 'direction', kana: 'ひがし', kanji: '東', romaji: 'higashi', meaning: 'wschód' },
+  { id: 'n129', type: 'word', lesson: '2ka', category: 'direction', kana: 'にし', kanji: '西', romaji: 'nishi', meaning: 'zachód' },
+  { id: 'n130', type: 'word', lesson: '2ka', category: 'direction', kana: 'みなみ', kanji: '南', romaji: 'minami', meaning: 'południe' },
+  { id: 'n131', type: 'word', lesson: '2ka', category: 'direction', kana: 'きた', kanji: '北', romaji: 'kita', meaning: 'północ' },
+
+  // Ciało (z Shokyū Nihongo L07, L12)
+  { id: 'n132', type: 'word', lesson: '2ka', category: 'body', kana: 'て', kanji: '手', romaji: 'te', meaning: 'ręka / dłoń' },
+  { id: 'n133', type: 'word', lesson: '2ka', category: 'body', kana: 'め', kanji: '目', romaji: 'me', meaning: 'oko' },
+  { id: 'n134', type: 'word', lesson: '2ka', category: 'body', kana: 'くち', kanji: '口', romaji: 'kuchi', meaning: 'usta' },
+
   { id: 'p01', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
   { id: 'p02', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
   { id: 'p03', type: 'phrase', lesson: '0', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
@@ -910,7 +994,15 @@ const VOCAB_ITEMS = [
   { id: 'a11', type: 'adjective', lesson: '2ka', kana: 'くろい', kanji: '黒い', romaji: 'kuroi', meaning: 'czarny' },
   { id: 'a12', type: 'adjective', lesson: '2ka', kana: 'あかい', kanji: '赤い', romaji: 'akai', meaning: 'czerwony' },
   { id: 'a13', type: 'adjective', lesson: '2ka', kana: 'あおい', kanji: '青い', romaji: 'aoi', meaning: 'niebieski' },
-  { id: 'a14', type: 'adjective', lesson: '2ka', kana: 'きいろい', kanji: '黄色い', romaji: 'kiiroi', meaning: 'żółty' }
+  { id: 'a14', type: 'adjective', lesson: '2ka', kana: 'きいろい', kanji: '黄色い', romaji: 'kiiroi', meaning: 'żółty' },
+
+  // Kolejne i-przymiotniki (z Shokyū Nihongo L07, L09, L10)
+  { id: 'a15', type: 'adjective', lesson: '2ka', kana: 'ふとい', kanji: '太い', romaji: 'futoi', meaning: 'gruby' },
+  { id: 'a16', type: 'adjective', lesson: '2ka', kana: 'おおい', kanji: '多い', romaji: 'ooi', meaning: 'liczny / dużo' },
+  { id: 'a17', type: 'adjective', lesson: '2ka', kana: 'すくない', kanji: '少ない', romaji: 'sukunai', meaning: 'nieliczny / mało' },
+  { id: 'a18', type: 'adjective', lesson: '2ka', kana: 'ひろい', kanji: '広い', romaji: 'hiroi', meaning: 'szeroki / przestronny' },
+  { id: 'a19', type: 'adjective', lesson: '2ka', kana: 'せまい', kanji: '狭い', romaji: 'semai', meaning: 'wąski / ciasny' },
+  { id: 'a20', type: 'adjective', lesson: '2ka', kana: 'わかい', kanji: '若い', romaji: 'wakai', meaning: 'młody' }
 ];
 
 /*
@@ -3172,7 +3264,7 @@ function renderDashboard() {
               <span class="dashboard-metric-lbl">Poznane</span>
             </div>
             <div class="dashboard-metric-item">
-              <span class="dashboard-metric-val">9</span>
+              <span class="dashboard-metric-val">${categoriesIn(VOCAB_LEARN_ITEMS).filter(c => c.id !== CATEGORY_NONE).length}</span>
               <span class="dashboard-metric-lbl">Kategorii</span>
             </div>
             <div class="dashboard-metric-item">

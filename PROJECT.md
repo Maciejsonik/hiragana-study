@@ -1955,19 +1955,19 @@ at once, so the two cannot drift apart. Ids are additive and stable
 migration and no `VOCAB_VERSION` bump. The two verbs without a request
 expression (`v23`, `v24`) are explicit `type: 'verb'` entries.
 
-`VOCAB_LEARN_ITEMS` is the 128-card list: 20 expressions, 22 verbs, 64 nouns,
-14 adjectives, 6 phrases and 2 patterns. `vocabCard()` accepts every one of those types, so
+`VOCAB_LEARN_ITEMS` is the 204-card list: 20 expressions, 22 verbs, 134 nouns,
+20 adjectives, 6 phrases and 2 patterns (184 raw entries in `VOCAB_ITEMS`). `vocabCard()` accepts every one of those types, so
 `recordVocabAnswer('v01-verb', …)`, `recordVocabAnswer('n01', …)`, `recordVocabAnswer('a01', …)` and
 `recordVocabAnswer('v21', …)` create real records, while an unknown id such as
 `v99` still returns `null`.
 
-Covered by VO8–VO11: 20 derived cards plus two explicit verbs, the
-`<id>-verb` / `source` link, 128 unique kana, the fields copied from the source
+Covered by VO1–VO17: 20 derived cards plus two explicit verbs, the
+`<id>-verb` / `source` link, 204 unique kana, the fields copied from the source
 card, and `vocabCard()` accepting all material types while rejecting an
 unknown id.
 
 Nothing has verified the translations against a Polish teacher; they are my
-own reading of the worksheet.
+own reading of the worksheet and Shokyū Nihongo textbook.
 
 ### Vocabulary progress store
 
@@ -2017,12 +2017,12 @@ choice is session-only (a decision for one session, like the exam scope, not a
 stored preference):
 
 ```text
-Tryb      Nauka (default) | Test
+Tryb      Nauka (default) | Test | Wpisywanie
 Kierunek  Japoński → znaczenie | Znaczenie → japoński
-Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (64)
-          Przymiotniki (14) | Zwroty (8) | Wszystko (128, default)
+Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (134)
+          Przymiotniki (20) | Zwroty (8) | Wszystko (204, default)
 Lekcja    Wszystkie (default) | Klasa | 1か | 2か
-Tematy    osobny folder tematów, w tym Bez kategorii
+Tematy    osobny folder tematów (13 kategorii), w tym Bez kategorii
 Kolejność Inteligentna (default) | Losowa
 Liczba    Wszystkie (default) | 10 | 20
 ```
