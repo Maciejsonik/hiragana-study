@@ -1016,31 +1016,41 @@ hiragana-settings = { ..., muted, ... }
 The legacy `hiragana-muted` key is read once during migration and is never
 written again.
 
-Available sounds:
+Available sounds and speech:
 
 ```text
 correct()
 wrong()
 click()
 celebrate()
+speak(text, { lang = 'ja-JP', rate = 0.85 })
+isSpeaking()
 ```
 
 The module is implemented as an IIFE and exposes:
 
 ```text
 muted
-toggleMute()
+setMuted(value)
 correct()
 wrong()
 click()
 celebrate()
+speak(text, options)
+isSpeaking()
 ```
 
 ### Current state
 
-The audio system is functional but intentionally basic.
+The audio system combines Web Audio API synthesized tones for UI feedback and the
+native **Web Speech API** (`window.speechSynthesis`) for natural Japanese pronunciation.
+It requires **zero external MP3 files**, dependencies, or network downloads.
 
-The current sound effects are simple generated Web Audio tones.
+Key properties:
+- **Speech synthesis language:** `ja-JP` (prioritizes native voices such as Kyoko or Otoya if available in `getVoices()`).
+- **Cadence:** `rate = 0.85` for learner-friendly clarity.
+- **Mute synchronization:** `Audio.speak` respects `Audio.muted`. Calling `Audio.setMuted(true)` immediately invokes `speechSynthesis.cancel()`.
+- **Global event delegation:** Click delegation for `[data-speak]` triggers audio playback throughout Kana learn, Vocab flashcards/prompts, and Kanji reading/jukugo details. Keyboard shortcuts `S` and `V` trigger pronunciation in active study cards.
 
 Future audio work should **extend the existing system rather than replace it unnecessarily**.
 
@@ -2488,9 +2498,10 @@ UI modernization — phase 4: Kana hub — COMPLETE
 Visual polish — calm Japanese learning app layer — IN PROGRESS
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
 Kanji expansion (Lessons L11–L15, 204 kanji) — COMPLETE
+Audio pronunciation (Web Speech API ja-JP across Kana, Vocab, Kanji) — COMPLETE
 T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L15) — SHIPPED
 T19 Vocabulary (data, progress, flashcards, topics, lessons) — SHIPPED
-Next planned: Audio pronunciation (Web Speech API) or Grammar (T20)
+Next planned: Grammar (T20) or Exam Typed Mode extensions
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),

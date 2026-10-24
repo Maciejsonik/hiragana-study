@@ -1275,11 +1275,48 @@ const Audio = (() => {
       tone(783.99, 0.15, 'sine', 0.18, 0.24);
       tone(1046.5, 0.25, 'sine', 0.22, 0.36);
     },
+    speak(text, { lang = 'ja-JP', rate = 0.85 } = {}) {
+      if (muted || !text) return false;
+      if (typeof window === 'undefined' || !window.speechSynthesis) return false;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = lang;
+        utter.rate = rate;
+        if (window.speechSynthesis.getVoices) {
+          const voices = window.speechSynthesis.getVoices() || [];
+          const jaVoice =
+            voices.find(v => v.lang === 'ja-JP' || v.lang === 'ja_JP') ||
+            voices.find(v => v.lang && v.lang.startsWith('ja'));
+          if (jaVoice) {
+            try {
+              utter.voice = jaVoice;
+            } catch (err) {}
+          }
+        }
+        window.speechSynthesis.speak(utter);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+    isSpeaking() {
+      return (
+        typeof window !== 'undefined' &&
+        !!window.speechSynthesis &&
+        window.speechSynthesis.speaking
+      );
+    },
     get muted() {
       return muted;
     },
     setMuted(value) {
       muted = !!value;
+      if (muted && typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {}
+      }
       return muted;
     }
   };
@@ -3794,7 +3831,10 @@ function vocabRevealHTML(item, correct) {
   return `
     <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
       <div class="flash-label">${correct ? '✓ Dobrze' : '✗ Poprawna odpowiedź'}</div>
-      <div class="flash-kana vocab-kana">${item.kana}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+        <div class="flash-kana vocab-kana">${item.kana}</div>
+        <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
+      </div>
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
       ${vocabAnswerDetailsHTML(item)}
@@ -3807,7 +3847,10 @@ function vocabLearnAnswerHTML(item, asksKana) {
   return `
     <div class="vocab-learn-answer">
       <div class="vocab-learn-label">Odpowiedź</div>
-      <div class="${asksKana ? 'question-vocab' : 'question-vocab-pl'}">${asksKana ? item.kana : item.meaning}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+        <div class="${asksKana ? 'question-vocab' : 'question-vocab-pl'}">${asksKana ? item.kana : item.meaning}</div>
+        <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
+      </div>
       <div class="flash-romaji">${item.romaji}</div>
       ${vocabAnswerDetailsHTML(item)}
     </div>
@@ -4166,7 +4209,14 @@ function renderVocab() {
           <div class="vocab-learn-card">
             <span class="vocab-card-watermark" aria-hidden="true">${item.kanji ? item.kanji.charAt(0) : item.kana ? item.kana.charAt(0) : '語'}</span>
             <div class="vocab-learn-side">${sideLabel}</div>
-            <div class="${frontClass} vocab-learn-front">${front}</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+              <div class="${frontClass} vocab-learn-front">${front}</div>
+              ${
+                !asksKana
+                  ? `<button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>`
+                  : ''
+              }
+            </div>
             ${
               session.revealed
                 ? vocabLearnAnswerHTML(item, asksKana)
@@ -4242,7 +4292,7 @@ function renderVocab() {
           ${
             asksKana
               ? `<div class="question question-vocab-pl">${item.meaning}</div>`
-              : `<div class="question question-vocab">${item.kana}</div>`
+              : `<div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="question question-vocab">${item.kana}</div><button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button></div>`
           }
 
           <div class="answers ${asksKana ? '' : 'answers-text'}">
@@ -4898,14 +4948,14 @@ function renderKanjiDetail() {
                 <div class="kanji-reading-box onyomi">
                   <span class="kanji-reading-label">On'yomi (音読み)</span>
                   <div class="kanji-reading-values">
-                    ${item.onyomi.length ? item.onyomi.map(on => `<span class="kanji-reading-tag on">${escapeHtml(on)}</span>`).join('') : '<span class="kanji-reading-none">—</span>'}
+                    ${item.onyomi.length ? item.onyomi.map(on => `<button class="kanji-reading-tag on btn-speak-reading" data-speak="${escapeHtml(on)}" type="button" title="Odsłuchaj ${escapeHtml(on)}">${escapeHtml(on)} <span class="speak-tag-icon">${icon('volume')}</span></button>`).join('') : '<span class="kanji-reading-none">—</span>'}
                   </div>
                 </div>
 
                 <div class="kanji-reading-box kunyomi">
                   <span class="kanji-reading-label">Kun'yomi (訓読み)</span>
                   <div class="kanji-reading-values">
-                    ${item.kunyomi.length ? item.kunyomi.map(kun => `<span class="kanji-reading-tag kun">${escapeHtml(kun)}</span>`).join('') : '<span class="kanji-reading-none">—</span>'}
+                    ${item.kunyomi.length ? item.kunyomi.map(kun => `<button class="kanji-reading-tag kun btn-speak-reading" data-speak="${escapeHtml(kun.replace(/\./g, ''))}" type="button" title="Odsłuchaj ${escapeHtml(kun)}">${escapeHtml(kun)} <span class="speak-tag-icon">${icon('volume')}</span></button>`).join('') : '<span class="kanji-reading-none">—</span>'}
                   </div>
                 </div>
               </div>
@@ -4924,6 +4974,9 @@ function renderKanjiDetail() {
                       <div class="kanji-example-word font-japanese">${escapeHtml(ex.word)}</div>
                       <div class="kanji-example-reading">${escapeHtml(ex.reading)}</div>
                       <div class="kanji-example-meaning">${escapeHtml(ex.meaning)}</div>
+                      <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(ex.reading || ex.word)}" type="button" title="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}" aria-label="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}">
+                        ${icon('volume')}
+                      </button>
                     </div>
                   `
                     )
@@ -4948,6 +5001,9 @@ function renderKanjiDetail() {
                       <span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>
                       <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
                       <span class="kanji-lesson-word-gloss">${escapeHtml(w.meaning)}</span>
+                      <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(w.kana)}" type="button" title="Odsłuchaj ${escapeHtml(w.kana)}" aria-label="Odsłuchaj ${escapeHtml(w.kana)}">
+                        ${icon('volume')}
+                      </button>
                     </div>
                   `
                     )
@@ -5125,7 +5181,12 @@ function renderKanjiFlashcard() {
               <div class="kanji-card-back-header">
                 <span class="kanji-card-back-glyph font-japanese">${current.kanji}</span>
                 <div class="kanji-card-back-title">
-                  <h2 class="kanji-card-back-meaning">${escapeHtml(current.meaning)}</h2>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <h2 class="kanji-card-back-meaning" style="margin:0">${escapeHtml(current.meaning)}</h2>
+                    <button class="btn-speak" data-speak="${escapeHtml(current.kunyomi[0]?.replace(/\./g, '') || current.onyomi[0] || current.kanji)}" type="button" title="Odsłuchaj czytanie" aria-label="Odsłuchaj czytanie">
+                      ${icon('volume')}
+                    </button>
+                  </div>
                   <span class="kanji-card-back-strokes">${current.strokes} kresek · ${categoryLabel(current.category)}</span>
                 </div>
               </div>
@@ -5153,6 +5214,9 @@ function renderKanjiFlashcard() {
                         ex => `
                       <span class="kanji-back-tag">
                         <strong>${escapeHtml(ex.word)}</strong> (${escapeHtml(ex.reading)}) — ${escapeHtml(ex.meaning)}
+                        <button class="btn-speak-inline" data-speak="${escapeHtml(ex.reading || ex.word)}" type="button" title="Odsłuchaj" aria-label="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}">
+                          ${icon('volume')}
+                        </button>
                       </span>
                     `
                       )
@@ -5883,7 +5947,12 @@ function renderLearn() {
     <div class="study-head">
       <div>
         <div class="eyebrow">${current.group}</div>
-        <h2 style="margin:4px 0">${current.romaji}</h2>
+        <div style="display:inline-flex;align-items:center;gap:8px;margin:4px 0">
+          <h2 style="margin:0">${current.romaji}</h2>
+          <button class="btn-speak" id="speakKana" data-speak="${escapeHtml(state.kana)}" type="button" title="Odsłuchaj wymowę (S)" aria-label="Odsłuchaj wymowę ${current.romaji}">
+            ${icon('volume')}
+          </button>
+        </div>
       </div>
       <div class="badge" id="strokeBadge">${count} ${strokeWord(count)}</div>
     </div>
@@ -8831,6 +8900,11 @@ document.addEventListener('keydown', event => {
         return;
       }
       if (ks.showBack) {
+        if (event.key.toLowerCase() === 's' || event.key.toLowerCase() === 'v') {
+          event.preventDefault();
+          document.querySelector('#kanjiCard [data-speak]')?.click();
+          return;
+        }
         if (event.key === '1') {
           document.querySelector('[data-srs="again"]')?.click();
           return;
@@ -8917,6 +8991,11 @@ document.addEventListener('keydown', event => {
       }
 
       if (vocabSession.revealed && !vocabSession.answered) {
+        if (event.key.toLowerCase() === 's' || event.key.toLowerCase() === 'v') {
+          event.preventDefault();
+          document.querySelector('.vocab-learn-card [data-speak], .vocab-learn-answer [data-speak]')?.click();
+          return;
+        }
         if (event.key === '1') {
           event.preventDefault();
           gradeVocab(false);
@@ -8963,6 +9042,9 @@ document.addEventListener('keydown', event => {
       event.preventDefault();
       const showBtn = document.getElementById('showAllStrokes');
       if (showBtn && !showBtn.disabled) showBtn.click();
+    } else if (event.key.toLowerCase() === 's' || event.key.toLowerCase() === 'v') {
+      event.preventDefault();
+      document.getElementById('speakKana')?.click();
     }
   }
 });
@@ -9133,6 +9215,22 @@ function resultText(score, total, script = state.script, kind = 'exam') {
     { passive: true }
   );
 })();
+
+/* =========================================================
+   WYMOWA AUDIO (Web Speech API — delegacja [data-speak])
+========================================================= */
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-speak]');
+  if (!btn) return;
+  e.stopPropagation();
+  const text = btn.getAttribute('data-speak');
+  if (text) {
+    Audio.speak(text);
+    btn.classList.add('is-speaking');
+    setTimeout(() => btn.classList.remove('is-speaking'), 400);
+  }
+});
 
 /* =========================================================
    START

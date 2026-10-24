@@ -2591,6 +2591,96 @@
   }
 
   /* =====================================================
+     AU. JAPOŃSKA WYMOWA AUDIO (Web Speech API)
+     ===================================================== */
+  try {
+    ok('AU1 Audio.speak jest funkcją', typeof Audio.speak === 'function');
+    ok('AU2 Audio.isSpeaking jest funkcją', typeof Audio.isSpeaking === 'function');
+
+    // Test wyciszenia
+    const prevMuted = Audio.muted;
+    Audio.setMuted(true);
+    ok('AU3 Audio.speak zwraca false gdy muted=true', Audio.speak('あ') === false);
+
+    // Spying na metodach speechSynthesis dla testów
+    const ss = window.speechSynthesis;
+    let spokenUtter = null;
+    let cancelled = false;
+    const origCancel = ss ? ss.cancel : null;
+    const origSpeak = ss ? ss.speak : null;
+    const origGetVoices = ss ? ss.getVoices : null;
+
+    if (ss) {
+      ss.cancel = function () {
+        cancelled = true;
+      };
+      ss.speak = function (utter) {
+        spokenUtter = utter;
+      };
+      ss.getVoices = function () {
+        return [
+          { lang: 'ja-JP', name: 'Kyoko' },
+          { lang: 'en-US', name: 'Alex' }
+        ];
+      };
+    }
+
+    Audio.setMuted(false);
+    cancelled = false;
+    spokenUtter = null;
+    const res = Audio.speak('ねこ');
+    ok('AU4 Audio.speak zwraca true przy aktywnym speech', res === true);
+    ok('AU5 Audio.speak anulowało poprzednią mowę przed startem', cancelled === true);
+    ok(
+      'AU6 utterance ma język ja-JP i tekst ねこ',
+      spokenUtter && spokenUtter.lang === 'ja-JP' && spokenUtter.text === 'ねこ'
+    );
+    ok(
+      'AU7 utterance ma właściwe tempo mowy 0.85',
+      spokenUtter && Math.abs(spokenUtter.rate - 0.85) < 0.01
+    );
+
+    // Wyciszenie anuluje mowę
+    cancelled = false;
+    Audio.setMuted(true);
+    ok('AU8 Audio.setMuted(true) anuluje trwającą syntezę', cancelled === true);
+
+    // Przywrócenie stanu Audio i speechSynthesis
+    Audio.setMuted(prevMuted);
+    if (ss) {
+      ss.cancel = origCancel;
+      ss.speak = origSpeak;
+      ss.getVoices = origGetVoices;
+    }
+
+    // Test przycisku #speakKana w widoku nauki
+    setScreen('learn');
+    const speakKanaBtn = document.getElementById('speakKana');
+    ok(
+      'AU9 #speakKana istnieje w widoku nauki kana',
+      !!speakKanaBtn && speakKanaBtn.getAttribute('data-speak') === state.kana
+    );
+
+    // Test obecności przycisków [data-speak] w widoku detali Kanji
+    setScreen('kanji');
+    kanjiSession.mode = 'detail';
+    kanjiSession.detailKanji = 'k01';
+    renderKanjiDetail();
+    const kanjiSpeaks = document.querySelectorAll('.kanji-detail-screen [data-speak]');
+    ok(
+      'AU10 widok detali kanji posiada przyciski [data-speak] dla czytań i złożeń',
+      kanjiSpeaks.length >= 3,
+      'znaleziono ' + kanjiSpeaks.length
+    );
+
+    // Przywrócenie ekranu
+    kanjiSession.mode = 'hub';
+    setScreen('menu');
+  } catch (e) {
+    ok('AU wymowa audio', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

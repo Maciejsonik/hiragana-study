@@ -7121,3 +7121,148 @@ body::before {
   color: var(--ink);
   background: var(--card-solid);
 }
+
+/* =========================================================
+   WYMOWA AUDIO (Web Speech API)
+========================================================= */
+
+.btn-speak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  background: var(--btn-secondary-bg);
+  color: var(--ink-muted);
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+  vertical-align: middle;
+}
+
+.btn-speak:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--btn-secondary-bg));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  transform: translateY(-1px) scale(1.05);
+}
+
+.btn-speak:active {
+  transform: scale(0.95);
+}
+
+.btn-speak.is-speaking {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent);
+  animation: pulse-speak 0.4s ease-out;
+}
+
+@keyframes pulse-speak {
+  0% { transform: scale(0.95); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.btn-speak svg,
+.btn-speak .icon {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+}
+
+.btn-speak-sm {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-speak-sm svg,
+.btn-speak-sm .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-speak-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 6px;
+  padding: 0;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: color var(--duration-fast) ease;
+}
+
+.btn-speak-inline:hover {
+  color: var(--accent);
+}
+
+.btn-speak-inline svg,
+.btn-speak-inline .icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
+
+.btn-speak-reading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: inherit;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.btn-speak-reading:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.btn-speak-reading .speak-tag-icon svg,
+.btn-speak-reading .speak-tag-icon .icon {
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+
+.btn-speak-reading:hover .speak-tag-icon svg {
+  opacity: 1;
+}
+
+.kanji-example-item {
+  position: relative;
+  padding-right: 42px;
+}
+
+.kanji-example-item .btn-speak {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.kanji-example-item .btn-speak:hover {
+  transform: translateY(-50%) scale(1.08);
+}
+
