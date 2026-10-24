@@ -2306,7 +2306,7 @@ Status: **SHIPPED** (Phase 1).
 - **Multi-module daily activity tracking**: questions answered in Kana, Kanji (quiz and SRS), Vocabulary (quiz, flashcards, typed mode), and Grammar all report to `hiragana-daily`. This powers the unified daily goal progress bar and streak counter across the whole app.
 - **Configurable daily question goal**: 10, 20, 30 or 50 questions per day selectable in Settings (`settings.dailyGoal`), defaulting to 20.
 - **Visual goal progress on Dashboard**: percentage tracking and mini progress bar.
-- **Celebration state**: when `todayAnswers >= dailyGoal`, badge dynamically switches to `.is-goal.is-completed` with celebratory highlight and *"Cel na dziś osiągnięty! 🎉"* callout.
+- **Celebration state**: when `todayAnswers >= dailyGoal`, badge dynamically switches to `.is-goal.is-completed` with celebratory highlight and _"Cel na dziś osiągnięty! 🎉"_ callout.
 - **Automated test coverage**: `DG1`–`DG8a` in `tests-daily.js`, `V10` in `tests.js`.
 
 ---
@@ -2339,26 +2339,38 @@ Implemented scope:
 
 ---
 
-## T24 — Custom Study Sets
+## T24 — Custom Study Sets & Bookmarks
 
-Allow the user to create custom practice sets.
+Status: **SHIPPED**.
 
-Potential examples:
+Implemented scope:
 
-```text
-Difficult kana
-My mistakes
-Katakana only
-JLPT N5
-Custom characters
-```
+- **Storage & Isolation**: Key `hiragana-bookmarks`, version `1`. Registered in `appStorageKeys()`, reset on `resetProgressData()` and cleared on `clearAllData()`. Stores collections `{ kana: [], kanji: [], vocab: [] }`.
+- **Bookmark Actions & UI Integration**:
+  - Kana: star button `#btnStarKana` on the active study card next to speech audio.
+  - Kanji: star button `.kanji-card-star` on every catalog card; `#btnStarKanjiDetail` in the detail navigation bar.
+  - Kanji Catalog Filter: toggle button `#btnFilterStarredKanji` showing dynamic count of bookmarked characters.
+  - Vocab: star button `.vocab-star-btn` on topic item rows; `.vocab-card-star-btn` in flashcard study mode.
+  - Global delegation listener for `[data-star-type]` ensuring instant reactive toggling, audio feedback, and synchronized DOM updates without full rerenders.
+- **Smart Practice Integration**:
+  - `getSmartPracticePool(type)` automatically combines starred bookmarks and challenging items (accuracy < 60% or mistakes).
+  - `#btnKanjiSmartPractice` card in Kanji Hub launches targeted flashcards.
+  - `#btnVocabSmartPractice` button in Vocab Setup initiates smart review sessions for difficult/starred vocabulary.
+- **Automated test coverage**: `BM1`–`BM10` in `tests.js`.
 
-Potential future support:
+---
 
-- saved sets,
-- renamed sets,
-- imported sets,
-- exam configuration per set.
+## T25 — Kanji L19–L24 Expansion
+
+Status: **SHIPPED**.
+
+Implemented scope:
+
+- **193 new Kanji (L19–L24)**: Baza znaków powiększona z 294 do 487 unikalnych znaków z podręcznika _Shokyū Nihongo_.
+- **Lessons L19–L24**: Added to `KANJI_LESSONS` with thematic descriptions (rodzina, społeczeństwo, warunki, podróże, zjawiska, relacje).
+- **Comprehensive metadata**: Each character includes verified stroke counts, onyomi (katakana), kunyomi (hiragana), Polish meanings, categories, and at least 2 verified example compound words with readings and Polish translations.
+- **KanjiVG 100% verification**: All 193 SVG stroke order animations verified against KanjiVG CDN.
+- **Automated test coverage**: `KJ1` (487 count), `KJ2`, `KJ3`, `KJ4`, `KJ19b`, `KJ20` in `tests.js`.
 
 ---
 
@@ -2576,7 +2588,10 @@ Practice modes (Vocab typed keyboard input + Kanji blind drawing from memory) �
 T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L18) — SHIPPED
 T19 Vocabulary (data, progress, flashcards, topics, lessons, typed mode) — SHIPPED
 T22 Daily Goals (configurable 10-50 daily question target, celebration state) — SHIPPED
-Next planned: Grammar Phase 4 (T20 conversational structures) or Achievements (T23)
+T23 Achievements (12 milestone badges, modal, toast notifications) — SHIPPED
+T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — SHIPPED
+Kanji Expansion L19–L24 (193 new kanji, total 487 kanji) — SHIPPED
+Next planned: Advanced audio / focus lo-fi (T25) or Code splitting (T16)
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2596,14 +2611,10 @@ filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items, i-ad
 were introduced as 14 items with distractor isolation, and kanji writings are surfaced
 on reveals.
 
-**Where the next session picks up.** The T19 vocabulary expansion and UX cleanup are complete:
-the topic folder respects and allows changing the selected scope directly
-via scope pills, topic cards and detail rows show robust counts and
-accuracy metrics, navigation between topics and detail views manages focus
-and topbar titles contextually, and action buttons use consistent iconography.
-Two decisions remain deliberately open: whether a topic should influence the
-"smart" order, and whether kanji and vocabulary should share one session.
-The kanji data contract (T18) can be drafted on the same taxonomy in parallel.
+**Where the next session picks up.** T23 Achievements, T24 Custom Sets & Bookmarks, and
+the Kanji L19–L24 dataset expansion (bringing total Kanji to 487 characters) are all fully
+shipped, regression-tested across all three suites (tests.html, tests-learn.html, tests-daily.html),
+and documented.
 
 T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
 documented. For what has been fixed, verified or deliberately accepted so
@@ -2618,26 +2629,28 @@ UI phase 4 (Kana hub) — COMPLETE
 ↓
 T19 Vocabulary (data, progress, flashcards, topics, UX, Lessons 1 & 2 expansion) — COMPLETE
 ↓
-T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPLETE
+T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz, L01–L24: 487 kanji) — COMPLETE
 ↓
 T20 Grammar (Phases 1-4: 31 items, particles, verbs, adjectives, conversation) — COMPLETE
 ↓
 T22 Daily Goals (configurable target, multi-module activity, celebration) — COMPLETE
 ↓
-Next: T23 Achievements (12 milestone badges) or T24 Custom Sets
+T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
 ↓
-T16 Code splitting
+T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
+↓
+Next: T25 Advanced Audio & Focus / Lo-fi or T16 Code splitting
 ```
 
 Long-term:
 
 ```text
-T18 Kanji (Core complete)
-T19 Vocabulary
-T20 Grammar
-T22 Daily Practice / Goals
-T23 Achievements
-T24 Custom Study Sets
+T18 Kanji (Core + L01-L24 complete)
+T19 Vocabulary (Complete)
+T20 Grammar (Phases 1-4 complete)
+T22 Daily Practice / Goals (Complete)
+T23 Achievements (Complete)
+T24 Custom Study Sets (Complete)
 T25 Advanced Audio & Focus / Lo-fi
 ```
 

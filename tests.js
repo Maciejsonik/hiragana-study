@@ -2518,16 +2518,16 @@
      ===================================================== */
   try {
     ok(
-      'KJ1 KANJI_ITEMS zawiera 294 znaki',
-      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 294,
+      'KJ1 KANJI_ITEMS zawiera 487 znaków',
+      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 487,
       String(KANJI_ITEMS.length)
     );
 
     const kanjiIds = new Set(KANJI_ITEMS.map(k => k.id));
-    eq('KJ2 unikalne ID znaków k001..k294', kanjiIds.size, 294);
+    eq('KJ2 unikalne ID znaków k001..k487', kanjiIds.size, 487);
 
     const kanjiChars = new Set(KANJI_ITEMS.map(k => k.kanji));
-    eq('KJ3 unikalne glify kanji', kanjiChars.size, 294);
+    eq('KJ3 unikalne glify kanji', kanjiChars.size, 487);
 
     const lessonsPresent = [
       'L01',
@@ -2548,6 +2548,12 @@
       'L16',
       'L17',
       'L18',
+      'L19',
+      'L20',
+      'L21',
+      'L22',
+      'L23',
+      'L24',
       'N5'
     ];
     ok(
@@ -2622,6 +2628,19 @@
         KANJI_ITEMS.filter(k => k.lesson === 'L17').length === 33 &&
         KANJI_ITEMS.filter(k => k.lesson === 'L18').length === 28,
       l16_18.map(l => l + '=' + KANJI_ITEMS.filter(k => k.lesson === l).length).join(' ')
+    );
+
+    // Lekcje L19-L24
+    const l19_24 = ['L19', 'L20', 'L21', 'L22', 'L23', 'L24'];
+    ok(
+      'KJ19b lekcje L19-L24 posiadają kompletną liczbę znaków',
+      KANJI_ITEMS.filter(k => k.lesson === 'L19').length === 21 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L20').length === 37 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L21').length === 29 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L22').length === 27 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L23').length === 44 &&
+        KANJI_ITEMS.filter(k => k.lesson === 'L24').length === 35,
+      l19_24.map(l => l + '=' + KANJI_ITEMS.filter(k => k.lesson === l).length).join(' ')
     );
 
     ok(
