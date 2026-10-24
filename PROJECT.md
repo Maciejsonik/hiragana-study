@@ -2294,17 +2294,14 @@ should provide a foundation for this system.
 
 ## T22 — Daily Practice / Goals
 
-Potential functionality:
+Status: **SHIPPED** (Phase 1).
 
-- daily question goal,
-- daily study streak,
-- daily XP goal,
-- session length,
-- daily review,
-- weekly goals,
-- progress toward targets.
+Implemented scope:
 
-The feature should remain optional and avoid unnecessary pressure.
+- **Configurable daily question goal**: 10, 20, 30 or 50 questions per day selectable in Settings (`settings.dailyGoal`), defaulting to 20.
+- **Visual goal progress on Dashboard**: percentage tracking and mini progress bar.
+- **Celebration state**: when `todayAnswers >= dailyGoal`, badge dynamically switches to `.is-goal.is-completed` with celebratory highlight and *"Cel na dziś osiągnięty! 🎉"* callout.
+- **Automated test coverage**: `DG1`–`DG5b` in `tests-daily.js`.
 
 ---
 
@@ -2561,7 +2558,8 @@ Audio pronunciation (Google Translate TTS ja-JP + Web Speech fallback across Kan
 Practice modes (Vocab typed keyboard input + Kanji blind drawing from memory) — COMPLETE
 T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L18) — SHIPPED
 T19 Vocabulary (data, progress, flashcards, topics, lessons, typed mode) — SHIPPED
-Next planned: Grammar (T20) or Exam Typed Mode extensions
+T22 Daily Goals (configurable 10-50 daily question target, celebration state) — SHIPPED
+Next planned: Grammar Phase 4 (T20 conversational structures) or Achievements (T23)
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2607,7 +2605,9 @@ T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPL
 ↓
 T20 Grammar (Phase 1: 10 N5 particles, formulas, pitfall callouts, examples with audio, cloze practice) — COMPLETE
 ↓
-Next: Daily Practice / Goals (T22) or Achievements (T23)
+T22 Daily Goals (configurable target, dashboard celebration) — COMPLETE
+↓
+Next: Grammar Phase 4 (T20 conversational structures) or Achievements (T23)
 ↓
 T16 Code splitting
 ```

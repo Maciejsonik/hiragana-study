@@ -890,6 +890,34 @@
         /title\.textContent = screenTitle\(\)/.test(src) && !/title\.textContent = scriptName\(\)/.test(src)
       );
 
+      /* =====================================================
+         T22: CEL DZIENNY I MULTI-MODUŁOWA AKTYWNOŚĆ
+         ===================================================== */
+      // DG1: Domyślny cel dzienny w SETTINGS_DEFAULTS
+      ok('DG1 domyślny cel dzienny w SETTINGS_DEFAULTS to 20', SETTINGS_DEFAULTS.dailyGoal === 20);
+
+      // DG2: setDailyGoal zmienia cel i zapisuje
+      setDailyGoal(30);
+      ok('DG2 setDailyGoal(30) poprawnie zapisuje cel w settings', settings.dailyGoal === 30);
+      const reloadedSettings = loadSettings();
+      ok('DG2a loadSettings odczytuje nowy cel', reloadedSettings.dailyGoal === 30);
+
+      // DG3: setDailyGoal odrzuca nieobsługiwane wartości
+      setDailyGoal(999);
+      ok('DG3 setDailyGoal(999) odrzuca nieprawidłową wartość', settings.dailyGoal === 30);
+      setDailyGoal(20); // przywrócenie domyślnej
+
+      // DG4: resetSettings przywraca domyślny cel dzienny
+      setDailyGoal(50);
+      ok('DG4 setDailyGoal(50) ustawia cel na 50', settings.dailyGoal === 50);
+      resetSettings();
+      ok('DG4a resetSettings przywraca domyślny cel 20', settings.dailyGoal === 20);
+
+      // DG5: validateSettings obsługuje dailyGoal
+      ok('DG5 validateSettings akceptuje prawidłowe wartości', validateSettings({ dailyGoal: 30 }).dailyGoal === 30);
+      ok('DG5a validateSettings odrzuca nieznane wartości', validateSettings({ dailyGoal: 999 }).dailyGoal === null);
+      ok('DG5b validateSettings konwertuje string na liczbę', validateSettings({ dailyGoal: '50' }).dailyGoal === 50);
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));

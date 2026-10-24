@@ -6787,6 +6787,17 @@ body::before {
   color: var(--good);
 }
 
+.dashboard-activity-badge.is-goal.is-completed {
+  border-color: color-mix(in srgb, var(--good) 45%, var(--line) 55%);
+  background: color-mix(in srgb, var(--good) 6%, var(--card) 94%);
+}
+
+.dashboard-activity-badge.is-goal.is-completed .dashboard-activity-icon {
+  background: color-mix(in srgb, var(--good) 25%, transparent);
+  color: var(--good);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--good) 35%, transparent);
+}
+
 .dashboard-activity-badge.is-due .dashboard-activity-icon {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   color: var(--accent);

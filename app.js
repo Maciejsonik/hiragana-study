@@ -197,14 +197,16 @@ const SETTINGS_DEFAULTS = {
   // zapożyczeniach), więc nauka od razu obejmuje oba. Wybór jednego
   // alfabetu nadal jest w pełni wspierany.
   script: 'both',
-  hideGuide: false
+  hideGuide: false,
+  dailyGoal: 20
 };
 
 const THEME_VALUES = ['light', 'dark', 'system'];
 const SCRIPT_VALUES = ['hiragana', 'katakana', 'both'];
+const DAILY_GOAL_VALUES = [10, 20, 30, 50];
 
 /*
- * Zwraca `{ theme, muted, script, hideGuide }`, gdzie każde pole to poprawna
+ * Zwraca `{ theme, muted, script, hideGuide, dailyGoal }`, gdzie każde pole to poprawna
  * wartość albo `null`, gdy w źródle jest brak lub błędna wartość.
  * Nieznane pola są odrzucane. Nie zależy od `state` ani `scriptData`.
  */
@@ -215,7 +217,8 @@ function validateSettings(raw) {
     theme: THEME_VALUES.includes(src.theme) ? src.theme : null,
     muted: typeof src.muted === 'boolean' ? src.muted : null,
     script: SCRIPT_VALUES.includes(src.script) ? src.script : null,
-    hideGuide: typeof src.hideGuide === 'boolean' ? src.hideGuide : null
+    hideGuide: typeof src.hideGuide === 'boolean' ? src.hideGuide : null,
+    dailyGoal: DAILY_GOAL_VALUES.includes(Number(src.dailyGoal)) ? Number(src.dailyGoal) : null
   };
 }
 
@@ -262,7 +265,8 @@ function loadSettings() {
     theme: valid.theme || readLegacyTheme() || SETTINGS_DEFAULTS.theme,
     muted: valid.muted !== null ? valid.muted : readLegacyMuted(),
     script: valid.script || SETTINGS_DEFAULTS.script,
-    hideGuide: valid.hideGuide !== null ? valid.hideGuide : SETTINGS_DEFAULTS.hideGuide
+    hideGuide: valid.hideGuide !== null ? valid.hideGuide : SETTINGS_DEFAULTS.hideGuide,
+    dailyGoal: valid.dailyGoal || SETTINGS_DEFAULTS.dailyGoal
   };
 
   let rewrite = !stored;
@@ -277,6 +281,13 @@ function loadSettings() {
   if (rewrite) saveSettings(normalized);
 
   return normalized;
+}
+
+function setDailyGoal(goal) {
+  const parsed = Number(goal);
+  if (!DAILY_GOAL_VALUES.includes(parsed)) return;
+  settings.dailyGoal = parsed;
+  saveSettings(settings);
 }
 
 function saveSettings(settings) {
@@ -3215,8 +3226,9 @@ function renderDashboard() {
   const todayKey = localDayKey(Date.now());
   const todayRecord = daily.days && daily.days[todayKey] ? daily.days[todayKey] : null;
   const todayAnswers = todayRecord && Number.isFinite(todayRecord.answers) ? todayRecord.answers : 0;
-  const dailyGoal = 20;
+  const dailyGoal = settings.dailyGoal || 20;
   const goalPercent = Math.min(100, Math.round((todayAnswers / dailyGoal) * 100));
+  const isGoalCompleted = todayAnswers >= dailyGoal;
 
   const totalDue = kana.due + kanji.due;
 
@@ -3245,7 +3257,7 @@ function renderDashboard() {
               </div>
             </div>
 
-            <div class="dashboard-activity-badge is-goal">
+            <div class="dashboard-activity-badge is-goal ${isGoalCompleted ? 'is-completed' : ''}">
               <span class="dashboard-activity-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
                   <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
@@ -3253,7 +3265,7 @@ function renderDashboard() {
               </span>
               <div class="dashboard-activity-info">
                 <span class="dashboard-activity-value">${todayAnswers} / ${dailyGoal} ćwiczeń</span>
-                <span class="dashboard-activity-sub">Cel dzienny (${goalPercent}%)</span>
+                <span class="dashboard-activity-sub">${isGoalCompleted ? 'Cel na dziś osiągnięty! 🎉' : `Cel dzienny (${goalPercent}%)`}</span>
               </div>
               <div class="dashboard-mini-progress">
                 <div class="dashboard-mini-progress-fill" style="width: ${goalPercent}%"></div>
@@ -8124,6 +8136,7 @@ function resetSettings() {
   setMuted(SETTINGS_DEFAULTS.muted);
   setScript(SETTINGS_DEFAULTS.script);
   setHideGuide(SETTINGS_DEFAULTS.hideGuide);
+  setDailyGoal(SETTINGS_DEFAULTS.dailyGoal);
 }
 
 function clearAllData() {
@@ -8193,6 +8206,15 @@ function renderSettings() {
             ${settingsPill('hiragana', settings.script, 'ひ Hiragana', 'data-script-set', 'script-hiragana')}
             ${settingsPill('both', settings.script, 'ひカ Oba', 'data-script-set', 'script-both')}
             ${settingsPill('katakana', settings.script, 'カ Katakana', 'data-script-set', 'script-katakana')}
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top: 14px">
+          <span class="settings-label" id="dailyGoalLabel">Cel dzienny</span>
+          <div class="settings-pills" role="group" aria-labelledby="dailyGoalLabel">
+            ${settingsPill('10', String(settings.dailyGoal), '10 pytań', 'data-daily-goal-set', 'goal-10')}
+            ${settingsPill('20', String(settings.dailyGoal), '20 pytań', 'data-daily-goal-set', 'goal-20')}
+            ${settingsPill('30', String(settings.dailyGoal), '30 pytań', 'data-daily-goal-set', 'goal-30')}
+            ${settingsPill('50', String(settings.dailyGoal), '50 pytań', 'data-daily-goal-set', 'goal-50')}
           </div>
         </div>
       </div>
@@ -8278,6 +8300,14 @@ function renderSettings() {
       Audio.click();
       setScript(btn.dataset.scriptSet);
       renderSettingsFocused('script-' + btn.dataset.scriptSet);
+    };
+  });
+
+  document.querySelectorAll('[data-daily-goal-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setDailyGoal(btn.dataset.dailyGoalSet);
+      renderSettingsFocused('goal-' + btn.dataset.dailyGoalSet);
     };
   });
 
