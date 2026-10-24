@@ -8561,3 +8561,175 @@ body::before {
     align-items: center;
   }
 }
+
+/* =========================================================
+   ZAKŁADKI I ULUBIONE / TRUDNE ZNAKI (T24)
+   ========================================================= */
+
+.kanji-card-star {
+  background: none;
+  border: none;
+  padding: 1px 3px;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--ink) 25%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.kanji-card-star:hover {
+  transform: scale(1.25);
+  color: #f59e0b;
+}
+
+.kanji-card-star.bookmarked {
+  color: #f59e0b;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.45);
+}
+
+.kanji-detail-star-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kanji-detail-star-btn:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.kanji-detail-star-btn.bookmarked {
+  border-color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.vocab-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vocab-star-btn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 0.95rem;
+  color: color-mix(in srgb, var(--ink) 25%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+  line-height: 1;
+}
+
+.vocab-star-btn:hover {
+  transform: scale(1.25);
+  color: #f59e0b;
+}
+
+.vocab-star-btn.bookmarked {
+  color: #f59e0b;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.45);
+}
+
+.btn-star-kana {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-star-kana:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  transform: scale(1.08);
+}
+
+.btn-star-kana.bookmarked {
+  border-color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #f59e0b;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.45);
+}
+
+.vocab-card-star-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: color-mix(in srgb, var(--ink) 25%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+  margin-left: 6px;
+}
+
+.vocab-card-star-btn:hover {
+  transform: scale(1.2);
+  color: #f59e0b;
+}
+
+.vocab-card-star-btn.bookmarked {
+  color: #f59e0b;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.kanji-catalog-btn.star-filter-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.kanji-catalog-btn.star-filter-btn.active {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  border-color: #f59e0b;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.vocab-smart-banner {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.vocab-smart-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px dashed color-mix(in srgb, #f59e0b 60%, transparent);
+  background: color-mix(in srgb, #f59e0b 8%, transparent);
+  color: var(--ink);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vocab-smart-btn:hover {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  border-color: #f59e0b;
+}

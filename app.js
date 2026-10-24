@@ -4089,7 +4089,7 @@ function renderVocabTopics() {
     .map(item => {
       const stat = vocabStat(item.id);
       const seenStr = stat.seen ? `${stat.seen} powt. · ${Math.round(stat.accuracy * 100)}%` : 'nie rozpoczęte';
-      return `<div class="vocab-item-row"><div class="vocab-item-lead"><strong>${item.kana}</strong> <span class="vocab-item-romaji">${item.romaji}</span></div><div class="vocab-item-meaning-cell"><span class="vocab-item-meaning">${item.meaning}</span></div><div class="vocab-item-stat">${seenStr}</div></div>`;
+      return `<div class="vocab-item-row"><div class="vocab-item-lead"><div class="vocab-item-title-row"><button type="button" class="vocab-star-btn ${isBookmarked('vocab', item.id) ? 'bookmarked' : ''}" data-star-type="vocab" data-star-id="${item.id}" aria-label="Ulubione" title="Przełącz ulubione">★</button><strong>${item.kana}</strong></div><span class="vocab-item-romaji">${item.romaji}</span></div><div class="vocab-item-meaning-cell"><span class="vocab-item-meaning">${item.meaning}</span></div><div class="vocab-item-stat">${seenStr}</div></div>`;
     })
     .join('');
 
@@ -4636,6 +4636,12 @@ function renderVocabSetup() {
         </button>
       </div>
 
+      <div class="vocab-smart-banner">
+        <button class="btn btn-secondary vocab-smart-btn" id="btnVocabSmartPractice" type="button">
+          ⭐ Inteligentna powtórka (${getSmartPracticePool('vocab').length} słówek z gwiazdką lub &lt; 60%)
+        </button>
+      </div>
+
       <div class="vocab-mode-grid" role="group" aria-label="Tryb nauki">
         ${VOCAB_MODES.map(
           id => `
@@ -4790,6 +4796,23 @@ function renderVocabSetup() {
     Audio.click();
     startVocabSession();
   };
+
+  const btnVocabSmart = document.getElementById('btnVocabSmartPractice');
+  if (btnVocabSmart) {
+    btnVocabSmart.onclick = () => {
+      Audio.click();
+      const pool = getSmartPracticePool('vocab');
+      if (!pool.length) {
+        showAchievementToast({
+          icon: '⭐',
+          title: 'Brak trudnych słówek',
+          desc: 'Oznacz słówka gwiazdką w widoku tematów, aby utworzyć własną powtórkę.'
+        });
+      } else {
+        startVocabSession({ ids: pool.map(v => v.id) });
+      }
+    };
+  }
 }
 
 function renderVocab() {
@@ -4932,6 +4955,7 @@ function renderVocab() {
                   ? `<button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>`
                   : ''
               }
+              <button class="vocab-card-star-btn ${isBookmarked('vocab', item.id) ? 'bookmarked' : ''}" data-star-type="vocab" data-star-id="${item.id}" type="button" title="Przełącz ulubione" aria-label="Ulubione">★</button>
             </div>
             ${
               session.revealed
@@ -5181,8 +5205,13 @@ function getKanjiSummaryStats(lesson = 'all') {
   };
 }
 
-function startKanjiSession({ mode = 'flashcard', lesson = 'all' } = {}) {
-  let pool = lesson === 'all' ? [...KANJI_ITEMS] : KANJI_ITEMS.filter(k => k.lesson === lesson);
+function startKanjiSession({ mode = 'flashcard', lesson = 'all', items = null } = {}) {
+  let pool =
+    items && items.length
+      ? [...items]
+      : lesson === 'all'
+        ? [...KANJI_ITEMS]
+        : KANJI_ITEMS.filter(k => k.lesson === lesson);
   if (!pool.length) pool = [...KANJI_ITEMS];
 
   pool = shuffle([...pool]);
@@ -5336,6 +5365,19 @@ function renderKanjiHub() {
           </div>
           <button class="kanji-action-btn quiz" type="button">Rozpocznij quiz →</button>
         </div>
+
+        <div class="kanji-action-card" id="btnKanjiSmartPractice">
+          <div class="kanji-action-icon" style="color:#f59e0b">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div class="kanji-action-info">
+            <h2 class="kanji-action-title">Inteligentna Powtórka</h2>
+            <p class="kanji-action-desc">Skup się na trudnych i ulubionych znakach (${getSmartPracticePool('kanji').length} znaków z gwiazdką lub dokładnością &lt; 60%).</p>
+          </div>
+          <button class="kanji-action-btn" type="button" style="border-color:#f59e0b;color:#f59e0b">Ćwicz trudne znaki →</button>
+        </div>
       </div>
 
       <div class="kanji-lessons-panel">
@@ -5388,6 +5430,23 @@ function renderKanjiHub() {
     startKanjiSession({ mode: 'quiz', lesson: kanjiSession.lesson || 'all' });
   };
 
+  const btnSmart = document.getElementById('btnKanjiSmartPractice');
+  if (btnSmart) {
+    btnSmart.onclick = () => {
+      Audio.click();
+      const pool = getSmartPracticePool('kanji');
+      if (!pool.length) {
+        showAchievementToast({
+          icon: '⭐',
+          title: 'Brak trudnych znaków',
+          desc: 'Oznacz znaki gwiazdką w katalogu, aby rozpocząć powtórkę ulubionych.'
+        });
+      } else {
+        startKanjiSession({ mode: 'flashcard', items: pool });
+      }
+    };
+  }
+
   app.querySelectorAll('[data-lesson]').forEach(card => {
     card.onclick = () => {
       Audio.click();
@@ -5407,8 +5466,12 @@ function renderKanjiCatalog() {
   const currentLesson = kanjiSession.lesson || 'all';
   const currentCategory = kanjiSession.filter || 'all';
   const searchQuery = (kanjiSession.search || '').trim().toLowerCase();
+  const onlyStarred = !!kanjiSession.onlyStarred;
 
   let filtered = KANJI_ITEMS;
+  if (onlyStarred) {
+    filtered = filtered.filter(k => isBookmarked('kanji', k.id));
+  }
   if (currentLesson !== 'all') {
     filtered = filtered.filter(k => k.lesson === currentLesson);
   }
@@ -5454,6 +5517,9 @@ function renderKanjiCatalog() {
           <span class="kanji-catalog-counter">Pokazano ${filtered.length} z ${KANJI_ITEMS.length} znaków</span>
         </div>
         <div class="kanji-catalog-quick-actions">
+          <button class="kanji-catalog-btn star-filter-btn ${onlyStarred ? 'active' : ''}" id="btnFilterStarredKanji" type="button" title="Pokaż tylko oznaczone gwiazdką">
+            ★ Ulubione (${bookmarks.kanji.length})
+          </button>
           <button class="kanji-catalog-btn accent" id="btnStartLessonFlashcards" type="button">
             Fiszki (${filtered.length})
           </button>
@@ -5533,6 +5599,7 @@ function renderKanjiCatalog() {
               return `
               <div class="kanji-card" data-kanji-id="${k.id}">
                 <div class="kanji-card-badges">
+                  <button type="button" class="kanji-card-star ${isBookmarked('kanji', k.id) ? 'bookmarked' : ''}" data-star-type="kanji" data-star-id="${k.id}" title="Przełącz ulubione" aria-label="Ulubione">★</button>
                   <span class="kanji-card-strokes">${k.strokes} 画</span>
                   <span class="kanji-card-lesson">${k.lesson}</span>
                   <span class="kanji-card-status status-${stat.status}" title="Status: ${stat.status}"></span>
@@ -5560,11 +5627,20 @@ function renderKanjiCatalog() {
     render();
   };
 
+  const btnFilterStarred = document.getElementById('btnFilterStarredKanji');
+  if (btnFilterStarred) {
+    btnFilterStarred.onclick = () => {
+      Audio.click();
+      kanjiSession.onlyStarred = !kanjiSession.onlyStarred;
+      renderKanjiCatalog();
+    };
+  }
+
   const btnStartFlashcards = document.getElementById('btnStartLessonFlashcards');
   if (btnStartFlashcards) {
     btnStartFlashcards.onclick = () => {
       Audio.click();
-      startKanjiSession({ mode: 'flashcard', lesson: kanjiSession.lesson || 'all' });
+      startKanjiSession({ mode: 'flashcard', items: filtered });
     };
   }
 
@@ -5572,7 +5648,7 @@ function renderKanjiCatalog() {
   if (btnStartQuiz) {
     btnStartQuiz.onclick = () => {
       Audio.click();
-      startKanjiSession({ mode: 'quiz', lesson: kanjiSession.lesson || 'all' });
+      startKanjiSession({ mode: 'quiz', items: filtered });
     };
   }
 
@@ -5612,12 +5688,14 @@ function renderKanjiCatalog() {
       kanjiSession.lesson = 'all';
       kanjiSession.filter = 'all';
       kanjiSession.search = '';
+      kanjiSession.onlyStarred = false;
       renderKanjiCatalog();
     };
   }
 
   app.querySelectorAll('[data-kanji-id]').forEach(card => {
-    card.onclick = () => {
+    card.onclick = e => {
+      if (e.target.closest('[data-star-type]')) return;
       Audio.click();
       kanjiSession.charId = card.dataset.kanjiId;
       kanjiSession.mode = 'detail';
@@ -5653,6 +5731,9 @@ function renderKanjiDetail() {
         </button>
 
         <div class="kanji-detail-step-buttons">
+          <button class="kanji-detail-star-btn ${isBookmarked('kanji', item.id) ? 'bookmarked' : ''}" id="btnStarKanjiDetail" data-star-type="kanji" data-star-id="${item.id}" type="button" title="Przełącz ulubione">
+            ★ ${isBookmarked('kanji', item.id) ? 'W ulubionych' : 'Dodaj do ulubionych'}
+          </button>
           <button class="kanji-step-nav-btn" id="btnPrevKanji" type="button" ${!prevItem ? 'disabled' : ''}>
             ← ${prevItem ? prevItem.kanji : ''}
           </button>
@@ -9199,6 +9280,49 @@ function toggleBookmark(type, id) {
   return isBookmarked(type, id);
 }
 
+function getSmartPracticePool(type) {
+  if (type === 'kanji') {
+    const bookmarked = KANJI_ITEMS.filter(k => isBookmarked('kanji', k.id));
+    const lowAccuracy = KANJI_ITEMS.filter(k => {
+      const s = kanjiStat(k.id);
+      return (s.seen > 0 && s.accuracy < 0.6) || s.status === 'learning';
+    });
+    const combined = [...bookmarked];
+    for (const item of lowAccuracy) {
+      if (!combined.some(k => k.id === item.id)) combined.push(item);
+    }
+    return combined;
+  }
+  if (type === 'vocab') {
+    const bookmarked = VOCAB_ITEMS.filter(v => isBookmarked('vocab', v.id));
+    const lowAccuracy = VOCAB_ITEMS.filter(v => {
+      const s = vocabStat(v.id);
+      return s.seen > 0 && s.accuracy < 0.6;
+    });
+    const combined = [...bookmarked];
+    for (const item of lowAccuracy) {
+      if (!combined.some(v => v.id === item.id)) combined.push(item);
+    }
+    return combined;
+  }
+  if (type === 'kana') {
+    const chars = allChars();
+    const bookmarked = chars.filter(c => isBookmarked('kana', c));
+    const lowAccuracy = chars.filter(c => {
+      const p = progress.chars[c];
+      if (!p || !p.answers) return false;
+      const acc = p.correct / p.answers;
+      return acc < 0.6;
+    });
+    const combined = [...bookmarked];
+    for (const c of lowAccuracy) {
+      if (!combined.includes(c)) combined.push(c);
+    }
+    return combined;
+  }
+  return [];
+}
+
 /* =========================================================
    TRYB NAUKI
    ========================================================= */
@@ -9382,6 +9506,9 @@ function renderLearn() {
           <h2 style="margin:0">${current.romaji}</h2>
           <button class="btn-speak" id="speakKana" data-speak="${escapeHtml(state.kana)}" type="button" title="Odsłuchaj wymowę (S)" aria-label="Odsłuchaj wymowę ${current.romaji}">
             ${icon('volume')}
+          </button>
+          <button class="btn-star-kana ${isBookmarked('kana', state.kana) ? 'bookmarked' : ''}" id="btnStarKana" data-star-type="kana" data-star-id="${escapeHtml(state.kana)}" type="button" title="${isBookmarked('kana', state.kana) ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}" aria-label="Przełącz gwiazdkę">
+            ★
           </button>
         </div>
       </div>
@@ -12667,6 +12794,34 @@ document.addEventListener('click', e => {
     Audio.speak(text);
     btn.classList.add('is-speaking');
     setTimeout(() => btn.classList.remove('is-speaking'), 400);
+  }
+});
+
+/* =========================================================
+   ULUBIONE I GWIAZDKI (delegacja [data-star-type])
+========================================================= */
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-star-type]');
+  if (!btn) return;
+  e.stopPropagation();
+  e.preventDefault();
+  const type = btn.getAttribute('data-star-type');
+  const id = btn.getAttribute('data-star-id');
+  if (type && id) {
+    const isNow = toggleBookmark(type, id);
+    Audio.click();
+    btn.classList.toggle('bookmarked', isNow);
+    if (btn.id === 'btnStarKanjiDetail') {
+      btn.textContent = `★ ${isNow ? 'W ulubionych' : 'Dodaj do ulubionych'}`;
+    }
+    if (btn.id === 'btnStarKana') {
+      btn.title = isNow ? 'Usuń z ulubionych' : 'Dodaj do ulubionych';
+    }
+    const starFilterBtn = document.getElementById('btnFilterStarredKanji');
+    if (starFilterBtn && bookmarks.kanji) {
+      starFilterBtn.textContent = `★ Ulubione (${bookmarks.kanji.length})`;
+    }
   }
 });
 

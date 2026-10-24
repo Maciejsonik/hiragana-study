@@ -3408,6 +3408,71 @@
     ok('ACH moduł osiągnięć', false, e.message);
   }
 
+  try {
+    /* =====================================================
+       BM — ULUBIONE I TRUDNE ZNAKI / ZAKŁADKI (T24)
+       ===================================================== */
+    resetBookmarksData();
+
+    // BM1: stan początkowy
+    ok(
+      'BM1 stan początkowy zakładek jest pusty',
+      !isBookmarked('kana', 'あ') && !isBookmarked('kanji', 'k001') && !isBookmarked('vocab', 'n01')
+    );
+
+    // BM2: dodanie do ulubionych kana
+    const addedKana = toggleBookmark('kana', 'あ');
+    ok('BM2 toggleBookmark kana dodaje znak do ulubionych', addedKana === true && isBookmarked('kana', 'あ'));
+
+    // BM3: usunięcie z ulubionych kana
+    const removedKana = toggleBookmark('kana', 'あ');
+    ok('BM3 ponowne toggleBookmark usuwa znak z ulubionych', removedKana === false && !isBookmarked('kana', 'あ'));
+
+    // BM4: dodanie kanji i vocab
+    toggleBookmark('kanji', 'k001');
+    toggleBookmark('vocab', 'n01');
+    ok(
+      'BM4 kanji i vocab są poprawnie oznaczone w bookmarks',
+      isBookmarked('kanji', 'k001') && isBookmarked('vocab', 'n01')
+    );
+
+    // BM5: trwałość w localStorage
+    const storedBm = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '{}');
+    ok(
+      'BM5 bookmarks są utrwalane w localStorage pod BOOKMARKS_KEY',
+      Array.isArray(storedBm.kanji) && storedBm.kanji.includes('k001')
+    );
+
+    // BM6: getSmartPracticePool zawiera oznaczone znaki
+    const smartKanji = getSmartPracticePool('kanji');
+    ok(
+      'BM6 getSmartPracticePool dla kanji zawiera dodany k001',
+      smartKanji.some(k => k.id === 'k001')
+    );
+
+    const smartVocab = getSmartPracticePool('vocab');
+    ok(
+      'BM7 getSmartPracticePool dla vocab zawiera dodany n01',
+      smartVocab.some(v => v.id === 'n01')
+    );
+
+    // BM8: renderKanjiCatalog zawiera przycisk filtra ulubionych i gwiazdki na kartach
+    renderKanjiCatalog();
+    const btnFilterStarred = document.getElementById('btnFilterStarredKanji');
+    const firstCardStar = document.querySelector('.kanji-card-star');
+    ok('BM8 renderKanjiCatalog renderuje przycisk filtra ulubionych', !!btnFilterStarred);
+    ok('BM9 karty kanji posiadają przycisk gwiazdki [data-star-type="kanji"]', !!firstCardStar);
+
+    // BM10: resetBookmarksData czyści wszystkie kolekcje
+    resetBookmarksData();
+    ok(
+      'BM10 resetBookmarksData czyści wszystkie zakładki',
+      !isBookmarked('kanji', 'k001') && !isBookmarked('vocab', 'n01')
+    );
+  } catch (e) {
+    ok('BM moduł zakładek', false, e.message);
+  }
+
   /* =====================================================
      PODSUMOWANIE
      ===================================================== */
