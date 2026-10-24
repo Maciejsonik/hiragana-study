@@ -1985,9 +1985,9 @@ Two deliberate omissions define the layer:
 - **no SRS** — cards carry no schedule. The card order (layer 3) will be
   computed from the counters, not stored, so nothing here advances or resets
   a spaced-repetition schedule.
-- **no daily history** — answering a card is not answering a character, so
-  `recordVocabAnswer()` never touches `hiragana-daily`. The two histories stay
-  separate on purpose; see "Daily statistics (T15)".
+- **daily history integration (T22)** — answering a card, kanji or grammar exercise
+  reports to `hiragana-daily` (so daily goals and streaks reflect all learning across
+  modules), while individual progress stores remain strictly decoupled per AGENTS.md §2.2.
 
 `recordVocabAnswer()` returns `false` only for an unknown id (`v99`), so a typo
 cannot create a record that nothing will ever display. Patterns, nouns and
@@ -2296,12 +2296,11 @@ should provide a foundation for this system.
 
 Status: **SHIPPED** (Phase 1).
 
-Implemented scope:
-
+- **Multi-module daily activity tracking**: questions answered in Kana, Kanji (quiz and SRS), Vocabulary (quiz, flashcards, typed mode), and Grammar all report to `hiragana-daily`. This powers the unified daily goal progress bar and streak counter across the whole app.
 - **Configurable daily question goal**: 10, 20, 30 or 50 questions per day selectable in Settings (`settings.dailyGoal`), defaulting to 20.
 - **Visual goal progress on Dashboard**: percentage tracking and mini progress bar.
 - **Celebration state**: when `todayAnswers >= dailyGoal`, badge dynamically switches to `.is-goal.is-completed` with celebratory highlight and *"Cel na dziś osiągnięty! 🎉"* callout.
-- **Automated test coverage**: `DG1`–`DG5b` in `tests-daily.js`.
+- **Automated test coverage**: `DG1`–`DG8a` in `tests-daily.js`, `V10` in `tests.js`.
 
 ---
 

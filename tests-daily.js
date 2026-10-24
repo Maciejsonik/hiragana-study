@@ -918,6 +918,31 @@
       ok('DG5a validateSettings odrzuca nieznane wartości', validateSettings({ dailyGoal: 999 }).dailyGoal === null);
       ok('DG5b validateSettings konwertuje string na liczbę', validateSettings({ dailyGoal: '50' }).dailyGoal === 50);
 
+      // DG6: recordKanjiAnswer zwiększa statystyki dzienne
+      const dBeforeK = (store() && store().days[localDayKey(Date.now())]) || { answers: 0, correct: 0 };
+      const ansBeforeK = dBeforeK.answers || 0;
+      const corrBeforeK = dBeforeK.correct || 0;
+      recordKanjiAnswer('k001', true);
+      const dAfterK = (store() && store().days[localDayKey(Date.now())]) || { answers: 0, correct: 0 };
+      ok('DG6 recordKanjiAnswer zwiększa answers w dailyStats', dAfterK.answers === ansBeforeK + 1);
+      ok('DG6a recordKanjiAnswer zwiększa correct w dailyStats dla true', dAfterK.correct === corrBeforeK + 1);
+
+      // DG7: recordVocabAnswer zwiększa statystyki dzienne
+      const ansBeforeV = dAfterK.answers;
+      const corrBeforeV = dAfterK.correct;
+      recordVocabAnswer('v01', false);
+      const dAfterV = (store() && store().days[localDayKey(Date.now())]) || { answers: 0, correct: 0 };
+      ok('DG7 recordVocabAnswer zwiększa answers w dailyStats', dAfterV.answers === ansBeforeV + 1);
+      ok('DG7a recordVocabAnswer nie zwiększa correct w dailyStats dla false', dAfterV.correct === corrBeforeV);
+
+      // DG8: recordGrammarAnswer zwiększa statystyki dzienne
+      const ansBeforeG = dAfterV.answers;
+      const corrBeforeG = dAfterV.correct;
+      recordGrammarAnswer('wa', true);
+      const dAfterG = (store() && store().days[localDayKey(Date.now())]) || { answers: 0, correct: 0 };
+      ok('DG8 recordGrammarAnswer zwiększa answers w dailyStats', dAfterG.answers === ansBeforeG + 1);
+      ok('DG8a recordGrammarAnswer zwiększa correct w dailyStats dla true', dAfterG.correct === corrBeforeG + 1);
+
       report();
     } catch (e) {
       R.push('FAIL threw :: ' + e.message + ' | ' + String(e.stack).split('\n').slice(0, 3).join(' >> '));

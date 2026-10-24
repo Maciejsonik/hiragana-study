@@ -7405,6 +7405,7 @@ function recordGrammarAnswer(particleId, isCorrect) {
   grammarProgress.totalAnswers = (grammarProgress.totalAnswers || 0) + 1;
   grammarProgress.lastPracticed = Date.now();
   saveGrammar();
+  recordDailyAnswer(isCorrect);
 }
 
 function getGrammarSummaryStats() {
@@ -9115,7 +9116,11 @@ function recordDailyAnswer(correct, now = Date.now()) {
     przekazują `'exam'` — również w sesji powtórek. Jedynym pewnym
     źródłem wiedzy o tym, że to powtórka, jest trwająca sesja.
   */
-  const isReview = !!(state.exam && state.exam.kind === 'review');
+  const isReview = !!(
+    (state.exam && state.exam.kind === 'review') ||
+    (state.kanji && state.kanji.mode === 'flashcards') ||
+    (state.vocab && state.vocab.view === 'learn')
+  );
 
   bucket.answers++;
   if (isReview) bucket.reviewAnswers++;
@@ -9718,6 +9723,7 @@ function recordVocabAnswer(cardId, correct) {
   entry.last = Date.now();
 
   saveVocab();
+  recordDailyAnswer(correct);
   return true;
 }
 
@@ -9824,6 +9830,7 @@ function recordKanjiAnswer(idOrChar, correct) {
   }
 
   saveKanjiProgress();
+  recordDailyAnswer(correct);
   return true;
 }
 

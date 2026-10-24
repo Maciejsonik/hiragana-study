@@ -1920,13 +1920,14 @@
       JSON.stringify(vocab.cards.v03)
     );
 
-    const dailyBefore = localStorage.getItem(DAILY_STATS_KEY);
+    const dBefore = (loadDailyStats().days[localDayKey(Date.now())] || {}).answers || 0;
     recordVocabAnswer('v01', true);
     recordVocabAnswer('v01', false);
+    const dAfter = (loadDailyStats().days[localDayKey(Date.now())] || {}).answers || 0;
     ok(
-      'V10 odpowiedzi słownictwa nie ruszają historii dziennej',
-      localStorage.getItem(DAILY_STATS_KEY) === dailyBefore,
-      'przed=' + String(dailyBefore) + ' po=' + String(localStorage.getItem(DAILY_STATS_KEY))
+      'V10 odpowiedzi słownictwa raportują do historii dziennej (T22)',
+      dAfter === dBefore + 2,
+      'przed=' + dBefore + ' po=' + dAfter
     );
 
     resetProgressData();
