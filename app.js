@@ -7351,6 +7351,258 @@ const GRAMMAR_ITEMS = [
         explanation: 'Czasownik ある (mieć / istnieć) odmienia się nieregularnie: przeczenie to ない, a w czasie przeszłym なかった (forma aranai/aranakatta nie istnieje!).'
       }
     ]
+  },
+  {
+    id: 'v_tai',
+    category: 'conversation',
+    kana: '〜たい / 〜たくない',
+    speakKana: 'たべたい',
+    romaji: 'tai / takunai',
+    label: 'Chęci i pragnienia (〜たい / 〜たくない)',
+    pattern: '[Temat masu] + たい (chcę) / たくない (nie chcę)',
+    description: 'Konstrukcja służy do wyrażania pragnień osoby mówiącej („chcę zrobić coś...”, „nie chcę...”). Tworzy się ją, zastępując końcówkę -masu końcówką -tai. Cała forma odmienia się syntaktycznie jak przymiotnik typu i (czas przeszły: 〜たかった, przeszłe przeczenie: 〜たくなかった).',
+    notes: 'Ważna reguła partykuł: dopełnienie w konstrukcji z 〜たい może zachować partykułę を, lecz bardzo naturalnie przyjmuje partykułę が (np. みずを のみたい lub みずが のみたい). Uwaga kulturowa: 〜たい stosujemy tylko do siebie lub w pytaniach do rozmówcy („Czy chcesz...?”). Do opisu chęci osób trzecich stosuje się 〜たがっている.',
+    examples: [
+      { japanese: 'にほんへ いきたいです。', romaji: 'Nihon e ikitai desu.', polish: 'Chcę pojechać do Japonii.' },
+      { japanese: 'つめたい みずが のみたいです。', romaji: 'Tsumetai mizu ga nomitai desu.', polish: 'Chcę napić się zimnej wody.' },
+      { japanese: 'きょうは なにも たべたくないです。', romaji: 'Kyou wa nani mo tabetakunai desu.', polish: 'Dzisiaj nie chcę nic jeść.' }
+    ],
+    questions: [
+      {
+        sentence: 'わたしは あたらしい カメラを [?] です。',
+        full: 'わたしは あたらしい カメラを かいたいです。',
+        polish: 'Chcę kupić nowy aparat fotograficzny.',
+        answer: 'かいたい',
+        distractors: ['かうたい', 'かいて', 'かった'],
+        explanation: 'Formę chęci tworzy temat czasownika (stem formy masu: かい) + たい: かいたい.'
+      },
+      {
+        sentence: 'きょうは つかれたから、どこへも [?] です。',
+        full: 'きょうは つかれたから、どこへも いきたくない です。',
+        polish: 'Jestem dziś zmęczony, więc nigdzie nie chcę iść.',
+        answer: 'いきたくない',
+        distractors: ['いかないたい', 'いくない', 'いきたかった'],
+        explanation: 'Przeczenie formy chęci („nie chcę iść”) tworzy końcówka 〜たくない: いきたくない.'
+      },
+      {
+        sentence: 'なに [?] のみたいですか。',
+        full: 'なにが のみたいですか。',
+        polish: 'Czego chciałbyś się napić?',
+        answer: 'が',
+        distractors: ['に', 'で', 'へ'],
+        explanation: 'W pytaniach i zdaniach z formą 〜たい obiekt pragnienia bardzo często łączy się z partykułą が: なにが のみたいですか.'
+      }
+    ]
+  },
+  {
+    id: 'tsumori',
+    category: 'conversation',
+    kana: '〜つもり',
+    speakKana: 'いく つもり',
+    romaji: 'tsumori',
+    label: 'Zamiary i plany (〜つもり / 〜予定)',
+    pattern: '[Czasownik forma słownikowa / forma nai] + つもりです',
+    description: 'Wyraża zamiar lub intencję podjęcia działania („mam zamiar...”, „planuję...”). Łączy się bezpośrednio z formą słownikową czasownika (twierdzenie) lub formą przeczącą -nai (przeczenie: „nie mam zamiaru...”).',
+    notes: 'Różnica つもり vs 予定 (よてい): つもり to subiektywny zamiar mówiącego, natomiast 予定 oznacza obiektywny plan lub harmonogram (np. odlot samolotu, zaplanowane spotkanie). W zdaniach z osobami trzecimi używa się 〜つもりだそうです („podobno ma zamiar”).',
+    examples: [
+      { japanese: 'らいねん にほんへ いく つもりです。', romaji: 'Rainen Nihon e iku tsumori desu.', polish: 'Mam zamiar pojechać w przyszłym roku do Japonii.' },
+      { japanese: 'きょうは テレビを みない つもりです。', romaji: 'Kyou wa terebi o minai tsumori desu.', polish: 'Dzisiaj nie mam zamiaru oglądać telewizji.' },
+      { japanese: 'あしたは ともだちと あう よていです。', romaji: 'Ashita wa tomodachi to au yotei desu.', polish: 'Jutro w planach mam spotkanie z przyjacielem.' }
+    ],
+    questions: [
+      {
+        sentence: 'だいがくで にほんごを [?] つもりです。',
+        full: 'だいがくで にほんごを べんきょうする つもりです。',
+        polish: 'Mam zamiar studiować japoński na uniwersytecie.',
+        answer: 'べんきょうする',
+        distractors: ['べんきょうして', 'べんきょうした', 'べんきょうし'],
+        explanation: 'Przed つもり używa się formy prostej (słownikowej) czasownika: べんきょうする つもり.'
+      },
+      {
+        sentence: 'あしたは どこへも [?] つもりです。',
+        full: 'あしたは どこへも いかない つもりです。',
+        polish: 'Jutro nie mam zamiaru nigdzie wychodzić.',
+        answer: 'いかない',
+        distractors: ['いくない', 'いかないで', 'いって'],
+        explanation: 'Zamiar powstrzymania się od czynności wyraża forma przecząca -nai + つもり: いかない つもり.'
+      },
+      {
+        sentence: 'らいしゅう ひこうきで [?] よていです。',
+        full: 'らいしゅう ひこうきで かえる よていです。',
+        polish: 'W przyszłym tygodniu mam zaplanowany powrót samolotem.',
+        answer: 'かえる',
+        distractors: ['かえり', 'かえって', 'かえった'],
+        explanation: 'Konstrukcja planu (予定, よてい) łączy się z formą słownikową czasownika: かえる よてい.'
+      }
+    ]
+  },
+  {
+    id: 'te_ageru_kureru',
+    category: 'conversation',
+    kana: '〜てあげる / 〜てくれる',
+    speakKana: 'おしえてあげる',
+    romaji: 'te ageru / te kureru',
+    label: 'Wyświadczanie przysług (〜てあげる / 〜てくれる)',
+    pattern: '[Czasownik-te] + あげる (robię dla kogoś) / くれる (ktoś robi dla mnie)',
+    description: 'Fundamentalne japońskie konstrukcje dobrodziejstwa i uprzejmości. 〜てあげる oznacza zrobienie czegoś dobrego dla kogoś innego („zrobić komuś przysługę”). Z kolei 〜てくれる oznacza, że ktoś wyświadcza przysługę mówiącemu lub komuś z jego najbliższego kręgu.',
+    notes: 'Kierunek przysługi w japońskim jest rygorystyczny! Nigdy nie mów, że ktoś „てあげる dla mnie” – gdy akcja zmierza w Twoją stronę, ZAWSZE używaj 〜てくれる lub 〜てもらう. Pamiętaj też: mówienie przełożonemu 〜てあげます może brzmieć protekcjonalnie („robię panu łaskę”), dlatego w sytuacjach formalnych stosuje się formy honoryfikatywne.',
+    examples: [
+      { japanese: 'わたしは いもうとに えいごを おしえて あげました。', romaji: 'Watashi wa imouto ni eigo o oshiete agemashita.', polish: 'Nauczyłem młodszą siostrę angielskiego (wyświadczyłem jej przysługę).' },
+      { japanese: 'たなかさんは わたしに ほんを かして くれました。', romaji: 'Tanaka-san wa watashi ni hon o kashite kuremashita.', polish: 'Pan Tanaka pożyczył mi książkę (wyświadczył mi przysługę).' },
+      { japanese: 'ともだちが えきまで おくって くれました。', romaji: 'Tomodachi ga eki made okutte kuremashita.', polish: 'Przyjaciel podwiózł / odprowadził mnie na stację.' }
+    ],
+    questions: [
+      {
+        sentence: 'わたしは おとうとに じてんしゃを なおして [?]。',
+        full: 'わたしは おとうとに じてんしゃを なおして あげました。',
+        polish: 'Naprawiłem młodszemu bratu rower (dla niego).',
+        answer: 'あげました',
+        distractors: ['くれました', 'もらいました', 'いました'],
+        explanation: 'Mówiący wykonuje przysługę dla innej osoby (młodszego brata) – właściwą formą jest 〜てあげました.'
+      },
+      {
+        sentence: 'やまださんは わたしに えきへの みちを [?] くれました。',
+        full: 'やまださんは わたしに えきへの みちを おしえて くれました。',
+        polish: 'Pan Yamada wskazał mi drogę na stację.',
+        answer: 'おしえて',
+        distractors: ['おしえ', 'おしえる', 'おしえた'],
+        explanation: 'Konstrukcja wyświadczania przysługi wymaga formy te: おしえて くれました.'
+      },
+      {
+        sentence: 'せんせいが わたしの さくぶんを [?] くれました。',
+        full: 'せんせいが わたしの さくぶんを みて くれました。',
+        polish: 'Nauczyciel zechciał sprawdzić / przeczytać moje wypracowanie.',
+        answer: 'みて',
+        distractors: ['み', 'みる', 'みた'],
+        explanation: 'Gdy ktoś wyświadcza przysługę mówiącemu, czasownik występuje w formie -te + くれる: みて くれました.'
+      }
+    ]
+  },
+  {
+    id: 'te_morau',
+    category: 'conversation',
+    kana: '〜てもらう',
+    speakKana: 'なおしてもらう',
+    romaji: 'te morau',
+    label: 'Otrzymywanie przysługi na prośbę (〜てもらう)',
+    pattern: '[Odbiorca] は [Wykonawca] に [Czasownik-te] + もらう / もらいました',
+    description: 'Wyraża uzyskanie od kogoś przysługi, często w wyniku własnej prośby („poprosiłem kogoś i otrzymałem pomoc”). W odróżnieniu od 〜てくれる, w tej konstrukcji podmiotem zdania (z は) jest biorca/mówiący, a wykonawcę przysługi oznacza partykuła に.',
+    notes: 'Kluczowe rozróżnienie: [Osoba] が [czynność]-てくれた (ktoś sam z siebie mi pomógł) vs わたしは [Osoba] に [czynność]-てもらった (zwróciłem się do kogoś i uzyskałem jego życzliwą pomoc).',
+    examples: [
+      { japanese: 'わたしは せんせいに さくぶんを なおして もらいました。', romaji: 'Watashi wa sensei ni sakubun o naoshite moraimashita.', polish: 'Nauczyciel poprawił mi wypracowanie (otrzymałem pomoc nauczyciela).' },
+      { japanese: 'すずきさんに しゃしんを とって もらいました。', romaji: 'Suzuki-san ni shashin o totte moraimashita.', polish: 'Pan Suzuki zrobił mi zdjęcie (poprosiłem go o to).' },
+      { japanese: 'やまださんに えいごを おしえて もらいます。', romaji: 'Yamada-san ni eigo o oshiete moraimasu.', polish: 'Poproszę pana Yamadę o lekcję angielskiego.' }
+    ],
+    questions: [
+      {
+        sentence: 'わたしは たなかさん [?] にほんごを おしえて もらいました。',
+        full: 'わたしは たなかさんに にほんごを おしえて もらいました。',
+        polish: 'Pan Tanaka uczył mnie japońskiego (otrzymałem od niego pomoc).',
+        answer: 'に',
+        distractors: ['を', 'で', 'へ'],
+        explanation: 'W konstrukcji 〜てもらう osoba wyświadczająca przysługę (darczyńca) jest oznaczana partykułą に.'
+      },
+      {
+        sentence: 'ともだちに にもつを [?] もらいました。',
+        full: 'ともだちに にもつを もって もらいました。',
+        polish: 'Przyjaciel poniósł mi bagaż.',
+        answer: 'もって',
+        distractors: ['もち', 'もつ', 'もった'],
+        explanation: 'Czasownik もつ (trzymać/nieść) w połączeniu z 〜てもらう wymaga formy te: もって もらいました.'
+      },
+      {
+        sentence: 'わたしは いしゃに くすりを [?] もらいました。',
+        full: 'わたしは いしゃに くすりを だして もらいました。',
+        polish: 'Lekarz przepisał mi leki.',
+        answer: 'だして',
+        distractors: ['だし', 'だす', 'だした'],
+        explanation: 'Forma -te od だす (wypisać/wydać) to だして: だして もらいました.'
+      }
+    ]
+  },
+  {
+    id: 'v_mashou',
+    category: 'conversation',
+    kana: '〜ましょう / 〜ませんか',
+    speakKana: 'いきましょう',
+    romaji: 'mashou / masen ka',
+    label: 'Propozycje i zaproszenia (〜ましょう / 〜ませんか)',
+    pattern: '[Temat masu] + ましょう (zróbmy!) / ませんか (czy nie zrobilibyśmy...?)',
+    description: 'Podstawowe formuły dialogowe służące do proponowania wspólnych działań. 〜ましょう to zdecydowana propozycja („Zróbmy to razem!” lub zaoferowanie pomocy: „Czy mam pomóc?”), natomiast 〜ませんか to uprzejme, nienarzucające się zaproszenie dające rozmówcy pełną swobodę odpowiedzi.',
+    notes: 'W japońskiej etykiecie zaproszenie w formie przeczącej pytającej (〜ませんか) jest znacznie bardziej eleganckie niż bezpośrednie stwierdzenie, gdyż nie stawia rozmówcy pod presją akceptacji.',
+    examples: [
+      { japanese: 'いっしょに ひるごはんを たべませんか。', romaji: 'Issho ni hirugohan o tabemasen ka.', polish: 'Może zjedlibyśmy razem obiad? (uprzejme zaproszenie)' },
+      { japanese: 'ちょっと やすみましょう。', romaji: 'Chotto yasumimashou.', polish: 'Odpocznijmy chwilę! (propozycja)' },
+      { japanese: 'にもつを もちましょうか。', romaji: 'Nimotsu o mochimashou ka.', polish: 'Czy ponieść ci bagaż? (zaoferowanie pomocy)' }
+    ],
+    questions: [
+      {
+        sentence: 'ロビーで コーヒーを [?]。ええ、そうしましょう。',
+        full: 'ロビーで コーヒーを のみませんか。ええ、そうしましょう。',
+        polish: 'Może napijemy się kawy w holu? – Tak, zróbmy tak.',
+        answer: 'のみませんか',
+        distractors: ['のみます', 'のまない', 'のめ'],
+        explanation: 'Uprzejme zaproszenie rozmówcy do wspólnego napicia się kawy tworzy końcówka 〜ませんか.'
+      },
+      {
+        sentence: 'じかんが ありますから、あるいて [?]。',
+        full: 'じかんが ありますから、あるいて いきましょう。',
+        polish: 'Mamy czas, więc pójdźmy pieszo!',
+        answer: 'いきましょう',
+        distractors: ['いきます', 'いく', 'いって'],
+        explanation: 'Entuzjastyczną propozycję wspólnego działania tworzy forma 〜ましょう: いきましょう.'
+      },
+      {
+        sentence: 'まどを [?] か。すずしい かぜが はいりますよ。',
+        full: 'まどを あけましょうか。すずしい かぜが はいりますよ。',
+        polish: 'Czy otworzyć okno? Wpadnie chłodny wietrzyk.',
+        answer: 'あけましょう',
+        distractors: ['あけます', 'あけて', 'あける'],
+        explanation: 'Zaoferowanie pomocy lub podjęcie inicjatywy („Czy mam zrobić...?”) tworzy zwrot 〜ましょうか.'
+      }
+    ]
+  },
+  {
+    id: 'purpose_ni_iku',
+    category: 'conversation',
+    kana: '〜に行く / 〜に来る',
+    speakKana: 'かいにいく',
+    romaji: 'ni iku / ni kuru',
+    label: 'Cel przemieszczania się (〜に 行く / 来る / 帰る)',
+    pattern: '[Miejsce] へ [Temat masu / Rzeczownik czynnościowy] に [行く / 来る / 帰る]',
+    description: 'Konstrukcja gramatyczna wyrażająca cel przemieszczania się („idę / przychodzę / wracam, żeby zrobić coś...”). Temat czasownika w formie masu (masu-stem) lub rzeczownik czynnościowy łączy się z partykułą celu に oraz czasownikiem ruchu (いく, くる, かえる).',
+    notes: 'Gdy celem jest rzeczownik oznaczający czynność (np. かいもの – zakupy, りょこう – podróż, しょくじ – posiłek), łączy się go z partykułą に bezpośrednio: かいもの に いく (iść na zakupy).',
+    examples: [
+      { japanese: 'スーパーへ パンを かいに いきます。', romaji: 'Suupaa e pan o kai ni ikimasu.', polish: 'Idę do supermarketu kupić chleb.' },
+      { japanese: 'としょかんへ べんきょうしに いきました。', romaji: 'Toshokan e benkyoushi ni ikimashita.', polish: 'Poszedłem do biblioteki uczyć się.' },
+      { japanese: 'にほんへ なにを しに きましたか。', romaji: 'Nihon e nani o shi ni kimashita ka.', polish: 'W jakim celu przybyłeś do Japonii? (co przyjechałeś robić?)' }
+    ],
+    questions: [
+      {
+        sentence: 'ゆうびんきょくへ きってを [?] に いきます。',
+        full: 'ゆうびんきょくへ きってを かいに いきます。',
+        polish: 'Idę na pocztę kupić znaczki.',
+        answer: 'かい',
+        distractors: ['かう', 'かって', 'かった'],
+        explanation: 'Przed partykułą celu に w konstrukcji z czasownikiem ruchu używamy tematu formy masu (かう -> かいます -> かい).'
+      },
+      {
+        sentence: 'きょうとへ [?] に いきたいです。',
+        full: 'きょうとへ りょこうに いきたいです。',
+        polish: 'Chcę pojechać do Kioto w celach turystycznych / na wycieczkę.',
+        answer: 'りょこう',
+        distractors: ['りょこうする', 'りょこうして', 'りょこうした'],
+        explanation: 'Rzeczownik czynnościowy りょこう (podróż) łączy się z partykułą に bezpośrednio: りょこうに いく.'
+      },
+      {
+        sentence: 'しょくどうへ ひるごはんを たべ [?] いきました。',
+        full: 'しょくどうへ ひるごはんを たべに いきました。',
+        polish: 'Poszedłem do stołówki zjeść obiad.',
+        answer: 'に',
+        distractors: ['を', 'で', 'へ'],
+        explanation: 'Cel przemieszczania się („w celu zjedzenia”) po temacie czasownika たべ wyraża partykuła に.'
+      }
+    ]
   }
 ];
 
@@ -7545,6 +7797,7 @@ function renderGrammarHub() {
   const countParticles = GRAMMAR_ITEMS.filter(p => !p.category || p.category === 'particle').length;
   const countVerbs = GRAMMAR_ITEMS.filter(p => p.category === 'verb' || p.category === 'existence').length;
   const countAdjectives = GRAMMAR_ITEMS.filter(p => p.category === 'adjective').length;
+  const countConversation = GRAMMAR_ITEMS.filter(p => p.category === 'conversation').length;
 
   const filteredItems = GRAMMAR_ITEMS.filter(p => {
     const cat = p.category || 'particle';
@@ -7552,6 +7805,7 @@ function renderGrammarHub() {
     if (activeCat === 'particle') return cat === 'particle';
     if (activeCat === 'verb') return cat === 'verb' || cat === 'existence';
     if (activeCat === 'adjective') return cat === 'adjective';
+    if (activeCat === 'conversation') return cat === 'conversation';
     return true;
   });
 
@@ -7559,6 +7813,7 @@ function renderGrammarHub() {
   if (activeCat === 'particle') sectionTitle = `Partykuły japońskie (${countParticles})`;
   else if (activeCat === 'verb') sectionTitle = `Koniugacja czasowników i formy (${countVerbs})`;
   else if (activeCat === 'adjective') sectionTitle = `Przymiotniki typu I oraz NA (${countAdjectives})`;
+  else if (activeCat === 'conversation') sectionTitle = `Konstrukcje konwersacyjne i dialogi (${countConversation})`;
 
   app.innerHTML = `
     <div class="grammar-screen animate-fade">
@@ -7566,10 +7821,10 @@ function renderGrammarHub() {
         <div class="grammar-hero-watermark" aria-hidden="true">文</div>
         <div class="grammar-hero-content">
           <span class="grammar-eyebrow">GRAMATYKA JAPOŃSKA · N5</span>
-          <h1 class="grammar-title">Partykuły, Czasowniki i Przymiotniki</h1>
+          <h1 class="grammar-title">Partykuły, Czasowniki i Dialogi</h1>
           <p class="grammar-desc">
             Kluczowe zagadnienia gramatyczne poziomu N5.
-            Opanuj partykuły (助詞), formy czasowników (ます, て, た, istnienie) i przymiotniki (i/na) oraz trenuj uzupełnianie zdań.
+            Opanuj partykuły (助詞), formy czasowników (ます, て, た), przymiotniki oraz konstrukcje konwersacyjne (たい, つもり, てあげる/くれる, zaproszenia) i trenuj uzupełnianie zdań.
           </p>
 
           <div class="grammar-activity-bar">
@@ -7616,6 +7871,9 @@ function renderGrammarHub() {
         </button>
         <button class="grammar-pill ${activeCat === 'adjective' ? 'active' : ''}" data-cat="adjective" role="tab" type="button">
           Przymiotniki <span class="grammar-pill-count">${countAdjectives}</span>
+        </button>
+        <button class="grammar-pill ${activeCat === 'conversation' ? 'active' : ''}" data-cat="conversation" role="tab" type="button">
+          Konwersacja <span class="grammar-pill-count">${countConversation}</span>
         </button>
       </div>
 

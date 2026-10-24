@@ -2894,14 +2894,21 @@
      GRAMATYKA (T20) — partykuły N5, baza wiedzy i quizy luk
      ===================================================== */
   try {
-    // GR1: Komplet 25 zagadnień w bazie (faza 1 + 2 + 3)
-    eq('GR1 baza gramatyki zawiera 25 pozycji', GRAMMAR_ITEMS.length, 25);
+    // GR1: Komplet 31 zagadnień w bazie (faza 1 + 2 + 3 + 4)
+    eq('GR1 baza gramatyki zawiera 31 pozycji', GRAMMAR_ITEMS.length, 31);
 
     // GR1a: Komplet zagadnień fazy 3
     const phase3Ids = ['te_form', 'te_kudasai', 'te_imasu', 'te_mo_ii', 'ta_form', 'ta_koto_ga_aru', 'v_nakatta'];
     ok(
       'GR1a faza 3 gramatyki zawiera komplet 7 form czasownikowych',
       phase3Ids.every(id => GRAMMAR_ITEMS.some(item => item.id === id && item.category === 'verb'))
+    );
+
+    // GR1b: Komplet zagadnień fazy 4 (konstrukcje konwersacyjne)
+    const phase4Ids = ['v_tai', 'tsumori', 'te_ageru_kureru', 'te_morau', 'v_mashou', 'purpose_ni_iku'];
+    ok(
+      'GR1b faza 4 gramatyki zawiera komplet 6 konstrukcji konwersacyjnych',
+      phase4Ids.every(id => GRAMMAR_ITEMS.some(item => item.id === id && item.category === 'conversation'))
     );
 
     // GR2: Każde zagadnienie ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
@@ -2956,7 +2963,7 @@
 
     const stats = getGrammarSummaryStats();
     eq('GR6 getGrammarSummaryStats poprawnie zlicza opanowane partykuły', stats.mastered, 1);
-    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 4);
+    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 3);
 
     // GR8: Inicjalizacja sesji quizu startGrammarPractice
     startGrammarPractice();
@@ -3003,7 +3010,7 @@
       render();
     }
     const particleCards = document.querySelectorAll('.grammar-particle-card');
-    eq('GR15 ekran hub gramatyki renderuje 25 kart w widoku ogólnym', particleCards.length, 25);
+    eq('GR15 ekran hub gramatyki renderuje 31 kart w widoku ogólnym', particleCards.length, 31);
 
     // GR16: Nawigacja do widoku szczegółowego partykuły
     const firstCard = particleCards[0];
@@ -3042,6 +3049,11 @@
     const adjCardsFiltered = document.querySelectorAll('.grammar-particle-card');
     eq('GR23 filtr przymiotników renderuje 2 karty', adjCardsFiltered.length, 2);
 
+    grammarSession.category = 'conversation';
+    renderGrammarHub();
+    const convCardsFiltered = document.querySelectorAll('.grammar-particle-card');
+    eq('GR26 filtr konstrukcji konwersacyjnych renderuje 6 kart', convCardsFiltered.length, 6);
+
     // GR24-GR25: startGrammarPractice z filtrem kategorii
     startGrammarPractice({ category: 'verb' });
     const allVerbQ = grammarSession.practice.questions.every(q => {
@@ -3056,6 +3068,13 @@
       return it && it.category === 'adjective';
     });
     ok('GR25 quiz dla kategorii przymiotników zawiera wyłącznie pytania o przymiotniki', allAdjQ);
+
+    startGrammarPractice({ category: 'conversation' });
+    const allConvQ = grammarSession.practice.questions.every(q => {
+      const it = grammarItem(q.particleId);
+      return it && it.category === 'conversation';
+    });
+    ok('GR27 quiz dla kategorii konwersacji zawiera wyłącznie pytania o konstrukcje konwersacyjne', allConvQ);
 
     // Przywrócenie stanu
     grammarSession.mode = 'hub';

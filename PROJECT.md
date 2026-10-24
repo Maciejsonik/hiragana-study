@@ -2219,27 +2219,34 @@ Polish meanings remain an unverified translation.
 - Phase 1 (N5 Particles & Cloze Training) — **COMPLETE**.
 - Phase 2 (Verbs Conjugation, Existence & Adjectives) — **COMPLETE**.
 - Phase 3 (Te-form, Requests, State/Continuous, Permission/Prohibition, Ta-form, Experience, Negative Past) — **COMPLETE**.
+- Phase 4 (Conversational Structures: Desires ~tai, Intentions tsumori, Favors ~te ageru / ~te kureru / ~te morau, Invitations ~mashou / ~masen ka, Purpose ~ni iku/kuru) — **COMPLETE**.
 
 ### Implemented Scope
 
 - **Data Model (`GRAMMAR_ITEMS`)**:
-  - Expanded from 18 to 25 fundamental Japanese grammar items for JLPT N5 across 4 categories:
+  - Expanded from 25 to 31 fundamental Japanese grammar items for JLPT N5 across 5 categories:
     - **Particles (`particle`, 10 items)**: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
-    - **Verb Conjugation & Forms (`verb`, 11 items + 2 existence)**:
+    - **Verb Conjugation & Forms (`verb`, 11 items + 2 existence = 13 items)**:
       - Polite forms: `v_masu` (〜ます), `v_masen` (〜ません), `v_mashita` (〜ました), `v_masendeshita` (〜ませんでした).
       - Existence: `arimasu` (ある / あります – inanimate), `imasu` (いる / います – animate).
       - Te-forms & requests: `te_form` (〜て / 〜で), `te_kudasai` (〜てください), `te_imasu` (〜ています), `te_mo_ii` (〜てもいい / 〜てはいけません).
       - Ta-forms & experience: `ta_form` (〜た / 〜だ), `ta_koto_ga_aru` (〜た ことがあります), `v_nakatta` (〜なかった / 〜ませんでした).
     - **Adjectives (`adjective`, 2 items)**: `adj_i` (〜い / 〜くない – i-keiyoushi), `adj_na` (〜な / 〜です – na-keiyoushi).
-  - 75 authentic example sentences with audio pronunciation and 75 cloze questions with rule explanations.
+    - **Conversational Structures & Dialogues (`conversation`, 6 items)**:
+      - Desires & wants: `v_tai` (〜たい / 〜たくない),
+      - Intentions & plans: `tsumori` (〜つもり / 〜予定),
+      - Favors & gratitude: `te_ageru_kureru` (〜てあげる / 〜てくれる), `te_morau` (〜てもらう),
+      - Invitations & proposals: `v_mashou` (〜ましょう / 〜ませんか),
+      - Movement purpose: `purpose_ni_iku` (〜に 行く / 来る / 帰る).
+  - 93 authentic example sentences with audio pronunciation and 93 cloze questions with rule explanations.
 - **Storage & Isolation (`hiragana-grammar`)**:
   - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
   - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
   - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
-    - Header with stats chips (mastered count out of 25, in-progress count, total answers, mini-progress percentage bar),
-    - Category pills (`all`: 25, `particle`: 10, `verb`: 13 — "Czasowniki i formy", `adjective`: 2) with active states and badge counters,
+    - Header with stats chips (mastered count out of 31, in-progress count, total answers, mini-progress percentage bar),
+    - Category pills (`all`: 31, `particle`: 10, `verb`: 13 — "Czasowniki i formy", `adjective`: 2, `conversation`: 6 — "Konwersacja") with active states and badge counters,
     - Responsive grid of grammar cards with mastery badges, syntax formulas, summaries, and accuracy scores,
     - Adaptive typography with `.is-long` modifier for multi-character tags.
   - **Detail View (`detail`)**:
@@ -2602,11 +2609,11 @@ T19 Vocabulary (data, progress, flashcards, topics, UX, Lessons 1 & 2 expansion)
 ↓
 T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz) — COMPLETE
 ↓
-T20 Grammar (Phase 1: 10 N5 particles, formulas, pitfall callouts, examples with audio, cloze practice) — COMPLETE
+T20 Grammar (Phases 1-4: 31 items, particles, verbs, adjectives, conversation) — COMPLETE
 ↓
-T22 Daily Goals (configurable target, dashboard celebration) — COMPLETE
+T22 Daily Goals (configurable target, multi-module activity, celebration) — COMPLETE
 ↓
-Next: Grammar Phase 4 (T20 conversational structures) or Achievements (T23)
+Next: T23 Achievements (12 milestone badges) or T24 Custom Sets
 ↓
 T16 Code splitting
 ```
