@@ -1,6 +1,6 @@
 # Koto — nauka japońskiej kany
 
-**Koto** to aplikacja do nauki języka japońskiego: **hiragana i katakana** (z animacją kolejności kresek i rysowaniem na płótnie), **kanji** (487 znaków z lekcji L01–L24 podręcznika _Shokyū Nihongo_), **gramatyka** (JLPT N5, 31 reguł w 4 fazach), **słownictwo** (fiszki tematyczne, pisanie z klawiatury), **system osiągnięć** (12 odznak), **ulubione znaki i zakładki**, cele dzienne oraz śledzenie postępu SRS.
+**Koto** to aplikacja do nauki języka japońskiego: **hiragana i katakana** (z animacją kolejności kresek i rysowaniem na płótnie), **kanji** (599 znaków z lekcji L01–L28 podręcznika _Shokyū Nihongo_), **gramatyka** (JLPT N5, 31 reguł w 4 fazach), **słownictwo** (fiszki tematyczne, pisanie z klawiatury), **system osiągnięć** (12 odznak), **ulubione znaki i zakładki**, cele dzienne oraz śledzenie postępu SRS.
 
 Działa jako zwykła strona (bez build stepu) i jako **PWA** — po pierwszym poprawnym załadowaniu online cała aplikacja działa offline.
 

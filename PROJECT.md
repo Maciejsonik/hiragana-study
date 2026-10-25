@@ -2,14 +2,14 @@
 
 ## 1. Project Overview
 
-**Koto** is a calm, local, vanilla JavaScript single-page web application for learning Japanese: basic and extended kana (Hiragana and Katakana), 487 foundational kanji characters, essential vocabulary, and JLPT N5 grammar structures.
+**Koto** is a calm, local, vanilla JavaScript single-page web application for learning Japanese: basic and extended kana (Hiragana and Katakana), 599 foundational kanji characters, essential vocabulary, and JLPT N5 grammar structures.
 
 The repository and published URL keep the historical `hiragana-study` slug; that is a technical identifier, not product branding.
 
 The app currently provides:
 
 - **Kana learning & exam**: 251 characters (Hiragana, Katakana, Dakuten, Handakuten, Yōon, Special Katakana) with animated stroke order, stroke descriptions, 4 adaptive exam modes, per-question timer, optional question limit, XP, confetti celebration, and swipe gestures.
-- **Kanji learning (487 characters)**: comprehensive L01–L24 + N5 dataset with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
+- **Kanji learning (599 characters)**: comprehensive L01–L28 + N5 dataset (100% of _Shokyū Nihongo_) with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
 - **Vocabulary (134 words / 204 learn cards)**: nouns, verbs, request expressions, adjectives, topic categorization, orthogonal lesson filters, flashcard learning, recognition tests, and keyboard typing input.
 - **Grammar N5 (31 items across 16 lessons)**: particles, verb conjugations and forms, adjectives, and conversational structures with 93 authentic example sentences and interactive cloze fill-in-the-blank practice.
 - **Learning habit & gamification**:
@@ -1431,7 +1431,7 @@ T26  Settings / Personalization                   DONE
 T14  Offline PWA                                  DONE
 T21  Spaced repetition engine                      DONE
 T15  Long-term multi-module statistics             DONE
-T18  Kanji (487 kanji, L01–L24 + N5, drawing, catalog, SRS, quiz) DONE
+T18  Kanji (599 kanji, L01–L28 + N5, drawing, catalog, SRS, quiz) DONE
 T19  Vocabulary (134 words / 204 cards, topics, lessons, typed mode) DONE
 T20  Grammar N5 (31 items, 16 lessons, cloze trainer) DONE
 T22  Daily Goals (configurable target, multi-module aggregation) DONE
@@ -2561,13 +2561,13 @@ Code splitting: NOT implemented (reserved until feature set settles)
 ```text
 UI modernization & Dashboard — COMPLETE
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
-Kanji core & expansion (L01–L24, 487 kanji, stroke order, drawing canvas) — COMPLETE
+Kanji core & expansion (L01–L28, 599 kanji, stroke order, drawing canvas) — COMPLETE
 Audio pronunciation (Google Translate TTS ja-JP + Web Speech fallback across Kana, Vocab, Kanji) — COMPLETE
 Grammar N5 (Phases 1–4, 31 items, 16 lessons, cloze trainer) — COMPLETE
 T22 Daily Goals (configurable 10-50 daily question target, multi-module aggregation) — COMPLETE
 T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
 T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
-Kanji Expansion L19–L24 (193 new kanji, total 487 kanji) — COMPLETE
+Kanji Expansion L25–L28 finale (112 new kanji, 100% of Shokyū Nihongo: 599 kanji) — COMPLETE
 T25 Advanced Audio & Focus Mode / Lo-Fi (organic Suzu/Hyōshigi sounds, offline ambient, Zen Pomodoro) — COMPLETE
 Next planned: Code splitting (T16)
 ```
@@ -2582,7 +2582,7 @@ The vocabulary module includes its **topic axis** (13 categories) and **lesson a
 orthogonal lesson filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items,
 i-adjectives are present with distractor isolation, and kanji writings are surfaced on reveals.
 
-The kanji module provides 487 characters across 25 lessons (L01–L24 + N5), all 100% verified against
+The kanji module provides 599 characters across 29 lessons (L01–L28 + N5, 100% of _Shokyū Nihongo_), all 100% verified against
 KanjiVG CDN, with animated stroke order, canvas drawing (with blind memory mode), catalog search,
 SRS flashcards, and 4-choice recognition quiz.
 
@@ -2596,12 +2596,12 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-989 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+990 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 
 ```text
-T18 Kanji (Core + L01-L24: 487 kanji, drawing, catalog, SRS, quiz) — COMPLETE
+T18 Kanji (Core + L01-L28: 599 kanji, drawing, catalog, SRS, quiz) — COMPLETE
 ↓
 T19 Vocabulary (134 words / 204 cards, topics, lesson filters, typed mode) — COMPLETE
 ↓
