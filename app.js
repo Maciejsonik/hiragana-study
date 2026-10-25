@@ -6590,8 +6590,8 @@ function renderKanjiDetail() {
         </button>
 
         <div class="kanji-detail-step-buttons">
-          <button class="kanji-detail-star-btn ${isBookmarked('kanji', item.id) ? 'bookmarked' : ''}" id="btnStarKanjiDetail" data-star-type="kanji" data-star-id="${item.id}" type="button" title="Przełącz ulubione">
-            ★ ${isBookmarked('kanji', item.id) ? 'W ulubionych' : 'Dodaj do ulubionych'}
+          <button class="kanji-detail-star-btn ${isBookmarked('kanji', item.id) ? 'bookmarked' : ''}" id="btnStarKanjiDetail" data-star-type="kanji" data-star-id="${item.id}" type="button" title="Przełącz ulubione" aria-label="Ulubione">
+            <span>★</span><span class="kanji-star-btn-label">${isBookmarked('kanji', item.id) ? 'Ulubiony' : 'Do ulubionych'}</span>
           </button>
           <button class="kanji-step-nav-btn" id="btnPrevKanji" type="button" ${!prevItem ? 'disabled' : ''}>
             ← ${prevItem ? prevItem.kanji : ''}
@@ -6639,14 +6639,14 @@ function renderKanjiDetail() {
                   <path d="M2 2l7.586 7.586"/>
                   <circle cx="11" cy="11" r="2"/>
                 </svg>
-                ${kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj'}
+                ${kanjiSession.drawingEnabled ? 'Schowaj' : 'Rysuj'}
               </button>
             </div>
 
             <div class="kanji-drawing-panel ${kanjiSession.drawingEnabled ? 'is-visible' : 'is-hidden'}" id="kanjiDrawingBar">
               <div class="kanji-drawing-actions">
                 <button class="kanji-draw-action-btn ${kanjiSession.drawingBlind ? 'active' : ''}" id="btnToggleBlind" type="button" title="Przełącz widoczność wzoru znaku">
-                  ${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Ślepy szkic (ukryj wzór)' : 'Wzór widoczny'}
+                  ${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Szkic z pamięci' : 'Wzór widoczny'}
                 </button>
                 <button class="kanji-draw-action-btn" id="btnDrawClear" type="button">Wyczyść</button>
                 <button class="kanji-draw-action-btn primary" id="btnDrawCheck" type="button">Sprawdź rysunek</button>
@@ -6727,7 +6727,7 @@ function renderKanjiDetail() {
                       <span class="kanji-lesson-word-badge">${w.lesson}</span>
                       <span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>
                       <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
-                      <span class="kanji-lesson-word-gloss">${escapeHtml(w.meaning)}</span>
+                      <span class="kanji-lesson-word-gloss" title="${escapeHtml(w.meaning)}">${escapeHtml(w.meaning)}</span>
                       <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(w.kana)}" type="button" title="Odsłuchaj ${escapeHtml(w.kana)}" aria-label="Odsłuchaj ${escapeHtml(w.kana)}">
                         ${icon('volume')}
                       </button>
@@ -6835,7 +6835,7 @@ function renderKanjiDetail() {
         <path d="M2 2l7.586 7.586"/>
         <circle cx="11" cy="11" r="2"/>
       </svg>
-      ${kanjiSession.drawingEnabled ? 'Schowaj rysowanie' : 'Rysuj'}
+      ${kanjiSession.drawingEnabled ? 'Schowaj' : 'Rysuj'}
     `;
     drawingBar.classList.toggle('is-visible', kanjiSession.drawingEnabled);
     drawingBar.classList.toggle('is-hidden', !kanjiSession.drawingEnabled);
@@ -6852,7 +6852,7 @@ function renderKanjiDetail() {
       stage.classList.toggle('is-blind', !!kanjiSession.drawingBlind);
       stage.classList.remove('revealed');
       toggleBlindBtn.classList.toggle('active', kanjiSession.drawingBlind);
-      toggleBlindBtn.innerHTML = `${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Ślepy szkic (ukryj wzór)' : 'Wzór widoczny'}`;
+      toggleBlindBtn.innerHTML = `${icon(kanjiSession.drawingBlind ? 'eye-off' : 'eye')} ${kanjiSession.drawingBlind ? 'Szkic z pamięci' : 'Wzór widoczny'}`;
       drawFeedback.textContent = kanjiSession.drawingBlind ? 'Rysuj znak z pamięci bez podglądu kresek.' : '';
       drawFeedback.className = 'kanji-draw-feedback';
     };
@@ -15071,7 +15071,7 @@ document.addEventListener('click', e => {
     Audio.click();
     btn.classList.toggle('bookmarked', isNow);
     if (btn.id === 'btnStarKanjiDetail') {
-      btn.textContent = `★ ${isNow ? 'W ulubionych' : 'Dodaj do ulubionych'}`;
+      btn.innerHTML = `<span>★</span><span class="kanji-star-btn-label">${isNow ? 'Ulubiony' : 'Do ulubionych'}</span>`;
     }
     if (btn.id === 'btnStarKana') {
       btn.title = isNow ? 'Usuń z ulubionych' : 'Dodaj do ulubionych';
