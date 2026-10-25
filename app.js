@@ -198,16 +198,28 @@ const SETTINGS_DEFAULTS = {
   // alfabetu nadal jest w pełni wspierany.
   script: 'both',
   hideGuide: false,
-  dailyGoal: 20
+  dailyGoal: 20,
+  masterVolume: 80,
+  sfxVolume: 80,
+  ambientVolume: 50,
+  ambientSound: 'rain'
 };
 
 const THEME_VALUES = ['light', 'dark', 'system'];
 const SCRIPT_VALUES = ['hiragana', 'katakana', 'both'];
 const DAILY_GOAL_VALUES = [10, 20, 30, 50];
+const AMBIENT_SOUND_VALUES = ['rain', 'bamboo', 'waves', 'off'];
+
+function validateVolume(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const num = Number(val);
+  if (isNaN(num)) return null;
+  return Math.max(0, Math.min(100, Math.round(num)));
+}
 
 /*
- * Zwraca `{ theme, muted, script, hideGuide, dailyGoal }`, gdzie każde pole to poprawna
- * wartość albo `null`, gdy w źródle jest brak lub błędna wartość.
+ * Zwraca `{ theme, muted, script, hideGuide, dailyGoal, masterVolume, sfxVolume, ambientVolume, ambientSound }`,
+ * gdzie każde pole to poprawna wartość albo `null`, gdy w źródle jest brak lub błędna wartość.
  * Nieznane pola są odrzucane. Nie zależy od `state` ani `scriptData`.
  */
 function validateSettings(raw) {
@@ -218,7 +230,11 @@ function validateSettings(raw) {
     muted: typeof src.muted === 'boolean' ? src.muted : null,
     script: SCRIPT_VALUES.includes(src.script) ? src.script : null,
     hideGuide: typeof src.hideGuide === 'boolean' ? src.hideGuide : null,
-    dailyGoal: DAILY_GOAL_VALUES.includes(Number(src.dailyGoal)) ? Number(src.dailyGoal) : null
+    dailyGoal: DAILY_GOAL_VALUES.includes(Number(src.dailyGoal)) ? Number(src.dailyGoal) : null,
+    masterVolume: validateVolume(src.masterVolume),
+    sfxVolume: validateVolume(src.sfxVolume),
+    ambientVolume: validateVolume(src.ambientVolume),
+    ambientSound: AMBIENT_SOUND_VALUES.includes(src.ambientSound) ? src.ambientSound : null
   };
 }
 
@@ -266,7 +282,11 @@ function loadSettings() {
     muted: valid.muted !== null ? valid.muted : readLegacyMuted(),
     script: valid.script || SETTINGS_DEFAULTS.script,
     hideGuide: valid.hideGuide !== null ? valid.hideGuide : SETTINGS_DEFAULTS.hideGuide,
-    dailyGoal: valid.dailyGoal || SETTINGS_DEFAULTS.dailyGoal
+    dailyGoal: valid.dailyGoal || SETTINGS_DEFAULTS.dailyGoal,
+    masterVolume: valid.masterVolume !== null ? valid.masterVolume : SETTINGS_DEFAULTS.masterVolume,
+    sfxVolume: valid.sfxVolume !== null ? valid.sfxVolume : SETTINGS_DEFAULTS.sfxVolume,
+    ambientVolume: valid.ambientVolume !== null ? valid.ambientVolume : SETTINGS_DEFAULTS.ambientVolume,
+    ambientSound: valid.ambientSound || SETTINGS_DEFAULTS.ambientSound
   };
 
   let rewrite = !stored;
@@ -288,6 +308,31 @@ function setDailyGoal(goal) {
   if (!DAILY_GOAL_VALUES.includes(parsed)) return;
   settings.dailyGoal = parsed;
   saveSettings(settings);
+}
+
+function setAudioVolume(type, val) {
+  const clamped = validateVolume(val);
+  if (clamped === null) return;
+  if (type === 'master') settings.masterVolume = clamped;
+  else if (type === 'sfx') settings.sfxVolume = clamped;
+  else if (type === 'ambient') settings.ambientVolume = clamped;
+  saveSettings(settings);
+  if (typeof Audio !== 'undefined' && Audio.updateVolumes) {
+    Audio.updateVolumes();
+  }
+}
+
+function setAmbientSound(preset) {
+  if (!AMBIENT_SOUND_VALUES.includes(preset)) return;
+  settings.ambientSound = preset;
+  saveSettings(settings);
+  if (typeof Audio !== 'undefined' && Audio.ambient) {
+    if (preset === 'off') {
+      Audio.ambient.stop();
+    } else if (Audio.ambient.isPlaying()) {
+      Audio.ambient.setPreset(preset);
+    }
+  }
 }
 
 function saveSettings(settings) {
@@ -1719,18 +1764,211 @@ const Audio = (() => {
   let muted = settings.muted;
   let currentAudio = null;
 
+  let masterGain = null;
+  let sfxGain = null;
+  let ambientGain = null;
+
+  // Ambient procedural generator state
+  let noiseBuffer = null;
+  let ambientSource = null;
+  let ambientFilter1 = null;
+  let ambientFilter2 = null;
+  let ambientLfo = null;
+  let ambientLfoGain = null;
+  let ambientPlaying = false;
+  let activeAmbientPreset = settings.ambientSound !== 'off' ? settings.ambientSound : 'rain';
+
+  function updateVolumes() {
+    if (!ctx || !masterGain) return;
+    try {
+      const masterLevel = muted ? 0 : (settings.masterVolume ?? 80) / 100;
+      const sfxLevel = (settings.sfxVolume ?? 80) / 100;
+      const ambientLevel = (settings.ambientVolume ?? 50) / 100;
+      const now = ctx.currentTime;
+
+      masterGain.gain.cancelScheduledValues(now);
+      masterGain.gain.setValueAtTime(masterLevel, now);
+
+      sfxGain.gain.cancelScheduledValues(now);
+      sfxGain.gain.setValueAtTime(sfxLevel, now);
+
+      ambientGain.gain.cancelScheduledValues(now);
+      ambientGain.gain.setValueAtTime(ambientLevel, now);
+    } catch (e) {}
+  }
+
   function getCtx() {
     if (!ctx) {
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        ctx = new AudioCtx();
+        masterGain = ctx.createGain();
+        sfxGain = ctx.createGain();
+        ambientGain = ctx.createGain();
+
+        sfxGain.connect(masterGain);
+        ambientGain.connect(masterGain);
+        masterGain.connect(ctx.destination);
+        updateVolumes();
+      }
     }
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
     return ctx;
+  }
+
+  function getNoiseBuffer(c) {
+    if (noiseBuffer) return noiseBuffer;
+    const sampleRate = c.sampleRate || 44100;
+    const bufferSize = sampleRate * 8; // 8 seconds of seamless stereo pink noise
+    const buf = c.createBuffer(2, bufferSize, sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buf.getChannelData(ch);
+      let b0 = 0,
+        b1 = 0,
+        b2 = 0,
+        b3 = 0,
+        b4 = 0,
+        b5 = 0,
+        b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        // Paul Kellet's filtered pink noise algorithm
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.969 * b2 + white * 0.153852;
+        b3 = 0.8665 * b3 + white * 0.3104856;
+        b4 = 0.55 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.016898;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.08;
+        b6 = white * 0.115926;
+      }
+    }
+    noiseBuffer = buf;
+    return noiseBuffer;
+  }
+
+  function configureAmbientNodes(preset) {
+    if (!ctx || !ambientFilter1 || !ambientFilter2 || !ambientLfo || !ambientLfoGain) return;
+    const now = ctx.currentTime;
+    activeAmbientPreset = preset;
+
+    if (preset === 'rain') {
+      // Łagodny deszcz w świątynnym ogrodzie (filtr dolnoprzepustowy z miękkim szumem kropel)
+      ambientFilter1.type = 'lowpass';
+      ambientFilter1.frequency.setTargetAtTime(850, now, 0.4);
+      ambientFilter1.Q.setTargetAtTime(1.2, now, 0.4);
+
+      ambientFilter2.type = 'peaking';
+      ambientFilter2.frequency.setTargetAtTime(1400, now, 0.4);
+      ambientFilter2.Q.setTargetAtTime(1.0, now, 0.4);
+      ambientFilter2.gain.setTargetAtTime(3, now, 0.4);
+
+      ambientLfo.frequency.setTargetAtTime(0.25, now, 0.4);
+      ambientLfoGain.gain.setTargetAtTime(60, now, 0.4);
+    } else if (preset === 'bamboo') {
+      // Wiatr przez bambusowy las (rezonans pasmowy z powolnym powiewem)
+      ambientFilter1.type = 'bandpass';
+      ambientFilter1.frequency.setTargetAtTime(450, now, 0.4);
+      ambientFilter1.Q.setTargetAtTime(2.2, now, 0.4);
+
+      ambientFilter2.type = 'lowpass';
+      ambientFilter2.frequency.setTargetAtTime(750, now, 0.4);
+      ambientFilter2.Q.setTargetAtTime(1.5, now, 0.4);
+      ambientFilter2.gain.setTargetAtTime(0, now, 0.4);
+
+      ambientLfo.frequency.setTargetAtTime(0.09, now, 0.4);
+      ambientLfoGain.gain.setTargetAtTime(140, now, 0.4);
+    } else if (preset === 'waves') {
+      // Spokojne fale morskie (głębokie, powolne 10-sekundowe przypływy)
+      ambientFilter1.type = 'lowpass';
+      ambientFilter1.frequency.setTargetAtTime(320, now, 0.4);
+      ambientFilter1.Q.setTargetAtTime(0.8, now, 0.4);
+
+      ambientFilter2.type = 'lowpass';
+      ambientFilter2.frequency.setTargetAtTime(550, now, 0.4);
+      ambientFilter2.Q.setTargetAtTime(1.0, now, 0.4);
+      ambientFilter2.gain.setTargetAtTime(0, now, 0.4);
+
+      ambientLfo.frequency.setTargetAtTime(0.1, now, 0.4);
+      ambientLfoGain.gain.setTargetAtTime(180, now, 0.4);
+    }
+  }
+
+  function startAmbient(preset = settings.ambientSound) {
+    if (preset === 'off') {
+      stopAmbient();
+      return;
+    }
+    try {
+      const c = getCtx();
+      if (!c) return;
+      if (ambientPlaying) {
+        configureAmbientNodes(preset);
+        return;
+      }
+
+      const buf = getNoiseBuffer(c);
+      ambientSource = c.createBufferSource();
+      ambientSource.buffer = buf;
+      ambientSource.loop = true;
+
+      ambientFilter1 = c.createBiquadFilter();
+      ambientFilter2 = c.createBiquadFilter();
+      ambientLfo = c.createOscillator();
+      ambientLfoGain = c.createGain();
+
+      ambientLfo.connect(ambientLfoGain);
+      ambientLfoGain.connect(ambientFilter1.frequency);
+
+      ambientSource.connect(ambientFilter1);
+      ambientFilter1.connect(ambientFilter2);
+
+      const fadeGain = c.createGain();
+      fadeGain.gain.setValueAtTime(0.0001, c.currentTime);
+      fadeGain.gain.exponentialRampToValueAtTime(1.0, c.currentTime + 1.2);
+
+      ambientFilter2.connect(fadeGain);
+      fadeGain.connect(ambientGain);
+
+      configureAmbientNodes(preset);
+      ambientLfo.start();
+      ambientSource.start();
+      ambientPlaying = true;
+    } catch (e) {
+      ambientPlaying = false;
+    }
+  }
+
+  function stopAmbient() {
+    if (!ambientPlaying || !ctx) return;
+    try {
+      if (ambientSource) {
+        ambientSource.stop(ctx.currentTime + 0.8);
+      }
+      if (ambientLfo) {
+        ambientLfo.stop(ctx.currentTime + 0.8);
+      }
+      setTimeout(() => {
+        ambientPlaying = false;
+        ambientSource = null;
+        ambientFilter1 = null;
+        ambientFilter2 = null;
+        ambientLfo = null;
+        ambientLfoGain = null;
+      }, 900);
+    } catch (e) {
+      ambientPlaying = false;
+    }
   }
 
   function tone(freq, duration, type = 'sine', volume = 0.25, delay = 0) {
     if (muted) return;
     try {
       const c = getCtx();
+      if (!c) return;
       const osc = c.createOscillator();
       const gain = c.createGain();
       osc.type = type;
@@ -1738,12 +1976,148 @@ const Audio = (() => {
       gain.gain.setValueAtTime(volume, c.currentTime + delay);
       gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + duration);
       osc.connect(gain);
-      gain.connect(c.destination);
+      gain.connect(sfxGain || c.destination);
       osc.start(c.currentTime + delay);
       osc.stop(c.currentTime + delay + duration);
-    } catch (e) {
-      /* audio not available */
-    }
+    } catch (e) {}
+  }
+
+  // Organiczny dzwonek świątynny Suzu / Rin (poprawna odpowiedź)
+  function playSuzu() {
+    if (muted) return;
+    try {
+      const c = getCtx();
+      if (!c) return;
+      const now = c.currentTime;
+
+      // Ton podstawowy: 528 Hz (czysty, harmonijny rezonans)
+      const osc1 = c.createOscillator();
+      const g1 = c.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(528, now);
+      g1.gain.setValueAtTime(0.32, now);
+      g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+      osc1.connect(g1);
+      g1.connect(sfxGain || c.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.7);
+
+      // Czysty alikwot: 1056 Hz (oktawa)
+      const osc2 = c.createOscillator();
+      const g2 = c.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1056, now);
+      g2.gain.setValueAtTime(0.16, now);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+      osc2.connect(g2);
+      g2.connect(sfxGain || c.destination);
+      osc2.start(now);
+      osc2.stop(now + 0.45);
+    } catch (e) {}
+  }
+
+  // Organiczne uderzenie drewniane Hyōshigi (błędna odpowiedź, niekarzące)
+  function playHyoshigi() {
+    if (muted) return;
+    try {
+      const c = getCtx();
+      if (!c) return;
+      const now = c.currentTime;
+
+      // Klocki drewniane (pasmo 420 Hz i 320 Hz z szybkim tłumieniem)
+      const osc1 = c.createOscillator();
+      const f1 = c.createBiquadFilter();
+      const g1 = c.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(420, now);
+      f1.type = 'bandpass';
+      f1.frequency.setValueAtTime(420, now);
+      f1.Q.setValueAtTime(4, now);
+      g1.gain.setValueAtTime(0.28, now);
+      g1.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      osc1.connect(f1);
+      f1.connect(g1);
+      g1.connect(sfxGain || c.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      const osc2 = c.createOscillator();
+      const f2 = c.createBiquadFilter();
+      const g2 = c.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(320, now + 0.03);
+      f2.type = 'bandpass';
+      f2.frequency.setValueAtTime(320, now + 0.03);
+      f2.Q.setValueAtTime(5, now + 0.03);
+      g2.gain.setValueAtTime(0.2, now + 0.03);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc2.connect(f2);
+      f2.connect(g2);
+      g2.connect(sfxGain || c.destination);
+      osc2.start(now + 0.03);
+      osc2.stop(now + 0.21);
+    } catch (e) {}
+  }
+
+  // Drewniany klik dotykowy Ki
+  function playKi() {
+    if (muted) return;
+    try {
+      const c = getCtx();
+      if (!c) return;
+      const now = c.currentTime;
+      const osc = c.createOscillator();
+      const filter = c.createBiquadFilter();
+      const gain = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(750, now);
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(750, now);
+      filter.Q.setValueAtTime(6, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(sfxGain || c.destination);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } catch (e) {}
+  }
+
+  // Pentatoniczny arpeggio w skali Hirajōshi (dla serii poprawnych odpowiedzi)
+  function playStreakFlourish() {
+    if (muted) return;
+    try {
+      const notes = [587.33, 622.25, 783.99, 880.0]; // D5, Eb5, G5, A5
+      notes.forEach((freq, idx) => {
+        tone(freq, 0.22, 'sine', 0.16, idx * 0.08);
+      });
+    } catch (e) {}
+  }
+
+  // Głęboki dzwon świątynny z akordem gongowym (celebracja, ukończenie sesji)
+  function playTempleGong() {
+    if (muted) return;
+    try {
+      const c = getCtx();
+      if (!c) return;
+      const now = c.currentTime;
+      // Dzwon C3 (130.8 Hz) + G3 (196 Hz) + E4 (329.6 Hz) + C5 (523.2 Hz)
+      const freqs = [130.81, 196.0, 329.63, 523.25];
+      freqs.forEach((freq, idx) => {
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        const startVol = 0.25 / (idx + 1);
+        g.gain.setValueAtTime(startVol, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        osc.connect(g);
+        g.connect(sfxGain || c.destination);
+        osc.start(now);
+        osc.stop(now + 1.8);
+      });
+    } catch (e) {}
   }
 
   function stopPlayback() {
@@ -1805,6 +2179,11 @@ const Audio = (() => {
         const audio = new window.Audio(url);
         currentAudio = audio;
 
+        // Skalowanie głośności TTS zgodnie z ustawieniami
+        const sfxVol = (settings.sfxVolume ?? 80) / 100;
+        const masterVol = (settings.masterVolume ?? 80) / 100;
+        audio.volume = Math.max(0, Math.min(1, sfxVol * masterVol));
+
         audio.onerror = () => {
           if (currentAudio === audio) {
             currentAudio = null;
@@ -1839,22 +2218,21 @@ const Audio = (() => {
 
   return {
     correct() {
-      tone(523.25, 0.12, 'sine', 0.22);
-      tone(659.25, 0.18, 'sine', 0.18, 0.1);
+      playSuzu();
     },
     wrong() {
-      tone(233, 0.25, 'triangle', 0.18);
-      tone(220, 0.3, 'triangle', 0.12, 0.08);
+      playHyoshigi();
     },
     click() {
-      tone(1200, 0.04, 'sine', 0.08);
+      playKi();
+    },
+    streak() {
+      playStreakFlourish();
     },
     celebrate() {
-      tone(523.25, 0.15, 'sine', 0.18, 0);
-      tone(659.25, 0.15, 'sine', 0.18, 0.12);
-      tone(783.99, 0.15, 'sine', 0.18, 0.24);
-      tone(1046.5, 0.25, 'sine', 0.22, 0.36);
+      playTempleGong();
     },
+    tone,
     speak,
     speakSystem,
     getTtsUrl,
@@ -1874,8 +2252,28 @@ const Audio = (() => {
       muted = !!value;
       if (muted) {
         stopPlayback();
+        stopAmbient();
       }
+      updateVolumes();
       return muted;
+    },
+    updateVolumes,
+    ambient: {
+      start(preset) {
+        startAmbient(preset);
+      },
+      stop() {
+        stopAmbient();
+      },
+      setPreset(preset) {
+        configureAmbientNodes(preset);
+      },
+      isPlaying() {
+        return ambientPlaying;
+      },
+      currentPreset() {
+        return activeAmbientPreset;
+      }
     }
   };
 })();
@@ -2030,7 +2428,8 @@ const SCREEN_TITLES = {
   vocab: 'Słownictwo',
   kanji: 'Kanji',
   grammar: 'Gramatyka',
-  settings: 'Ustawienia'
+  settings: 'Ustawienia',
+  focus: 'Tryb Skupienia'
 };
 
 const MODULE_LABELS = {
@@ -2039,7 +2438,8 @@ const MODULE_LABELS = {
   vocab: 'SŁOWNICTWO',
   kanji: 'KANJI',
   grammar: 'GRAMATYKA',
-  settings: 'APLIKACJA'
+  settings: 'APLIKACJA',
+  focus: 'SKUPIENIE'
 };
 
 /* Ekran → moduł. Ekrany kany (hub, nauka, egzamin, powtórki) dzielą jeden
@@ -2050,6 +2450,7 @@ function screenModule(screen = state.screen) {
   if (screen === 'kanji') return 'kanji';
   if (screen === 'grammar') return 'grammar';
   if (screen === 'settings') return 'settings';
+  if (screen === 'focus') return 'focus';
   return 'kana';
 }
 
@@ -2060,6 +2461,7 @@ function screenModule(screen = state.screen) {
    obiekcie stanu, co jest tym samym warunkiem, którego używa render.
 */
 function isFocusMode() {
+  if (state.screen === 'focus') return !!(focusSession && !focusSession.finished);
   if (state.screen === 'learn') return true;
   if (state.screen === 'exam') return !!(state.exam && !state.exam.finished);
   if (state.screen === 'vocab') return !!(state.vocab && !state.vocab.finished);
@@ -3263,6 +3665,14 @@ function setScreen(screen, { isBack = false } = {}) {
 homeBtn.onclick = () => {
   Audio.click();
 
+  if (state.screen === 'focus') {
+    if (focusSession && !focusSession.finished) {
+      if (!confirm('Czy na pewno chcesz przerwać sesję skupienia?')) return;
+    }
+    exitFocusSession();
+    return;
+  }
+
   if (state.screen === 'kanji') {
     if (!confirmKanjiExit()) return;
     const mode = state.kanji ? state.kanji.mode : 'hub';
@@ -3360,6 +3770,7 @@ function render() {
   if (state.screen === 'vocab') renderVocab();
   if (state.screen === 'kanji') renderKanji();
   if (state.screen === 'grammar') renderGrammar();
+  if (state.screen === 'focus') renderFocus();
   if (state.screen === 'settings') renderSettings();
 }
 
@@ -3530,6 +3941,27 @@ function renderDashboard() {
         </div>
         <button class="dashboard-smart-btn" id="btnDashboardSmartAction" type="button">
           ${totalDue > 0 ? (kana.due > 0 ? 'Powtórz Kanę →' : 'Powtórz Kanji →') : 'Ucz się Kany →'}
+        </button>
+      </div>
+
+      <!-- TRYB SKUPIENIA ZEN CARD (T25) -->
+      <div class="dashboard-focus-card">
+        <div class="dashboard-focus-watermark" aria-hidden="true">禅</div>
+        <div class="dashboard-focus-info">
+          <div class="dashboard-focus-kicker-wrap">
+            <span class="dashboard-focus-badge">TRYB SKUPIENIA · ZEN POMODORO</span>
+            <span class="dashboard-focus-ambient-badge">
+              <span class="focus-ambient-dot ${settings.ambientSound === 'off' ? 'is-off' : ''}"></span>
+              ${settings.ambientSound !== 'off' ? `Tło: ${focusAmbientLabel(settings.ambientSound)}` : 'Dźwięki natury'}
+            </span>
+          </div>
+          <h2 class="dashboard-focus-title">Głęboka sesja skupienia bez rozpraszaczy</h2>
+          <p class="dashboard-focus-desc">
+            Uruchom sesję z organicznym dźwiękiem tła (ambient), czasem odliczania (15, 20 lub 25 min) i miksem ćwiczeń dostosowanym do Twojego poziomu.
+          </p>
+        </div>
+        <button class="dashboard-focus-btn" id="btnDashboardFocusOpen" type="button">
+          Rozpocznij skupienie ⏳
         </button>
       </div>
 
@@ -3789,6 +4221,15 @@ function renderDashboard() {
         Audio.click();
         openAchievementsModal();
       }
+    };
+  }
+
+  // Tryb Skupienia Zen
+  const btnFocusOpen = document.getElementById('btnDashboardFocusOpen');
+  if (btnFocusOpen) {
+    btnFocusOpen.onclick = () => {
+      Audio.click();
+      openFocusSetupModal();
     };
   }
 
@@ -8781,12 +9222,42 @@ function renderSettings() {
       </div>
 
       <div class="settings-group card">
-        <h3>Dźwięk</h3>
+        <h3>Dźwięk i Ambient</h3>
         <div class="settings-row">
-          <span class="settings-label" id="soundLabel">Efekty dźwiękowe</span>
+          <span class="settings-label" id="soundLabel">Wyciszenie dźwięku</span>
           <div class="settings-pills" role="group" aria-labelledby="soundLabel">
             ${settingsPill('false', String(settings.muted), 'Włączone', 'data-muted-set', 'muted-false')}
-            ${settingsPill('true', String(settings.muted), 'Wyłączone', 'data-muted-set', 'muted-true')}
+            ${settingsPill('true', String(settings.muted), 'Wyciszone', 'data-muted-set', 'muted-true')}
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top: 14px">
+          <span class="settings-label" id="masterVolumeLabel">Głośność główna</span>
+          <div class="settings-slider-wrapper">
+            <input type="range" min="0" max="100" step="5" value="${settings.masterVolume ?? 80}" id="sliderMasterVolume" aria-labelledby="masterVolumeLabel" class="settings-slider" />
+            <span class="settings-slider-value" id="valMasterVolume">${settings.masterVolume ?? 80}%</span>
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top: 14px">
+          <span class="settings-label" id="sfxVolumeLabel">Efekty i wymowa (SFX)</span>
+          <div class="settings-slider-wrapper">
+            <input type="range" min="0" max="100" step="5" value="${settings.sfxVolume ?? 80}" id="sliderSfxVolume" aria-labelledby="sfxVolumeLabel" class="settings-slider" />
+            <span class="settings-slider-value" id="valSfxVolume">${settings.sfxVolume ?? 80}%</span>
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top: 14px">
+          <span class="settings-label" id="ambientSoundLabel">Dźwięk tła (Ambient)</span>
+          <div class="settings-pills" role="group" aria-labelledby="ambientSoundLabel">
+            ${settingsPill('rain', settings.ambientSound, '🌧️ Deszcz', 'data-ambient-set', 'ambient-rain')}
+            ${settingsPill('bamboo', settings.ambientSound, '🎋 Bambus', 'data-ambient-set', 'ambient-bamboo')}
+            ${settingsPill('waves', settings.ambientSound, '🌊 Fale', 'data-ambient-set', 'ambient-waves')}
+            ${settingsPill('off', settings.ambientSound, 'Wył.', 'data-ambient-set', 'ambient-off')}
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top: 14px">
+          <span class="settings-label" id="ambientVolumeLabel">Głośność tła</span>
+          <div class="settings-slider-wrapper">
+            <input type="range" min="0" max="100" step="5" value="${settings.ambientVolume ?? 50}" id="sliderAmbientVolume" aria-labelledby="ambientVolumeLabel" class="settings-slider" />
+            <span class="settings-slider-value" id="valAmbientVolume">${settings.ambientVolume ?? 50}%</span>
           </div>
         </div>
       </div>
@@ -8885,6 +9356,47 @@ function renderSettings() {
       Audio.click();
       setMuted(btn.dataset.mutedSet === 'true');
       renderSettingsFocused('muted-' + btn.dataset.mutedSet);
+    };
+  });
+
+  const masterSlider = document.getElementById('sliderMasterVolume');
+  if (masterSlider) {
+    masterSlider.oninput = e => {
+      const val = parseInt(e.target.value, 10);
+      const valSpan = document.getElementById('valMasterVolume');
+      if (valSpan) valSpan.textContent = val + '%';
+      setAudioVolume('master', val);
+    };
+  }
+
+  const sfxSlider = document.getElementById('sliderSfxVolume');
+  if (sfxSlider) {
+    sfxSlider.oninput = e => {
+      const val = parseInt(e.target.value, 10);
+      const valSpan = document.getElementById('valSfxVolume');
+      if (valSpan) valSpan.textContent = val + '%';
+      setAudioVolume('sfx', val);
+    };
+    sfxSlider.onchange = () => {
+      Audio.click();
+    };
+  }
+
+  const ambientSlider = document.getElementById('sliderAmbientVolume');
+  if (ambientSlider) {
+    ambientSlider.oninput = e => {
+      const val = parseInt(e.target.value, 10);
+      const valSpan = document.getElementById('valAmbientVolume');
+      if (valSpan) valSpan.textContent = val + '%';
+      setAudioVolume('ambient', val);
+    };
+  }
+
+  document.querySelectorAll('[data-ambient-set]').forEach(btn => {
+    btn.onclick = () => {
+      Audio.click();
+      setAmbientSound(btn.dataset.ambientSet);
+      renderSettingsFocused('ambient-' + btn.dataset.ambientSet);
     };
   });
 
@@ -9533,6 +10045,677 @@ function getSmartPracticePool(type) {
     return combined;
   }
   return [];
+}
+
+/* =========================================================
+   TRYB SKUPIENIA · ZEN FOCUS POMODORO (T25)
+   ------------------------------------------------------------
+   Głęboka sesja skupienia bez rozpraszaczy z generatorem
+   organicznego tła dźwiękowego (deszcz, bambus, fale),
+   timerem (15/20/25 min) i dynamicznym miksem pytań.
+   Odpowiedzi aktualizują standardowe harmonogramy SRS i dziennik.
+========================================================= */
+
+let focusSession = null;
+
+function formatFocusTimer(seconds) {
+  const m = Math.floor(Math.max(0, seconds) / 60);
+  const s = Math.max(0, seconds) % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function focusAmbientLabel(preset) {
+  if (preset === 'rain') return '🌧️ Deszcz';
+  if (preset === 'bamboo') return '🎋 Bambus';
+  if (preset === 'waves') return '🌊 Fale';
+  return 'Brak tła';
+}
+
+function buildFocusPool(scope = 'smart') {
+  const pool = [];
+
+  function pickDistractors(correctVal, fullList, count = 3) {
+    const available = fullList.filter(item => item !== correctVal);
+    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  }
+
+  function makeKanaItem(c) {
+    const allRomaji = getAll().map(k => k.romaji);
+    const distractors = pickDistractors(c.romaji, allRomaji, 3);
+    const choices = [c.romaji, ...distractors].sort(() => Math.random() - 0.5);
+    return {
+      type: 'kana',
+      id: c.kana,
+      question: c.kana,
+      promptSub: c.type ? `${c.type} · ${c.group || ''}` : 'Znak Kana',
+      answer: c.romaji,
+      choices,
+      audioText: c.kana
+    };
+  }
+
+  function makeVocabItem(v) {
+    const meaning = v.meaning || v.pl || '';
+    const allMeanings = VOCAB_LEARN_ITEMS.map(i => i.meaning || i.pl).filter(Boolean);
+    const distractors = pickDistractors(meaning, allMeanings, 3);
+    const choices = [meaning, ...distractors].sort(() => Math.random() - 0.5);
+    return {
+      type: 'vocab',
+      id: v.id,
+      question: v.kana,
+      promptSub: v.kanji ? `${v.kanji} (${v.romaji})` : v.romaji,
+      answer: meaning,
+      choices,
+      audioText: v.kana
+    };
+  }
+
+  function makeKanjiItem(k) {
+    const meaning = k.meaning || k.pl || '';
+    const allMeanings = KANJI_ITEMS.map(i => i.meaning || i.pl).filter(Boolean);
+    const distractors = pickDistractors(meaning, allMeanings, 3);
+    const choices = [meaning, ...distractors].sort(() => Math.random() - 0.5);
+    const subParts = [];
+    if (Array.isArray(k.onyomi) && k.onyomi.length) subParts.push(k.onyomi.join(', '));
+    else if (typeof k.onyomi === 'string') subParts.push(k.onyomi);
+    if (Array.isArray(k.kunyomi) && k.kunyomi.length) subParts.push(k.kunyomi.join(', '));
+    else if (typeof k.kunyomi === 'string') subParts.push(k.kunyomi);
+    return {
+      type: 'kanji',
+      id: k.id,
+      question: k.kanji,
+      promptSub: subParts.join(' · ') || 'Kanji N5',
+      answer: meaning,
+      choices,
+      audioText: null
+    };
+  }
+
+  if (scope === 'kana') {
+    const all = getAll().sort(() => Math.random() - 0.5);
+    all.forEach(c => pool.push(makeKanaItem(c)));
+    return pool;
+  }
+
+  if (scope === 'vocab') {
+    const all = [...VOCAB_LEARN_ITEMS].sort(() => Math.random() - 0.5);
+    all.forEach(v => pool.push(makeVocabItem(v)));
+    return pool;
+  }
+
+  if (scope === 'kanji') {
+    const all = [...KANJI_ITEMS].sort(() => Math.random() - 0.5);
+    all.forEach(k => pool.push(makeKanjiItem(k)));
+    return pool;
+  }
+
+  // scope === 'smart' (Inteligentny miks)
+  // 1. Priorytet: elementy zaległe SRS (due)
+  const dueKana = dueList();
+  dueKana.slice(0, 15).forEach(kanaStr => {
+    const charObj = item(kanaStr);
+    if (charObj) pool.push(makeKanaItem(charObj));
+  });
+
+  if (typeof dueKanjiList === 'function') {
+    const dueKanji = dueKanjiList();
+    dueKanji.slice(0, 10).forEach(k => {
+      pool.push(makeKanjiItem(k));
+    });
+  }
+
+  // 2. Dodaj zrównoważony miks ze wszystkich trzech filarów
+  const randomKana = getAll()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 25);
+  randomKana.forEach(c => {
+    if (!pool.some(p => p.id === c.kana)) pool.push(makeKanaItem(c));
+  });
+
+  const randomVocab = [...VOCAB_LEARN_ITEMS].sort(() => Math.random() - 0.5).slice(0, 20);
+  randomVocab.forEach(v => {
+    if (!pool.some(p => p.id === v.id)) pool.push(makeVocabItem(v));
+  });
+
+  const randomKanji = [...KANJI_ITEMS].sort(() => Math.random() - 0.5).slice(0, 15);
+  randomKanji.forEach(k => {
+    if (!pool.some(p => p.id === k.id)) pool.push(makeKanjiItem(k));
+  });
+
+  return pool.sort(() => Math.random() - 0.5);
+}
+
+function openFocusSetupModal() {
+  closeFocusSetupModal();
+
+  let selectedDuration = 20;
+  let selectedScope = 'smart';
+  let selectedAmbient = settings.ambientSound || 'rain';
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'focusModalBackdrop';
+  backdrop.className = 'focus-modal-backdrop animate-fade';
+
+  function renderModalContent() {
+    backdrop.innerHTML = `
+      <div class="focus-setup-modal animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="focusModalTitle">
+        <div class="focus-modal-head">
+          <div class="focus-modal-brand">
+            <span class="focus-modal-icon">⏳</span>
+            <span class="focus-modal-eyebrow">SESJA SKUPIENIA · ZEN POMODORO</span>
+          </div>
+          <button class="focus-modal-close" id="btnFocusModalClose" aria-label="Zamknij">✕</button>
+        </div>
+
+        <div class="focus-modal-body">
+          <h2 class="focus-modal-title" id="focusModalTitle">Tryb Głębokiego Skupienia</h2>
+          <p class="focus-modal-desc">
+            Uruchom wyciszoną sesję nauki bez rozpraszaczy z organicznym generatorem tła dźwiękowego,
+            odliczaniem czasu i płynnym przepływem pytań.
+          </p>
+
+          <div class="focus-modal-section">
+            <label class="focus-section-label" id="lblFocusDuration">Czas trwania sesji</label>
+            <div class="focus-pills" role="group" aria-labelledby="lblFocusDuration">
+              <button type="button" class="focus-pill ${selectedDuration === 15 ? 'is-active' : ''}" data-focus-time="15">15 min</button>
+              <button type="button" class="focus-pill ${selectedDuration === 20 ? 'is-active' : ''}" data-focus-time="20">20 min</button>
+              <button type="button" class="focus-pill ${selectedDuration === 25 ? 'is-active' : ''}" data-focus-time="25">25 min (Pomodoro)</button>
+            </div>
+          </div>
+
+          <div class="focus-modal-section">
+            <label class="focus-section-label" id="lblFocusScope">Materiał do nauki</label>
+            <div class="focus-pills" role="group" aria-labelledby="lblFocusScope">
+              <button type="button" class="focus-pill ${selectedScope === 'smart' ? 'is-active' : ''}" data-focus-scope="smart">✨ Inteligentny miks</button>
+              <button type="button" class="focus-pill ${selectedScope === 'kana' ? 'is-active' : ''}" data-focus-scope="kana">ひ/カ Tylko Kana</button>
+              <button type="button" class="focus-pill ${selectedScope === 'vocab' ? 'is-active' : ''}" data-focus-scope="vocab">語 Słownictwo</button>
+              <button type="button" class="focus-pill ${selectedScope === 'kanji' ? 'is-active' : ''}" data-focus-scope="kanji">漢 Kanji</button>
+            </div>
+          </div>
+
+          <div class="focus-modal-section">
+            <label class="focus-section-label" id="lblFocusAmbient">Tło dźwiękowe (Ambient)</label>
+            <div class="focus-pills" role="group" aria-labelledby="lblFocusAmbient">
+              <button type="button" class="focus-pill ${selectedAmbient === 'rain' ? 'is-active' : ''}" data-focus-ambient="rain">🌧️ Deszcz</button>
+              <button type="button" class="focus-pill ${selectedAmbient === 'bamboo' ? 'is-active' : ''}" data-focus-ambient="bamboo">🎋 Bambus</button>
+              <button type="button" class="focus-pill ${selectedAmbient === 'waves' ? 'is-active' : ''}" data-focus-ambient="waves">🌊 Fale</button>
+              <button type="button" class="focus-pill ${selectedAmbient === 'off' ? 'is-active' : ''}" data-focus-ambient="off">Brak</button>
+            </div>
+          </div>
+
+          <div class="focus-modal-actions">
+            <button class="btn btn-primary focus-start-btn" id="btnFocusModalStart">
+              Rozpocznij skupienie ⏳
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const btnClose = backdrop.querySelector('#btnFocusModalClose');
+    if (btnClose) {
+      btnClose.onclick = () => {
+        Audio.click();
+        closeFocusSetupModal();
+      };
+    }
+
+    backdrop.querySelectorAll('[data-focus-time]').forEach(btn => {
+      btn.onclick = () => {
+        Audio.click();
+        selectedDuration = parseInt(btn.dataset.focusTime, 10);
+        renderModalContent();
+      };
+    });
+
+    backdrop.querySelectorAll('[data-focus-scope]').forEach(btn => {
+      btn.onclick = () => {
+        Audio.click();
+        selectedScope = btn.dataset.focusScope;
+        renderModalContent();
+      };
+    });
+
+    backdrop.querySelectorAll('[data-focus-ambient]').forEach(btn => {
+      btn.onclick = () => {
+        Audio.click();
+        selectedAmbient = btn.dataset.focusAmbient;
+        renderModalContent();
+      };
+    });
+
+    const btnStart = backdrop.querySelector('#btnFocusModalStart');
+    if (btnStart) {
+      btnStart.onclick = () => {
+        Audio.click();
+        startFocusSession({
+          durationMinutes: selectedDuration,
+          scope: selectedScope,
+          ambient: selectedAmbient
+        });
+      };
+    }
+  }
+
+  document.body.appendChild(backdrop);
+  renderModalContent();
+
+  const onKey = e => {
+    if (e.key === 'Escape') {
+      closeFocusSetupModal();
+      window.removeEventListener('keydown', onKey);
+    }
+  };
+  window.addEventListener('keydown', onKey);
+}
+
+function closeFocusSetupModal() {
+  const backdrop = document.getElementById('focusModalBackdrop');
+  if (backdrop) backdrop.remove();
+}
+
+function startFocusSession(opts = {}) {
+  const duration = Number(opts.durationMinutes) || 20;
+  const scope = opts.scope || 'smart';
+  const ambient = opts.ambient || settings.ambientSound || 'rain';
+
+  closeFocusSetupModal();
+
+  const pool = buildFocusPool(scope);
+  if (!pool || pool.length === 0) {
+    alert('Nie udało się utworzyć zestawu pytań dla wybranego zakresu.');
+    return;
+  }
+
+  focusSession = {
+    durationMinutes: duration,
+    totalSeconds: duration * 60,
+    secondsLeft: duration * 60,
+    scope: scope,
+    ambientSound: ambient,
+    isPaused: false,
+    finished: false,
+    currentIndex: 0,
+    pool: pool,
+    answeredThisCard: false,
+    timerInterval: null,
+    stats: {
+      answered: 0,
+      correct: 0,
+      streak: 0,
+      bestStreak: 0,
+      startTime: Date.now()
+    }
+  };
+
+  // Uruchomienie tła dźwiękowego
+  if (ambient !== 'off' && typeof Audio !== 'undefined' && Audio.ambient) {
+    Audio.ambient.start(ambient);
+  }
+
+  // Uruchomienie timera
+  focusSession.timerInterval = setInterval(() => {
+    if (!focusSession || focusSession.isPaused || focusSession.finished) return;
+    focusSession.secondsLeft--;
+    updateFocusTimerDisplay();
+    if (focusSession.secondsLeft <= 0) {
+      finishFocusSession();
+    }
+  }, 1000);
+
+  setScreen('focus');
+}
+
+function updateFocusTimerDisplay() {
+  if (!focusSession) return;
+  const timeText = document.getElementById('focusTimerText');
+  if (timeText) {
+    timeText.textContent = formatFocusTimer(focusSession.secondsLeft);
+  }
+  const progFill = document.getElementById('focusTimerProgressFill');
+  if (progFill && focusSession.totalSeconds > 0) {
+    const elapsedPercent = Math.min(
+      100,
+      Math.round(((focusSession.totalSeconds - focusSession.secondsLeft) / focusSession.totalSeconds) * 100)
+    );
+    progFill.style.width = elapsedPercent + '%';
+  }
+}
+
+function toggleFocusPause() {
+  if (!focusSession || focusSession.finished) return;
+  Audio.click();
+  focusSession.isPaused = !focusSession.isPaused;
+  if (focusSession.isPaused) {
+    if (typeof Audio !== 'undefined' && Audio.ambient) {
+      Audio.ambient.stop();
+    }
+  } else {
+    if (focusSession.ambientSound !== 'off' && typeof Audio !== 'undefined' && Audio.ambient) {
+      Audio.ambient.start(focusSession.ambientSound);
+    }
+  }
+  renderFocus();
+}
+
+function cycleFocusAmbient() {
+  if (!focusSession || focusSession.finished) return;
+  Audio.click();
+  const presets = ['rain', 'bamboo', 'waves', 'off'];
+  const curIdx = presets.indexOf(focusSession.ambientSound);
+  const nextPreset = presets[(curIdx + 1) % presets.length];
+  focusSession.ambientSound = nextPreset;
+
+  if (typeof Audio !== 'undefined' && Audio.ambient) {
+    if (nextPreset === 'off') {
+      Audio.ambient.stop();
+    } else {
+      Audio.ambient.start(nextPreset);
+    }
+  }
+
+  const lbl = document.getElementById('focusAmbientLabel');
+  if (lbl) lbl.textContent = focusAmbientLabel(nextPreset);
+  const indicator = document.querySelector('.focus-ambient-indicator');
+  if (indicator) indicator.classList.toggle('is-off', nextPreset === 'off');
+}
+
+function exitFocusSession() {
+  if (focusSession) {
+    if (focusSession.timerInterval) clearInterval(focusSession.timerInterval);
+    if (typeof Audio !== 'undefined' && Audio.ambient) Audio.ambient.stop();
+    focusSession = null;
+  }
+  const target = screenHistory.pop() || 'dashboard';
+  setScreen(target, { isBack: true });
+}
+
+function finishFocusSession() {
+  if (!focusSession || focusSession.finished) return;
+  focusSession.finished = true;
+  if (focusSession.timerInterval) clearInterval(focusSession.timerInterval);
+  if (typeof Audio !== 'undefined' && Audio.ambient) Audio.ambient.stop();
+
+  if (typeof Audio !== 'undefined' && Audio.celebrate) {
+    Audio.celebrate();
+  }
+
+  showFocusSummaryModal();
+}
+
+function renderFocus() {
+  if (!focusSession) {
+    setScreen('dashboard');
+    return;
+  }
+
+  const elapsedPercent = Math.min(
+    100,
+    Math.round(((focusSession.totalSeconds - focusSession.secondsLeft) / focusSession.totalSeconds) * 100)
+  );
+
+  app.innerHTML = `
+    <div class="focus-screen animate-fade">
+      <div class="focus-progress-line">
+        <div class="focus-progress-line-fill" id="focusTimerProgressFill" style="width: ${elapsedPercent}%"></div>
+      </div>
+
+      <div class="focus-header">
+        <button class="focus-header-btn exit" id="btnFocusExit" type="button" title="Zakończ sesję skupienia">
+          ${icon('chevron-left')} Zakończ
+        </button>
+
+        <div class="focus-timer-badge">
+          <span class="focus-timer-icon">⏳</span>
+          <span id="focusTimerText" class="focus-timer-text">${formatFocusTimer(focusSession.secondsLeft)}</span>
+        </div>
+
+        <div class="focus-header-controls">
+          <button class="focus-ambient-toggle" id="btnFocusAmbientToggle" type="button" title="Przełącz tło dźwiękowe">
+            <span class="focus-ambient-indicator ${focusSession.ambientSound === 'off' ? 'is-off' : ''}"></span>
+            <span id="focusAmbientLabel">${focusAmbientLabel(focusSession.ambientSound)}</span>
+          </button>
+
+          <button class="focus-header-btn pause ${focusSession.isPaused ? 'is-active' : ''}" id="btnFocusPause" type="button" title="${focusSession.isPaused ? 'Wznów' : 'Wstrzymaj'}">
+            ${focusSession.isPaused ? '▶️ Wznów' : '⏸️'}
+          </button>
+        </div>
+      </div>
+
+      <div class="focus-meta-bar">
+        <span class="focus-meta-item">
+          🔥 Seria: <strong id="focusStreakVal">${focusSession.stats.streak}</strong>
+        </span>
+        <span class="focus-meta-divider">·</span>
+        <span class="focus-meta-item">
+          Wynik: <strong id="focusScoreVal">${focusSession.stats.correct} / ${focusSession.stats.answered}</strong>
+        </span>
+      </div>
+
+      <div id="focusCardContainer" class="focus-card-area ${focusSession.isPaused ? 'is-paused' : ''}">
+        ${
+          focusSession.isPaused
+            ? `
+          <div class="focus-paused-overlay animate-fade">
+            <div class="focus-paused-icon">⏸️</div>
+            <h3 class="focus-paused-title">Sesja wstrzymana</h3>
+            <p class="focus-paused-desc">Odpocznij chwilę i wróć do skupienia, gdy będziesz gotowy.</p>
+            <button class="btn btn-primary" id="btnFocusResumeBig">Wznów sesję skupienia</button>
+          </div>
+        `
+            : ''
+        }
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnFocusExit').onclick = () => {
+    Audio.click();
+    if (!focusSession.finished) {
+      if (!confirm('Czy na pewno chcesz zakończyć sesję skupienia?')) return;
+    }
+    exitFocusSession();
+  };
+
+  document.getElementById('btnFocusPause').onclick = toggleFocusPause;
+  document.getElementById('btnFocusAmbientToggle').onclick = cycleFocusAmbient;
+
+  const btnResumeBig = document.getElementById('btnFocusResumeBig');
+  if (btnResumeBig) {
+    btnResumeBig.onclick = toggleFocusPause;
+  }
+
+  if (!focusSession.isPaused) {
+    renderFocusCard();
+  }
+}
+
+function renderFocusCard() {
+  const container = document.getElementById('focusCardContainer');
+  if (!container || !focusSession || focusSession.isPaused) return;
+
+  if (focusSession.currentIndex >= focusSession.pool.length) {
+    const more = buildFocusPool(focusSession.scope);
+    focusSession.pool.push(...more);
+  }
+
+  const item = focusSession.pool[focusSession.currentIndex];
+  if (!item) {
+    finishFocusSession();
+    return;
+  }
+
+  focusSession.answeredThisCard = false;
+
+  const typeLabel = item.type === 'kana' ? 'KANA' : item.type === 'vocab' ? 'SŁOWNICTWO' : 'KANJI';
+
+  container.innerHTML = `
+    <div class="focus-card animate-slide-up">
+      <div class="focus-card-top">
+        <span class="focus-card-type-tag">${typeLabel}</span>
+        ${
+          item.audioText
+            ? `
+          <button class="focus-audio-btn" id="btnFocusSpeak" type="button" title="Odsłuchaj wymowę (klawisz V lub Spacja)">
+            ${icon('speaker')}
+          </button>
+        `
+            : ''
+        }
+      </div>
+
+      <div class="focus-question-wrap">
+        <div class="focus-question-glyph">${escapeHtml(item.question)}</div>
+        ${item.promptSub ? `<div class="focus-question-sub">${escapeHtml(item.promptSub)}</div>` : ''}
+      </div>
+
+      <div class="focus-choices-grid">
+        ${item.choices
+          .map(
+            (choice, idx) => `
+          <button class="focus-choice-btn" data-choice-idx="${idx}" data-choice-val="${escapeHtml(choice)}" type="button">
+            <span class="focus-choice-idx">${idx + 1}</span>
+            <span class="focus-choice-label">${escapeHtml(choice)}</span>
+          </button>
+        `
+          )
+          .join('')}
+      </div>
+    </div>
+  `;
+
+  const btnSpeak = document.getElementById('btnFocusSpeak');
+  if (btnSpeak && item.audioText) {
+    btnSpeak.onclick = () => {
+      Audio.speak(item.audioText);
+    };
+  }
+
+  container.querySelectorAll('.focus-choice-btn').forEach(btn => {
+    btn.onclick = () => {
+      const choiceVal = btn.dataset.choiceVal;
+      handleFocusAnswer(choiceVal, item.answer, btn, item);
+    };
+  });
+}
+
+function handleFocusAnswer(selectedChoice, correctChoice, clickedBtn, item) {
+  if (!focusSession || focusSession.answeredThisCard || focusSession.isPaused) return;
+  focusSession.answeredThisCard = true;
+
+  const isCorrect = selectedChoice === correctChoice;
+  focusSession.stats.answered++;
+
+  if (isCorrect) {
+    focusSession.stats.correct++;
+    focusSession.stats.streak++;
+    if (focusSession.stats.streak > focusSession.stats.bestStreak) {
+      focusSession.stats.bestStreak = focusSession.stats.streak;
+    }
+    clickedBtn.classList.add('is-correct');
+
+    if (focusSession.stats.streak % 5 === 0 && focusSession.stats.streak > 0) {
+      if (typeof Audio !== 'undefined' && Audio.streak) Audio.streak();
+    } else {
+      if (typeof Audio !== 'undefined' && Audio.correct) Audio.correct();
+    }
+  } else {
+    focusSession.stats.streak = 0;
+    clickedBtn.classList.add('is-wrong');
+
+    // Podświetlenie poprawnej odpowiedzi
+    document.querySelectorAll('.focus-choice-btn').forEach(btn => {
+      if (btn.dataset.choiceVal === correctChoice) {
+        btn.classList.add('is-correct');
+      }
+    });
+
+    if (typeof Audio !== 'undefined' && Audio.wrong) Audio.wrong();
+  }
+
+  // Aktualizacja liczników w UI
+  const streakVal = document.getElementById('focusStreakVal');
+  if (streakVal) streakVal.textContent = focusSession.stats.streak;
+  const scoreVal = document.getElementById('focusScoreVal');
+  if (scoreVal) scoreVal.textContent = `${focusSession.stats.correct} / ${focusSession.stats.answered}`;
+
+  // Zapis odpowiedzi do właściwego magazynu i historii dziennej
+  try {
+    if (item.type === 'kana') {
+      recordAnswer(item.id, isCorrect, !isCorrect ? selectedChoice : null, 'focus');
+    } else if (item.type === 'vocab') {
+      recordVocabAnswer(item.id, isCorrect);
+    } else if (item.type === 'kanji') {
+      recordKanjiAnswer(item.id, isCorrect);
+    }
+  } catch (e) {}
+
+  // Przejście do następnej karty
+  const delay = isCorrect ? 500 : 950;
+  setTimeout(() => {
+    if (!focusSession || focusSession.finished) return;
+    focusSession.currentIndex++;
+    renderFocusCard();
+  }, delay);
+}
+
+function showFocusSummaryModal() {
+  const backdrop = document.createElement('div');
+  backdrop.id = 'focusSummaryModalBackdrop';
+  backdrop.className = 'focus-modal-backdrop animate-fade';
+
+  const timeMinutes = Math.max(1, Math.round((focusSession.totalSeconds - focusSession.secondsLeft) / 60));
+  const accuracy = focusSession.stats.answered
+    ? Math.round((focusSession.stats.correct / focusSession.stats.answered) * 100)
+    : 100;
+
+  backdrop.innerHTML = `
+    <div class="focus-summary-modal animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="focusSummaryTitle">
+      <div class="focus-summary-head">
+        <span class="focus-summary-icon">🌸</span>
+        <h2 class="focus-summary-title" id="focusSummaryTitle">Sesja Skupienia Zakończona</h2>
+        <p class="focus-summary-subtitle">Doskonałe skupienie. Każdy krok buduje mistrzostwo.</p>
+      </div>
+
+      <div class="focus-summary-metrics">
+        <div class="focus-summary-metric">
+          <span class="focus-summary-val">${timeMinutes} min</span>
+          <span class="focus-summary-lbl">Czas skupienia</span>
+        </div>
+        <div class="focus-summary-metric">
+          <span class="focus-summary-val">${focusSession.stats.answered}</span>
+          <span class="focus-summary-lbl">Ćwiczeń</span>
+        </div>
+        <div class="focus-summary-metric">
+          <span class="focus-summary-val">${accuracy}%</span>
+          <span class="focus-summary-lbl">Skuteczność</span>
+        </div>
+        <div class="focus-summary-metric">
+          <span class="focus-summary-val">🔥 ${focusSession.stats.bestStreak}</span>
+          <span class="focus-summary-lbl">Najlepsza seria</span>
+        </div>
+      </div>
+
+      <p class="focus-summary-quote">
+        „Spokojny umysł widzi znaki takimi, jakimi są w istocie.”
+      </p>
+
+      <div class="focus-summary-actions">
+        <button class="btn btn-primary" id="btnFocusSummaryDone">
+          Wróć do pulpitu →
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(backdrop);
+
+  document.getElementById('btnFocusSummaryDone').onclick = () => {
+    Audio.click();
+    backdrop.remove();
+    exitFocusSession();
+  };
 }
 
 /* =========================================================
@@ -12658,6 +13841,29 @@ document.addEventListener('keydown', event => {
   // Escape → powrót
   if (event.key === 'Escape' && state.screen !== 'dashboard') {
     homeBtn.click();
+    return;
+  }
+
+  // Obsługa klawiatury dla Trybu Skupienia (T25)
+  if (state.screen === 'focus' && focusSession && !focusSession.finished) {
+    if (event.key.toLowerCase() === 'p') {
+      event.preventDefault();
+      toggleFocusPause();
+      return;
+    }
+    if (!focusSession.isPaused && !focusSession.answeredThisCard) {
+      const num = parseInt(event.key, 10);
+      if (num >= 1 && num <= 4) {
+        event.preventDefault();
+        document.querySelector(`.focus-choice-btn[data-choice-idx="${num - 1}"]`)?.click();
+        return;
+      }
+      if (event.key === ' ' || event.key.toLowerCase() === 'v' || event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        document.getElementById('btnFocusSpeak')?.click();
+        return;
+      }
+    }
     return;
   }
 

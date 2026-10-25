@@ -8758,3 +8758,748 @@ body::before {
   background: color-mix(in srgb, #f59e0b 16%, transparent);
   border-color: #f59e0b;
 }
+
+/* =========================================================
+   ZAAWANSOWANE AUDIO & SUWAKI GŁOŚNOŚCI (T25)
+   ========================================================= */
+.settings-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  width: 100%;
+  max-width: 260px;
+}
+
+.settings-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  outline: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.settings-slider:hover {
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
+}
+
+.settings-slider-value {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 700;
+  color: var(--ink);
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   DASHBOARD FOCUS CARD · TRYB SKUPIENIA ZEN (T25)
+   ========================================================= */
+.dashboard-focus-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4, 16px);
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--card) 92%, #6366f1 8%),
+    color-mix(in srgb, var(--card) 95%, #8b5cf6 5%)
+  );
+  border: 1px solid color-mix(in srgb, #6366f1 28%, var(--line));
+  border-radius: var(--radius-3xl, 24px);
+  box-shadow: 0 4px 20px -6px rgba(99, 102, 241, 0.12);
+  margin-bottom: var(--space-6, 24px);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .dashboard-focus-card {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.dashboard-focus-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, #6366f1 48%, var(--line));
+  box-shadow: 0 8px 28px -6px rgba(99, 102, 241, 0.2);
+}
+
+.dashboard-focus-watermark {
+  position: absolute;
+  right: -8px;
+  bottom: -22px;
+  font-family: "Noto Sans JP", serif;
+  font-size: 8rem;
+  font-weight: 900;
+  color: color-mix(in srgb, #6366f1 7%, transparent);
+  user-select: none;
+  pointer-events: none;
+  line-height: 1;
+  z-index: 0;
+}
+
+.dashboard-focus-info {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+}
+
+.dashboard-focus-kicker-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.dashboard-focus-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, #6366f1 18%, transparent);
+  color: #6366f1;
+}
+
+[data-theme="dark"] .dashboard-focus-badge {
+  color: #a5b4fc;
+}
+
+.dashboard-focus-ambient-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.focus-ambient-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseAmbient 2.5s infinite ease-in-out;
+}
+
+.focus-ambient-dot.is-off {
+  background: var(--muted);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes pulseAmbient {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.dashboard-focus-title {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.dashboard-focus-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+}
+
+.dashboard-focus-btn {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: 12px 22px;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+  white-space: nowrap;
+}
+
+.dashboard-focus-btn:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+  filter: brightness(1.06);
+}
+
+.dashboard-focus-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Modal Setup */
+.focus-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: color-mix(in srgb, #000 60%, transparent);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.focus-setup-modal,
+.focus-summary-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-3xl, 24px);
+  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.35);
+  padding: clamp(20px, 3.5vw, 32px);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.focus-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.focus-modal-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-modal-icon {
+  font-size: 1.3rem;
+}
+
+.focus-modal-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  text-transform: uppercase;
+}
+
+.focus-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-md, 8px);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.focus-modal-close:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.focus-modal-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.focus-modal-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.focus-modal-section {
+  margin-bottom: 18px;
+}
+
+.focus-section-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.focus-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.focus-pill {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.focus-pill:hover {
+  border-color: color-mix(in srgb, #6366f1 50%, var(--line));
+  background: color-mix(in srgb, #6366f1 6%, var(--card));
+}
+
+.focus-pill.is-active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+}
+
+.focus-modal-actions {
+  margin-top: 24px;
+}
+
+.focus-start-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 750;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);
+}
+
+/* Tryb Skupienia — Pełny ekran Zen */
+.focus-screen {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(12px, 2.5vw, 24px) 16px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
+.focus-progress-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  z-index: 1000;
+}
+
+.focus-progress-line-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #10b981);
+  transition: width 0.3s ease;
+}
+
+.focus-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4, 16px);
+  gap: 12px;
+}
+
+.focus-header-btn {
+  background: none;
+  border: 1px solid var(--line);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill, 999px);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.focus-header-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.focus-header-btn.pause.is-active {
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.focus-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--card) 85%, var(--accent) 15%);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+}
+
+.focus-timer-text {
+  font-size: 1.15rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.focus-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-ambient-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.focus-ambient-toggle:hover {
+  border-color: #6366f1;
+}
+
+.focus-ambient-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.focus-ambient-indicator.is-off {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.focus-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: var(--space-5, 20px);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.focus-meta-divider {
+  opacity: 0.4;
+}
+
+.focus-meta-item strong {
+  color: var(--ink);
+}
+
+.focus-card-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.focus-card-area.is-paused {
+  filter: blur(3px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.focus-paused-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border-radius: var(--radius-3xl, 24px);
+  padding: 24px;
+  text-align: center;
+}
+
+.focus-paused-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.focus-paused-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.focus-paused-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+
+.focus-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-3xl, 24px);
+  padding: clamp(24px, 4vw, 36px);
+  box-shadow: 0 10px 32px -8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.focus-card-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.focus-card-type-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  background: color-mix(in srgb, #6366f1 12%, transparent);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill, 999px);
+}
+
+.focus-audio-btn {
+  background: none;
+  border: 1px solid var(--line);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.focus-audio-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.focus-question-wrap {
+  margin: 12px 0 28px;
+}
+
+.focus-question-glyph {
+  font-size: clamp(3.2rem, 8vw, 4.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink);
+  font-family: "Noto Sans JP", "Hiragino Sans", sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.focus-question-sub {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.focus-choices-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .focus-choices-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.focus-choice-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: color-mix(in srgb, var(--card) 95%, var(--ink) 5%);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-xl, 14px);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.focus-choice-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  transform: translateY(-1px);
+}
+
+.focus-choice-btn:active {
+  transform: translateY(0);
+}
+
+.focus-choice-idx {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.focus-choice-btn.is-correct {
+  background: color-mix(in srgb, var(--good) 18%, var(--card)) !important;
+  border-color: var(--good) !important;
+  color: var(--good) !important;
+}
+
+.focus-choice-btn.is-correct .focus-choice-idx {
+  background: var(--good);
+  color: #fff;
+}
+
+.focus-choice-btn.is-wrong {
+  background: color-mix(in srgb, var(--bad) 18%, var(--card)) !important;
+  border-color: var(--bad) !important;
+  color: var(--bad) !important;
+}
+
+.focus-choice-btn.is-wrong .focus-choice-idx {
+  background: var(--bad);
+  color: #fff;
+}
+
+/* Summary Modal */
+.focus-summary-head {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.focus-summary-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.focus-summary-title {
+  font-size: 1.45rem;
+  font-weight: 850;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.focus-summary-subtitle {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.focus-summary-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.focus-summary-metric {
+  background: color-mix(in srgb, var(--ink) 4%, var(--card));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl, 14px);
+  padding: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.focus-summary-val {
+  font-size: 1.4rem;
+  font-weight: 850;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-summary-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.focus-summary-quote {
+  font-style: italic;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+  padding: 12px 18px;
+  border-left: 2px solid #6366f1;
+  background: color-mix(in srgb, #6366f1 6%, transparent);
+  border-radius: 0 var(--radius-md, 8px) var(--radius-md, 8px) 0;
+  margin: 0 0 24px 0;
+}
+
+.focus-summary-actions .btn {
+  width: 100%;
+}

@@ -1446,21 +1446,14 @@ These are implemented, live, and guarded by 976 automated regression tests acros
 ## Next major priorities
 
 ```text
-T25 Advanced Audio & Focus Mode / Lo-fi
 T16 Code splitting (ES modules)
-```
-
-Recommended order:
-
-```text
-T25 → T16
 ```
 
 ### Rationale
 
-**T25 — Advanced Audio & Focus Mode / Lo-fi**
+**T25 — Advanced Audio & Focus Mode / Lo-fi (COMPLETED)**
 
-The next feature that enhances the calm, immersive Japanese learning environment without requiring architectural rewrites. It brings organic audio (temple bells, wood blocks), background ambient focus sounds, and structured focus study sessions.
+Brought organic audio (Suzu temple bells, Hyōshigi clappers, wood block taps, pentatonic flourishes), background ambient soundscapes (rain, bamboo, waves), volume sliders in Settings, and structured Zen Focus study sessions (15/20/25 min Pomodoro).
 
 **T16 — Code splitting**
 
@@ -2559,8 +2552,8 @@ Daily goals: implemented (configurable 10–50 target, celebration state, multi-
 Achievements: implemented (12 milestone badges, modal dialog, celebration toasts)
 Custom study sets & bookmarks: implemented (Kana, Kanji, Vocab stars + Smart Practice pool)
 JSON backup & restore: implemented (export/import in Settings)
+Advanced audio & focus mode: implemented (T25 organic sounds, offline ambient generator, Zen Pomodoro)
 Code splitting: NOT implemented (reserved until feature set settles)
-Advanced audio / lo-fi: NOT implemented (T25)
 ```
 
 ### Current active task
@@ -2575,7 +2568,8 @@ T22 Daily Goals (configurable 10-50 daily question target, multi-module aggregat
 T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
 T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
 Kanji Expansion L19–L24 (193 new kanji, total 487 kanji) — COMPLETE
-Next planned: Advanced audio / focus lo-fi (T25) or Code splitting (T16)
+T25 Advanced Audio & Focus Mode / Lo-Fi (organic Suzu/Hyōshigi sounds, offline ambient, Zen Pomodoro) — COMPLETE
+Next planned: Code splitting (T16)
 ```
 
 Phases 1 (app shell, module navigation, contextual top bar, focus mode),
@@ -2595,8 +2589,14 @@ SRS flashcards, and 4-choice recognition quiz.
 The grammar module provides 31 items across 16 lessons with 93 authentic example sentences, audio
 pronunciation, and interactive cloze fill-in-the-blank practice with rule explanations.
 
+The audio subsystem provides organic Japanese-inspired sound synthesis (Suzu bell, Hyōshigi clappers,
+wooden block tap, Hirajōshi pentatonic flourish, temple gong), 3 volume buses (master, sfx, ambient)
+with sliders in Settings, an offline procedural noise ambient soundscape generator (`rain`, `bamboo`, `waves`),
+and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pillar practice pool, live controls,
+and summary modal).
+
 All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-976 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+989 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 
@@ -2613,9 +2613,9 @@ T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
 ↓
 T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
 ↓
-Next: T25 Advanced Audio & Focus / Lo-fi
+T25 Advanced Audio & Focus Mode (organic sounds, ambient generator, Zen Pomodoro) — COMPLETE
 ↓
-Later: T16 Code splitting (ES modules, once feature set settles)
+Next: T16 Code splitting (ES modules, once feature set settles)
 ```
 
 ---

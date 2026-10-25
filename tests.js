@@ -3492,6 +3492,151 @@
     ok('BM moduł zakładek', false, e.message);
   }
 
+  try {
+    /* =====================================================
+       AU — ZAAWANSOWANE AUDIO, AMBIENT & FOCUS MODE (T25)
+       ===================================================== */
+
+    // AU1: Wartości domyślne w SETTINGS_DEFAULTS
+    ok(
+      'AU1 domyślne wartości audio i ambient w SETTINGS_DEFAULTS',
+      SETTINGS_DEFAULTS.masterVolume === 80 &&
+        SETTINGS_DEFAULTS.sfxVolume === 80 &&
+        SETTINGS_DEFAULTS.ambientVolume === 50 &&
+        SETTINGS_DEFAULTS.ambientSound === 'rain'
+    );
+
+    // AU2: Walidacja głośności przez validateVolume
+    ok(
+      'AU2 validateVolume akceptuje prawidłowe wartości i obcina skrajne',
+      validateVolume(0) === 0 &&
+        validateVolume(100) === 100 &&
+        validateVolume(45) === 45 &&
+        validateVolume(150) === 100 &&
+        validateVolume(-20) === 0 &&
+        validateVolume('invalid') === null
+    );
+
+    // AU3: validateSettings normalizuje audio i ambient
+    const validTest = validateSettings({
+      masterVolume: 75,
+      sfxVolume: 60,
+      ambientVolume: 40,
+      ambientSound: 'bamboo'
+    });
+    ok(
+      'AU3 validateSettings prawidłowo przepuszcza klucze audio i ambient',
+      validTest.masterVolume === 75 &&
+        validTest.sfxVolume === 60 &&
+        validTest.ambientVolume === 40 &&
+        validTest.ambientSound === 'bamboo'
+    );
+
+    // AU4: setAudioVolume aktualizuje settings i utrwala w localStorage
+    setAudioVolume('master', 65);
+    setAudioVolume('sfx', 70);
+    setAudioVolume('ambient', 35);
+    const storedSettings = JSON.parse(localStorage.getItem(SETTINGS_STORE_KEY) || '{}');
+    ok(
+      'AU4 setAudioVolume zapisuje głośności w settings i localStorage',
+      settings.masterVolume === 65 &&
+        settings.sfxVolume === 70 &&
+        settings.ambientVolume === 35 &&
+        storedSettings.masterVolume === 65 &&
+        storedSettings.sfxVolume === 70 &&
+        storedSettings.ambientVolume === 35
+    );
+
+    // AU5: setAmbientSound aktualizuje preset i odrzuca nieznane wartości
+    setAmbientSound('waves');
+    ok('AU5 setAmbientSound ustawia waves', settings.ambientSound === 'waves');
+    setAmbientSound('unknown_sound');
+    ok('AU5a setAmbientSound odrzuca nieprawidłowy preset', settings.ambientSound === 'waves');
+    setAmbientSound('rain'); // powrót do domyślnego
+
+    // AU6: Audio API posiada organiczne metody dźwięków
+    ok(
+      'AU6 Audio posiada organiczne metody correct, wrong, click, streak, celebrate',
+      typeof Audio.correct === 'function' &&
+        typeof Audio.wrong === 'function' &&
+        typeof Audio.click === 'function' &&
+        typeof Audio.streak === 'function' &&
+        typeof Audio.celebrate === 'function'
+    );
+
+    // AU7: Audio.ambient generator sterowany API
+    ok(
+      'AU7 Audio.ambient udostępnia start, stop, setPreset, isPlaying, currentPreset',
+      typeof Audio.ambient === 'object' &&
+        typeof Audio.ambient.start === 'function' &&
+        typeof Audio.ambient.stop === 'function' &&
+        typeof Audio.ambient.setPreset === 'function' &&
+        typeof Audio.ambient.isPlaying === 'function' &&
+        typeof Audio.ambient.currentPreset === 'function'
+    );
+
+    // AU8: buildFocusPool('kana') generuje pulę pytań kany z 4 opcjami
+    const kanaPool = buildFocusPool('kana');
+    ok(
+      'AU8 buildFocusPool kana tworzy pytania z 4 opcjami i audioText',
+      Array.isArray(kanaPool) &&
+        kanaPool.length > 50 &&
+        kanaPool[0].type === 'kana' &&
+        Array.isArray(kanaPool[0].choices) &&
+        kanaPool[0].choices.length === 4 &&
+        kanaPool[0].choices.includes(kanaPool[0].answer) &&
+        !!kanaPool[0].audioText
+    );
+
+    // AU9: buildFocusPool('vocab') generuje pytania słownictwa
+    const vocabPool = buildFocusPool('vocab');
+    ok(
+      'AU9 buildFocusPool vocab tworzy pytania słownictwa z polskimi odpowiedziami',
+      Array.isArray(vocabPool) &&
+        vocabPool.length > 0 &&
+        vocabPool[0].type === 'vocab' &&
+        vocabPool[0].choices.length === 4 &&
+        vocabPool[0].choices.includes(vocabPool[0].answer)
+    );
+
+    // AU10: buildFocusPool('kanji') generuje pytania kanji
+    const kanjiPool = buildFocusPool('kanji');
+    ok(
+      'AU10 buildFocusPool kanji tworzy pytania kanji z 4 opcjami',
+      Array.isArray(kanjiPool) &&
+        kanjiPool.length > 0 &&
+        kanjiPool[0].type === 'kanji' &&
+        kanjiPool[0].choices.length === 4 &&
+        kanjiPool[0].choices.includes(kanjiPool[0].answer)
+    );
+
+    // AU11: buildFocusPool('smart') zawiera zrównoważony miks typów
+    const smartPool = buildFocusPool('smart');
+    const hasKana = smartPool.some(p => p.type === 'kana');
+    const hasVocab = smartPool.some(p => p.type === 'vocab');
+    const hasKanji = smartPool.some(p => p.type === 'kanji');
+    ok(
+      'AU11 buildFocusPool smart zawiera miks pytań kana, vocab i kanji',
+      smartPool.length >= 30 && hasKana && hasVocab && hasKanji
+    );
+
+    // AU12: isFocusMode() odzwierciedla aktywną sesję skupienia
+    const prevScreen = state.screen;
+    state.screen = 'focus';
+    focusSession = { finished: false };
+    const inFocusActive = isFocusMode();
+    focusSession.finished = true;
+    const inFocusFinished = isFocusMode();
+    focusSession = null;
+    state.screen = prevScreen;
+    ok(
+      'AU12 isFocusMode zwraca true dla aktywnej sesji focus i false po zakończeniu',
+      inFocusActive === true && inFocusFinished === false
+    );
+  } catch (e) {
+    ok('AU zaawansowane audio i focus mode', false, e.message);
+  }
+
   /* =====================================================
      PODSUMOWANIE
      ===================================================== */
