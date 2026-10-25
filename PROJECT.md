@@ -2,29 +2,33 @@
 
 ## 1. Project Overview
 
-**Koto** is a local, vanilla JavaScript web application for learning the 46 basic hiragana characters plus `ん`.
+**Koto** is a calm, local, vanilla JavaScript single-page web application for learning Japanese: basic and extended kana (Hiragana and Katakana), 487 foundational kanji characters, essential vocabulary, and JLPT N5 grammar structures.
 
 The repository and published URL keep the historical `hiragana-study` slug; that is a technical identifier, not product branding.
 
 The app currently provides:
 
-- hiragana learning mode,
-- animated stroke order using KanjiVG,
-- stroke descriptions,
-- per-character mastery/progress tracking,
-- adaptive exam question selection,
-- multiple exam question types,
-- configurable answer counts,
-- configurable exam timer,
-- optional exam question limit,
-- XP and streak system,
-- exam results and hard-character practice,
-- confetti celebration,
-- dark/light theme,
-- sound feedback,
-- mobile swipe navigation.
+- **Kana learning & exam**: 251 characters (Hiragana, Katakana, Dakuten, Handakuten, Yōon, Special Katakana) with animated stroke order, stroke descriptions, 4 adaptive exam modes, per-question timer, optional question limit, XP, confetti celebration, and swipe gestures.
+- **Kanji learning (487 characters)**: comprehensive L01–L24 + N5 dataset with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
+- **Vocabulary (134 words / 204 learn cards)**: nouns, verbs, request expressions, adjectives, topic categorization, orthogonal lesson filters, flashcard learning, recognition tests, and keyboard typing input.
+- **Grammar N5 (31 items across 16 lessons)**: particles, verb conjugations and forms, adjectives, and conversational structures with 93 authentic example sentences and interactive cloze fill-in-the-blank practice.
+- **Learning habit & gamification**:
+  - Spaced Repetition (SRS) scheduling engine,
+  - Configurable daily goals (10–50 exercises/day) with celebration state,
+  - Multi-module daily activity tracking and streak system,
+  - 12 milestone achievement badges with modal dialog and celebration toasts,
+  - Custom bookmarks (starring Kana, Kanji, Vocab) and Smart Practice pool for difficult and starred items.
+- **Audio & Accessibility**:
+  - TTS speech pronunciation (Google Translate ja-JP with Web Speech fallback),
+  - Web Audio SFX for calm feedback,
+  - Keyboard navigation across all learning modes.
+- **Platform & Design**:
+  - 100% client-side offline PWA with service worker caching,
+  - Dark/light responsive theme with sleek Japanese calligraphy aesthetics,
+  - JSON backup and restore in Settings,
+  - Strict data isolation across independent stores.
 
-The application is intentionally simple and currently consists of three main source files.
+The application is built deliberately with pure Vanilla JavaScript, HTML5, and a single consolidated stylesheet — with zero npm dependencies and no build step.
 
 ---
 
@@ -1420,46 +1424,47 @@ The roadmap has been reordered around feature value and learning-system complete
 ## Already shipped
 
 ```text
-T8  Dakuten / Handakuten / Yōon      DONE
-T17 Katakana mode                   DONE
-T26 Settings / Personalization     DONE
-T14 Offline PWA                    DONE
-T21 Spaced repetition              DONE
-T15 Long-term statistics           DONE
+T8   Dakuten / Handakuten / Yōon                    DONE
+T17  Katakana mode                                 DONE
+T13  Canvas drawing mode                           DONE
+T26  Settings / Personalization                   DONE
+T14  Offline PWA                                  DONE
+T21  Spaced repetition engine                      DONE
+T15  Long-term multi-module statistics             DONE
+T18  Kanji (487 kanji, L01–L24 + N5, drawing, catalog, SRS, quiz) DONE
+T19  Vocabulary (134 words / 204 cards, topics, lessons, typed mode) DONE
+T20  Grammar N5 (31 items, 16 lessons, cloze trainer) DONE
+T22  Daily Goals (configurable target, multi-module aggregation) DONE
+T23  Achievements (12 milestone badges, modal, celebration toasts) DONE
+T24  Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) DONE
+JSON Backup & Restore (export/import in Settings)  DONE
 ```
 
-These are implemented and live. Sections 32 (T8), 33 (T17), 37 (T14),
-39 (T26), 44 (Offline architecture), 45 (Settings architecture) and
-46 (Spaced repetition) describe the shipped behaviour; the daily statistics
-store and its read-only aggregation are documented under
-"Daily statistics (T15)".
+These are implemented, live, and guarded by 976 automated regression tests across `tests.html`,
+`tests-learn.html`, and `tests-daily.html`.
 
 ## Next major priorities
 
 ```text
-T19 Vocabulary
-T16 Code splitting
+T25 Advanced Audio & Focus Mode / Lo-fi
+T16 Code splitting (ES modules)
 ```
 
 Recommended order:
 
 ```text
-T19 → T16
+T25 → T16
 ```
 
 ### Rationale
 
-**T19 — Vocabulary**
+**T25 — Advanced Audio & Focus Mode / Lo-fi**
 
-The next item that adds learner value rather than maintenance: it builds on the kana the learner already knows instead of adding plumbing. It goes before T16 for the same reason T13 did — feature decisions first.
-
-**T13 — Canvas drawing mode — SHIPPED**
-
-Shipped in three layers (§35). Listed above only while the roadmap is re-read.
+The next feature that enhances the calm, immersive Japanese learning environment without requiring architectural rewrites. It brings organic audio (temple bells, wood blocks), background ambient focus sounds, and structured focus study sessions.
 
 **T16 — Code splitting**
 
-Technical architecture work should happen after the feature set has stabilized. `app.js` is now a single large bundle; splitting it is worth doing, but only once the remaining feature decisions are settled, so that boundaries do not have to be redrawn afterwards.
+Technical architecture work should happen after the feature set has stabilized. `app.js` is a single large bundle; splitting it into native ES modules is reserved until the core feature decisions are final, so boundaries do not have to be redrawn afterwards.
 
 ---
 
@@ -2242,7 +2247,7 @@ Polish meanings remain an unverified translation.
 - **Storage & Isolation (`hiragana-grammar`)**:
   - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
   - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
-  - Registered in `appStorageKeys()` (total 9 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
+  - Registered in `appStorageKeys()` (total 11 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
     - Header with stats chips (mastered count out of 31, in-progress count, total answers, mini-progress percentage bar),
@@ -2360,7 +2365,7 @@ Implemented scope:
 
 ---
 
-## T25 — Kanji L19–L24 Expansion
+## T18b — Kanji L19–L24 Expansion
 
 Status: **SHIPPED**.
 
@@ -2515,23 +2520,7 @@ change; **accepted** — a decision, not a bug.
 - **1. `masteryLevel()` ordering of `hard` vs `mastered` — CORRECT, no bug.** The branches are mutually exclusive given the size of `recent`. `hard` needs `errorRate >= 0.5` over the whole window; `mastered` needs the last five entries to all be correct. With `recent` capped at 6, five correct entries in the last five give a rate of 0.167, so both cannot hold. The cap is only enforced on write, never on read — nothing trims a longer array — but `git log -S` shows `entry.recent.length > 6` has existed since the initial commit, which is the same commit that introduced `recent`. A window longer than 6 is therefore unreachable except by hand-editing `localStorage` or importing data.
 - **6. `mountKana().finish()` — NOT A BUG, the item rests on a wrong premise.** `mountKana()` returns `{ play, step, showAll, count }`. There is no `finish` on the returned object; `finish` is a local function inside `mountKana`, called by `step()` and `play()` when the last stroke completes, and never exposed. `player.finish` is not referenced anywhere in the app or the harnesses.
 - **7. Global keyboard listener vs text inputs — NO DEFECT FOUND.** Typed inputs attach their own `keydown` handler that calls `e.stopPropagation()` for Enter, so the global listener never sees it. Digit shortcuts are additionally guarded by `exam.currentMode !== 'romaji-kana-type' && exam.currentMode !== 'kana-romaji-type'`, so typing digits into the field selects nothing. Escape reaches the global handler and returns to the menu, which is intended. Worth remembering: that guard is positional — any input added to Learn mode later will need its own handling.
-- **8. Four exam modes vs original T7 specification — NO DEFECT.** The original T7 specification described three modes, but the implementation deliberately supports four and §12 documents all of them. The fourth mode (Kana → type Romaji) is exercised by the M-series assertions in `tests.js`, so this is an intentional extension of the specification, not a discrepancy in the product.
-
-## Accepted — deliberate decisions, not bugs
-
-- **5. Theme system branch — ACCEPTED, no listener added.** `resolveTheme()` calls `window.matchMedia('(prefers-color-scheme: dark)')` once per render; with the theme set to `system`, an OS appearance change is picked up on the next render or reload. The resolution itself is correct. A live `change` listener was considered and deliberately not added: it would add event wiring without changing any stored preference, and the current branch is correct at every render.
-- **10. `color-mix()` support — ACCEPTED.** Used 28 times. The property is widely available in current browsers; supporting older engines would mean rewriting the theme layer for no gain on the platforms this app targets. Not verified against specific legacy browsers.
-- **12. KanjiVG loaded from a CDN — ACCEPTED.** The app needs one online load before it is fully offline. Vendoring all 148 stroke SVGs would remove that dependency at the cost of a much larger repository, and KanjiVG data changes rarely. `SVG_SOURCES` tries three locations in order, and Google Fonts are cached by the service worker with a system-font stack in `style.css` as the fallback, so a single failed host does not break the app.
-
-## Open, forward-looking
-
-17. Future multi-character kana representation for yōon.
-18. KanjiVG compatibility for combined kana and future kanji data.
-19. Separation of music/SFX/master volume when advanced audio is implemented.
-
----
-
-# 42. Current Project State
+- **8. Four exam modes vs original T7 specification — NO DEFECT.** The original T7 specification described three modes, but the imple# 42. Current Project State
 
 As of the current roadmap revision:
 
@@ -2541,56 +2530,51 @@ Architecture: vanilla JS SPA + service worker
 Source files: app.js, style.css, index.html, sw.js, manifest.webmanifest,
               offline.html, icons/
 
-Learning mode: implemented
+Learning mode (Kana): implemented (251 characters)
 KanjiVG animation: implemented
-Progress: implemented
-Adaptive exam: implemented
-4 exam modes: implemented
+Progress & SRS: implemented across Kana, Kanji, Vocabulary
+Adaptive exam: implemented (4 modes)
 Per-question timer: implemented
 Optional question limit: implemented
-XP: implemented
-Touch gestures: implemented
-Confetti: implemented
+XP & streaks: implemented
+Touch gestures & swipe: implemented
+Confetti celebration: implemented
 
 Dakuten / Handakuten / Yōon: implemented
-Katakana: implemented
+Katakana mode & special combinations: implemented
 Settings / personalization: implemented
 Offline support (PWA): implemented
 
-Long-term statistics: implemented
-Drawing mode: implemented
-App shell / module navigation: implemented
-Design tokens / visual system: implemented
+Long-term statistics: implemented (hiragana-daily multi-module aggregation)
+Drawing mode: implemented (Kana & Kanji, stroke-by-stroke evaluation, blind mode)
+App shell / module navigation: implemented (5 modules: Kana, Kanji, Vocab, Grammar, Settings)
+Design tokens / visual system: implemented (calm Japanese aesthetics, dark & light themes)
 Shared session frame: implemented
 SVG icon set: implemented
 Kana hub: implemented
-Code splitting: NOT implemented
-Kanji: NOT implemented
-Vocabulary: data, progress store, flashcards, patterns and topic
-           categories; all 57 items implemented
-Grammar: NOT implemented
-Spaced repetition engine: implemented
-Daily goals: NOT implemented
-Achievements: NOT implemented
-Custom study sets: NOT implemented
-Advanced audio / lo-fi: NOT implemented
+Kanji: implemented (487 characters, L01–L24 + N5, catalog, drawing, blind mode, SRS, quiz)
+Vocabulary: implemented (134 words / 204 learn cards, topics, lesson filters, recognition, typed mode)
+Grammar: implemented (Phases 1–4, 31 items across 16 lessons, authentic sentences, audio, cloze trainer)
+Daily goals: implemented (configurable 10–50 target, celebration state, multi-module)
+Achievements: implemented (12 milestone badges, modal dialog, celebration toasts)
+Custom study sets & bookmarks: implemented (Kana, Kanji, Vocab stars + Smart Practice pool)
+JSON backup & restore: implemented (export/import in Settings)
+Code splitting: NOT implemented (reserved until feature set settles)
+Advanced audio / lo-fi: NOT implemented (T25)
 ```
 
 ### Current active task
 
 ```text
-UI modernization — phase 4: Kana hub — COMPLETE
-Visual polish — calm Japanese learning app layer — IN PROGRESS
+UI modernization & Dashboard — COMPLETE
 Vocabulary expansion (Lessons 1 & 2, adjectives, lesson filter) — COMPLETE
-Kanji expansion (Lessons L16–L18, 294 kanji) — COMPLETE
+Kanji core & expansion (L01–L24, 487 kanji, stroke order, drawing canvas) — COMPLETE
 Audio pronunciation (Google Translate TTS ja-JP + Web Speech fallback across Kana, Vocab, Kanji) — COMPLETE
-Practice modes (Vocab typed keyboard input + Kanji blind drawing from memory) — COMPLETE
-T18 Kanji (data, stroke order, drawing, catalog, SRS, quiz, L01–L18) — SHIPPED
-T19 Vocabulary (data, progress, flashcards, topics, lessons, typed mode) — SHIPPED
-T22 Daily Goals (configurable 10-50 daily question target, celebration state) — SHIPPED
-T23 Achievements (12 milestone badges, modal, toast notifications) — SHIPPED
-T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — SHIPPED
-Kanji Expansion L19–L24 (193 new kanji, total 487 kanji) — SHIPPED
+Grammar N5 (Phases 1–4, 31 items, 16 lessons, cloze trainer) — COMPLETE
+T22 Daily Goals (configurable 10-50 daily question target, multi-module aggregation) — COMPLETE
+T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
+T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
+Kanji Expansion L19–L24 (193 new kanji, total 487 kanji) — COMPLETE
 Next planned: Advanced audio / focus lo-fi (T25) or Code splitting (T16)
 ```
 
@@ -2598,38 +2582,28 @@ Phases 1 (app shell, module navigation, contextual top bar, focus mode),
 2 (design tokens, typography, surfaces), 3 (shared session frame plus the
 SVG icon set) and 4 (the Kana hub summary card, primary `Nauka` action,
 accessible script state and a single-row script switcher at 320 px) are
-implemented and accepted. Phase 3 also fixed the live exam-options summary,
-the mastery strip with unpractised characters and the drawing-control groups.
-The remaining UI phases are the list/detail components and Settings.
-Vocabulary, grammar and kanji plug into those archetypes instead of inventing
-their own screens.
+implemented and accepted.
 
-The vocabulary module now includes its **topic axis** (layer 4) and **lesson axis**:
-a closed, module-independent taxonomy, a dedicated scope-aware topic folder with detail
-views, progress summaries and an explicit "Bez kategorii" bucket, plus orthogonal lesson
-filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items, i-adjectives
-were introduced as 14 items with distractor isolation, and kanji writings are surfaced
-on reveals.
+The vocabulary module includes its **topic axis** (13 categories) and **lesson axis**:
+orthogonal lesson filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items,
+i-adjectives are present with distractor isolation, and kanji writings are surfaced on reveals.
 
-**Where the next session picks up.** T23 Achievements, T24 Custom Sets & Bookmarks, and
-the Kanji L19–L24 dataset expansion (bringing total Kanji to 487 characters) are all fully
-shipped, regression-tested across all three suites (tests.html, tests-learn.html, tests-daily.html),
-and documented.
+The kanji module provides 487 characters across 25 lessons (L01–L24 + N5), all 100% verified against
+KanjiVG CDN, with animated stroke order, canvas drawing (with blind memory mode), catalog search,
+SRS flashcards, and 4-choice recognition quiz.
 
-T21 (spaced repetition) and T15 (long-term statistics) are both shipped and
-documented. For what has been fixed, verified or deliberately accepted so
-far, see §41 rather than a list here — an enumeration in this section would
-go stale on the next round. T13 is complete: the drawing surface, its scoring
-and the polish are shipped (§35).
+The grammar module provides 31 items across 16 lessons with 93 authentic example sentences, audio
+pronunciation, and interactive cloze fill-in-the-blank practice with rule explanations.
+
+All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
+976 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 
 ```text
-UI phase 4 (Kana hub) — COMPLETE
+T18 Kanji (Core + L01-L24: 487 kanji, drawing, catalog, SRS, quiz) — COMPLETE
 ↓
-T19 Vocabulary (data, progress, flashcards, topics, UX, Lessons 1 & 2 expansion) — COMPLETE
-↓
-T18 Kanji (data, stroke order, drawing, catalog, SRS flashcards, quiz, L01–L24: 487 kanji) — COMPLETE
+T19 Vocabulary (134 words / 204 cards, topics, lesson filters, typed mode) — COMPLETE
 ↓
 T20 Grammar (Phases 1-4: 31 items, particles, verbs, adjectives, conversation) — COMPLETE
 ↓
@@ -2639,19 +2613,9 @@ T23 Achievements (12 milestone badges, modal, celebration toasts) — COMPLETE
 ↓
 T24 Custom Sets & Bookmarks (Kana, Kanji, Vocab stars + Smart Practice) — COMPLETE
 ↓
-Next: T25 Advanced Audio & Focus / Lo-fi or T16 Code splitting
-```
-
-Long-term:
-
-```text
-T18 Kanji (Core + L01-L24 complete)
-T19 Vocabulary (Complete)
-T20 Grammar (Phases 1-4 complete)
-T22 Daily Practice / Goals (Complete)
-T23 Achievements (Complete)
-T24 Custom Study Sets (Complete)
-T25 Advanced Audio & Focus / Lo-fi
+Next: T25 Advanced Audio & Focus / Lo-fi
+↓
+Later: T16 Code splitting (ES modules, once feature set settles)
 ```
 
 ---
@@ -3145,7 +3109,7 @@ Shipped in Step 6. Accessible via the **Settings (`settings`)** panel.
   - `exportedAt`: ISO 8601 timestamp string,
   - `stores`: object mapping each storage key in `appStorageKeys()` to its current parsed or raw data.
 - **Scope**:
-  - Covers all 9 storage stores: settings (`hiragana-settings`, `hiragana-exam-settings`, legacy theme/muted), progress (`hiragana-progress`), daily stats & streaks (`hiragana-daily`), vocabulary (`hiragana-vocab`), kanji (`hiragana-kanji`), and grammar (`hiragana-grammar`).
+  - Covers all 11 storage stores: settings (`hiragana-settings`, `hiragana-exam-settings`, legacy theme/muted), progress (`hiragana-progress`), daily stats & streaks (`hiragana-daily`), vocabulary (`hiragana-vocab`), kanji (`hiragana-kanji`), grammar (`hiragana-grammar`), achievements (`hiragana-achievements`), and bookmarks (`hiragana-bookmarks`).
 - **Export (`exportBackup`)**:
   - Dynamically builds the JSON payload and triggers a download of `koto-backup-YYYY-MM-DD.json` using a Blob and temporary object URL.
 - **Import (`applyBackup`)**:
@@ -3153,7 +3117,7 @@ Shipped in Step 6. Accessible via the **Settings (`settings`)** panel.
   - Rejects foreign files or corrupted data without touching `localStorage`.
   - Prompts for explicit user confirmation with the backup creation date.
   - Sanitizes keys: only stores recognized by `appStorageKeys()` are written to `localStorage`.
-  - Automatically reloads in-memory variables (`settings`, `examSettings`, `progress`, `dailyStats`, `vocab`, `kanjiProgress`, `grammarProgress`), reapplies themes/audio preferences, and updates the UI.
+  - Automatically reloads in-memory variables (`settings`, `examSettings`, `progress`, `dailyStats`, `vocab`, `kanjiProgress`, `grammarProgress`, `achievements`, `bookmarks`), reapplies themes/audio preferences, and updates the UI.
 
 ---
 
