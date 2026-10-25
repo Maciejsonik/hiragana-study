@@ -2220,12 +2220,13 @@
       GRAMMAR_KEY,
       ACHIEVEMENTS_KEY,
       BOOKMARKS_KEY,
+      JLPT_KEY,
       LEGACY_THEME_KEY,
       LEGACY_MUTED_KEY
     ];
     ok(
-      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie jedenaście kluczy aplikacji',
-      keys.length === 11 && expected.every(key => keys.indexOf(key) >= 0),
+      'CLR1 „Wyczyść wszystkie dane" obejmuje wszystkie dwanaście kluczy aplikacji',
+      keys.length === 12 && expected.every(key => keys.indexOf(key) >= 0),
       keys.join(', ')
     );
 
@@ -2269,11 +2270,11 @@
     const title = () => document.getElementById('appTitle').textContent;
 
     ok('NAV1 nawigacja istnieje poza #app', !!nav && !document.getElementById('app').contains(nav));
-    eq('NAV2 pięć pozycji nawigacji', navButtons().length, 5);
+    eq('NAV2 sześć pozycji nawigacji', navButtons().length, 6);
     deepEq(
       'NAV3 etykiety modułów',
       navButtons().map(button => button.querySelector('.app-nav-label').textContent),
-      ['Pulpit', 'Kana', 'Słownictwo', 'Kanji', 'Gramatyka']
+      ['Pulpit', 'Kana', 'Słownictwo', 'Kanji', 'Gramatyka', 'Egzamin N5']
     );
     ok(
       'NAV4 ikony to inline SVG, nie emoji',
@@ -2289,7 +2290,7 @@
     eq('DASH2 tytuł pulpitu', title(), 'Pulpit');
     eq('DASH3 aktywna pozycja nawigacji dla pulpitu', navButton('dashboard').getAttribute('aria-current'), 'page');
     ok('DASH4 powrót ukryty na pulpicie', homeBtn.classList.contains('is-hidden'));
-    ok('DASH5 obecne karty czterech modułów', document.querySelectorAll('.dashboard-module-card').length === 4);
+    ok('DASH5 obecne karty pięciu modułów', document.querySelectorAll('.dashboard-module-card').length === 5);
 
     setScreen('menu');
     await sleep(30);
@@ -2344,6 +2345,14 @@
     eq('NAV15f tytuł huba gramatyki', title(), 'Gramatyka');
     eq('NAV15g aktywna pozycja gramatyki', navButton('grammar').getAttribute('aria-current'), 'page');
     ok('NAV15h powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
+
+    /* Egzamin N5 — wejście przez nawigację */
+    navButton('jlpt').click();
+    await sleep(30);
+    eq('NAV15i klik prowadzi do egzaminu N5', state.screen, 'jlpt');
+    eq('NAV15j tytuł huba egzaminu N5', title(), 'Egzamin JLPT N5');
+    eq('NAV15k aktywna pozycja egzaminu N5', navButton('jlpt').getAttribute('aria-current'), 'page');
+    ok('NAV15l powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
 
     ok('NAV16 nawigacja nie zawiera pozycji Ustawienia', !navButton('settings'));
     setScreen('settings');
@@ -2521,16 +2530,16 @@
      ===================================================== */
   try {
     ok(
-      'KJ1 KANJI_ITEMS zawiera 599 znaków',
-      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 599,
+      'KJ1 KANJI_ITEMS zawiera 600 znaków',
+      Array.isArray(KANJI_ITEMS) && KANJI_ITEMS.length === 600,
       String(KANJI_ITEMS.length)
     );
 
     const kanjiIds = new Set(KANJI_ITEMS.map(k => k.id));
-    eq('KJ2 unikalne ID znaków k001..k599', kanjiIds.size, 599);
+    eq('KJ2 unikalne ID znaków k001..k600', kanjiIds.size, 600);
 
     const kanjiChars = new Set(KANJI_ITEMS.map(k => k.kanji));
-    eq('KJ3 unikalne glify kanji', kanjiChars.size, 599);
+    eq('KJ3 unikalne glify kanji', kanjiChars.size, 600);
 
     const lessonsPresent = [
       'L01',
@@ -2659,6 +2668,15 @@
         KANJI_ITEMS.filter(k => k.lesson === 'L27').length === 22 &&
         KANJI_ITEMS.filter(k => k.lesson === 'L28').length === 17,
       l25_28.map(l => l + '=' + KANJI_ITEMS.filter(k => k.lesson === l).length).join(' ')
+    );
+
+    ok(
+      'KJ19d kategoria uzupełniająca N5 zawiera 3 znaki (後, 読, 週)',
+      KANJI_ITEMS.filter(k => k.lesson === 'N5').length === 3 &&
+        KANJI_ITEMS.some(k => k.id === 'k600' && k.kanji === '週' && k.strokes === 11),
+      KANJI_ITEMS.filter(k => k.lesson === 'N5')
+        .map(k => k.kanji)
+        .join(',')
     );
 
     ok(
@@ -2933,8 +2951,8 @@
      GRAMATYKA (T20) — partykuły N5, baza wiedzy i quizy luk
      ===================================================== */
   try {
-    // GR1: Komplet 31 zagadnień w bazie (faza 1 + 2 + 3 + 4)
-    eq('GR1 baza gramatyki zawiera 31 pozycji', GRAMMAR_ITEMS.length, 31);
+    // GR1: Komplet 46 zagadnień w bazie (faza 1 + 2 + 3 + 4 + 5)
+    eq('GR1 baza gramatyki zawiera 46 pozycji', GRAMMAR_ITEMS.length, 46);
 
     // GR1a: Komplet zagadnień fazy 3
     const phase3Ids = ['te_form', 'te_kudasai', 'te_imasu', 'te_mo_ii', 'ta_form', 'ta_koto_ga_aru', 'v_nakatta'];
@@ -2948,6 +2966,29 @@
     ok(
       'GR1b faza 4 gramatyki zawiera komplet 6 konstrukcji konwersacyjnych',
       phase4Ids.every(id => GRAMMAR_ITEMS.some(item => item.id === id && item.category === 'conversation'))
+    );
+
+    // GR1c: Komplet zagadnień fazy 5 (pełne dopełnienie N5)
+    const phase5Ids = [
+      'koto_ga_dekiru',
+      'tari_tari_suru',
+      'hou_ga_ii',
+      'mae_ni',
+      'ato_de',
+      'te_kara',
+      'nakereba_naranai',
+      'te_wa_ikenai',
+      'naide_kudasai',
+      'sugiru',
+      'ni_naru_ku_naru',
+      'ni_suru_ku_suru',
+      'node',
+      'kara_node_comp',
+      'yori_hou_ga'
+    ];
+    ok(
+      'GR1c faza 5 gramatyki zawiera komplet 15 kluczowych struktur N5',
+      phase5Ids.every(id => GRAMMAR_ITEMS.some(item => item.id === id))
     );
 
     // GR2: Każde zagadnienie ma wymagane pola, minimum 3 przykłady i 3 pytania cloze
@@ -3002,7 +3043,7 @@
 
     const stats = getGrammarSummaryStats();
     eq('GR6 getGrammarSummaryStats poprawnie zlicza opanowane partykuły', stats.mastered, 1);
-    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 3);
+    eq('GR7 getGrammarSummaryStats oblicza procent opanowania', stats.percent, 2);
 
     // GR8: Inicjalizacja sesji quizu startGrammarPractice
     startGrammarPractice();
@@ -3049,7 +3090,7 @@
       render();
     }
     const particleCards = document.querySelectorAll('.grammar-particle-card');
-    eq('GR15 ekran hub gramatyki renderuje 31 kart w widoku ogólnym', particleCards.length, 31);
+    eq('GR15 ekran hub gramatyki renderuje 46 kart w widoku ogólnym', particleCards.length, 46);
 
     // GR16: Nawigacja do widoku szczegółowego partykuły
     const firstCard = particleCards[0];
@@ -3076,22 +3117,22 @@
     grammarSession.category = 'particle';
     renderGrammarHub();
     const particleCardsFiltered = document.querySelectorAll('.grammar-particle-card');
-    eq('GR21 filtr partykuł renderuje 10 kart', particleCardsFiltered.length, 10);
+    eq('GR21 filtr partykuł renderuje 11 kart', particleCardsFiltered.length, 11);
 
     grammarSession.category = 'verb';
     renderGrammarHub();
     const verbCardsFiltered = document.querySelectorAll('.grammar-particle-card');
-    eq('GR22 filtr czasowników i form renderuje 13 kart', verbCardsFiltered.length, 13);
+    eq('GR22 filtr czasowników i form renderuje 19 kart', verbCardsFiltered.length, 19);
 
     grammarSession.category = 'adjective';
     renderGrammarHub();
     const adjCardsFiltered = document.querySelectorAll('.grammar-particle-card');
-    eq('GR23 filtr przymiotników renderuje 2 karty', adjCardsFiltered.length, 2);
+    eq('GR23 filtr przymiotników renderuje 4 karty', adjCardsFiltered.length, 4);
 
     grammarSession.category = 'conversation';
     renderGrammarHub();
     const convCardsFiltered = document.querySelectorAll('.grammar-particle-card');
-    eq('GR26 filtr konstrukcji konwersacyjnych renderuje 6 kart', convCardsFiltered.length, 6);
+    eq('GR26 filtr konstrukcji konwersacyjnych renderuje 12 kart', convCardsFiltered.length, 12);
 
     // GR24-GR25: startGrammarPractice z filtrem kategorii
     startGrammarPractice({ category: 'verb' });
@@ -3653,6 +3694,158 @@
     );
   } catch (e) {
     ok('AU zaawansowane audio i focus mode', false, e.message);
+  }
+
+  /* =====================================================
+     T24: EGZAMIN PRÓBNY JLPT N5 & KOMPENDIUM WIEDZY
+     ===================================================== */
+  try {
+    // JL1: Komplet 43 pytań w arkuszu egzaminacyjnym
+    eq('JL1 JLPT_N5_QUESTIONS zawiera 43 pytania', JLPT_N5_QUESTIONS.length, 43);
+
+    // JL2: Każde pytanie posiada wymagane pola, 4 opcje i polskie wyjaśnienie
+    const allValidQ = JLPT_N5_QUESTIONS.every(q => {
+      const hasId = typeof q.id === 'string' && q.id.startsWith('n5_q');
+      const hasSec = q.section === 'lang' || q.section === 'reading';
+      const hasOpts = Array.isArray(q.options) && q.options.length === 4;
+      const hasCorrect = typeof q.correct === 'number' && q.correct >= 0 && q.correct <= 3;
+      const hasExp = typeof q.explanation === 'string' && q.explanation.length > 10;
+      return hasId && hasSec && hasOpts && hasCorrect && hasExp;
+    });
+    ok('JL2 wszystkie 43 pytania mają prawidłowy format, 4 opcje i polskie objaśnienie', allValidQ);
+
+    // JL3: Rozkład podkategorii zgodny z oficjalnym sylabusem N5
+    const kanjiReadCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'kanji_reading').length;
+    const kanjiWriteCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'kanji_writing').length;
+    const vocabCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'context_vocab').length;
+    const paraCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'paraphrase').length;
+    const grammarCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'grammar_choice').length;
+    const starCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'star_sentence').length;
+    const readCount = JLPT_N5_QUESTIONS.filter(q => q.subType === 'reading').length;
+
+    ok(
+      'JL3 proporcje zadań odpowiadają strukturze JLPT N5 (6/6/6/5/9/5/6)',
+      kanjiReadCount === 6 &&
+        kanjiWriteCount === 6 &&
+        vocabCount === 6 &&
+        paraCount === 5 &&
+        grammarCount === 9 &&
+        starCount === 5 &&
+        readCount === 6,
+      `R=${kanjiReadCount} W=${kanjiWriteCount} V=${vocabCount} P=${paraCount} G=${grammarCount} S=${starCount} D=${readCount}`
+    );
+
+    // JL4: Zadania z gwiazdką ★ posiadają poprawne klocki i permutacje
+    const starValid = JLPT_N5_QUESTIONS.filter(q => q.subType === 'star_sentence').every(q => {
+      return (
+        Array.isArray(q.starPieces) &&
+        q.starPieces.length === 4 &&
+        Array.isArray(q.correctOrder) &&
+        q.correctOrder.length === 4 &&
+        typeof q.starSlotIndex === 'number'
+      );
+    });
+    ok('JL4 wszystkie zadania z gwiazdką ★ mają 4 klocki i logiczną permutację kolejności', starValid);
+
+    // JL5: Zadania czytania ze zrozumieniem posiadają przypisane teksty źródłowe
+    const readValid = JLPT_N5_QUESTIONS.filter(q => q.subType === 'reading').every(q => {
+      return q.readingPassage && q.readingPassage.title && q.readingPassage.japanese;
+    });
+    ok('JL5 wszystkie zadania czytania zawierają autentyczne japońskie teksty źródłowe', readValid);
+
+    // JL6: Kompendium wiedzy N5 (Liczniki, Kalendarz, Ko-So-A-Do)
+    ok(
+      'JL6 JLPT_N5_COUNTERS zawiera komplet 11 liczników N5',
+      Array.isArray(JLPT_N5_COUNTERS) &&
+        JLPT_N5_COUNTERS.length === 11 &&
+        JLPT_N5_COUNTERS.every(c => c.id && c.name && Array.isArray(c.items) && c.items.length >= 5)
+    );
+
+    ok(
+      'JL7 JLPT_N5_CALENDAR zawiera nieregularne dni miesiąca i określenia względne',
+      Array.isArray(JLPT_N5_CALENDAR.days) &&
+        JLPT_N5_CALENDAR.days.length >= 10 &&
+        Array.isArray(JLPT_N5_CALENDAR.relativeTime) &&
+        JLPT_N5_CALENDAR.relativeTime.length >= 15
+    );
+
+    // JL8: calculateJlptScore() oblicza punktację 0-180 i progi zdania
+    const mockSessionPass = {
+      questions: JLPT_N5_QUESTIONS,
+      answers: {},
+      flagged: {}
+    };
+    // Zaznacz wszystkie poprawne
+    JLPT_N5_QUESTIONS.forEach(q => {
+      mockSessionPass.answers[q.id] = q.correct;
+    });
+    const scorePass = calculateJlptScore(mockSessionPass);
+    eq('JL8a perfekcyjny egzamin daje 180 punktów', scorePass.totalScore, 180);
+    eq('JL8b język daje maksimum 120 punktów', scorePass.langScore, 120);
+    eq('JL8c czytanie daje maksimum 60 punktów', scorePass.readScore, 60);
+    eq('JL8d status zdania to true', scorePass.passed, true);
+
+    // Egzamin z wynikiem poniżej progu
+    const mockSessionFail = {
+      questions: JLPT_N5_QUESTIONS,
+      answers: {},
+      flagged: {}
+    };
+    const scoreFail = calculateJlptScore(mockSessionFail);
+    eq('JL8e pusty arkusz daje 0 punktów', scoreFail.totalScore, 0);
+    eq('JL8f status pustego arkusza to false (niezdany)', scoreFail.passed, false);
+
+    // JL9: Zarządzanie magazynem i historią podejść
+    localStorage.removeItem(JLPT_KEY);
+    const initialHist = loadJlptHistory();
+    eq('JL9a stan początkowy historii podejść jest pusty', initialHist.attempts.length, 0);
+    eq('JL9b stan początkowy bestScore wynosi 0', initialHist.bestScore, 0);
+
+    // JL10: Tryby uruchamiania egzaminu (full, practice, mini)
+    startJlptExam('mini');
+    eq('JL10a startJlptExam("mini") tworzy arkusz z 15 pytań', jlptSession.questions.length, 15);
+    eq('JL10b mini egzamin ma limit czasu 20 minut', jlptSession.timeRemainingSec, 1200);
+
+    startJlptExam('full');
+    eq('JL10c startJlptExam("full") tworzy pełny arkusz 43 pytań', jlptSession.questions.length, 43);
+    eq('JL10d pełny egzamin ma oficjalny limit czasu 75 minut', jlptSession.timeRemainingSec, 4500);
+
+    // Czyszczenie timera po teście
+    if (jlptSession.timerInterval) {
+      clearInterval(jlptSession.timerInterval);
+      jlptSession.timerInterval = null;
+    }
+
+    // JL11: Interaktywne układanie klocków z gwiazdką ★
+    const starQ = JLPT_N5_QUESTIONS.find(q => q.subType === 'star_sentence');
+    setFirstAvailableStarSlot(starQ.id, 1);
+    setFirstAvailableStarSlot(starQ.id, 3);
+    setFirstAvailableStarSlot(starQ.id, 0); // gwiazdka slot 2
+    setFirstAvailableStarSlot(starQ.id, 2);
+    eq('JL11 ułożenie klocka na pozycji gwiazdki zaznacza poprawną opcję', jlptSession.answers[starQ.id], 0);
+
+    // JL12: Renderowanie widoków bez wyjątków
+    renderJlpt();
+    ok(
+      'JL12a renderJlpt() renderuje aktywny widok w kontenerze #app',
+      !!document.querySelector('.jlpt-exam-container')
+    );
+
+    jlptSession.mode = 'hub';
+    renderJlpt();
+    ok('JL12b renderJlptHub() renderuje kafelki trybów i skróty kompendium', !!document.getElementById('cardJlptFull'));
+
+    jlptSession.mode = 'handbook';
+    renderJlpt();
+    ok(
+      'JL12c renderJlptHandbook() renderuje tabele kompendium wiedzy',
+      !!document.querySelector('.jlpt-handbook-tabs')
+    );
+
+    // Przywrócenie stanu domyślnego
+    jlptSession.mode = 'hub';
+  } catch (e) {
+    ok('T24 błąd w module JLPT N5', false, e.message);
   }
 
   /* =====================================================

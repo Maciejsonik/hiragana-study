@@ -1111,7 +1111,7 @@ const VOCAB_LEARN_ITEMS = [
 
 // prettier-ignore
 const KANJI_LESSONS = [
-  { id: 'all', label: 'Wszystkie', count: 599 },
+  { id: 'all', label: 'Wszystkie', count: 600 },
   { id: 'L01', label: 'L01 · Człowiek', desc: 'Podstawowe pojęcie człowieka i narodowości' },
   { id: 'L02', label: 'L02 · Liczby i natura', desc: 'Liczebniki 1–10 000, góra i biel' },
   { id: 'L03', label: 'L03 · Dni i żywioły', desc: 'Dni tygodnia, słońce, księżyc, ogień, woda, drzewo, złoto' },
@@ -1803,6 +1803,7 @@ const KANJI_ITEMS = [
   { id: 'k597', kanji: '位', meaning: 'pozycja / ranga / stopień', onyomi: ['イ'], kunyomi: ['くらい'], strokes: 7, lesson: 'L28', category: 'number', grade: 'N5', examples: [{ word: '一位', reading: 'いちい', meaning: 'pierwsze miejsce' }, { word: '位置', reading: 'いち', meaning: 'położenie / lokalizacja' }] },
   { id: 'k598', kanji: '泊', meaning: 'nocować / zatrzymać się', onyomi: ['ハク'], kunyomi: ['と-まる', 'と-める'], strokes: 8, lesson: 'L28', category: 'place', grade: 'N5', examples: [{ word: '泊まる', reading: 'とまる', meaning: 'nocować / zatrzymywać się na noc' }, { word: '一泊', reading: 'いっぱく', meaning: 'jeden nocleg' }] },
   { id: 'k599', kanji: '客', meaning: 'gość / klient', onyomi: ['キャク', 'カク'], kunyomi: [], strokes: 9, lesson: 'L28', category: 'people', grade: 'N5', examples: [{ word: 'お客様', reading: 'おきゃくさま', meaning: 'klient / gość' }, { word: '乗客', reading: 'じょうきゃく', meaning: 'pasażer' }] },
+  { id: 'k600', kanji: '週', meaning: 'tydzień', onyomi: ['シュウ'], kunyomi: [], strokes: 11, lesson: 'N5', category: 'time', grade: 'N5', examples: [{ word: '今週', reading: 'こんしゅう', meaning: 'ten tydzień' }, { word: '来週', reading: 'らいしゅう', meaning: 'przyszły tydzień' }, { word: '毎週', reading: 'まいしゅう', meaning: 'co tydzień' }, { word: '一週間', reading: 'いっしゅうかん', meaning: 'jeden tydzień' }] }
 ];
 
 // prettier-ignore
@@ -2542,6 +2543,12 @@ const NAV_ITEMS = [
     label: 'Gramatyka',
     screen: 'grammar',
     icon: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10M6 14h6"/>'
+  },
+  {
+    id: 'jlpt',
+    label: 'Egzamin N5',
+    screen: 'jlpt',
+    icon: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><path d="m9 9 2 2 4-4"/>'
   }
 ];
 
@@ -2554,6 +2561,7 @@ const SCREEN_TITLES = {
   vocab: 'Słownictwo',
   kanji: 'Kanji',
   grammar: 'Gramatyka',
+  jlpt: 'Egzamin JLPT N5',
   settings: 'Ustawienia',
   focus: 'Tryb Skupienia'
 };
@@ -2564,6 +2572,7 @@ const MODULE_LABELS = {
   vocab: 'SŁOWNICTWO',
   kanji: 'KANJI',
   grammar: 'GRAMATYKA',
+  jlpt: 'EGZAMIN N5',
   settings: 'APLIKACJA',
   focus: 'SKUPIENIE'
 };
@@ -2575,6 +2584,7 @@ function screenModule(screen = state.screen) {
   if (screen === 'vocab') return 'vocab';
   if (screen === 'kanji') return 'kanji';
   if (screen === 'grammar') return 'grammar';
+  if (screen === 'jlpt') return 'jlpt';
   if (screen === 'settings') return 'settings';
   if (screen === 'focus') return 'focus';
   return 'kana';
@@ -2691,9 +2701,15 @@ function renderNav() {
         state.grammar = grammarSession;
       }
 
+      if (target.screen === 'jlpt') {
+        jlptSession.mode = 'hub';
+        state.jlpt = jlptSession;
+      }
+
       if (state.screen === target.screen) {
         if (target.screen === 'vocab') renderVocab();
         if (target.screen === 'grammar') renderGrammar();
+        if (target.screen === 'jlpt') renderJlpt();
         return;
       }
 
@@ -3896,6 +3912,7 @@ function render() {
   if (state.screen === 'vocab') renderVocab();
   if (state.screen === 'kanji') renderKanji();
   if (state.screen === 'grammar') renderGrammar();
+  if (state.screen === 'jlpt') renderJlpt();
   if (state.screen === 'focus') renderFocus();
   if (state.screen === 'settings') renderSettings();
 }
@@ -4314,6 +4331,59 @@ function renderDashboard() {
             </div>
           </div>
         </div>
+
+        <!-- MODUŁ 5: EGZAMIN PRÓBNY JLPT N5 -->
+        <div class="dashboard-module-card jlpt-highlight-card" data-module-card="jlpt">
+          <div class="dashboard-module-watermark" aria-hidden="true">合</div>
+          <div class="dashboard-module-head">
+            <div class="dashboard-module-icon jlpt-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <path d="m9 9 2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="dashboard-module-headings">
+              <span class="dashboard-module-tag jlpt-tag">OFICJALNY FORMAT JLPT N5</span>
+              <h3 class="dashboard-module-name">Egzamin Próbny N5 (日本語能力試験)</h3>
+            </div>
+          </div>
+
+          <p class="dashboard-module-desc">
+            Kompletny arkusz egzaminacyjny JLPT N5: 43 pytania (Pismo, Słownictwo, Gramatyka, Gwiazdki ★, Czytanie), oficjalna skala 0–180 pkt oraz kompendium wiedzy.
+          </p>
+
+          <div class="dashboard-module-metrics">
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${typeof jlptHistory !== 'undefined' && jlptHistory.bestScore ? jlptHistory.bestScore + ' / 180' : '—'}</span>
+              <span class="dashboard-metric-lbl">Najlepszy wynik</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${typeof jlptHistory !== 'undefined' && jlptHistory.passed ? 'ZDANY (合格)' : typeof jlptHistory !== 'undefined' && jlptHistory.attempts && jlptHistory.attempts.length > 0 ? 'W TRAKCIE' : 'NIEPODEJŚTY'}</span>
+              <span class="dashboard-metric-lbl">Status</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">${typeof jlptHistory !== 'undefined' && jlptHistory.attempts ? jlptHistory.attempts.length : 0}</span>
+              <span class="dashboard-metric-lbl">Podejść</span>
+            </div>
+            <div class="dashboard-metric-item">
+              <span class="dashboard-metric-val">100%</span>
+              <span class="dashboard-metric-lbl">Zakres N5</span>
+            </div>
+          </div>
+
+          <div class="dashboard-module-actions">
+            <button class="dashboard-action-btn primary" id="btnDashJlptStart" type="button">
+              Rozpocznij Egzamin (75 min) →
+            </button>
+            <div class="dashboard-action-chips">
+              <button class="dashboard-chip-btn" id="btnDashJlptPractice" type="button">Trening z wyjaśnieniami</button>
+              <button class="dashboard-chip-btn" id="btnDashJlptHandbook" type="button">Kompendium N5</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -4439,6 +4509,32 @@ function renderDashboard() {
     startGrammarPractice();
     setScreen('grammar');
   };
+
+  // JLPT N5 actions
+  const btnDashJlptStart = document.getElementById('btnDashJlptStart');
+  if (btnDashJlptStart) {
+    btnDashJlptStart.onclick = () => {
+      Audio.click();
+      startJlptExam('full');
+      setScreen('jlpt');
+    };
+  }
+  const btnDashJlptPractice = document.getElementById('btnDashJlptPractice');
+  if (btnDashJlptPractice) {
+    btnDashJlptPractice.onclick = () => {
+      Audio.click();
+      startJlptExam('practice');
+      setScreen('jlpt');
+    };
+  }
+  const btnDashJlptHandbook = document.getElementById('btnDashJlptHandbook');
+  if (btnDashJlptHandbook) {
+    btnDashJlptHandbook.onclick = () => {
+      Audio.click();
+      openJlptHandbook('counters');
+      setScreen('jlpt');
+    };
+  }
 }
 
 /* =========================================================
@@ -8477,6 +8573,636 @@ const GRAMMAR_ITEMS = [
         explanation: 'Cel przemieszczania się („w celu zjedzenia”) po temacie czasownika たべ wyraża partykuła に.'
       }
     ]
+  },
+  {
+    id: 'koto_ga_dekiru',
+    category: 'conversation',
+    kana: '〜ことができる',
+    speakKana: 'ことができる',
+    romaji: 'koto ga dekiru',
+    label: 'Możność i zdolność (〜ことができる / できます)',
+    pattern: '[Czasownik r. słownikowej] + ことができる / できます',
+    description: 'Wyraża umiejętność wykonania czynności („potrafię...”) lub ogólną możliwość („można tu...”). W formie przeczącej: ことができない / できません.',
+    notes: 'Przed ことができる czasownik musi być zawsze w formie słownikowej (słownikowej podstawowej, np. はなす, たべる, およぐ), nigdy w formie ます.',
+    examples: [
+      { japanese: 'わたしは にほんごを はなすことが できます。', romaji: 'Watashi wa nihongo o hanasu koto ga dekimasu.', polish: 'Potrafię mówić po japońsku.' },
+      { japanese: 'この みせでは クレジットカードを つかうことが できますか。', romaji: 'Kono mise dewa kurejitto kaado o tsukau koto ga dekimasu ka.', polish: 'Czy w tym sklepie można płacić kartą kredytową?' },
+      { japanese: 'おとうとは ５０メートル およぐことが できません。', romaji: 'Otouto wa gojuu meetoru oyogu koto ga dekimasen.', polish: 'Mój młodszy brat nie potrafi przepłynąć 50 metrów.' }
+    ],
+    questions: [
+      {
+        sentence: 'すずきさんは ピアノを [?] ことが できます。',
+        full: 'すずきさんは ピアノを ひくことが できます。',
+        polish: 'Pani Suzuki potrafi grać na pianinie.',
+        answer: 'ひく',
+        distractors: ['ひきます', 'ひいて', 'ひいた'],
+        explanation: 'Przed konstrukcją ことができる używamy formy słownikowej czasownika (ひく, a nie formy ます).'
+      },
+      {
+        sentence: 'この へやで たばこを すうこと [?] できません。',
+        full: 'この へやで たばこを すうことが できません。',
+        polish: 'W tym pokoju nie wolno / nie można palić papierosów.',
+        answer: 'が',
+        distractors: ['を', 'に', 'で'],
+        explanation: 'Konstrukcja zdolności i możliwości wymaga partykuły が: [Czasownik słownikowy] + ことが + できます/できません.'
+      },
+      {
+        sentence: 'きょうは いそがしいですから、あうことが [?]。',
+        full: 'きょうは いそがしいですから、あうことが できません。',
+        polish: 'Ponieważ jestem dziś zajęty, nie mogę się spotkać.',
+        answer: 'できません',
+        distractors: ['できます', 'しません', 'あります'],
+        explanation: 'Wyrażenie niemożności: あうことが できません (nie mogę się spotkać).'
+      }
+    ]
+  },
+  {
+    id: 'tari_tari_suru',
+    category: 'verb',
+    kana: '〜たり〜たりする',
+    speakKana: 'たりたりする',
+    romaji: 'tari tari suru',
+    label: 'Wyliczanie czynności (〜たり〜たりする / します)',
+    pattern: '[V1-tari] + [V2-tari] + します / しました',
+    description: 'Służy do wyliczania przykładowych czynności spośród wielu wykonanych lub powtarzających się („robię to, tamto i inne rzeczy”). Nie narzuca ścisłej kolejności czasowej.',
+    notes: 'Formę たり tworzy się dodając り do formy czasu przeszłego た (np. 食べる -> 食べた -> 食べたり, 飲む -> 飲んだ -> 飲んだり). Czas całego zdania określa ostatni czasownik します / しました.',
+    examples: [
+      { japanese: 'やすみの ひは ほんを よんだり おんがくを きいたり します。', romaji: 'Yasumi no hi wa hon o yondari ongaku o kiitari shimasu.', polish: 'W dni wolne czytam książki, słucham muzyki i tym podobne.' },
+      { japanese: 'きのうは かいものを したり えいがを みたり しました。', romaji: 'Kinou wa kaimono o shitari eiga o mitari shimashita.', polish: 'Wczoraj robiłem zakupy, oglądałem film itp.' },
+      { japanese: 'きょうは あめが ふったり やんだり しています。', romaji: 'Kyou wa ame ga futtari yandari shite imasu.', polish: 'Dzisiaj deszcz to pada, to przestaje.' }
+    ],
+    questions: [
+      {
+        sentence: 'にちようびは テニスを [?] さんぽを したり します。',
+        full: 'にちようびは テニスを したり さんぽを したり します。',
+        polish: 'W niedzielę gram w tenisa, chodzę na spacery itp.',
+        answer: 'したり',
+        distractors: ['して', 'した', 'する'],
+        explanation: 'Wyliczanie przykładowych czynności wymaga formy 〜たり (した -> したり).'
+      },
+      {
+        sentence: 'きょうかしょを よんだり ノートに かいたり [?]。',
+        full: 'きょうかしょを よんだり ノートに かいたり しました。',
+        polish: 'Czytaliśmy podręcznik, pisaliśmy w zeszytach itp.',
+        answer: 'しました',
+        distractors: ['ありました', 'なりました', 'いきました'],
+        explanation: 'Konstrukcja 〜たり〜たり kończy się czasownikiem する (w czasie przeszłym: しました).'
+      },
+      {
+        sentence: 'おちゃを [?] ケーキを たべたり しましょう。',
+        full: 'おちゃを のんだり ケーキを たべたり しましょう。',
+        polish: 'Napijmy się herbaty, zjedzmy ciastko i miło spędźmy czas.',
+        answer: 'のんだり',
+        distractors: ['のみたり', 'のんで', 'のむたり'],
+        explanation: 'Czasownik のむ w formie przeszłej to のんだ, więc forma tari to のんだり.'
+      }
+    ]
+  },
+  {
+    id: 'hou_ga_ii',
+    category: 'conversation',
+    kana: '〜たほうがいい / 〜ないほうがいい',
+    speakKana: 'たほうがいい',
+    romaji: 'ta hou ga ii / nai hou ga ii',
+    label: 'Udzielanie rad (〜たほうがいい / ないほうがいい)',
+    pattern: '[V-ta / V-nai] + ほうが いいです',
+    description: 'Służy do udzielania rad i zaleceń: „lepiej zrobić...” (z formą przeszłą た) lub „lepiej nie robić...” (z formą przeczącą ない).',
+    notes: 'W radzie twierdzącej regułą jest użycie formy czasu przeszłego [V-た] + ほうがいい (np. 行ったほうがいい), natomiast w radzie negatywnej używamy [V-ない] + ほうがいい (np. 行かないほうがいい).',
+    examples: [
+      { japanese: 'かぜですから、きょうは はやく ねたほうが いいですよ。', romaji: 'Kaze desu kara, kyou wa hayaku neta hou ga ii desu yo.', polish: 'Skoro jesteś przeziębiony, lepiej dziś wcześnie połóż się spać.' },
+      { japanese: 'あたまが いたいですから、くすりを のんだほうが いいです。', romaji: 'Atama ga itai desu kara, kusuri o nonda hou ga ii desu.', polish: 'Boli mnie głowa, więc lepiej zażyj lekarstwo.' },
+      { japanese: 'あぶないですから、そこへ いかないほうが いいです。', romaji: 'Abunai desu kara, soko e ikanai hou ga ii desu.', polish: 'Ponieważ tam jest niebezpiecznie, lepiej tam nie idź.' }
+    ],
+    questions: [
+      {
+        sentence: 'びょうきですから、びょういんへ [?] ほうが いいです。',
+        full: 'びょうきですから、びょういんへ いったほうが いいです。',
+        polish: 'Jesteś chory, więc lepiej idź do szpitala / lekarza.',
+        answer: 'いった',
+        distractors: ['いく', 'いきます', 'いって'],
+        explanation: 'Radę twierdzącą tworzymy za pomocą formy [V-た] + ほうがいい: いった ほうが いい.'
+      },
+      {
+        sentence: 'からだに わるいですから、たばこを すわ [?] ほうが いいですよ。',
+        full: 'からだに わるいですから、たばこを すわないほうが いいですよ。',
+        polish: 'To niezdrowe, więc lepiej nie pal papierosów.',
+        answer: 'ない',
+        distractors: ['なかった', 'なくて', 'ず'],
+        explanation: 'Radę przeczącą („lepiej nie rób”) tworzymy za pomocą formy czasu teraźniejszego przeczącego [V-ない]: すわない ほうが いい.'
+      },
+      {
+        sentence: 'あしたは テストですから、たくさん べんきょうした [?] が いいです。',
+        full: 'あしたは テストですから、たくさん べんきょうしたほうが いいです。',
+        polish: 'Jutro jest test, więc lepiej dużo się poucz.',
+        answer: 'ほう',
+        distractors: ['もの', 'こと', 'とき'],
+        explanation: 'W konstrukcji porady używamy słowa ほう: 〜た ほう が いいです.'
+      }
+    ]
+  },
+  {
+    id: 'mae_ni',
+    category: 'conversation',
+    kana: '〜まえに',
+    speakKana: 'まえに',
+    romaji: 'mae ni',
+    label: 'Przed zrobieniem (〜前に / まえに)',
+    pattern: '[Czasownik r. słownikowej / Rzeczownik + の] + まえに',
+    description: 'Wskazuje, że dane działanie następuje PRZED inną czynnością lub punktem w czasie („zanim...”, „przed...”).',
+    notes: 'Z czasownikami ZAWSZE używamy formy słownikowej teraźniejszej (niezależnie od tego, czy całe zdanie jest w czasie przeszłym, czy przyszłym). Z rzeczownikami łączymy za pomocą partykuły の (np. 食事の前に).',
+    examples: [
+      { japanese: 'ごはんを たべるまえに、てを あらいます。', romaji: 'Gohan o taberu mae ni, te o araimasu.', polish: 'Przed jedzeniem posiłku myję ręce.' },
+      { japanese: 'ねるまえに、ほんを よみました。', romaji: 'Neru mae ni, hon o yomimashita.', polish: 'Przed snem (zanim poszedłem spać) przeczytałem książkę.' },
+      { japanese: 'しょくじの まえに、おちゃを のみましょう。', romaji: 'Shokuji no mae ni, ocha o nomimashou.', polish: 'Przed posiłkiem napijmy się herbaty.' }
+    ],
+    questions: [
+      {
+        sentence: 'にほんへ [?] まえに、にほんごを べんきょうしました。',
+        full: 'にほんへ くるまえに、にほんごを べんきょうしました。',
+        polish: 'Przed przyjazdem do Japonii uczyłem się japońskiego.',
+        answer: 'くる',
+        distractors: ['きた', 'きて', 'きます'],
+        explanation: 'Przed まえに czasownik musi być zawsze w formie słownikowej (くる), nawet gdy zdanie kończy się czasem przeszłym.'
+      },
+      {
+        sentence: 'かいぎ [?] まえに、しりょうを コピーしてください。',
+        full: 'かいぎの まえに、しりょうを コピーしてください。',
+        polish: 'Przed zebraniem proszę skserować materiały.',
+        answer: 'の',
+        distractors: ['に', 'を', 'で'],
+        explanation: 'Rzeczownik łączy się ze słowem まえに za pomocą partykuły の: かいぎの まえに.'
+      },
+      {
+        sentence: 'でかけるまえ [?]、でんきを けしました。',
+        full: 'でかけるまえに、でんきを けしました。',
+        polish: 'Przed wyjściem zgasiłem światło.',
+        answer: 'に',
+        distractors: ['で', 'を', 'へ'],
+        explanation: 'Punkt w czasie lub relację czasową określa partykuła に: [czynność] まえに.'
+      }
+    ]
+  },
+  {
+    id: 'ato_de',
+    category: 'conversation',
+    kana: '〜あとで',
+    speakKana: 'あとで',
+    romaji: 'ato de',
+    label: 'Po zrobieniu (〜後で / あとで)',
+    pattern: '[Czasownik w formie た / Rzeczownik + の] + あとで',
+    description: 'Wskazuje, że dana czynność następuje PO zakończeniu innej czynności lub wydarzenia („po zrobieniu...”).',
+    notes: 'Z czasownikami ZAWSZE łączymy formę czasu przeszłego [V-た] (ponieważ czynność pierwsza musi zostać ukończona). Z rzeczownikami łączymy za pomocą partykuły の (np. 授業の後で).',
+    examples: [
+      { japanese: 'ごはんを たべたあとで、はを みがきます。', romaji: 'Gohan o tabeta ato de, ha o migakimasu.', polish: 'Po zjedzeniu posiłku myję zęby.' },
+      { japanese: 'しごとが おわったあとで、のみに いきませんか。', romaji: 'Shigoto ga owatta ato de, nomi ni ikimasen ka.', polish: 'Czy po skończeniu pracy pójdziemy się czegoś napić?' },
+      { japanese: 'じゅぎょうの あとで、せんせいに しつもんしました。', romaji: 'Jugyou no ato de, sensei ni shitsumon shimashita.', polish: 'Po lekcji zadałem pytanie nauczycielowi.' }
+    ],
+    questions: [
+      {
+        sentence: 'えいがを [?] あとで、レストランへ いきました。',
+        full: 'えいがを みたあとで、レストランへ いきました。',
+        polish: 'Po obejrzeniu filmu poszliśmy do restauracji.',
+        answer: 'みた',
+        distractors: ['みる', 'みて', 'みます'],
+        explanation: 'Przed あとで czasownik musi przyjąć formę przeszłą twierdzącą た (みた あとで).'
+      },
+      {
+        sentence: 'スポーツの [?] あとで、シャワーを あびます。',
+        full: 'スポーツの あとで、シャワーを あびます。',
+        polish: 'Po uprawianiu sportu biorę prysznic.',
+        answer: 'の',
+        distractors: ['な', 'に', 'で'],
+        explanation: 'Rzeczownik łączy się z あとで partykułą の: スポーツの あとで.'
+      },
+      {
+        sentence: 'ほんを よんだあと [?]、ともだちに かえしました。',
+        full: 'ほんを よんだあとで、ともだちに かえしました。',
+        polish: 'Po przeczytaniu książki oddałem ją koledze.',
+        answer: 'で',
+        distractors: ['に', 'を', 'は'],
+        explanation: 'Konstrukcja brzmi: [V-た] + あとで.'
+      }
+    ]
+  },
+  {
+    id: 'te_kara',
+    category: 'verb',
+    kana: '〜てから',
+    speakKana: 'てから',
+    romaji: 'te kara',
+    label: 'Następstwo czynności (〜てから)',
+    pattern: '[Czasownik w formie て] + から',
+    description: 'Wskazuje na ścisłą kolejność chronologiczną: „po tym jak...”, „dopiero odkąd...”. Druga czynność następuje niezwłocznie po zakończeniu pierwszej.',
+    notes: 'Różnica między あとで a てから: てから kładzie nacisk na ciągłość procesu („dopiero po zrobieniu A następuje B”), podczas gdy あとで określa po prostu dowolny moment w czasie po fakcie A.',
+    examples: [
+      { japanese: 'てを あらってから、ごはんを たべます。', romaji: 'Te o aratte kara, gohan o tabemasu.', polish: 'Po umyciu rąk jem posiłek.' },
+      { japanese: 'にほんへ きてから、にほんごの べんきょうを はじめました。', romaji: 'Nihon e kite kara, nihongo no benkyou o hajimemashita.', polish: 'Dopiero po przyjeździe do Japonii zacząłem naukę japońskiego.' },
+      { japanese: 'おかねを はらってから、きっぷを うけとってください。', romaji: 'Okane o haratte kara, kippu o uketotte kudasai.', polish: 'Po uiszczeniu opłaty proszę odebrać bilet.' }
+    ],
+    questions: [
+      {
+        sentence: 'うちへ [?] から、おふろに はいります。',
+        full: 'うちへ かえってから、おふろに はいります。',
+        polish: 'Po powrocie do domu biorę kąpiel.',
+        answer: 'かえって',
+        distractors: ['かえる', 'かえった', 'かえります'],
+        explanation: 'W konstrukcji sekwencji czasowej używamy formy te czasownika: かえって から.'
+      },
+      {
+        sentence: 'あさごはんを たべて [?]、がっこうへ いきます。',
+        full: 'あさごはんを たべてから、がっこうへ いきます。',
+        polish: 'Po zjedzeniu śniadania idę do szkoły.',
+        answer: 'から',
+        distractors: ['まで', 'ので', 'より'],
+        explanation: 'Sekwencję chronologiczną po formie te tworzy partykuła から: [V-て] から.'
+      },
+      {
+        sentence: 'せんせいの せつめいを [?] から、しつもんしてください。',
+        full: 'せんせいの せつめいを きいてから、しつもんしてください。',
+        polish: 'Proszę zadawać pytania po wysłuchaniu wyjaśnień nauczyciela.',
+        answer: 'きいて',
+        distractors: ['きく', 'きいた', 'ききます'],
+        explanation: 'Przed から w sekwencji czynności wymagana jest forma te: きいて から.'
+      }
+    ]
+  },
+  {
+    id: 'nakereba_naranai',
+    category: 'verb',
+    kana: '〜なければならない',
+    speakKana: 'なければならない',
+    romaji: 'nakereba naranai',
+    label: 'Konieczność i obowiązek (Musieć / Trzeba)',
+    pattern: '[V-nai bez い] + ければ なりません / くてはいけません',
+    description: 'Wyraża bezwzględną konieczność lub obowiązek wykonania czynności: „muszę...”, „trzeba...”. Dosłownie: „jeśli nie zrobię, to nie ujdzie”.',
+    notes: 'Tworzenie: od formy przeczącej nai odcinamy końcowe い i dodajemy ければなりません (np. 行かない -> 行かなければなりません) lub くてはいけません.',
+    examples: [
+      { japanese: 'あした テストが ありますから、べんきょうしなければ なりません。', romaji: 'Ashita tesuto ga arimasu kara, benkyou shinakereba narimasen.', polish: 'Ponieważ jutro jest test, muszę się uczyć.' },
+      { japanese: 'びょうきですから、くすりを のまなければ なりません。', romaji: 'Byouki desu kara, kusuri o nomanakereba narimasen.', polish: 'Jestem chory, więc muszę wziąć lekarstwo.' },
+      { japanese: 'きょうは はやく うちへ かえらなければ なりません。', romaji: 'Kyou wa hayaku uchi e kaeranakereba narimasen.', polish: 'Muszę dzisiaj wcześnie wrócić do domu.' }
+    ],
+    questions: [
+      {
+        sentence: 'パスポートを [?] なければ なりません。',
+        full: 'パスポートを みせなければ なりません。',
+        polish: 'Muszę pokazać paszport.',
+        answer: 'みせ',
+        distractors: ['みせる', 'みせて', 'みせた'],
+        explanation: 'Od formy przeczącej みせない odrzucamy ない i wstawiamy bazę: みせ + なければなりません.'
+      },
+      {
+        sentence: 'じゅぎょうの まえに しゅくだいを ださなければ [?]。',
+        full: 'じゅぎょうの まえに しゅくだいを ださなければ なりません。',
+        polish: 'Przed lekcją muszę oddać pracę domową.',
+        answer: 'なりません',
+        distractors: ['ありません', 'しません', 'いません'],
+        explanation: 'Druga część konstrukcji obowiązku to なりません (lub いけません).'
+      },
+      {
+        sentence: 'あしたは はやく [?] なければ なりません。',
+        full: 'あしたは はやく おきなければ なりません。',
+        polish: 'Jutro muszę wcześnie wstać.',
+        answer: 'おき',
+        distractors: ['おきる', 'おきて', 'おきた'],
+        explanation: 'Czasownik おきる (wstawać) ma formę przeczącą おきない, więc forma obowiązku to おきなければなりません.'
+      }
+    ]
+  },
+  {
+    id: 'te_wa_ikenai',
+    category: 'verb',
+    kana: '〜てはいけない',
+    speakKana: 'てはいけない',
+    romaji: 'te wa ikenai',
+    label: 'Zakaz (〜てはいけません / Nie wolno)',
+    pattern: '[Czasownik w formie て] + はいけません',
+    description: 'Wyraża stanowczy zakaz: „nie wolno robić czegoś”. Wynika z regulaminów, prawa, zasad lub norm społecznych.',
+    notes: 'W stylu potocznym: 〜てはいけない / 〜ちゃだめ. Pytanie o pozwolenie to 〜てもいいですか, a odpowiedź odmowna (zakaz) to いいえ、〜てはいけません.',
+    examples: [
+      { japanese: 'ここで しゃしんを とっては いけません。', romaji: 'Koko de shashin o totte wa ikemasen.', polish: 'Tutaj nie wolno robić zdjęć.' },
+      { japanese: 'としょかんで おおきな こえで はなしては いけません。', romaji: 'Toshokan de ookina koe de hanashite wa ikemasen.', polish: 'W bibliotece nie wolno rozmawiać głośno.' },
+      { japanese: 'テストの とき、ほかの ひとの かみを みては いけません。', romaji: 'Tesuto no toki, hoka no hito no kami o mite wa ikemasen.', polish: 'Podczas testu nie wolno patrzeć na kartki innych osób.' }
+    ],
+    questions: [
+      {
+        sentence: 'きょうしつで たばこを [?] は いけません。',
+        full: 'きょうしつで たばこを すっては いけません。',
+        polish: 'W klasie nie wolno palić tytoniu.',
+        answer: 'すって',
+        distractors: ['すう', 'すった', 'すいます'],
+        explanation: 'Konstrukcja zakazu wymaga formy te czasownika: すって + はいけません.'
+      },
+      {
+        sentence: 'あぶないですから、かわで およいでは [?]。',
+        full: 'あぶないですから、かわで およいでは いけません。',
+        polish: 'Ponieważ jest niebezpiecznie, w tej rzece nie wolno pływać.',
+        answer: 'いけません',
+        distractors: ['ありません', 'しません', 'できません'],
+        explanation: 'Formuła zakazu brzmi: 〜てはいけません.'
+      },
+      {
+        sentence: 'ここで くるまを [?] は いけませんよ。',
+        full: 'ここで くるまを とめては いけませんよ。',
+        polish: 'Tutaj nie wolno zatrzymywać samochodu.',
+        answer: 'とめて',
+        distractors: ['とめる', 'とめた', 'とめます'],
+        explanation: 'Czasownik とめる w formie te to とめて: とめてはいけません.'
+      }
+    ]
+  },
+  {
+    id: 'naide_kudasai',
+    category: 'verb',
+    kana: '〜ないでください',
+    speakKana: 'ないでください',
+    romaji: 'naide kudasai',
+    label: 'Prośba o zaniechanie (〜ないでください / Proszę nie...)',
+    pattern: '[Czasownik w formie ない] + で ください',
+    description: 'Uprzejma prośba o niezrobienie danej czynności: „proszę nie robić...”.',
+    notes: 'Tworzenie: do pełnej formy przeczącej czasu teraźniejszego [V-ない] dodajemy でください (np. いかない -> いかないでください, わすれない -> わすれないでください).',
+    examples: [
+      { japanese: 'ここで しゃしんを とらないで ください。', romaji: 'Koko de shashin o toranaide kudasai.', polish: 'Proszę nie robić tutaj zdjęć.' },
+      { japanese: 'パスポートを わすれないで くださいね。', romaji: 'Pasupooto o wasurenaide kudasai ne.', polish: 'Proszę nie zapomnieć paszportu.' },
+      { japanese: 'しんぱいしないで ください。だいじょうぶですよ。', romaji: 'Shinpai shinaide kudasai. Daijoubu desu yo.', polish: 'Proszę się nie martwić. Wszystko w porządku.' }
+    ],
+    questions: [
+      {
+        sentence: 'まだ ね [?] で ください。いっしょに はなしましょう。',
+        full: 'まだ ねないで ください。いっしょに はなしましょう。',
+        polish: 'Proszę jeszcze nie iść spać. Porozmawiajmy razem.',
+        answer: 'ない',
+        distractors: ['なく', 'なかっ', 'ぬ'],
+        explanation: 'Konstrukcja prośby negatywnej to [V-ない] + でください (ねる -> ねないでください).'
+      },
+      {
+        sentence: 'あした じゅぎょうに [?] で ください。',
+        full: 'あした じゅぎょうに おくれないで ください。',
+        polish: 'Proszę nie spóźnić się jutro na lekcję.',
+        answer: 'おくれない',
+        distractors: ['おくれる', 'おくれて', 'おくれません'],
+        explanation: 'Czasownik おくれる w formie przeczącej nai to おくれない: おくれないでください.'
+      },
+      {
+        sentence: 'だいじな かみですから、すてない [?] ください。',
+        full: 'だいじな かみですから、すてないで ください。',
+        polish: 'To ważny papier, więc proszę go nie wyrzucać.',
+        answer: 'で',
+        distractors: ['に', 'を', 'と'],
+        explanation: 'Po formie przeczącej nai dodajemy partykułę で: すてないで ください.'
+      }
+    ]
+  },
+  {
+    id: 'sugiru',
+    category: 'verb',
+    kana: '〜すぎる',
+    speakKana: 'すぎる',
+    romaji: 'sugiru',
+    label: 'Nadmiar i przesada (〜すぎる / すぎます)',
+    pattern: '[Temat masu / Przym. bez い / な] + すぎます',
+    description: 'Wskazuje, że dana czynność lub cecha przekroczyła pożądaną miarę lub granice rozsądku („za dużo”, „zbyt...”). Zwykle niesie wydźwięk negatywny.',
+    notes: 'Czasowniki: odcinamy ます (たべます -> たべすぎる). Przymiotniki I: odcinamy い (たかい -> たかすぎる). Przymiotniki NA: sam temat (しずか -> しずかすぎる).',
+    examples: [
+      { japanese: 'きのうは おさけを のみすぎました。', romaji: 'Kinou wa osake o nomisugimashita.', polish: 'Wczoraj wypiłem za dużo alkoholu.' },
+      { japanese: 'この シャツは わたしには おおきすぎます。', romaji: 'Kono shatsu wa watashi niwa ookisugimasu.', polish: 'Ta koszula jest na mnie za duża.' },
+      { japanese: 'この もんだいは ふくざつすぎて、わかりません。', romaji: 'Kono mondai wa fukuzatsusugite, wakarimasen.', polish: 'To zadanie jest zbyt skomplikowane i go nie rozumiem.' }
+    ],
+    questions: [
+      {
+        sentence: 'きのうの ばん、ごはんを [?] すぎました。おなかが いたいです。',
+        full: 'きのうの ばん、ごはんを たべすぎました。おなかが いたいです。',
+        polish: 'Wczoraj wieczorem zjadłem za dużo. Boli mnie brzuch.',
+        answer: 'たべ',
+        distractors: ['たべる', 'たべて', 'たべた'],
+        explanation: 'Do すぎる dołączamy sam temat czasownika formy masu (たべます -> たべ).'
+      },
+      {
+        sentence: 'この パソコンは [?] すぎて、かうことが できません。',
+        full: 'この パソコンは たかすぎて、かうことが できません。',
+        polish: 'Ten komputer jest zbyt drogi i nie mogę go kupić.',
+        answer: 'たか',
+        distractors: ['たかい', 'たかく', 'たかった'],
+        explanation: 'Przymiotnik i-adjective łączy się ze すぎる po odcięciu końcówki い: たかい -> たかすぎて.'
+      },
+      {
+        sentence: 'テレビを み [?] から、めが つかれました。',
+        full: 'テレビを みすぎたから、めが つかれました。',
+        polish: 'Ponieważ za dużo oglądałem telewizję, zmęczyły mi się oczy.',
+        answer: 'すぎた',
+        distractors: ['すぎ', 'すぎる', 'すぎない'],
+        explanation: 'Czas przeszły w zdaniu przyczynowym: みすぎた から (ponieważ oglądałem za dużo).'
+      }
+    ]
+  },
+  {
+    id: 'ni_naru_ku_naru',
+    category: 'adjective',
+    kana: '〜になる / 〜くなる',
+    speakKana: 'になる',
+    romaji: 'ni naru / ku naru',
+    label: 'Zmiana stanu (Stawać się / Robić się)',
+    pattern: '[Rzeczownik / Przym. NA] + になる / [Przym. I bez い] + くなる',
+    description: 'Opisuje obiektywną lub naturalną zmianę stanu rzeczy: „stawać się jakimś”, „zrobić się...”.',
+    notes: 'Rzeczowniki i przymiotniki typu NA łączą się przez に (np. 先生になる, 元気になる). Przymiotniki typu I zmieniają końcówkę い na く (np. 暑い -> 暑くなる, 寒くなる).',
+    examples: [
+      { japanese: '１２月に なって、さむく なりました。', romaji: 'Juunigatsu ni natte, samuku narimashita.', polish: 'Nadszedł grudzień i zrobiło się zimno.' },
+      { japanese: 'しょうらい にほんごの せんせいに なりたいです。', romaji: 'Shourai nihongo no sensei ni naritai desu.', polish: 'W przyszłości chcę zostać nauczycielem japońskiego.' },
+      { japanese: 'びょうきが なおって、げんきに なりました。', romaji: 'Byouki ga naotte, genki ni narimashita.', polish: 'Wyzdrowiałem i poczułem się dobrze.' }
+    ],
+    questions: [
+      {
+        sentence: 'はるに なって、あたたか [?] なりました。',
+        full: 'はるに なって、あたたかく なりました。',
+        polish: 'Nadeszła wiosna i zrobiło się ciepło.',
+        answer: 'く',
+        distractors: ['い', 'に', 'で'],
+        explanation: 'Przymiotnik i-adjective あたたかい przed なります zmienia い na く: あたたかく なりました.'
+      },
+      {
+        sentence: 'まいあさ はしって、からだが じょうぶ [?] なりました。',
+        full: 'まいあさ はしって、からだが じょうぶに なりました。',
+        polish: 'Biegam co rano i moje ciało stało się silne / zdrowe.',
+        answer: 'に',
+        distractors: ['く', 'な', 'で'],
+        explanation: 'Przymiotnik na-adjective じょうぶ łączy się z なります przez partykułę に: じょうぶに なりました.'
+      },
+      {
+        sentence: 'もう １２じに [?] から、ねましょう。',
+        full: 'もう １２じに なったから、ねましょう。',
+        polish: 'Wybiła już dwunasta, więc chodźmy spać.',
+        answer: 'なった',
+        distractors: ['なる', 'なって', 'なり'],
+        explanation: 'Po rzeczowniku oznaczającym godzinę (12時) w czasie przeszłym: １２じに なったから.'
+      }
+    ]
+  },
+  {
+    id: 'ni_suru_ku_suru',
+    category: 'adjective',
+    kana: '〜にする / 〜くする',
+    speakKana: 'にする',
+    romaji: 'ni suru / ku suru',
+    label: 'Czynna zmiana i wybór (Robić jakimś / Wybierać)',
+    pattern: '[Rzeczownik / Przym. NA] + にする / [Przym. I bez い] + くする',
+    description: 'Opisuje celowe przekształcenie cechy przez podmiot („zrobić jakimś”, „zmienić stan”) lub podjęcie decyzji/wyboru przy zamawianiu („decyduję się na...”).',
+    notes: 'W przeciwieństwie do なる (gdzie zmiana dzieje się sama), する oznacza działanie człowieka (np. 音を小さくする – ściszać dźwięk, 部屋をきれいにする – sprzątać pokój, コーヒーにする – decyduję się na kawę).',
+    examples: [
+      { japanese: 'あかちゃんが ねていますから、おとを ちいさく してください。', romaji: 'Akachan ga nete imasu kara, oto o chiisaku shite kudasai.', polish: 'Dziecko śpi, więc proszę ściszyć dźwięk (zrobić go małym).' },
+      { japanese: 'へやを きれいに しました。', romaji: 'Heya o kirei ni shimashita.', polish: 'Uporządkowałem pokój (zrobiłem go czystym).' },
+      { japanese: 'わたしは コーヒーに します。', romaji: 'Watashi wa koohii ni shimasu.', polish: 'Ja wybieram kawę / poproszę kawę.' }
+    ],
+    questions: [
+      {
+        sentence: 'くらいですから、へやを あかる [?] してください。',
+        full: 'くらいですから、へやを あかるく してください。',
+        polish: 'Jest ciemno, więc proszę rozjaśnić pokój.',
+        answer: 'く',
+        distractors: ['い', 'に', 'な'],
+        explanation: 'Przymiotnik i-adjective あかるい w połączeniu z する zmienia い na く: あかるく してください.'
+      },
+      {
+        sentence: 'きょうは なにを のみますか。ー わたしは おちゃ [?] します。',
+        full: 'きょうは なにを のみますか。ー わたしは おちゃに します。',
+        polish: 'Czego się dziś napijesz? – Ja wybieram zieloną herbatę.',
+        answer: 'に',
+        distractors: ['を', 'で', 'が'],
+        explanation: 'Wybór lub decyzję z rzeczownikiem wyraża konstrukcja: [Rzeczownik] + に します.'
+      },
+      {
+        sentence: 'ながい かみを みじかく [?]。',
+        full: 'ながい かみを みじかく しました。',
+        polish: 'Ściąłem długie włosy na krótko.',
+        answer: 'しました',
+        distractors: ['なりました', 'ありました', 'いきました'],
+        explanation: 'Świadoma zmiana cechy przez podmiot wymaga czasownika する (w czasie przeszłym: しました).'
+      }
+    ]
+  },
+  {
+    id: 'node',
+    category: 'conversation',
+    kana: '〜ので',
+    speakKana: 'ので',
+    romaji: 'node',
+    label: 'Obiektywna przyczyna (〜ので / Ponieważ / Skoro)',
+    pattern: '[Zdanie w stylu prostym / Przym. NA + な / Rzeczownik + な] + ので',
+    description: 'Wskazuje na obiektywny powód, naturalną przyczynę lub usprawiedliwienie. Brzmi znacznie uprzejmiej, łagodniej i mniej narzucająco niż から.',
+    notes: 'Ważna różnica: z przymiotnikami na-adjective i rzeczownikami przed ので pojawia się な (np. 雨なので, 好きなので, 静かなので), a nie だ.',
+    examples: [
+      { japanese: 'あめが ふっている ので、かさを もっていきます。', romaji: 'Ame ga futte iru node, kasa o motte ikimasu.', polish: 'Ponieważ pada deszcz, wezmę ze sobą parasol.' },
+      { japanese: 'きょうは あたまが いたい ので、はやく かえっても いいですか。', romaji: 'Kyou wa atama ga itai node, hayaku kaette mo ii desu ka.', polish: 'Ponieważ boli mnie dziś głowa, czy mógłbym pójść wcześniej do domu?' },
+      { japanese: 'きょうは にちようびな ので、ぎんこうは やすみです。', romaji: 'Kyou wa nichiyoubina node, ginkou wa yasumi desu.', polish: 'Z uwagi na to, że dziś jest niedziela, bank jest nieczynny.' }
+    ],
+    questions: [
+      {
+        sentence: 'バスが こなかった [?]、ちこくしました。',
+        full: 'バスが こなかったので、ちこくしました。',
+        polish: 'Ponieważ autobus nie przyjechał, spóźniłem się.',
+        answer: 'ので',
+        distractors: ['のに', 'でも', 'からが'],
+        explanation: 'Uprzejme wskazanie przyczyny zdarzenia: こなかった ので.'
+      },
+      {
+        sentence: 'きょうは ひま [?] ので、あそびに きてください。',
+        full: 'きょうは ひまな ので、あそびに きてください。',
+        polish: 'Skoro mam dziś wolny czas, przyjdź w odwiedziny.',
+        answer: 'な',
+        distractors: ['だ', 'に', 'で'],
+        explanation: 'Przymiotnik na-adjective ひま łączy się z ので przez な: ひまな ので.'
+      },
+      {
+        sentence: 'あした テストが [?] ので、こんばん べんきょうします。',
+        full: 'あした テストが あるので、こんばん べんきょうします。',
+        polish: 'Ponieważ jutro mam test, będę się uczyć dziś wieczorem.',
+        answer: 'ある',
+        distractors: ['あります', 'あって', 'あったら'],
+        explanation: 'Przed partykułą przyczynową ので używamy formy stylu prostego: ある ので.'
+      }
+    ]
+  },
+  {
+    id: 'kara_node_comp',
+    category: 'particle',
+    kana: '〜から / 〜まで',
+    speakKana: 'からまで',
+    romaji: 'kara / made',
+    label: 'Ramy czasowe i przestrzenne (Od... do...)',
+    pattern: '[Punkt początkowy] から [Punkt końcowy] まで',
+    description: 'Określa ramy czasowe („od godziny... do godziny...”) lub przestrzenne („z miejsca... do miejsca...”). Może również występować samodzielnie (samo から lub samo まで).',
+    notes: 'Kiedy から stoi po orzeczeniu całego zdania, oznacza przyczynę („ponieważ / dlatego że”). Kiedy stoi po rzeczowniku, oznacza punkt startowy („od / z”).',
+    examples: [
+      { japanese: 'ぎんこうは ９じから ３じまで あいています。', romaji: 'Ginkou wa kuji kara sanji made aite imasu.', polish: 'Bank jest otwarty od 9:00 do 15:00.' },
+      { japanese: 'とうきょうから きょうとまで しんかんせんで いきます。', romaji: 'Toukyou kara Kyouto made shinkansen de ikimasu.', polish: 'Z Tokio do Kioto jedzie się shinkansenem.' },
+      { japanese: 'まいあさ ８じから べんきょうを はじめます。', romaji: 'Maiasa hachiji kara benkyou o hajimemasu.', polish: 'Każdego ranka zaczynam naukę od 8:00.' }
+    ],
+    questions: [
+      {
+        sentence: 'ゆうびんきょくは ごぜん９じ [?] ごご５じまでです。',
+        full: 'ゆうびんきょくは ごぜん９じから ごご５じまでです。',
+        polish: 'Poczta jest czynna od 9:00 rano do 17:00 po południu.',
+        answer: 'から',
+        distractors: ['まで', 'より', 'に'],
+        explanation: 'Początek przedziału czasowego („od”) oznacza partykuła から.'
+      },
+      {
+        sentence: 'うちから えき [?] あるいて １０ぷんです。',
+        full: 'うちから えきまで あるいて １０ぷんです。',
+        polish: 'Z domu na stację idzie się pieszo 10 minut.',
+        answer: 'まで',
+        distractors: ['から', 'へ', 'に'],
+        explanation: 'Koniec trasy lub zakresu („do”) oznacza partykuła まで.'
+      },
+      {
+        sentence: 'げつようびから きんようび [?] はたらきます。',
+        full: 'げつようびから きんようびまで はたらきます。',
+        polish: 'Pracuję od poniedziałku do piątku.',
+        answer: 'まで',
+        distractors: ['で', 'を', 'に'],
+        explanation: 'Konstrukcja zakresu dni tygodnia: [Dzień] から [Dzień] まで.'
+      }
+    ]
+  },
+  {
+    id: 'yori_hou_ga',
+    category: 'conversation',
+    kana: '〜より〜のほうが',
+    speakKana: 'よりのほうが',
+    romaji: 'yori ~ no hou ga',
+    label: 'Porównania (〜より〜のほうが〜 / B jest bardziej niż A)',
+    pattern: '[Element A] より [Element B] の ほうが [Przymiotnik] です',
+    description: 'Służy do porównywania dwóch rzeczy: „B jest bardziej [jakiś] niż A”. Element przy より to punkt odniesienia, a element przy のほうが to ten, który wygrywa w danej cesze.',
+    notes: 'Pytanie o wybór między dwoma elementami: A と B と どちらが [Przymiotnik] ですか. Przy porównaniu trzech lub więcej rzeczy: [Grupa] の中で [Element] が 一番 [Przymiotnik] です.',
+    examples: [
+      { japanese: 'ひこうきの ほうが でんしゃより はやいです。', romaji: 'Hikouki no hou ga densha yori hayai desu.', polish: 'Samolot jest szybszy niż pociąg.' },
+      { japanese: 'にほんごの ほうが えいごより むずかしいですか。', romaji: 'Nihongo no hou ga eigo yori muzukashii desu ka.', polish: 'Czy japoński jest trudniejszy niż angielski?' },
+      { japanese: 'りんごと みかんと どちらが すきですか。', romaji: 'Ringo to mikan to dochira ga suki desu ka.', polish: 'Co bardziej lubisz: jabłka czy mandarynki?' }
+    ],
+    questions: [
+      {
+        sentence: 'くるま [?] しんかんせんの ほうが はやいです。',
+        full: 'くるまより しんかんせんの ほうが はやいです。',
+        polish: 'Shinkansen jest szybszy niż samochód.',
+        answer: 'より',
+        distractors: ['から', 'まで', 'ほど'],
+        explanation: 'Punkt odniesienia w porównaniu („niż”) oznacza partykuła より.'
+      },
+      {
+        sentence: 'コーヒーより おちゃの [?] が すきです。',
+        full: 'コーヒーより おちゃの ほうが すきです。',
+        polish: 'Bardziej lubię herbatę niż kawę.',
+        answer: 'ほう',
+        distractors: ['もの', 'こと', 'とき'],
+        explanation: 'Element cechujący się większym natężeniem cechy otrzymuje znacznik の ほう が.'
+      },
+      {
+        sentence: 'スポーツの なかで なに [?] いちばん おもしろいですか。',
+        full: 'スポーツの なかで なにが いちばん おもしろいですか。',
+        polish: 'Jaki sport jest najciekawszy ze wszystkich?',
+        answer: 'が',
+        distractors: ['は', 'を', 'に'],
+        explanation: 'W pytaniu o najwyższy stopień (一番) podmiot cechy oznaczamy partykułą が.'
+      }
+    ]
   }
 ];
 
@@ -9116,6 +9842,8 @@ const ACHIEVEMENTS_KEY = 'hiragana-achievements';
 const ACHIEVEMENTS_VERSION = 1;
 const BOOKMARKS_KEY = 'hiragana-bookmarks';
 const BOOKMARKS_VERSION = 1;
+const JLPT_KEY = 'hiragana-jlpt';
+const JLPT_VERSION = 1;
 
 function appStorageKeys() {
   return [
@@ -9128,6 +9856,7 @@ function appStorageKeys() {
     GRAMMAR_KEY,
     ACHIEVEMENTS_KEY,
     BOOKMARKS_KEY,
+    JLPT_KEY,
     LEGACY_THEME_KEY,
     LEGACY_MUTED_KEY
   ];
@@ -14353,6 +15082,2273 @@ document.addEventListener('click', e => {
     }
   }
 });
+
+/* =========================================================
+   EGZAMIN PRÓBNY JLPT N5 & KOMPENDIUM WIEDZY (日本語能力試験 N5)
+   ========================================================= */
+
+// prettier-ignore
+const JLPT_N5_COUNTERS = [
+  {
+    id: 'tsu',
+    kanji: 'つ',
+    name: '〜つ',
+    label: 'Przedmioty ogólne / rzeczy (1–10)',
+    desc: 'Uniwersalny rdzenny system japoński do liczenia małych przedmiotów, owoców, pomysłów, zamówień w restauracji do 10.',
+    tip: 'Liczby 1–10 są nieregularne i kończą się na 〜つ (z wyjątkiem とお = 10). Powyżej 10 używa się zwykłych liczb chińsko-japońskich (11 = じゅういち). Pytajnik: いくつ (ile?).',
+    items: [
+      { num: 1, kana: 'ひとつ', romaji: 'hitotsu', polish: 'jeden' },
+      { num: 2, kana: 'ふたつ', romaji: 'futatsu', polish: 'dwa' },
+      { num: 3, kana: 'みっつ', romaji: 'mittsu', polish: 'trzy' },
+      { num: 4, kana: 'よっつ', romaji: 'yottsu', polish: 'cztery' },
+      { num: 5, kana: 'いつつ', romaji: 'itsutsu', polish: 'pięć' },
+      { num: 6, kana: 'むっつ', romaji: 'muttsu', polish: 'sześć' },
+      { num: 7, kana: 'ななつ', romaji: 'nanatsu', polish: 'siedem' },
+      { num: 8, kana: 'やっつ', romaji: 'yattsu', polish: 'osiem' },
+      { num: 9, kana: 'ここのつ', romaji: 'kokonotsu', polish: 'dziewięć' },
+      { num: 10, kana: 'とお', romaji: 'too', polish: 'dziesięć' }
+    ]
+  },
+  {
+    id: 'nin',
+    kanji: '人',
+    name: '〜人 (にん)',
+    label: 'Osoby i ludzie',
+    desc: 'Służy do liczenia ludzi. Dwie pierwsze formy są unikalnymi rdzennymi wyjątkami.',
+    tip: '1 osoba = ひとり, 2 osoby = ふたり. Od 3 w górę: liczba + にん (3 = さんにん, 4 = よにん - UWAGA: yonin, nigdy shinin!). Pytajnik: なんにん (ile osób?).',
+    items: [
+      { num: 1, kana: 'ひとり', romaji: 'hitori', polish: 'jedna osoba', isIrregular: true },
+      { num: 2, kana: 'ふたり', romaji: 'futari', polish: 'dwie osoby', isIrregular: true },
+      { num: 3, kana: 'さんにん', romaji: 'sannin', polish: 'trzy osoby' },
+      { num: 4, kana: 'よにん', romaji: 'yonin', polish: 'cztery osoby', isIrregular: true },
+      { num: 5, kana: 'ごにん', romaji: 'gonin', polish: 'pięć osób' },
+      { num: 6, kana: 'ろくにん', romaji: 'rokunin', polish: 'sześć osób' },
+      { num: 7, kana: 'しちにん / ななにん', romaji: 'shichinin / nananin', polish: 'siedem osób' },
+      { num: 8, kana: 'はちにん', romaji: 'hachinin', polish: 'osiem osób' },
+      { num: 9, kana: 'きゅうにん / くにん', romaji: 'kyuunin / kunin', polish: 'dziewięć osób' },
+      { num: 10, kana: 'じゅうにん', romaji: 'juunin', polish: 'dziesięć osób' }
+    ]
+  },
+  {
+    id: 'hon',
+    kanji: '本',
+    name: '〜本 (ほん / ぼん / ぽん)',
+    label: 'Przedmioty podłużne i cylindryczne',
+    desc: 'Butelki, ołówki, długopisy, parasole, banany, drzewa, linie metra, rzeki.',
+    tip: 'Wymiany fonetyczne: 1 (いっぽん), 3 (さんぼん - dźwięczne!), 6 (ろっぽん), 8 (はっぽん), 10 (じゅっぽん/じっぽん). Pytajnik: なんぼん (ile?).',
+    items: [
+      { num: 1, kana: 'いっぽん', romaji: 'ippon', polish: 'jeden podłużny', isIrregular: true },
+      { num: 2, kana: 'にほん', romaji: 'nihon', polish: 'dwa podłużne' },
+      { num: 3, kana: 'さんぼん', romaji: 'sambon', polish: 'trzy podłużne', isIrregular: true },
+      { num: 4, kana: 'よんほん', romaji: 'yonhon', polish: 'cztery podłużne' },
+      { num: 5, kana: 'ごほん', romaji: 'gohon', polish: 'pięć podłużnych' },
+      { num: 6, kana: 'ろっぽん', romaji: 'roppon', polish: 'sześć podłużnych', isIrregular: true },
+      { num: 7, kana: 'ななほん', romaji: 'nanahon', polish: 'siedem podłużnych' },
+      { num: 8, kana: 'はっぽん', romaji: 'happon', polish: 'osiem podłużnych', isIrregular: true },
+      { num: 9, kana: 'きゅうほん', romaji: 'kyuuhon', polish: 'dziewięć podłużnych' },
+      { num: 10, kana: 'じゅっぽん', romaji: 'juppon', polish: 'dziesięć podłużnych', isIrregular: true }
+    ]
+  },
+  {
+    id: 'mai',
+    kanji: '枚',
+    name: '〜枚 (まい)',
+    label: 'Przedmioty płaskie i cienkie',
+    desc: 'Kartki papieru, bilety, koszule, znaczki, zdjęcia, talerze, pocztówki.',
+    tip: 'Całkowicie regularny licznik: wystarczy dodać まい do liczebnika (いちまい, にまい, さんまい, よんまい itd.). Pytajnik: なんまい (ile kartek/biletów?).',
+    items: [
+      { num: 1, kana: 'いちまい', romaji: 'ichimai', polish: 'jedna sztuka płaska' },
+      { num: 2, kana: 'にまい', romaji: 'nimai', polish: 'dwie sztuki' },
+      { num: 3, kana: 'さんまい', romaji: 'sammai', polish: 'trzy sztuki' },
+      { num: 4, kana: 'よんまい', romaji: 'yonmai', polish: 'cztery sztuki' },
+      { num: 5, kana: 'ごまい', romaji: 'gomai', polish: 'pięć sztuk' },
+      { num: 6, kana: 'ろくまい', romaji: 'rokumai', polish: 'sześć sztuk' },
+      { num: 7, kana: 'ななまい', romaji: 'nanamai', polish: 'siedem sztuk' },
+      { num: 8, kana: 'はちまい', romaji: 'hachimai', polish: 'osiem sztuk' },
+      { num: 9, kana: 'きゅうまい', romaji: 'kyuumai', polish: 'dziewięć sztuk' },
+      { num: 10, kana: 'じゅうまい', romaji: 'juumai', polish: 'dziesięć sztuk' }
+    ]
+  },
+  {
+    id: 'hiki',
+    kanji: '匹',
+    name: '〜匹 (ひき / びき / ぴき)',
+    label: 'Małe zwierzęta, ryby i owady',
+    desc: 'Psy, koty, ryby, małpy, ptaki domowe, owady.',
+    tip: 'Wymiany p/b: 1 (いっぴき), 3 (さんびき - dźwięczne!), 6 (ろっぴき), 8 (はっぴき), 10 (じゅっぴき). Pytajnik: なんびき (ile zwierząt?).',
+    items: [
+      { num: 1, kana: 'いっぴき', romaji: 'ippiki', polish: 'jedno zwierzę', isIrregular: true },
+      { num: 2, kana: 'にひき', romaji: 'nihiki', polish: 'dwa zwierzęta' },
+      { num: 3, kana: 'さんびき', romaji: 'sambiki', polish: 'trzy zwierzęta', isIrregular: true },
+      { num: 4, kana: 'よんひき', romaji: 'yonhiki', polish: 'cztery zwierzęta' },
+      { num: 5, kana: 'ごひき', romaji: 'gohiki', polish: 'pięć zwierząt' },
+      { num: 6, kana: 'ろっぴき', romaji: 'roppiki', polish: 'sześć zwierząt', isIrregular: true },
+      { num: 7, kana: 'ななひき', romaji: 'nanahiki', polish: 'siedem zwierząt' },
+      { num: 8, kana: 'はっぴき', romaji: 'happiki', polish: 'osiem zwierząt', isIrregular: true },
+      { num: 9, kana: 'きゅうひき', romaji: 'kyuuhiki', polish: 'dziewięć zwierząt' },
+      { num: 10, kana: 'じゅっぴき', romaji: 'juppiki', polish: 'dziesięć zwierząt', isIrregular: true }
+    ]
+  },
+  {
+    id: 'dai',
+    kanji: '台',
+    name: '〜台 (だい)',
+    label: 'Maszyny, pojazdy i sprzęt AGD',
+    desc: 'Samochody, rowery, komputery, telewizory, telefony komórkowe, pralki.',
+    tip: 'Regularny licznik: dodajemy だい (いちだい, にだい, さんだい, よんだい itd.). Pytajnik: なんだい (ile aut/maszyn?).',
+    items: [
+      { num: 1, kana: 'いちだい', romaji: 'ichidai', polish: 'jeden pojazd/maszyna' },
+      { num: 2, kana: 'にだい', romaji: 'nidai', polish: 'dwa pojazdy' },
+      { num: 3, kana: 'さんだい', romaji: 'sandai', polish: 'trzy pojazdy' },
+      { num: 4, kana: 'よんだい', romaji: 'yondai', polish: 'cztery pojazdy' },
+      { num: 5, kana: 'ごだい', romaji: 'godai', polish: 'pięć pojazdów' },
+      { num: 6, kana: 'ろくだい', romaji: 'rokudai', polish: 'sześć pojazdów' },
+      { num: 7, kana: 'ななだい', romaji: 'nanadai', polish: 'siedem pojazdów' },
+      { num: 8, kana: 'はちだい', romaji: 'hachidai', polish: 'osiem pojazdów' },
+      { num: 9, kana: 'きゅうだい', romaji: 'kyuudai', polish: 'dziewięć pojazdów' },
+      { num: 10, kana: 'じゅうだい', romaji: 'juudai', polish: 'dziesięć pojazdów' }
+    ]
+  },
+  {
+    id: 'satsu',
+    kanji: '冊',
+    name: '〜冊 (さつ)',
+    label: 'Książki, tomy i zeszyty',
+    desc: 'Książki, słowniki, magazyny, zeszyty, komiksy manga.',
+    tip: 'Wymiany s/ss: 1 (いっさつ), 8 (はっさつ), 10 (じゅっさつ). Pytajnik: なんさつ (ile książek?).',
+    items: [
+      { num: 1, kana: 'いっさつ', romaji: 'issatsu', polish: 'jedna książka', isIrregular: true },
+      { num: 2, kana: 'にさつ', romaji: 'nisatsu', polish: 'dwie książki' },
+      { num: 3, kana: 'さんさつ', romaji: 'sansatsu', polish: 'trzy książki' },
+      { num: 4, kana: 'よんさつ', romaji: 'yonsatsu', polish: 'cztery książki' },
+      { num: 5, kana: 'ごさつ', romaji: 'gosatsu', polish: 'pięć książek' },
+      { num: 6, kana: 'ろくさつ', romaji: 'rokusatsu', polish: 'sześć książek' },
+      { num: 7, kana: 'ななさつ', romaji: 'nanasatsu', polish: 'siedem książek' },
+      { num: 8, kana: 'はっさつ', romaji: 'hassatsu', polish: 'osiem książek', isIrregular: true },
+      { num: 9, kana: 'きゅうさつ', romaji: 'kyuusatsu', polish: 'dziewięć książek' },
+      { num: 10, kana: 'じゅっさつ', romaji: 'jussatsu', polish: 'dziesięć książek', isIrregular: true }
+    ]
+  },
+  {
+    id: 'hai',
+    kanji: '杯',
+    name: '〜杯 (はい / ばい / ぱい)',
+    label: 'Puchary, szklanki, kubki i miski z napojem/jedzeniem',
+    desc: 'Filiżanki kawy, szklanki wody, kufle piwa, miski zupy lub ryżu.',
+    tip: 'Wymiany fonetyczne: 1 (いっぱい), 3 (さんばい - dźwięczne!), 6 (ろっぱい), 8 (はっぱい), 10 (じゅっぱい). Pytajnik: なんばい (ile szklanek?).',
+    items: [
+      { num: 1, kana: 'いっぱい', romaji: 'ippai', polish: 'jedna szklanka/filiżanka', isIrregular: true },
+      { num: 2, kana: 'にはい', romaji: 'nihai', polish: 'dwie szklanki' },
+      { num: 3, kana: 'さんばい', romaji: 'sambai', polish: 'trzy szklanki', isIrregular: true },
+      { num: 4, kana: 'よんばい / よんはい', romaji: 'yonhai', polish: 'cztery szklanki' },
+      { num: 5, kana: 'ごはい', romaji: 'gohai', polish: 'pięć szklanek' },
+      { num: 6, kana: 'ろっぱい', romaji: 'roppai', polish: 'sześć szklanek', isIrregular: true },
+      { num: 7, kana: 'ななはい', romaji: 'nanahai', polish: 'siedem szklanek' },
+      { num: 8, kana: 'はっぱい', romaji: 'happai', polish: 'osiem szklanek', isIrregular: true },
+      { num: 9, kana: 'きゅうはい', romaji: 'kyuuhai', polish: 'dziewięć szklanek' },
+      { num: 10, kana: 'じゅっぱい', romaji: 'juppai', polish: 'dziesięć szklanek', isIrregular: true }
+    ]
+  },
+  {
+    id: 'kai_floors',
+    kanji: '階',
+    name: '〜階 (かい / がい)',
+    label: 'Piętra budynków',
+    desc: 'Kondygnacje naziemne i podziemne budynków.',
+    tip: 'Wyjątki: 1 (いっかい), 3 (さんがい - UWAGA: dźwięczne!), 6 (ろっかい), 8 (はっかい), 10 (じゅっかい). Pytajnik: なんがい (które piętro?). Piętro podziemne: 地下 (ちか, np. 地下一階 = B1).',
+    items: [
+      { num: 1, kana: 'いっかい', romaji: 'ikkai', polish: 'pierwsze piętro (parter w Japonii!)', isIrregular: true },
+      { num: 2, kana: 'にかい', romaji: 'nikai', polish: 'drugie piętro' },
+      { num: 3, kana: 'さんがい', romaji: 'sangai', polish: 'trzecie piętro', isIrregular: true },
+      { num: 4, kana: 'よんかい', romaji: 'yonkai', polish: 'czwarte piętro' },
+      { num: 5, kana: 'ごかい', romaji: 'gokai', polish: 'piąte piętro' },
+      { num: 6, kana: 'ろっかい', romaji: 'rokkai', polish: 'szóste piętro', isIrregular: true },
+      { num: 7, kana: 'ななかい', romaji: 'nanakai', polish: 'siódme piętro' },
+      { num: 8, kana: 'はっかい', romaji: 'hakkai', polish: 'ósme piętro', isIrregular: true },
+      { num: 9, kana: 'きゅうかい', romaji: 'kyuukai', polish: 'dziewiąte piętro' },
+      { num: 10, kana: 'じゅっかい', romaji: 'jukkai', polish: 'dziesiąte piętro', isIrregular: true }
+    ]
+  },
+  {
+    id: 'sai',
+    kanji: '歳',
+    name: '〜歳 (さい)',
+    label: 'Wiek ludzi i zwierząt',
+    desc: 'Wiek w latach.',
+    tip: 'Wyjątki: 1 rok (いっさい), 8 lat (はっさい), 10 lat (じゅっさい). NAJWIĘKSZY WYJĄTEK: 20 lat to はたち (nie nijuusai!). Pytajnik: なんさい lub uprzejme おいくつ.',
+    items: [
+      { num: 1, kana: 'いっさい', romaji: 'issai', polish: '1 rok', isIrregular: true },
+      { num: 2, kana: 'にさい', romaji: 'nisai', polish: '2 lata' },
+      { num: 8, kana: 'はっさい', romaji: 'hassai', polish: '8 lat', isIrregular: true },
+      { num: 10, kana: 'じゅっさい', romaji: 'jussai', polish: '10 lat', isIrregular: true },
+      { num: 20, kana: 'はたち', romaji: 'hatachi', polish: '20 lat (pełnoletność tradycyjna)', isIrregular: true }
+    ]
+  },
+  {
+    id: 'kai_times',
+    kanji: '回',
+    name: '〜回 (かい)',
+    label: 'Razy / częstotliwość',
+    desc: 'Liczba powtórzeń danej czynności lub zdarzenia.',
+    tip: 'Wyjątki fonetyczne: 1 raz (いっかい), 6 razy (ろっかい), 8 razy (はっかい), 10 razy (じゅっかい). Pytajnik: なんかい (ile razy?).',
+    items: [
+      { num: 1, kana: 'いっかい', romaji: 'ikkai', polish: 'jeden raz', isIrregular: true },
+      { num: 2, kana: 'にかい', romaji: 'nikai', polish: 'dwa razy' },
+      { num: 3, kana: 'さんかい', romaji: 'sankai', polish: 'trzy razy' },
+      { num: 6, kana: 'ろっかい', romaji: 'rokkai', polish: 'sześć razy', isIrregular: true },
+      { num: 8, kana: 'はっかい', romaji: 'hakkai', polish: 'osiem razy', isIrregular: true },
+      { num: 10, kana: 'じゅっかい', romaji: 'jukkai', polish: 'dziesięć razy', isIrregular: true }
+    ]
+  }
+];
+
+// prettier-ignore
+const JLPT_N5_CALENDAR = {
+  days: [
+    { day: 1, kanji: '1日', kana: 'ついたち', romaji: 'tsuitachi', isIrregular: true, desc: 'Pierwszy dzień miesiąca (rdzenny wyjątek)' },
+    { day: 2, kanji: '2日', kana: 'ふつか', romaji: 'futsuka', isIrregular: true, desc: 'Drugi dzień miesiąca' },
+    { day: 3, kanji: '3日', kana: 'みっか', romaji: 'mikka', isIrregular: true, desc: 'Trzeci dzień miesiąca' },
+    { day: 4, kanji: '4日', kana: 'よっか', romaji: 'yokka', isIrregular: true, desc: 'Czwarty dzień miesiąca' },
+    { day: 5, kanji: '5日', kana: 'いつか', romaji: 'itsuka', isIrregular: true, desc: 'Piąty dzień miesiąca' },
+    { day: 6, kanji: '6日', kana: 'むいか', romaji: 'muika', isIrregular: true, desc: 'Szósty dzień miesiąca' },
+    { day: 7, kanji: '7日', kana: 'なのか', romaji: 'nanoka', isIrregular: true, desc: 'Siódmy dzień miesiąca' },
+    { day: 8, kanji: '8日', kana: 'ようか', romaji: 'youka', isIrregular: true, desc: 'Ósmy dzień miesiąca' },
+    { day: 9, kanji: '9日', kana: 'ここのか', romaji: 'kokonoka', isIrregular: true, desc: 'Dziewiąty dzień miesiąca' },
+    { day: 10, kanji: '10日', kana: 'とおか', romaji: 'tooka', isIrregular: true, desc: 'Dziesiąty dzień miesiąca' },
+    { day: 14, kanji: '14日', kana: 'じゅうよっか', romaji: 'juuyokka', isIrregular: true, desc: 'Czternasty dzień miesiąca' },
+    { day: 20, kanji: '20日', kana: 'はつか', romaji: 'hatsuka', isIrregular: true, desc: 'Dwudziesty dzień miesiąca' },
+    { day: 24, kanji: '24日', kana: 'にじゅうよっか', romaji: 'nijuuyokka', isIrregular: true, desc: 'Dwudziesty czwarty dzień miesiąca' }
+  ],
+  relativeTime: [
+    { kanji: '今日', kana: 'きょう', romaji: 'kyou', polish: 'dzisiaj' },
+    { kanji: '明日', kana: 'あした / あす', romaji: 'ashita', polish: 'jutro' },
+    { kanji: '明後日', kana: 'あさって', romaji: 'asatte', polish: 'pojutrze' },
+    { kanji: '昨日', kana: 'きのう', romaji: 'kinou', polish: 'wczoraj' },
+    { kanji: '一昨日', kana: 'おととい', romaji: 'ototoi', polish: 'przedwczoraj' },
+    { kanji: '今週', kana: 'こんしゅう', romaji: 'konshuu', polish: 'w tym tygodniu' },
+    { kanji: '来週', kana: 'らいしゅう', romaji: 'raishuu', polish: 'w przyszłym tygodniu' },
+    { kanji: '先週', kana: 'せんしゅう', romaji: 'senshuu', polish: 'w zeszłym tygodniu' },
+    { kanji: '毎週', kana: 'まいしゅう', romaji: 'maishuu', polish: 'co tydzień' },
+    { kanji: '今月', kana: 'こんげつ', romaji: 'kongetsu', polish: 'w tym miesiącu' },
+    { kanji: '来月', kana: 'らいげつ', romaji: 'raigetsu', polish: 'w przyszłym miesiącu' },
+    { kanji: '先月', kana: 'せんげつ', romaji: 'sengetsu', polish: 'w zeszłym miesiącu' },
+    { kanji: '毎月', kana: 'まいつき', romaji: 'maitsuki', polish: 'co miesiąc' },
+    { kanji: '今年', kana: 'ことし', romaji: 'kotoshi', polish: 'w tym roku' },
+    { kanji: '来年', kana: 'らいねん', romaji: 'rainen', polish: 'w przyszłym roku' },
+    { kanji: '去年', kana: 'きょねん', romaji: 'kyonen', polish: 'w zeszłym roku' },
+    { kanji: '毎年', kana: 'まいとし / まいねん', romaji: 'maitoshi', polish: 'co roku' },
+    { kanji: '今朝', kana: 'けさ', romaji: 'kesa', polish: 'dziś rano' },
+    { kanji: '今晩', kana: 'こんばん', romaji: 'komban', polish: 'dziś wieczorem' },
+    { kanji: '毎朝', kana: 'まいあさ', romaji: 'maiasa', polish: 'każdego ranka' },
+    { kanji: '毎晩', kana: 'まいばん', romaji: 'maiban', polish: 'każdego wieczoru' }
+  ]
+};
+
+// prettier-ignore
+const JLPT_N5_KOS_O_A_DO = [
+  {
+    type: 'Rzeczy (Zaimki rzeczowne)',
+    ko: 'これ (to tutaj)',
+    so: 'それ (to u ciebie)',
+    a: 'あれ (tamto daleko)',
+    do: 'どれ (które?)'
+  },
+  {
+    type: 'Przymiotne (Określające rzeczownik)',
+    ko: 'この＋Rz. (ten ...)',
+    so: 'その＋Rz. (tamten ...)',
+    a: 'あの＋Rz. (ów ...)',
+    do: 'どの＋Rz. (który ...?)'
+  },
+  {
+    type: 'Miejsca',
+    ko: 'ここ (tutaj)',
+    so: 'そこ (tam / u ciebie)',
+    a: 'あそこ (tam daleko)',
+    do: 'どこ (gdzie?)'
+  },
+  {
+    type: 'Kierunki i formy uprzejme',
+    ko: 'こちら (w tę stronę / ta osoba)',
+    so: 'そちら (w tamtą stronę)',
+    a: 'あちら (w ową stronę)',
+    do: 'どちら (gdzie / w którą stronę?)'
+  }
+];
+
+// prettier-ignore
+const JLPT_N5_QUESTIONS = [
+  // ==========================================
+  // SEKCJA 1: 言語知識（文字・語彙）
+  // ==========================================
+  // Część 1: 漢字読み (Kanji Reading)
+  {
+    id: 'n5_q01',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: '毎朝 新聞を <u>読みます</u>。',
+    options: ['よみます', 'のみます', 'かきます', 'ききます'],
+    correct: 0,
+    explanation: 'Podkreślone słowo 読みます pochodzi od czasownika 読む (czytać) i czyta się よみます (yomimasu - czytam).'
+  },
+  {
+    id: 'n5_q02',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: 'きのう <u>新しい</u> 本を 買いました。',
+    options: ['ふるい', 'あたらしい', 'たかい', 'やすい'],
+    correct: 1,
+    explanation: 'Znak 新 oznacza „nowy”. W połączeniu z okurigana しい tworzy przymiotnik あたらしい (atarashii - nowy).'
+  },
+  {
+    id: 'n5_q03',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: 'えきの <u>南口</u>で 会いましょう。',
+    options: ['みなみぐち', 'きたぐち', 'ひがしぐち', 'にしぐち'],
+    correct: 0,
+    explanation: '南 (みなみ - południe) + 口 (くち -> ぐchi - wyjście) = みなみぐち (wyjście południowe stacji).'
+  },
+  {
+    id: 'n5_q04',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: '山川さんは <u>白い</u> シャツを 着ています。',
+    options: ['くろい', 'あかい', 'しろい', 'あおい'],
+    correct: 2,
+    explanation: 'Znak 白 oznacza „biały”. Przymiotnik 白い czyta się しろい (shiroi).'
+  },
+  {
+    id: 'n5_q05',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: 'この 川は <u>魚</u>が たくさん います。',
+    options: ['とり', 'さかな', 'いぬ', 'ねこ'],
+    correct: 1,
+    explanation: 'Znak 魚 oznacza „ryba” i w odczytaniu kunyomi ma czytanie さかな (sakana).'
+  },
+  {
+    id: 'n5_q06',
+    section: 'lang',
+    subType: 'kanji_reading',
+    typeLabel: 'Część 1: Czytanie znaków kanji (漢字読み)',
+    instruction: 'Wybierz prawidłowe odczytanie podkreślonego słowa zapisanego znakami kanji.',
+    question: '<u>来週</u> 京都へ 行きます。',
+    options: ['こんしゅう', 'せんしゅう', 'まいしゅう', 'らいしゅう'],
+    correct: 3,
+    explanation: 'Złożenie 来 (przyszły) + 週 (tydzień) tworzy 来週 oznaczające らいしゅう (raishuu - w przyszłym tygodniu).'
+  },
+
+  // Część 2: 表記 (Orthography / Kanji Writing)
+  {
+    id: 'n5_q07',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: 'ともだちと プールで <u>およぎました</u>。',
+    options: ['泳ぎました', '歩ぎました', '走りました', '行きました'],
+    correct: 0,
+    explanation: 'Czasownik およぐ (pływać) zapisuje się znakiem 泳. Prawidłowy zapis to 泳ぎました.'
+  },
+  {
+    id: 'n5_q08',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: '毎朝 ６時に <u>おきます</u>。',
+    options: ['起きます', '行きます', '来きます', '見きます'],
+    correct: 0,
+    explanation: 'Czasownik おきる (budzić się / wstawać) zapisuje się znakiem 起: 起きます.'
+  },
+  {
+    id: 'n5_q09',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: 'デパートで くつを <u>かいました</u>。',
+    options: ['売いました', '買いました', '貝いました', '見いました'],
+    correct: 1,
+    explanation: 'Czasownik かう (kupować) zapisuje się znakiem 買. 売 oznacza sprzedawać, a 貝 to muszla.'
+  },
+  {
+    id: 'n5_q10',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: 'ボールペンで なまえを <u>かいて</u> ください。',
+    options: ['話して', '読んで', '書いて', '聞きて'],
+    correct: 2,
+    explanation: 'Czasownik かく (pisać) zapisuje się znakiem 書. W formie te: 書いて (kaite).'
+  },
+  {
+    id: 'n5_q11',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: 'そとに <u>おとこのこ</u>が います。',
+    options: ['男の人', '女の子', '男の子', '女の人'],
+    correct: 2,
+    explanation: 'おとこのこ (chłopiec) składa się ze znaków 男 (mężczyzna) + 子 (dziecko) = 男の子.'
+  },
+  {
+    id: 'n5_q12',
+    section: 'lang',
+    subType: 'kanji_writing',
+    typeLabel: 'Część 2: Zapis kanji (表記)',
+    instruction: 'Wybierz prawidłowy zapis znakowy kanji dla podkreślonego słowa.',
+    question: 'つくえの <u>うえ</u>に ほんが あります。',
+    options: ['中', '下', '外', '上'],
+    correct: 3,
+    explanation: 'うえ (na / góra) zapisuje się znakiem 上. (中 to środek, 下 to dół, 外 to na zewnątrz).'
+  },
+
+  // Część 3: 文脈規定 (Contextual Vocabulary)
+  {
+    id: 'n5_q13',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'へやが 暗いですから、でんきを [?] ください。',
+    options: ['つけて', 'けして', 'あけて', 'しめて'],
+    correct: 0,
+    explanation: 'Ponieważ w pokoju jest ciemno (暗い), należy WŁĄCZYĆ światło: でんきを つける (forma te: つけて). けして = zgaś, あけて = otwórz, しめて = zamknij.'
+  },
+  {
+    id: 'n5_q14',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'テーブルの うえに りんごが [?] あります。',
+    options: ['みっつ', 'さんにん', 'さんぼん', 'さんまい'],
+    correct: 0,
+    explanation: 'Do liczenia jabłek używamy japońskich liczebników ogólnych: ひとつ、ふたつ、みっつ (3 sztuki). さんにん to ludzie, さんぼん to przedmioty podłużne, さんまい to przedmioty płaskie.'
+  },
+  {
+    id: 'n5_q15',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'きょうは さむいですから、あたたかい [?]を のみましょう。',
+    options: ['おちゃ', 'ごはん', 'パン', 'さかな'],
+    correct: 0,
+    explanation: 'Do czasownika のみましょう (napijmy się) i cechy あたたかい (ciepły) pasuje płynny napój: おちゃ (zielona herbata).'
+  },
+  {
+    id: 'n5_q16',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'としょかんで ほんを [?] か借りました。',
+    options: ['２まい', '２さつ', '２だい', '２ほん'],
+    correct: 1,
+    explanation: 'Do liczenia książek i tomów używamy japońskiego licznika 〜冊 (さつ): ２さつ (dwie książki).'
+  },
+  {
+    id: 'n5_q17',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'この りょうりは とても [?] です。もう すこし たべたいです。',
+    options: ['まずい', 'からい', 'おいしい', 'にがい'],
+    correct: 2,
+    explanation: 'Zdanie „Chcę zjeść jeszcze trochę” wskazuje, że potrawa jest bardzo smaczna (おいしい). まずい = niesmaczny, からい = ostry, にがい = gorzki.'
+  },
+  {
+    id: 'n5_q18',
+    section: 'lang',
+    subType: 'context_vocab',
+    typeLabel: 'Część 3: Słownictwo w kontekście (文脈規定)',
+    instruction: 'Wybierz słowo, które najlepiej pasuje do luki w zdaniu.',
+    question: 'じゅぎょうに [?]から、はしって がっこうへ 行きました。',
+    options: ['おくれた', 'やすんだ', 'はじまった', 'おわった'],
+    correct: 0,
+    explanation: 'Zwrot じゅぎょうに おくれる oznacza „spóźnić się na lekcję”. Dlatego biegłem do szkoły.'
+  },
+
+  // Część 4: 言い換え類義 (Paraphrases)
+  {
+    id: 'n5_q19',
+    section: 'lang',
+    subType: 'paraphrase',
+    typeLabel: 'Część 4: Parafrazy i wyrażenia bliskoznaczne (言い換え類義)',
+    instruction: 'Wybierz zdanie, które ma najbardziej zbliżone znaczenie do podanego zdania.',
+    question: 'きのうは どこへも 行きませんでした。',
+    options: ['きのうは うちに いました。', 'きのうは 学校へ 行きました。', 'きのうは デパートへ 行きました。', 'きのうは ともだちの いえへ 行きました。'],
+    correct: 0,
+    explanation: '„Nigdzie wczoraj nie poszedłem” (どこへも 行きませんでした) oznacza to samo, co „Wczoraj byłem w domu” (うちに いました).'
+  },
+  {
+    id: 'n5_q20',
+    section: 'lang',
+    subType: 'paraphrase',
+    typeLabel: 'Część 4: Parafrazy i wyrażenia bliskoznaczne (言い換え類義)',
+    instruction: 'Wybierz zdanie, które ma najbardziej zbliżone znaczenie do podanego zdania.',
+    question: 'たなかさんは 英語が じょうずです。',
+    options: ['たなかさんは 英語が すきではありません。', 'たなかさんは 英語が とても よく できます。', 'たなかさんは 英語を べんきょうしません。', 'たなかさんは 英語が へたです。'],
+    correct: 1,
+    explanation: 'じょうずです oznacza „być biegłym w czymś”. Zdanie równoważne: 英語が とても よく できます (radzi sobie świetnie z angielskim).'
+  },
+  {
+    id: 'n5_q21',
+    section: 'lang',
+    subType: 'paraphrase',
+    typeLabel: 'Część 4: Parafrazy i wyrażenia bliskoznaczne (言い換え類義)',
+    instruction: 'Wybierz zdanie, które ma najbardziej zbliżone znaczenie do podanego zdania.',
+    question: 'この みせの ケーキは たかいです。',
+    options: ['この みせの ケーキは やすくないです。', 'この みせの ケーキは おいしくないです。', 'この みせの ケーキは ちいさいです。', 'この みせの ケーキは あたらしくないです。'],
+    correct: 0,
+    explanation: 'たかい (drogi) jest antonimem やすい (tani), więc „drogi” oznacza „niedrogi” z przeczeniem: やすくないです.'
+  },
+  {
+    id: 'n5_q22',
+    section: 'lang',
+    subType: 'paraphrase',
+    typeLabel: 'Część 4: Parafrazy i wyrażenia bliskoznaczne (言い換え類義)',
+    instruction: 'Wybierz zdanie, które ma najbardziej zbliżone znaczenie do podanego zdania.',
+    question: 'わたしは きのう びょういんへ 行きました。',
+    options: ['きのう からだの ぐあいが わるかったです。', 'きのうは とても 元気でした。', 'きのう 買いものを しました。', 'きのう 映画を 見ました。'],
+    correct: 0,
+    explanation: 'Wizyta w szpitalu / przychodni (びょういん) oznacza, że osoba źle się czuła lub chorowała (からだの ぐあいが わるかった).'
+  },
+  {
+    id: 'n5_q23',
+    section: 'lang',
+    subType: 'paraphrase',
+    typeLabel: 'Część 4: Parafrazy i wyrażenia bliskoznaczne (言い換え類義)',
+    instruction: 'Wybierz zdanie, które ma najbardziej zbliżone znaczenie do podanego zdania.',
+    question: 'あしたは がっこうが やすみです。',
+    options: ['あしたは じゅぎょうが あります。', 'あしたは じゅぎょうが ありません。', 'あしたは テストが あります。', 'あしたは そうじを します。'],
+    correct: 1,
+    explanation: 'Dzień wolny od szkoły (やすみ) oznacza, że nie ma zajęć lekcyjnych: じゅぎょうが ありません.'
+  },
+
+  // ==========================================
+  // SEKCJA 2: 言語知識（文法）・読解
+  // ==========================================
+  // Część 5: 文法形式の判断 (Grammar Form & Particles)
+  {
+    id: 'n5_q24',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'わたしは 毎朝 バス [?] 学校へ 行きます。',
+    options: ['で', 'に', 'を', 'へ'],
+    correct: 0,
+    explanation: 'Środek lokomocji lub transportu oznaczamy partykułą で: バスで (autobusem).'
+  },
+  {
+    id: 'n5_q25',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: '日曜日、公園へ さんぽ [?] 行きました。',
+    options: ['に', 'を', 'で', 'へ'],
+    correct: 0,
+    explanation: 'Cel przemieszczania się po rzeczowniku czynnościowym wyraża partykuła に: さんぽに 行きました (poszedłem na spacer).'
+  },
+  {
+    id: 'n5_q26',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'あしたは 雨が [?] かもしれません。',
+    options: ['ふる', 'ふります', 'ふって', 'ふった'],
+    correct: 0,
+    explanation: 'Konstrukcja przypuszczenia かもしれません łączy się z formą słownikową czasu teraźniejszego: ふる かもしれません (może będzie padać).'
+  },
+  {
+    id: 'n5_q27',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'すみませんが、ペンを かして [?]。',
+    options: ['ください', 'します', 'あげます', 'みます'],
+    correct: 0,
+    explanation: 'Uprzejma prośba o pożyczenie tworzona jest wzorcem [V-て] + ください: かして ください.'
+  },
+  {
+    id: 'n5_q28',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: '日本へ 行った [?] が ありますか。',
+    options: ['こと', 'もの', 'とき', 'ほう'],
+    correct: 0,
+    explanation: 'Doświadczenie życiowe („czy kiedykolwiek”) to konstrukcja [V-た] + ことが あります: 行った ことが ありますか.'
+  },
+  {
+    id: 'n5_q29',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'テストですから、ノートを [?] は いけません。',
+    options: ['見て', '見る', '見ます', '見た'],
+    correct: 0,
+    explanation: 'Stanowczy zakaz („nie wolno”) tworzy się za pomocą formy te: [V-て] + はいけません: 見ては いけません.'
+  },
+  {
+    id: 'n5_q30',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'きのうは 映画を 見たり、音楽を [?] しました。',
+    options: ['きいたり', 'きいて', 'きく', 'ききました'],
+    correct: 0,
+    explanation: 'Wyliczanie przykładowych czynności w strukturze 〜たり〜たり wymaga formy tari: きいたり しました.'
+  },
+  {
+    id: 'n5_q31',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: 'この お茶は [?] すぎて、のめません。',
+    options: ['あつ', 'あつい', 'あつく', 'あつかった'],
+    correct: 0,
+    explanation: 'Przymiotnik i-adjective łączy się ze すぎる po odcięciu końcówki い: あつい -> あつすぎて (jest zbyt gorący).'
+  },
+  {
+    id: 'n5_q32',
+    section: 'lang',
+    subType: 'grammar_choice',
+    typeLabel: 'Część 5: Wybór formy gramatycznej (文法形式の判断)',
+    instruction: 'Wybierz element gramatyczny, który poprawnie uzupełnia zdanie.',
+    question: '薬を のんだ [?]、ねました。',
+    options: ['あとで', 'まえに', 'ときに', 'あいだに'],
+    correct: 0,
+    explanation: 'Czynność następująca po ukończeniu innej (z formą przeszłą た) wymaga słowa あとで: のんだ あとで (po zażyciu leku).'
+  },
+
+  // Część 6: 文の組み立て ★ (Star Sentence Ordering)
+  {
+    id: 'n5_q33',
+    section: 'lang',
+    subType: 'star_sentence',
+    typeLabel: 'Część 6: Układanie zdań z gwiazdką (文の組み立て ★)',
+    instruction: 'Ułóż 4 fragmenty zdania w odpowiedniej kolejności, a następnie wskaż słowo, które znajdzie się na miejscu oznaczonym gwiazdką (★).',
+    question: 'わたしは ＿ ＿ ★ ＿ 買いました。',
+    starPieces: ['新しい', '昨日', '本を', 'デパートで'],
+    correctOrder: [1, 3, 0, 2], // 昨日 デパートで 新しい 本を
+    starSlotIndex: 2, // pozycja 2 to element '新しい' (index 0 w starPieces)
+    options: ['新しい', '昨日', '本を', 'デパートで'],
+    correct: 0,
+    explanation: 'Poprawnie ułożone zdanie: わたしは 昨日(1) デパートで(3) ★新しい(0) 本を(2) 買いました (Wczoraj w domu towarowym kupiłem nową książkę). W miejscu gwiazdki ★ znajduje się słowo 新しい.'
+  },
+  {
+    id: 'n5_q34',
+    section: 'lang',
+    subType: 'star_sentence',
+    typeLabel: 'Część 6: Układanie zdań z gwiazdką (文の組み立て ★)',
+    instruction: 'Ułóż 4 fragmenty zdania w odpowiedniej kolejności, a następnie wskaż słowo, które znajdzie się na miejscu oznaczonym gwiazdką (★).',
+    question: '図書館では ＿ ＿ ★ ＿ いけません。',
+    starPieces: ['大きな', '話しては', '声で', '本を'],
+    correctOrder: [0, 2, 1, 3], // 大きな 声で 話しては
+    starSlotIndex: 2, // pozycja 2 to element '話しては' (index 1 w starPieces)
+    options: ['大きな', '話しては', '声で', '本を'],
+    correct: 1,
+    explanation: 'Poprawne zdanie: 図書館では 大きな(0) 声で(2) ★話しては(1) いけません (W bibliotece nie wolno rozmawiać głośnym głosem). W miejscu gwiazdki ★ znajduje się 話しては.'
+  },
+  {
+    id: 'n5_q35',
+    section: 'lang',
+    subType: 'star_sentence',
+    typeLabel: 'Część 6: Układanie zdań z gwiazdką (文の組み立て ★)',
+    instruction: 'Ułóż 4 fragmenty zdania w odpowiedniej kolejności, a następnie wskaż słowo, które znajdzie się na miejscu oznaczonym gwiazdką (★).',
+    question: '晩ごはんを ＿ ＿ ★ ＿ ねます。',
+    starPieces: ['歯を', 'みがいてから', '食べた', 'あとで'],
+    correctOrder: [2, 3, 0, 1], // 食べた あとで 歯を みがいてから
+    starSlotIndex: 2, // pozycja 2 to element '歯を' (index 0)
+    options: ['歯を', 'みがいてから', '食べた', 'あとで'],
+    correct: 0,
+    explanation: 'Poprawne zdanie: 晩ごはんを 食べた(2) あとで(3) ★歯を(0) みがいてから(1) ねます (Po zjedzeniu kolacji, po umyciu zębów idę spać). Na pozycji gwiazdki ★ znajduje się 歯を.'
+  },
+  {
+    id: 'n5_q36',
+    section: 'lang',
+    subType: 'star_sentence',
+    typeLabel: 'Część 6: Układanie zdań z gwiazdką (文の組み立て ★)',
+    instruction: 'Ułóż 4 fragmenty zdania w odpowiedniej kolejności, a następnie wskaż słowo, które znajdzie się na miejscu oznaczonym gwiazdką (★).',
+    question: '田中さんは ＿ ＿ ★ ＿ できます。',
+    starPieces: ['じょうずに はなす', '日本語を', 'ことが', 'とても'],
+    correctOrder: [1, 3, 0, 2], // 日本語を とても じょうずに はなす ことが
+    starSlotIndex: 2, // pozycja 2 to 'じょうずに はなす' (index 0)
+    options: ['じょうずに はなす', '日本語を', 'ことが', 'とても'],
+    correct: 0,
+    explanation: 'Poprawne zdanie: 田中さんは 日本語を(1) とても(3) ★じょうずに はなす(0) ことが(2) できます (Pan Tanaka potrafi bardzo biegle mówić po japońsku). W miejscu gwiazdki ★ znajduje się じょうずに はなす.'
+  },
+  {
+    id: 'n5_q37',
+    section: 'lang',
+    subType: 'star_sentence',
+    typeLabel: 'Część 6: Układanie zdań z gwiazdką (文の組み立て ★)',
+    instruction: 'Ułóż 4 fragmenty zdania w odpowiedniej kolejności, a następnie wskaż słowo, które znajdzie się na miejscu oznaczonym gwiazdką (★).',
+    question: '電車より ＿ ＿ ★ ＿ 早いです。',
+    starPieces: ['ひこうきの', 'ほうが', 'ずっと', 'スピードが'],
+    correctOrder: [0, 1, 2, 3], // ひこうきの ほうが ずっと スピードが 早いです
+    starSlotIndex: 2, // pozycja 2 to 'ずっと' (index 2)
+    options: ['ひこうきの', 'ほうが', 'ずっと', 'スピードが'],
+    correct: 2,
+    explanation: 'Poprawne zdanie: 電車より ひこうきの(0) ほうが(1) ★ずっと(2) スピードが(3) 早いです (Samolot ma znacznie większą prędkość niż pociąg). Na pozycji gwiazdki ★ znajduje się ずっと.'
+  },
+
+  // Część 7: 読解 (Reading Comprehension)
+  // Tekst 1: E-mail od Yamady
+  {
+    id: 'n5_q38',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 1',
+    instruction: 'Przeczytaj poniższy e-mail i odpowiedz na pytanie.',
+    readingPassage: {
+      title: 'E-mail od Yamady (Krótki list prywatny)',
+      badge: 'Tekst 1 z 3 (Krótka wiadomość)',
+      japanese: '田中さんへ\n\nこんにちは。山田です。\n今週の土曜日、いっしょに 映画を 見に 行きませんか。\n駅の 前の 新しい 映画館で １１時から おもしろい アニメが あります。\n１０時半に 駅の 南口で 会いましょう。\n映画を 見た あとで、近くの レストランで ひるごはんを 食べましょう。\n返事を ください。\n\n山田より'
+    },
+    question: '山田さんと 田中さんは 土曜日の 何時に どこで 会いますか。',
+    options: ['１０時半に 駅の 南口', '１１時に 映画館の なか', '１０時半に 駅の 北口', '１２時に レストラン'],
+    correct: 0,
+    explanation: 'W liście napisano dosłownie: 「１０時半に 駅の 南口で 会いましょう」 (Spotkajmy się o 10:30 przy południowym wyjściu ze stacji).'
+  },
+  {
+    id: 'n5_q39',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 1',
+    instruction: 'Przeczytaj e-mail i wybierz poprawną odpowiedź.',
+    readingPassage: {
+      title: 'E-mail od Yamady (Krótki list prywatny)',
+      badge: 'Tekst 1 z 3 (Krótka wiadomość)',
+      japanese: '田中さんへ\n\nこんにちは。山田です。\n今週の土曜日、いっしょに 映画を 見に 行きませんか。\n駅の 前の 新しい 映画館で １１時から おもしろい アニメが あります。\n１０時半に 駅の 南口で 会いましょう。\n映画を 見た あとで、近くの レストランで ひるごはんを 食べましょう。\n返事を ください。\n\n山田より'
+    },
+    question: '二人は 映画を 見た あとで 何を しますか。',
+    options: ['映画館で アニメを もう一度 見る', '近くの レストランで ひるごはんを 食べる', '駅へ かえる', '山田さんの 家へ 行く'],
+    correct: 1,
+    explanation: 'W liście czytamy: 「映画を 見た あとで、近くの レストランで ひるごはんを 食べましょう」 (Po obejrzeniu filmu zjedzmy obiad w pobliskiej restauracji).'
+  },
+
+  // Tekst 2: Diariusz studenta
+  {
+    id: 'n5_q40',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 2',
+    instruction: 'Przeczytaj wpis w pamiętniku i odpowiedz na pytanie.',
+    readingPassage: {
+      title: 'Pamiętnik studenta (Wizyta u japońskiego kolegi)',
+      badge: 'Tekst 2 z 3 (Wpis z pamiętnika)',
+      japanese: '１０月１５日（水曜日）\n\n今日、はじめて 日本の 友だちの 家へ 行きました。\n友だちの お母さんは おいしい おすしを つくってくれました。\nわたしは はしを つかう ことが あまり 上手ではありませんでしたが、\n友だちが しんせつに おしえてくれました。\nごはんの あとで、みんなで 日本の 歌を うたいました。\nとても たのしかったです。また 行きたいです。'
+    },
+    question: '友だちの お母さんは 何を してくれましたか。',
+    options: ['おいしい おすしを つくってくれた', 'はしを 買ってくれた', '日本の 歌を うたってくれた', '友だちの 家を そうじしてくれた'],
+    correct: 0,
+    explanation: 'W tekście zapisano: 「友だちの お母さんは おいしい おすしを つくってくれました」 (Mama kolegi przygotowała dla nas pyszne sushi).'
+  },
+  {
+    id: 'n5_q41',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 2',
+    instruction: 'Przeczytaj wpis w pamiętniku i wybierz poprawną odpowiedź.',
+    readingPassage: {
+      title: 'Pamiętnik studenta (Wizyta u japońskiego kolegi)',
+      badge: 'Tekst 2 z 3 (Wpis z pamiętnika)',
+      japanese: '１０月１５日（水曜日）\n\n今日、はじめて 日本の 友だちの 家へ 行きました。\n友だちの お母さんは おいしい おすしを つくってくれました。\nわたしは はしを つかう ことが あまり 上手ではありませんでしたが、\n友だちが しんせつに おしえてくれました。\nごはんの あとで、みんなで 日本の 歌を うたいました。\nとても たのしかったです。また 行きたいです。'
+    },
+    question: 'この 人は 友だちの 家で 何が あまり 上手ではありませんでしたか。',
+    options: ['日本語を はなすこと', '歌を うたうこと', 'はしを つかうこと', 'おすしを たべること'],
+    correct: 2,
+    explanation: 'Autor wspomina: 「わたしは はしを つかう ことが あまり 上手ではありませんでしたが...」 (Nie byłem zbyt zręczny w posługiwaniu się pałeczkami).'
+  },
+
+  // Tekst 3: Informator biblioteczny
+  {
+    id: 'n5_q42',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 3',
+    instruction: 'Przeczytaj informator biblioteki miejskiej i odpowiedz na pytanie.',
+    readingPassage: {
+      title: 'Ogłoszenie biblioteki miejskiej w Sakurze',
+      badge: 'Tekst 3 z 3 (Wyszukiwanie informacji / Ogłoszenie)',
+      japanese: '【さくら市 図書館の ご案内】\n\n開館時間（あいている 時間）：\n・火曜日 〜 金曜日：午前９時 〜 午後７時\n・土曜日・日曜日：午前９時 〜 午後５時\n\n休館日（やすみの 日）：\n・毎週 月曜日（月曜日が 祝日の ときは、火曜日が やすみです）\n・毎月さいごの 木曜日（ほんの せいり）\n\n本を かりる とき：\n・１人 ５さつまで、２週間 かりる ことが できます。\n・カードを つくる ときは、身分証明書（みぶんしょうめいしょ）を 見せて ください。'
+    },
+    question: '日曜日には 何時まで 本を かりる ことが できますか。',
+    options: ['午後５時まで', '午後７時まで', '午前９時まで', '本を かりる ことが できません'],
+    correct: 0,
+    explanation: 'W sekcji godzin otwarcia: 「土曜日・日曜日：午前９時 〜 午後５時」. W niedzielę biblioteka otwarta jest do godziny 17:00 (午後５時まで).'
+  },
+  {
+    id: 'n5_q43',
+    section: 'reading',
+    subType: 'reading',
+    typeLabel: 'Część 7: Czytanie ze zrozumieniem (読解) • Tekst 3',
+    instruction: 'Przeczytaj informator biblioteki miejskiej i odpowiedz na pytanie.',
+    readingPassage: {
+      title: 'Ogłoszenie biblioteki miejskiej w Sakurze',
+      badge: 'Tekst 3 z 3 (Wyszukiwanie informacji / Ogłoszenie)',
+      japanese: '【さくら市 図書館の ご案内】\n\n開館時間（あいている 時間）：\n・火曜日 〜 金曜日：午前９時 〜 午後７時\n・土曜日・日曜日：午前９時 〜 午後５時\n\n休館日（やすみの 日）：\n・毎週 月曜日（月曜日が 祝日の ときは、火曜日が やすみです）\n・毎月さいごの 木曜日（ほんの せいり）\n\n本を かりる とき：\n・１人 ５さつまで、２週間 かりる ことが できます。\n・カードを つくる ときは、身分証明書（みぶんしょうめいしょ）を 見せて ください。'
+    },
+    question: '本は １人 何さつまで、何週間 かりる ことが できますか。',
+    options: ['３さつまで、１週間', '５さつまで、２週間', '５さつまで、１か月', '１０さつまで、２週間'],
+    correct: 1,
+    explanation: 'Regulamin biblioteki określa: 「１人 ５さつまで、２週間 かりる ことが できます」 (Do 5 książek na okres 2 tygodni).'
+  }
+];
+
+// ==========================================
+// JLPT STORAGE & HISTORY
+// ==========================================
+
+function loadJlptHistory() {
+  try {
+    const raw = localStorage.getItem(JLPT_KEY);
+    if (!raw) return { version: JLPT_VERSION, attempts: [], bestScore: 0, passed: false };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return { version: JLPT_VERSION, attempts: [], bestScore: 0, passed: false };
+    }
+    return {
+      version: JLPT_VERSION,
+      attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
+      bestScore: typeof parsed.bestScore === 'number' ? parsed.bestScore : 0,
+      passed: Boolean(parsed.passed)
+    };
+  } catch (e) {
+    return { version: JLPT_VERSION, attempts: [], bestScore: 0, passed: false };
+  }
+}
+
+function saveJlptHistory(data = jlptHistory) {
+  try {
+    localStorage.setItem(JLPT_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+let jlptHistory = loadJlptHistory();
+
+// ==========================================
+// JLPT SESSION STATE
+// ==========================================
+
+let jlptSession = {
+  mode: 'hub', // 'hub' | 'exam' | 'results' | 'handbook'
+  examMode: 'full', // 'full' (75 min, 43 Q) | 'practice' (untimed, 43 Q) | 'mini' (20 min, 15 Q)
+  handbookTab: 'counters', // 'counters' | 'calendar' | 'pronouns' | 'kanji'
+  questions: [],
+  currentIndex: 0,
+  answers: {}, // { [qId]: selectedOptionIndex }
+  flagged: {}, // { [qId]: boolean }
+  starOrders: {}, // { [qId]: [pieceIndex, ...] }
+  practiceChecked: {}, // { [qId]: boolean }
+  timeRemainingSec: 0,
+  timerInterval: null,
+  elapsedSec: 0,
+  result: null
+};
+
+// ==========================================
+// SCORING & LOGIC
+// ==========================================
+
+function calculateJlptScore(session = jlptSession) {
+  const qs = session.questions && session.questions.length ? session.questions : JLPT_N5_QUESTIONS;
+  let langCorrect = 0;
+  let langTotal = 0;
+  let readCorrect = 0;
+  let readTotal = 0;
+
+  const breakdown = {
+    kanji_reading: { correct: 0, total: 0 },
+    kanji_writing: { correct: 0, total: 0 },
+    context_vocab: { correct: 0, total: 0 },
+    paraphrase: { correct: 0, total: 0 },
+    grammar_choice: { correct: 0, total: 0 },
+    star_sentence: { correct: 0, total: 0 },
+    reading: { correct: 0, total: 0 }
+  };
+
+  const details = [];
+
+  qs.forEach(q => {
+    const isLang = q.section === 'lang';
+    if (isLang) langTotal++;
+    else readTotal++;
+
+    if (breakdown[q.subType]) breakdown[q.subType].total++;
+
+    const chosen = session.answers[q.id];
+    const isCorrect = chosen === q.correct;
+
+    if (isCorrect) {
+      if (isLang) langCorrect++;
+      else readCorrect++;
+      if (breakdown[q.subType]) breakdown[q.subType].correct++;
+    }
+
+    details.push({
+      id: q.id,
+      question: q.question,
+      options: q.options,
+      chosen,
+      correct: q.correct,
+      isCorrect,
+      subType: q.subType,
+      typeLabel: q.typeLabel,
+      explanation: q.explanation,
+      flagged: Boolean(session.flagged[q.id])
+    });
+  });
+
+  const langScaled = langTotal > 0 ? Math.round((langCorrect / langTotal) * 120) : 0;
+  const readScaled = readTotal > 0 ? Math.round((readCorrect / readTotal) * 60) : 0;
+  const totalScore = langScaled + readScaled;
+
+  const langPass = langScaled >= 38;
+  const readPass = readScaled >= 19;
+  const passed = totalScore >= 90 && langPass && readPass;
+  const totalCorrect = langCorrect + readCorrect;
+  const totalQuestions = langTotal + readTotal;
+  const percent = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+  return {
+    totalScore,
+    maxScore: 180,
+    langScore: langScaled,
+    langMax: 120,
+    langPass,
+    readScore: readScaled,
+    readMax: 60,
+    readPass,
+    passed,
+    percent,
+    correctCount: totalCorrect,
+    totalCount: totalQuestions,
+    breakdown,
+    details
+  };
+}
+
+function startJlptExam(mode = 'full') {
+  if (jlptSession.timerInterval) {
+    clearInterval(jlptSession.timerInterval);
+    jlptSession.timerInterval = null;
+  }
+
+  let questionsPool = [];
+  let duration = 0;
+
+  if (mode === 'mini') {
+    // 15 pytań przekrojowo: 2 czytanie kanji, 2 pisanie, 2 słówka, 2 parafrazy, 3 gramatyka, 2 gwiazdki, 2 czytanie
+    const byType = {};
+    JLPT_N5_QUESTIONS.forEach(q => {
+      if (!byType[q.subType]) byType[q.subType] = [];
+      byType[q.subType].push(q);
+    });
+    questionsPool = [
+      ...(byType.kanji_reading || []).slice(0, 2),
+      ...(byType.kanji_writing || []).slice(0, 2),
+      ...(byType.context_vocab || []).slice(0, 2),
+      ...(byType.paraphrase || []).slice(0, 2),
+      ...(byType.grammar_choice || []).slice(0, 3),
+      ...(byType.star_sentence || []).slice(0, 2),
+      ...(byType.reading || []).slice(0, 2)
+    ];
+    duration = 20 * 60; // 20 min
+  } else {
+    // 'full' i 'practice': komplet 43 pytań
+    questionsPool = [...JLPT_N5_QUESTIONS];
+    duration = mode === 'full' ? 75 * 60 : 0;
+  }
+
+  jlptSession = {
+    mode: 'exam',
+    examMode: mode,
+    handbookTab: 'counters',
+    questions: questionsPool,
+    currentIndex: 0,
+    answers: {},
+    flagged: {},
+    starOrders: {},
+    practiceChecked: {},
+    timeRemainingSec: duration,
+    timerInterval: null,
+    elapsedSec: 0,
+    result: null
+  };
+
+  // Uruchomienie timera
+  jlptSession.timerInterval = setInterval(() => {
+    if (jlptSession.mode !== 'exam') {
+      clearInterval(jlptSession.timerInterval);
+      jlptSession.timerInterval = null;
+      return;
+    }
+
+    if (jlptSession.examMode === 'practice') {
+      jlptSession.elapsedSec++;
+      updateJlptTimerDisplay();
+    } else {
+      jlptSession.timeRemainingSec--;
+      jlptSession.elapsedSec++;
+      updateJlptTimerDisplay();
+      if (jlptSession.timeRemainingSec <= 0) {
+        clearInterval(jlptSession.timerInterval);
+        jlptSession.timerInterval = null;
+        finishJlptExam(true);
+      }
+    }
+  }, 1000);
+
+  state.jlpt = jlptSession;
+  render();
+}
+
+function updateJlptTimerDisplay() {
+  const el = document.getElementById('jlptTimerBadge');
+  if (!el) return;
+
+  if (jlptSession.examMode === 'practice') {
+    const mins = Math.floor(jlptSession.elapsedSec / 60);
+    const secs = jlptSession.elapsedSec % 60;
+    el.textContent = 'Czas nauki: ' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    el.classList.remove('is-urgent');
+  } else {
+    const s = Math.max(0, jlptSession.timeRemainingSec);
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    el.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    if (s <= 300) {
+      el.classList.add('is-urgent');
+    } else {
+      el.classList.remove('is-urgent');
+    }
+  }
+}
+
+function finishJlptExam(timeout = false) {
+  if (jlptSession.timerInterval) {
+    clearInterval(jlptSession.timerInterval);
+    jlptSession.timerInterval = null;
+  }
+
+  const result = calculateJlptScore(jlptSession);
+  jlptSession.result = result;
+  jlptSession.mode = 'results';
+
+  // Zapis do historii
+  const attempt = {
+    date: Date.now(),
+    mode: jlptSession.examMode,
+    totalScore: result.totalScore,
+    langScore: result.langScore,
+    readScore: result.readScore,
+    passed: result.passed,
+    elapsedSec: jlptSession.elapsedSec,
+    timeout: Boolean(timeout)
+  };
+
+  jlptHistory.attempts.unshift(attempt);
+  if (jlptHistory.attempts.length > 20) jlptHistory.attempts.pop();
+  if (result.totalScore > jlptHistory.bestScore) jlptHistory.bestScore = result.totalScore;
+  if (result.passed) jlptHistory.passed = true;
+  saveJlptHistory();
+
+  // Dźwięk gratulacji lub klik
+  if (result.passed) {
+    Audio.celebrate();
+  } else {
+    Audio.click();
+  }
+
+  render();
+}
+
+function selectJlptOption(optionIndex) {
+  const q = jlptSession.questions[jlptSession.currentIndex];
+  if (!q) return;
+
+  jlptSession.answers[q.id] = optionIndex;
+  Audio.click();
+
+  // W trybie treningowym, jeśli nie było jeszcze sprawdzone, użytkownik może sprawdzić
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function checkJlptPracticeAnswer(qId) {
+  const q = jlptSession.questions.find(item => item.id === qId);
+  if (!q) return;
+
+  jlptSession.practiceChecked[qId] = true;
+  const isCorrect = jlptSession.answers[qId] === q.correct;
+  if (isCorrect) {
+    Audio.correct();
+  } else {
+    Audio.wrong();
+  }
+
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function toggleJlptFlag(qId) {
+  jlptSession.flagged[qId] = !jlptSession.flagged[qId];
+  Audio.click();
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function setJlptStarSlot(qId, slotIdx, pieceIdx) {
+  const q = jlptSession.questions.find(item => item.id === qId);
+  if (!q || !q.starPieces) return;
+
+  if (!jlptSession.starOrders[qId]) {
+    jlptSession.starOrders[qId] = [null, null, null, null];
+  }
+
+  const order = jlptSession.starOrders[qId];
+
+  // Jeśli pieceIdx jest już w innym slocie, wyczyść go stamtąd
+  for (let i = 0; i < 4; i++) {
+    if (order[i] === pieceIdx) order[i] = null;
+  }
+
+  order[slotIdx] = pieceIdx;
+
+  // Sprawdź czy slot gwiazdki (indeks q.starSlotIndex, domyślnie 2) ma przypisany klocek
+  const starPiece = order[q.starSlotIndex];
+  if (typeof starPiece === 'number') {
+    jlptSession.answers[qId] = starPiece;
+  }
+
+  Audio.click();
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function clearJlptStarSlot(qId, slotIdx) {
+  if (!jlptSession.starOrders[qId]) return;
+  jlptSession.starOrders[qId][slotIdx] = null;
+  const q = jlptSession.questions.find(item => item.id === qId);
+  if (q && jlptSession.starOrders[qId][q.starSlotIndex] === null) {
+    delete jlptSession.answers[qId];
+  }
+  Audio.click();
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function openJlptHandbook(tab = 'counters') {
+  jlptSession.mode = 'handbook';
+  jlptSession.handbookTab = tab;
+  state.jlpt = jlptSession;
+  render();
+}
+
+// ==========================================
+// JLPT RENDER DELEGATOR
+// ==========================================
+
+function renderJlpt() {
+  const main = document.getElementById('app');
+  if (!main) return;
+
+  if (jlptSession.mode === 'exam') {
+    renderJlptExam(main);
+  } else if (jlptSession.mode === 'results') {
+    renderJlptResults(main);
+  } else if (jlptSession.mode === 'handbook') {
+    renderJlptHandbook(main);
+  } else {
+    renderJlptHub(main);
+  }
+}
+
+// ==========================================
+// JLPT RENDER: HUB VIEW
+// ==========================================
+
+function renderJlptHub(main) {
+  const bestScoreText = jlptHistory.bestScore ? jlptHistory.bestScore + ' / 180 pkt' : '—';
+  const statusText = jlptHistory.passed
+    ? 'ZDANY (合格)'
+    : jlptHistory.attempts.length > 0
+      ? 'W TRAKCIE'
+      : 'NIEPODEJŚTY';
+  const statusClass = jlptHistory.passed ? 'is-passed' : '';
+
+  main.innerHTML = `
+    <div class="jlpt-hub-container">
+      <div class="jlpt-top-actions">
+        <button class="hub-back-btn" id="btnJlptBackToDashboard" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Pulpit
+        </button>
+      </div>
+
+      <div class="jlpt-hero">
+        <div class="jlpt-hero-watermark" aria-hidden="true">合</div>
+        <div class="jlpt-hero-content">
+          <span class="jlpt-hero-eyebrow">OFICJALNY FORMAT • 日本語能力試験 N5</span>
+          <h2 class="jlpt-hero-title">Egzamin Próbny JLPT N5</h2>
+          <p class="jlpt-hero-desc">
+            Kompletny symulator państwowego egzaminu ze znajomości języka japońskiego na poziomie N5.
+            Sprawdź swoje umiejętności w autentycznych warunkach: czytanie i zapis kanji, słownictwo w kontekście,
+            struktury gramatyczne, układanie zdań z gwiazdką ★ oraz czytanie ze zrozumieniem.
+          </p>
+
+          <div class="jlpt-hero-stats">
+            <div class="jlpt-stat-card">
+              <span class="jlpt-stat-val">${bestScoreText}</span>
+              <span class="jlpt-stat-lbl">Najlepszy wynik</span>
+            </div>
+            <div class="jlpt-stat-card ${statusClass}">
+              <span class="jlpt-stat-val">${statusText}</span>
+              <span class="jlpt-stat-lbl">Status egzaminu</span>
+            </div>
+            <div class="jlpt-stat-card">
+              <span class="jlpt-stat-val">${jlptHistory.attempts.length}</span>
+              <span class="jlpt-stat-lbl">Podejść</span>
+            </div>
+            <div class="jlpt-stat-card">
+              <span class="jlpt-stat-val">100%</span>
+              <span class="jlpt-stat-lbl">Pokrycie N5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRYBY EGZAMINU -->
+      <div class="jlpt-section-title">
+        <h3>Wybierz tryb egzaminu</h3>
+        <p>Możesz przystąpić do pełnej oficjalnej symulacji czasowej lub uczyć się bez limitu czasu z polskimi objaśnieniami.</p>
+      </div>
+
+      <div class="jlpt-modes-grid">
+        <div class="jlpt-mode-card is-primary" id="cardJlptFull">
+          <div class="jlpt-mode-badge">OFICJALNY STANDARD</div>
+          <h4 class="jlpt-mode-title">Pełny Egzamin Czasowy</h4>
+          <p class="jlpt-mode-desc">
+            43 pytania w 2 sekcjach. Oficjalny limit 75 minut, brak podpowiedzi w trakcie i certyfikowana punktacja 0–180 pkt (próg zaliczenia: 90 pkt oraz minima sekcyjne).
+          </p>
+          <div class="jlpt-mode-meta">
+            <span>⏱ 75 minut</span>
+            <span>📝 43 pytania</span>
+            <span>🎯 0–180 pkt</span>
+          </div>
+          <button class="jlpt-mode-btn primary" id="btnStartJlptFull" type="button">
+            Rozpocznij Egzamin →
+          </button>
+        </div>
+
+        <div class="jlpt-mode-card" id="cardJlptPractice">
+          <div class="jlpt-mode-badge practice">BEZ LIMITU CZASU</div>
+          <h4 class="jlpt-mode-title">Tryb Treningowy (Practice)</h4>
+          <p class="jlpt-mode-desc">
+            Wszystkie 43 pytania we własnym tempie. Po zaznaczeniu odpowiedzi możesz natychmiast sprawdzić poprawność i przeczytać pełne polskie wyjaśnienie reguły.
+          </p>
+          <div class="jlpt-mode-meta">
+            <span>☕ Własne tempo</span>
+            <span>💡 Natychmiastowe wyjaśnienia</span>
+          </div>
+          <button class="jlpt-mode-btn" id="btnStartJlptPractice" type="button">
+            Trenuj z wyjaśnieniami →
+          </button>
+        </div>
+
+        <div class="jlpt-mode-card" id="cardJlptMini">
+          <div class="jlpt-mode-badge mini">SZYBKI TEST</div>
+          <h4 class="jlpt-mode-title">Mini-Mock N5 (15 pytań)</h4>
+          <p class="jlpt-mode-desc">
+            Szybka 20-minutowa przekrojowa powtórka: reprezentatywny zestaw zadań ze wszystkich typów pytań z proporcjonalną skalą punktacji.
+          </p>
+          <div class="jlpt-mode-meta">
+            <span>⏱ 20 minut</span>
+            <span>⚡ 15 pytań</span>
+          </div>
+          <button class="jlpt-mode-btn" id="btnStartJlptMini" type="button">
+            Szybki test (20 min) →
+          </button>
+        </div>
+      </div>
+
+      <!-- KOMPENDIUM WIEDZY N5 -->
+      <div class="jlpt-section-title">
+        <h3>Kompendium wiedzy do egzaminu N5</h3>
+        <p>Interaktywne tabele ze wszystkimi wymaganymi licznikami, dniami kalendarzowymi, zaimkami i znakami kanji.</p>
+      </div>
+
+      <div class="jlpt-handbook-shortcuts">
+        <button class="jlpt-shortcut-card" id="btnShortcutCounters" type="button">
+          <div class="jlpt-shortcut-icon">🔢</div>
+          <div class="jlpt-shortcut-info">
+            <h4>Liczniki japońskie (Counters)</h4>
+            <p>〜つ, 〜人, 〜本, 〜枚, 〜匹, 〜台, 〜冊, 〜杯, 〜階, 〜歳, 〜回 ze zmianami fonetycznymi</p>
+          </div>
+        </button>
+
+        <button class="jlpt-shortcut-card" id="btnShortcutCalendar" type="button">
+          <div class="jlpt-shortcut-icon">📅</div>
+          <div class="jlpt-shortcut-info">
+            <h4>Dni miesiąca i czas</h4>
+            <p>1–31 dzień miesiąca (ついたち, ふつか...), dni tygodnia i określenia względne</p>
+          </div>
+        </button>
+
+        <button class="jlpt-shortcut-card" id="btnShortcutPronouns" type="button">
+          <div class="jlpt-shortcut-icon">🧭</div>
+          <div class="jlpt-shortcut-info">
+            <h4>Zaimki Ko-So-A-Do & Pytajniki</h4>
+            <p>Kore/Sore/Are/Dore, Kono/Sono/Ano/Dono, Koko/Soko/Asoko/Doko i pytajniki N5</p>
+          </div>
+        </button>
+
+        <button class="jlpt-shortcut-card" id="btnShortcutKanji" type="button">
+          <div class="jlpt-shortcut-icon">漢</div>
+          <div class="jlpt-shortcut-info">
+            <h4>103 Kanoniczne Kanji N5</h4>
+            <p>Kompletna lista znaków z odczytaniami onyomi, kunyomi, polskimi znaczeniami i stopniem opanowania</p>
+          </div>
+        </button>
+      </div>
+
+      <!-- HISTORIA WYNIKÓW -->
+      ${
+        jlptHistory.attempts.length > 0
+          ? `
+        <div class="jlpt-history-section">
+          <h3>Historia ostatnich podejść</h3>
+          <div class="jlpt-history-list">
+            ${jlptHistory.attempts
+              .slice(0, 5)
+              .map(att => {
+                const d = new Date(att.date);
+                const dateStr =
+                  d.toLocaleDateString('pl-PL') +
+                  ' ' +
+                  d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+                const modeLabel =
+                  att.mode === 'full' ? 'Pełny (75 min)' : att.mode === 'mini' ? 'Mini (20 min)' : 'Treningowy';
+                return `
+                <div class="jlpt-history-item ${att.passed ? 'is-pass' : 'is-fail'}">
+                  <div class="jlpt-history-main">
+                    <span class="jlpt-history-verdict">${att.passed ? '合格 ZDANY' : '不合格 NIEZDANY'}</span>
+                    <span class="jlpt-history-mode">${modeLabel}</span>
+                    <span class="jlpt-history-date">${dateStr}</span>
+                  </div>
+                  <div class="jlpt-history-scores">
+                    <span class="jlpt-history-total">${att.totalScore} / 180 pkt</span>
+                    <span class="jlpt-history-sub">Język: ${att.langScore}/120 • Czytanie: ${att.readScore}/60</span>
+                  </div>
+                </div>
+              `;
+              })
+              .join('')}
+          </div>
+        </div>
+      `
+          : ''
+      }
+    </div>
+  `;
+
+  // Podpięcia zdarzeń
+  const btnBack = document.getElementById('btnJlptBackToDashboard');
+  if (btnBack) {
+    btnBack.onclick = () => {
+      Audio.click();
+      setScreen('dashboard');
+    };
+  }
+
+  const btnFull = document.getElementById('btnStartJlptFull');
+  if (btnFull)
+    btnFull.onclick = () => {
+      Audio.click();
+      startJlptExam('full');
+    };
+
+  const btnPractice = document.getElementById('btnStartJlptPractice');
+  if (btnPractice)
+    btnPractice.onclick = () => {
+      Audio.click();
+      startJlptExam('practice');
+    };
+
+  const btnMini = document.getElementById('btnStartJlptMini');
+  if (btnMini)
+    btnMini.onclick = () => {
+      Audio.click();
+      startJlptExam('mini');
+    };
+
+  const btnCounters = document.getElementById('btnShortcutCounters');
+  if (btnCounters)
+    btnCounters.onclick = () => {
+      Audio.click();
+      openJlptHandbook('counters');
+    };
+
+  const btnCal = document.getElementById('btnShortcutCalendar');
+  if (btnCal)
+    btnCal.onclick = () => {
+      Audio.click();
+      openJlptHandbook('calendar');
+    };
+
+  const btnPron = document.getElementById('btnShortcutPronouns');
+  if (btnPron)
+    btnPron.onclick = () => {
+      Audio.click();
+      openJlptHandbook('pronouns');
+    };
+
+  const btnKj = document.getElementById('btnShortcutKanji');
+  if (btnKj)
+    btnKj.onclick = () => {
+      Audio.click();
+      openJlptHandbook('kanji');
+    };
+}
+
+// ==========================================
+// JLPT RENDER: EXAM VIEW
+// ==========================================
+
+function renderJlptExam(main) {
+  main.innerHTML = `
+    <div class="jlpt-exam-container">
+      <!-- PASEK GÓRNY EGZAMINU -->
+      <div class="jlpt-exam-header">
+        <button class="jlpt-exit-btn" id="btnJlptExitExam" type="button" title="Wyjdź z egzaminu">
+          ✕ Wyjdź
+        </button>
+
+        <div class="jlpt-exam-section-badge" id="jlptSectionBadge">
+          Sekcja 1: Pismo i Słownictwo
+        </div>
+
+        <div class="jlpt-exam-timer" id="jlptTimerBadge">
+          --:--
+        </div>
+
+        <button class="jlpt-flag-btn" id="btnJlptToggleFlag" type="button" title="Oznacz pytanie do sprawdzenia">
+          🚩 Oznacz
+        </button>
+      </div>
+
+      <!-- KARTA PYTANIA -->
+      <div class="jlpt-question-card-wrapper" id="jlptQuestionCardWrapper">
+        <!-- Renderowane przez renderJlptExamCurrentQuestion() -->
+      </div>
+
+      <!-- PŁYWAJĄCY PASEK NAWIGACJI -->
+      <div class="jlpt-bottom-bar">
+        <button class="jlpt-nav-arrow-btn" id="btnJlptPrev" type="button">
+          ← Poprzednie
+        </button>
+
+        <div class="jlpt-navigator-strip" id="jlptNavigatorStrip">
+          <!-- Renderowane przez renderJlptExamNavigator() -->
+        </div>
+
+        <button class="jlpt-nav-arrow-btn" id="btnJlptNext" type="button">
+          Następne →
+        </button>
+
+        <button class="jlpt-finish-btn" id="btnJlptFinish" type="button">
+          Zakończ ✓
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Podpięcia zdarzeń
+  const btnExit = document.getElementById('btnJlptExitExam');
+  if (btnExit) {
+    btnExit.onclick = () => {
+      if (confirm('Czy na pewno chcesz przerwać egzamin próbny? Postęp tej próby nie zostanie zapisany.')) {
+        if (jlptSession.timerInterval) {
+          clearInterval(jlptSession.timerInterval);
+          jlptSession.timerInterval = null;
+        }
+        jlptSession.mode = 'hub';
+        render();
+      }
+    };
+  }
+
+  const btnFlag = document.getElementById('btnJlptToggleFlag');
+  if (btnFlag) {
+    btnFlag.onclick = () => {
+      const q = jlptSession.questions[jlptSession.currentIndex];
+      if (q) toggleJlptFlag(q.id);
+    };
+  }
+
+  const btnPrev = document.getElementById('btnJlptPrev');
+  if (btnPrev) {
+    btnPrev.onclick = () => {
+      if (jlptSession.currentIndex > 0) {
+        jlptSession.currentIndex--;
+        Audio.click();
+        renderJlptExamCurrentQuestion();
+        renderJlptExamNavigator();
+      }
+    };
+  }
+
+  const btnNext = document.getElementById('btnJlptNext');
+  if (btnNext) {
+    btnNext.onclick = () => {
+      if (jlptSession.currentIndex < jlptSession.questions.length - 1) {
+        jlptSession.currentIndex++;
+        Audio.click();
+        renderJlptExamCurrentQuestion();
+        renderJlptExamNavigator();
+      }
+    };
+  }
+
+  const btnFinish = document.getElementById('btnJlptFinish');
+  if (btnFinish) {
+    btnFinish.onclick = () => {
+      const answeredCount = Object.keys(jlptSession.answers).length;
+      const total = jlptSession.questions.length;
+      if (answeredCount < total) {
+        if (
+          !confirm(
+            `Odpowiedziano na ${answeredCount} z ${total} pytań. Czy na pewno chcesz zakończyć egzamin i poznać swój oficjalny wynik?`
+          )
+        ) {
+          return;
+        }
+      }
+      finishJlptExam(false);
+    };
+  }
+
+  updateJlptTimerDisplay();
+  renderJlptExamCurrentQuestion();
+  renderJlptExamNavigator();
+}
+
+function renderJlptExamCurrentQuestion() {
+  const container = document.getElementById('jlptQuestionCardWrapper');
+  if (!container) return;
+
+  const q = jlptSession.questions[jlptSession.currentIndex];
+  if (!q) return;
+
+  const total = jlptSession.questions.length;
+  const currentNum = jlptSession.currentIndex + 1;
+  const isFlagged = Boolean(jlptSession.flagged[q.id]);
+  const chosenOption = jlptSession.answers[q.id];
+  const isPractice = jlptSession.examMode === 'practice';
+  const isChecked = Boolean(jlptSession.practiceChecked[q.id]);
+
+  // Uaktualnij badge flagi w nagłówku
+  const flagBtn = document.getElementById('btnJlptToggleFlag');
+  if (flagBtn) {
+    flagBtn.textContent = isFlagged ? '🚩 Oflagowane' : '🚩 Oznacz';
+    flagBtn.classList.toggle('is-flagged', isFlagged);
+  }
+
+  // Uaktualnij badge sekcji
+  const secBadge = document.getElementById('jlptSectionBadge');
+  if (secBadge) {
+    if (q.section === 'lang') {
+      secBadge.textContent = 'Sekcja 1: Pismo, Słownictwo i Gramatyka';
+      secBadge.classList.remove('is-reading');
+    } else {
+      secBadge.textContent = 'Sekcja 2: Czytanie ze zrozumieniem (読解)';
+      secBadge.classList.add('is-reading');
+    }
+  }
+
+  // Budowa klocków zadania z gwiazdką ★
+  let starBuilderHtml = '';
+  if (q.subType === 'star_sentence' && Array.isArray(q.starPieces)) {
+    const order = jlptSession.starOrders[q.id] || [null, null, null, null];
+    const piecesInSlots = new Set(order.filter(x => typeof x === 'number'));
+
+    starBuilderHtml = `
+      <div class="jlpt-star-builder">
+        <div class="jlpt-star-label">Kliknij wyrazy poniżej, aby ułożyć je w lukach:</div>
+        <div class="jlpt-star-slots">
+          ${[0, 1, 2, 3]
+            .map(slotIdx => {
+              const pieceIdx = order[slotIdx];
+              const isStar = slotIdx === q.starSlotIndex;
+              const pieceText = typeof pieceIdx === 'number' ? q.starPieces[pieceIdx] : '';
+              return `
+              <div class="jlpt-star-slot ${isStar ? 'is-star-slot' : ''} ${pieceText ? 'has-piece' : ''}"
+                   onclick="clearJlptStarSlot('${q.id}', ${slotIdx})">
+                ${isStar ? '<span class="star-indicator">★</span>' : ''}
+                <span class="slot-text">${pieceText || '＿＿'}</span>
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
+
+        <div class="jlpt-star-pool">
+          ${q.starPieces
+            .map((pText, pIdx) => {
+              const isUsed = piecesInSlots.has(pIdx);
+              return `
+              <button class="jlpt-piece-chip ${isUsed ? 'is-used' : ''}" type="button"
+                      ${isUsed ? 'disabled' : ''}
+                      onclick="setFirstAvailableStarSlot('${q.id}', ${pIdx})">
+                ${pText}
+              </button>
+            `;
+            })
+            .join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Czytanie (Reading passage)
+  let readingHtml = '';
+  if (q.readingPassage) {
+    readingHtml = `
+      <div class="jlpt-reading-box">
+        <div class="jlpt-reading-top">
+          <span class="jlpt-reading-badge">${q.readingPassage.badge}</span>
+          <span class="jlpt-reading-title">${q.readingPassage.title}</span>
+        </div>
+        <div class="jlpt-reading-body">
+          ${q.readingPassage.japanese.split('\\n').join('<br>')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Opcje odpowiedzi
+  const optionsHtml = q.options
+    .map((optText, optIdx) => {
+      const isSelected = chosenOption === optIdx;
+      let optClass = isSelected ? 'is-selected' : '';
+
+      if (isPractice && isChecked) {
+        if (optIdx === q.correct) optClass += ' is-correct-answer';
+        else if (isSelected && optIdx !== q.correct) optClass += ' is-wrong-answer';
+      }
+
+      return `
+      <button class="jlpt-option-btn ${optClass}" type="button" onclick="selectJlptOption(${optIdx})">
+        <span class="jlpt-option-num">${optIdx + 1}</span>
+        <span class="jlpt-option-text">${optText}</span>
+      </button>
+    `;
+    })
+    .join('');
+
+  // Blok wyjaśnienia w trybie treningowym
+  let practiceExpHtml = '';
+  if (isPractice) {
+    if (isChecked) {
+      const isCorrect = chosenOption === q.correct;
+      practiceExpHtml = `
+        <div class="jlpt-practice-explanation ${isCorrect ? 'is-correct' : 'is-wrong'}">
+          <div class="jlpt-practice-exp-title">
+            ${isCorrect ? '✓ Świetnie! Prawidłowa odpowiedź' : '✕ Niestety to błąd'}
+          </div>
+          <div class="jlpt-practice-exp-body">
+            ${q.explanation}
+          </div>
+        </div>
+      `;
+    } else if (typeof chosenOption === 'number') {
+      practiceExpHtml = `
+        <div class="jlpt-practice-action-box">
+          <button class="jlpt-check-btn" type="button" onclick="checkJlptPracticeAnswer('${q.id}')">
+            Sprawdź odpowiedź ➔
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="jlpt-question-card">
+      <div class="jlpt-q-meta">
+        <span class="jlpt-q-type">${q.typeLabel}</span>
+        <span class="jlpt-q-counter">Pytanie ${currentNum} z ${total}</span>
+      </div>
+
+      <div class="jlpt-q-instruction">${q.instruction}</div>
+
+      ${readingHtml}
+
+      <div class="jlpt-q-sentence">${q.question}</div>
+
+      ${starBuilderHtml}
+
+      <div class="jlpt-options-list">
+        ${optionsHtml}
+      </div>
+
+      ${practiceExpHtml}
+    </div>
+  `;
+}
+
+function setFirstAvailableStarSlot(qId, pieceIdx) {
+  if (!jlptSession.starOrders[qId]) {
+    jlptSession.starOrders[qId] = [null, null, null, null];
+  }
+  const order = jlptSession.starOrders[qId];
+  let emptySlot = -1;
+  for (let i = 0; i < 4; i++) {
+    if (order[i] === null) {
+      emptySlot = i;
+      break;
+    }
+  }
+  if (emptySlot !== -1) {
+    setJlptStarSlot(qId, emptySlot, pieceIdx);
+  }
+}
+
+function renderJlptExamNavigator() {
+  const container = document.getElementById('jlptNavigatorStrip');
+  if (!container) return;
+
+  const total = jlptSession.questions.length;
+  const currentIdx = jlptSession.currentIndex;
+
+  container.innerHTML = jlptSession.questions
+    .map((q, idx) => {
+      const isCurrent = idx === currentIdx;
+      const isAnswered = typeof jlptSession.answers[q.id] === 'number';
+      const isFlagged = Boolean(jlptSession.flagged[q.id]);
+
+      let classes = ['jlpt-nav-chip'];
+      if (isCurrent) classes.push('is-active');
+      if (isAnswered) classes.push('is-answered');
+      if (isFlagged) classes.push('is-flagged');
+
+      return `
+      <button class="${classes.join(' ')}" type="button" title="Pytanie ${idx + 1}"
+              onclick="jumpToJlptQuestion(${idx})">
+        ${idx + 1}
+      </button>
+    `;
+    })
+    .join('');
+}
+
+function jumpToJlptQuestion(idx) {
+  if (idx >= 0 && idx < jlptSession.questions.length) {
+    jlptSession.currentIndex = idx;
+    Audio.click();
+    renderJlptExamCurrentQuestion();
+    renderJlptExamNavigator();
+  }
+}
+
+// ==========================================
+// JLPT RENDER: RESULTS VIEW
+// ==========================================
+
+let jlptResultFilter = 'all'; // 'all' | 'wrong' | 'flagged'
+
+function renderJlptResults(main) {
+  const res = jlptSession.result || calculateJlptScore(jlptSession);
+  const isPass = res.passed;
+  const verdictClass = isPass ? 'is-pass' : 'is-fail';
+  const verdictTitle = isPass ? '合格 GŌKAKU — EGZAMIN ZDANY!' : '不合格 FUGŌKAKU — EGZAMIN NIEZDANY';
+  const verdictSubtitle = isPass
+    ? 'Gratulacje! Twój wynik przekroczył oficjalny próg zaliczenia JLPT N5 (min. 90 pkt) oraz spełnił minima w każdej z sekcji!'
+    : 'Nie poddawaj się! Do zdania egzaminu N5 wymagane jest minimum 90/180 pkt oraz zdanie obu progów cząstkowych. Przeanalizuj poniższe błędy i spróbuj ponownie.';
+
+  // Filtrowanie szczegółów pytań
+  const filteredDetails = res.details.filter(d => {
+    if (jlptResultFilter === 'wrong') return !d.isCorrect;
+    if (jlptResultFilter === 'flagged') return d.flagged;
+    return true;
+  });
+
+  main.innerHTML = `
+    <div class="jlpt-results-container">
+      <!-- BANNER GŁÓWNY WYNIKU -->
+      <div class="jlpt-result-hero ${verdictClass}">
+        <div class="jlpt-result-badge">${isPass ? 'CERTYFIKAT N5' : 'WYNIK KOŃCOWY'}</div>
+        <h2 class="jlpt-result-title">${verdictTitle}</h2>
+        <p class="jlpt-result-subtitle">${verdictSubtitle}</p>
+
+        <div class="jlpt-score-showcase">
+          <div class="jlpt-big-score">${res.totalScore}</div>
+          <div class="jlpt-max-score">/ 180 punktów</div>
+        </div>
+
+        <div class="jlpt-sectional-cards">
+          <div class="jlpt-sec-card ${res.langPass ? 'is-sec-pass' : 'is-sec-fail'}">
+            <div class="jlpt-sec-name">言語知識（文字・語彙・文法）</div>
+            <div class="jlpt-sec-desc">Pismo, Słownictwo i Gramatyka</div>
+            <div class="jlpt-sec-score">${res.langScore} / 120 pkt</div>
+            <div class="jlpt-sec-bar">
+              <div class="jlpt-sec-bar-fill" style="width: ${Math.min(100, Math.round((res.langScore / 120) * 100))}%;"></div>
+            </div>
+            <div class="jlpt-sec-status">
+              Próg zaliczenia: 38 pkt • <b>${res.langPass ? '✓ ZALICZONE' : '✕ NIEZALICZONE'}</b>
+            </div>
+          </div>
+
+          <div class="jlpt-sec-card ${res.readPass ? 'is-sec-pass' : 'is-sec-fail'}">
+            <div class="jlpt-sec-name">読解（どっかい）</div>
+            <div class="jlpt-sec-desc">Czytanie ze zrozumieniem</div>
+            <div class="jlpt-sec-score">${res.readScore} / 60 pkt</div>
+            <div class="jlpt-sec-bar">
+              <div class="jlpt-sec-bar-fill" style="width: ${Math.min(100, Math.round((res.readScore / 60) * 100))}%;"></div>
+            </div>
+            <div class="jlpt-sec-status">
+              Próg zaliczenia: 19 pkt • <b>${res.readPass ? '✓ ZALICZONE' : '✕ NIEZALICZONE'}</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROZBICIE NA KATEGORIE ZADAŃ -->
+      <div class="jlpt-breakdown-section">
+        <h3>Rozbicie wyników wg typów zadań</h3>
+        <div class="jlpt-breakdown-grid">
+          ${Object.entries({
+            'Czytanie kanji (漢字読み)': res.breakdown.kanji_reading,
+            'Zapis kanji (表記)': res.breakdown.kanji_writing,
+            'Słownictwo (文脈規定)': res.breakdown.context_vocab,
+            'Parafrazy (言い換え類義)': res.breakdown.paraphrase,
+            'Gramatyka (文法形式)': res.breakdown.grammar_choice,
+            'Zadania z gwiazdką (★)': res.breakdown.star_sentence,
+            'Czytanie tekstów (読解)': res.breakdown.reading
+          })
+            .map(([label, stats]) => {
+              const p = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+              return `
+              <div class="jlpt-breakdown-card">
+                <span class="jlpt-bk-label">${label}</span>
+                <span class="jlpt-bk-val">${stats.correct} / ${stats.total} (${p}%)</span>
+                <div class="jlpt-bk-bar">
+                  <div class="jlpt-bk-bar-fill" style="width: ${p}%;"></div>
+                </div>
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
+      </div>
+
+      <!-- SZCZEGÓŁOWE OMÓWIENIE PYTAŃ -->
+      <div class="jlpt-review-section">
+        <div class="jlpt-review-head">
+          <h3>Szczegółowa analiza odpowiedzi</h3>
+          <div class="jlpt-filter-pills">
+            <button class="jlpt-pill ${jlptResultFilter === 'all' ? 'is-active' : ''}" type="button" onclick="setJlptReviewFilter('all')">
+              Wszystkie (${res.details.length})
+            </button>
+            <button class="jlpt-pill ${jlptResultFilter === 'wrong' ? 'is-active' : ''}" type="button" onclick="setJlptReviewFilter('wrong')">
+              Błędne (${res.details.filter(d => !d.isCorrect).length})
+            </button>
+            <button class="jlpt-pill ${jlptResultFilter === 'flagged' ? 'is-active' : ''}" type="button" onclick="setJlptReviewFilter('flagged')">
+              Oflagowane (${res.details.filter(d => d.flagged).length})
+            </button>
+          </div>
+        </div>
+
+        <div class="jlpt-review-list">
+          ${filteredDetails.length === 0 ? '<div class="jlpt-empty-msg">Brak pytań spełniających wybrane kryteria filtra.</div>' : ''}
+          ${filteredDetails
+            .map((d, idx) => {
+              const chosenText = typeof d.chosen === 'number' ? d.options[d.chosen] : 'Brak odpowiedzi';
+              const correctText = d.options[d.correct];
+              return `
+              <div class="jlpt-review-card ${d.isCorrect ? 'is-correct' : 'is-wrong'}">
+                <div class="jlpt-review-top">
+                  <span class="jlpt-review-qnum">Pytanie ${d.id.replace('n5_q', '')} • ${d.typeLabel}</span>
+                  <span class="jlpt-review-badge">${d.isCorrect ? '✓ Poprawnie' : '✕ Błąd'}</span>
+                </div>
+                <div class="jlpt-review-sentence">${d.question}</div>
+
+                <div class="jlpt-review-answers-box">
+                  <div class="jlpt-review-row ${d.isCorrect ? 'is-ok' : 'is-err'}">
+                    <span class="jlpt-row-lbl">Twoja odpowiedź:</span>
+                    <span class="jlpt-row-val">${chosenText}</span>
+                  </div>
+                  ${
+                    !d.isCorrect
+                      ? `
+                    <div class="jlpt-review-row is-right">
+                      <span class="jlpt-row-lbl">Prawidłowa odpowiedź:</span>
+                      <span class="jlpt-row-val">${correctText}</span>
+                    </div>
+                  `
+                      : ''
+                  }
+                </div>
+
+                <div class="jlpt-review-exp">
+                  <b>Wyjaśnienie:</b> ${d.explanation}
+                </div>
+              </div>
+            `;
+            })
+            .join('')}
+        </div>
+      </div>
+
+      <!-- AKCJE KOŃCOWE -->
+      <div class="jlpt-results-actions">
+        <button class="jlpt-action-btn primary" id="btnJlptRetry" type="button">
+          Rozwiąż ponownie ➔
+        </button>
+        <button class="jlpt-action-btn" id="btnJlptGoHandbook" type="button">
+          Kompendium wiedzy N5
+        </button>
+        <button class="jlpt-action-btn" id="btnJlptBackHome" type="button">
+          Wróć do pulpitu
+        </button>
+      </div>
+    </div>
+  `;
+
+  const btnRetry = document.getElementById('btnJlptRetry');
+  if (btnRetry)
+    btnRetry.onclick = () => {
+      Audio.click();
+      startJlptExam(jlptSession.examMode || 'full');
+    };
+
+  const btnHandbook = document.getElementById('btnJlptGoHandbook');
+  if (btnHandbook)
+    btnHandbook.onclick = () => {
+      Audio.click();
+      openJlptHandbook('counters');
+    };
+
+  const btnHome = document.getElementById('btnJlptBackHome');
+  if (btnHome)
+    btnHome.onclick = () => {
+      Audio.click();
+      setScreen('dashboard');
+    };
+}
+
+function setJlptReviewFilter(filter) {
+  jlptResultFilter = filter;
+  Audio.click();
+  const main = document.getElementById('app');
+  if (main) renderJlptResults(main);
+}
+
+// ==========================================
+// JLPT RENDER: HANDBOOK VIEW
+// ==========================================
+
+function renderJlptHandbook(main) {
+  const currentTab = jlptSession.handbookTab || 'counters';
+
+  let tabContentHtml = '';
+
+  if (currentTab === 'counters') {
+    tabContentHtml = `
+      <div class="jlpt-handbook-pane">
+        <div class="jlpt-pane-intro">
+          <h3>Liczniki japońskie (助数詞 - Josuushi)</h3>
+          <p>
+            W języku japońskim przedmioty liczy się za pomocą specjalnych klasyfikatorów (liczników) dopasowanych do kształtu,
+            rodzaju lub przeznaczenia rzeczy. Poniżej znajduje się komplet 11 kluczowych liczników sprawdzanych na egzaminie N5.
+          </p>
+        </div>
+
+        <div class="jlpt-counters-grid">
+          ${JLPT_N5_COUNTERS.map(ctr => {
+            return `
+              <div class="jlpt-counter-card">
+                <div class="jlpt-ctr-head">
+                  <span class="jlpt-ctr-kanji">${ctr.kanji}</span>
+                  <div class="jlpt-ctr-title-wrap">
+                    <h4 class="jlpt-ctr-name">${ctr.name}</h4>
+                    <span class="jlpt-ctr-label">${ctr.label}</span>
+                  </div>
+                </div>
+                <p class="jlpt-ctr-desc">${ctr.desc}</p>
+                <div class="jlpt-ctr-tip"><b>Wskazówka N5:</b> ${ctr.tip}</div>
+
+                <div class="jlpt-ctr-table">
+                  ${ctr.items
+                    .map(
+                      it => `
+                    <div class="jlpt-ctr-row ${it.isIrregular ? 'is-irregular' : ''}">
+                      <span class="jlpt-ctr-num">${it.num}</span>
+                      <span class="jlpt-ctr-kana">${it.kana}</span>
+                      <span class="jlpt-ctr-romaji">${it.romaji}</span>
+                      <span class="jlpt-ctr-pol">${it.polish}</span>
+                      <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${it.kana}" title="Odsłuchaj">
+                        🔊
+                      </button>
+                    </div>
+                  `
+                    )
+                    .join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } else if (currentTab === 'calendar') {
+    tabContentHtml = `
+      <div class="jlpt-handbook-pane">
+        <div class="jlpt-pane-intro">
+          <h3>Dni miesiąca i określenia czasu (Kalendarz N5)</h3>
+          <p>
+            Dni od 1 do 10 oraz 14, 20 i 24 mają w języku japońskim unikalne, rdzenne formy fonetyczne.
+            Są to jedne z najczęściej sprawdzanych pułapek na egzaminie JLPT N5.
+          </p>
+        </div>
+
+        <div class="jlpt-days-grid">
+          ${JLPT_N5_CALENDAR.days
+            .map(
+              d => `
+            <div class="jlpt-day-card ${d.isIrregular ? 'is-irregular' : ''}">
+              <div class="jlpt-day-header">
+                <span class="jlpt-day-kanji">${d.kanji}</span>
+                <span class="jlpt-day-kana">${d.kana}</span>
+              </div>
+              <div class="jlpt-day-romaji">${d.romaji}</div>
+              <div class="jlpt-day-desc">${d.desc}</div>
+              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${d.kana}" title="Odsłuchaj">
+                🔊 Wymowa
+              </button>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <div class="jlpt-pane-intro" style="margin-top: 40px;">
+          <h3>Określenia czasu względnego (Relative Time)</h3>
+          <p>Zwroty określające dni, tygodnie, miesiące i lata w odniesieniu do teraźniejszości.</p>
+        </div>
+
+        <div class="jlpt-rel-time-grid">
+          ${JLPT_N5_CALENDAR.relativeTime
+            .map(
+              rt => `
+            <div class="jlpt-rel-card">
+              <span class="jlpt-rel-kanji">${rt.kanji}</span>
+              <span class="jlpt-rel-kana">${rt.kana}</span>
+              <span class="jlpt-rel-romaji">${rt.romaji}</span>
+              <span class="jlpt-rel-pol">${rt.polish}</span>
+              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${rt.kana}" title="Odsłuchaj">
+                🔊
+              </button>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+  } else if (currentTab === 'pronouns') {
+    tabContentHtml = `
+      <div class="jlpt-handbook-pane">
+        <div class="jlpt-pane-intro">
+          <h3>Matryca zaimków Ko-So-A-Do (これ・それ・あれ・どれ)</h3>
+          <p>
+            Seria Ko (blisko mówiącego), So (blisko słuchacza), A (daleko od obu), Do (pytanie).
+          </p>
+        </div>
+
+        <div class="jlpt-kosoad-table-wrap">
+          <table class="jlpt-kosoad-table">
+            <thead>
+              <tr>
+                <th>Kategoria</th>
+                <th>Ko (これ)</th>
+                <th>So (それ)</th>
+                <th>A (あれ)</th>
+                <th>Do (どれ)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${JLPT_N5_KOS_O_A_DO.map(
+                row => `
+                <tr>
+                  <td><b>${row.type}</b></td>
+                  <td>${row.ko}</td>
+                  <td>${row.so}</td>
+                  <td>${row.a}</td>
+                  <td class="is-do">${row.do}</td>
+                </tr>
+              `
+              ).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="jlpt-pane-intro" style="margin-top: 40px;">
+          <h3>Główne słowa pytające (Pytajniki N5)</h3>
+        </div>
+
+        <div class="jlpt-rel-time-grid">
+          ${[
+            { kanji: '何', kana: 'なに / なん', romaji: 'nani / nan', polish: 'co?' },
+            { kanji: '誰 / 何方', kana: 'だれ / どなた', romaji: 'dare / donata', polish: 'kto? / (uprzejmie) kto?' },
+            { kanji: '何時', kana: 'いつ', romaji: 'itsu', polish: 'kiedy?' },
+            { kanji: '何処', kana: 'どこ / どちら', romaji: 'doko / dochira', polish: 'gdzie? / w którą stronę?' },
+            { kanji: '幾ら', kana: 'いくら', romaji: 'ikura', polish: 'ile kosztuje?' },
+            { kanji: '幾つ', kana: 'いくつ', romaji: 'ikutsu', polish: 'ile sztuk? / ile lat?' },
+            { kanji: 'どう', kana: 'どう / いかが', romaji: 'dou / ikaga', polish: 'jak? / w jaki sposób?' },
+            { kanji: 'どんな', kana: 'どんな', romaji: 'donna', polish: 'jaki? jakiego rodzaju?' },
+            { kanji: '何故', kana: 'どうして / なぜ', romaji: 'doushite / naze', polish: 'dlaczego?' }
+          ]
+            .map(
+              q => `
+            <div class="jlpt-rel-card">
+              <span class="jlpt-rel-kanji">${q.kanji}</span>
+              <span class="jlpt-rel-kana">${q.kana}</span>
+              <span class="jlpt-rel-romaji">${q.romaji}</span>
+              <span class="jlpt-rel-pol">${q.polish}</span>
+              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${q.kana}" title="Odsłuchaj">
+                🔊
+              </button>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      </div>
+    `;
+  } else if (currentTab === 'kanji') {
+    // 103 kanoniczne kanji N5 (grade === 'N5')
+    const n5Kanji = KANJI_ITEMS.filter(k => k.grade === 'N5');
+
+    tabContentHtml = `
+      <div class="jlpt-handbook-pane">
+        <div class="jlpt-pane-intro">
+          <h3>Kanoniczne Znaki Kanji N5 (${n5Kanji.length} znaków)</h3>
+          <p>
+            Wszystkie 103 znaki kanji wymagane do zdania egzaminu JLPT N5. Kliknij dowolny znak, aby otworzyć
+            widok szczegółowy z animacją kolejności kresek i przykładami.
+          </p>
+        </div>
+
+        <div class="jlpt-kanji-grid">
+          ${n5Kanji
+            .map(k => {
+              const stat = kanjiProgress && kanjiProgress.chars ? kanjiProgress.chars[k.id] : null;
+              const isMastered = stat && stat.correct >= 3 && stat.correct / stat.seen >= 0.8;
+              return `
+              <button class="jlpt-kanji-chip ${isMastered ? 'is-mastered' : ''}" type="button"
+                      onclick="openKanjiDetailFromJlpt('${k.id}')">
+                <span class="jlpt-kj-glyph">${k.kanji}</span>
+                <span class="jlpt-kj-meaning">${k.meaning.split('/')[0].trim()}</span>
+                <span class="jlpt-kj-reading">${k.onyomi.concat(k.kunyomi).slice(0, 2).join(', ')}</span>
+              </button>
+            `;
+            })
+            .join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  main.innerHTML = `
+    <div class="jlpt-handbook-container">
+      <div class="jlpt-top-actions">
+        <button class="hub-back-btn" id="btnHandbookBack" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Wróć do Egzaminu
+        </button>
+      </div>
+
+      <div class="jlpt-handbook-header">
+        <h2 class="jlpt-hb-title">Kompendium Wiedzy JLPT N5</h2>
+        <p class="jlpt-hb-desc">Tabele referencyjne i zbiory reguł wymaganych na oficjalnym egzaminie państwowym.</p>
+      </div>
+
+      <div class="jlpt-handbook-tabs">
+        <button class="jlpt-hb-tab ${currentTab === 'counters' ? 'is-active' : ''}" type="button" onclick="switchJlptHandbookTab('counters')">
+          🔢 Liczniki (11)
+        </button>
+        <button class="jlpt-hb-tab ${currentTab === 'calendar' ? 'is-active' : ''}" type="button" onclick="switchJlptHandbookTab('calendar')">
+          📅 Dni i Czas
+        </button>
+        <button class="jlpt-hb-tab ${currentTab === 'pronouns' ? 'is-active' : ''}" type="button" onclick="switchJlptHandbookTab('pronouns')">
+          🧭 Ko-So-A-Do
+        </button>
+        <button class="jlpt-hb-tab ${currentTab === 'kanji' ? 'is-active' : ''}" type="button" onclick="switchJlptHandbookTab('kanji')">
+          漢 Kanji N5 (103)
+        </button>
+      </div>
+
+      ${tabContentHtml}
+    </div>
+  `;
+
+  const btnBack = document.getElementById('btnHandbookBack');
+  if (btnBack) {
+    btnBack.onclick = () => {
+      Audio.click();
+      jlptSession.mode = 'hub';
+      render();
+    };
+  }
+}
+
+function switchJlptHandbookTab(tab) {
+  jlptSession.handbookTab = tab;
+  Audio.click();
+  const main = document.getElementById('app');
+  if (main) renderJlptHandbook(main);
+}
+
+function openKanjiDetailFromJlpt(charId) {
+  Audio.click();
+  kanjiSession.mode = 'detail';
+  kanjiSession.charId = charId;
+  state.kanji = kanjiSession;
+  setScreen('kanji');
+}
 
 /* =========================================================
    START

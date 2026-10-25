@@ -2,16 +2,23 @@
 
 ## 1. Project Overview
 
-**Koto** is a calm, local, vanilla JavaScript single-page web application for learning Japanese: basic and extended kana (Hiragana and Katakana), 599 foundational kanji characters, essential vocabulary, and JLPT N5 grammar structures.
+**Koto** is a calm, local, vanilla JavaScript single-page web application for learning Japanese: basic and extended kana (Hiragana and Katakana), 600 foundational kanji characters (100% canonical JLPT N5 coverage), essential vocabulary, comprehensive JLPT N5 grammar structures (46 structures), and a dedicated JLPT N5 Mock Exam engine (Egzamin Próbny JLPT N5).
 
 The repository and published URL keep the historical `hiragana-study` slug; that is a technical identifier, not product branding.
 
 The app currently provides:
 
 - **Kana learning & exam**: 251 characters (Hiragana, Katakana, Dakuten, Handakuten, Yōon, Special Katakana) with animated stroke order, stroke descriptions, 4 adaptive exam modes, per-question timer, optional question limit, XP, confetti celebration, and swipe gestures.
-- **Kanji learning (599 characters)**: comprehensive L01–L28 + N5 dataset (100% of _Shokyū Nihongo_) with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
+- **Kanji learning (600 characters)**: comprehensive L01–L28 + N5 dataset (100% of _Shokyū Nihongo_ and 100% of canonical JLPT N5 kanji) with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
 - **Vocabulary (134 words / 204 learn cards)**: nouns, verbs, request expressions, adjectives, topic categorization, orthogonal lesson filters, flashcard learning, recognition tests, and keyboard typing input.
-- **Grammar N5 (31 items across 16 lessons)**: particles, verb conjugations and forms, adjectives, and conversational structures with 93 authentic example sentences and interactive cloze fill-in-the-blank practice.
+- **Grammar N5 (46 items across 5 categories)**: particles, verb conjugations and forms, adjectives, and conversational structures with 138 authentic example sentences and interactive cloze fill-in-the-blank practice.
+- **JLPT N5 Mock Exam Engine & Reference Handbook**:
+  - Full official 43-question mock exam covering all 7 JLPT N5 sections (Kanji Reading, Kanji Writing, Contextual Vocabulary, Paraphrases, Grammar Selection, Star Sentence Ordering ★, and Reading Comprehension),
+  - 3 modes: Full Timed Exam (75 min, 43 Q), Practice Mode (untimed with immediate check and Polish explanations), Mini-Mock (20 min, 15 Q),
+  - Star Sentence ordering (★) with interactive chip and slot builder,
+  - Official scoring scale (0–180 points: Language Knowledge 0–120, Reading 0–60, pass threshold 90/180 with sectional minima) and celebration verdict: 合格 (Gōkaku) / 不合格 (Fugōkaku),
+  - Comprehensive question review with detailed Polish explanations,
+  - Reference handbook (Kompendium N5) with 11 counters, calendar & time expressions, Ko-So-A-Do matrix, and searchable 103 N5 kanji grid.
 - **Learning habit & gamification**:
   - Spaced Repetition (SRS) scheduling engine,
   - Configurable daily goals (10–50 exercises/day) with celebration state,
@@ -1891,8 +1898,8 @@ Goal:
 
 Implemented scope:
 
-- **294 curated kanji**: based on _Shokyū Nihongo_ (L01–L18) transcription and JLPT N5 foundational set, including stroke counts, on'yomi, kun'yomi, Polish meanings, and 2–4 verified compound vocabulary words per character.
-- **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L18, N5).
+- **600 curated kanji**: based on _Shokyū Nihongo_ (L01–L28) and complete canonical JLPT N5 set (all 103 characters, adding `週` as `k600`), including stroke counts, on'yomi, kun'yomi, Polish meanings, and verified compound vocabulary words per character.
+- **Dedicated learning hub**: hero metrics (seen, due, mastered, total), quick actions for catalog, SRS flashcards, and quiz, plus lesson breakdown grid (L01–L28, N5).
 - **Interactive character catalog**: instant search by character, reading (romaji/kana) or Polish meaning; filtering by lesson and semantic category pills; responsive card grid with status indicators.
 - **Detailed character modal/view**: animated stroke order playback via KanjiVG SVG, integrated canvas drawing practice with stroke-by-stroke comparison, blind drawing mode (`#btnToggleBlind`) to sketch characters purely from memory with post-draw template reveal, full readings, textbook vocabulary list, and previous/next character navigation with keyboard shortcuts (`ArrowLeft`, `ArrowRight`, `Space`).
 - **SRS flashcard review**: interval progression based on response grade (Znów / Trudne / Dobre / Łatwe) with keyboard shortcuts `1`–`4`.
@@ -2218,33 +2225,47 @@ Polish meanings remain an unverified translation.
 - Phase 2 (Verbs Conjugation, Existence & Adjectives) — **COMPLETE**.
 - Phase 3 (Te-form, Requests, State/Continuous, Permission/Prohibition, Ta-form, Experience, Negative Past) — **COMPLETE**.
 - Phase 4 (Conversational Structures: Desires ~tai, Intentions tsumori, Favors ~te ageru / ~te kureru / ~te morau, Invitations ~mashou / ~masen ka, Purpose ~ni iku/kuru) — **COMPLETE**.
+- Phase 5 (Full JLPT N5 Grammar Completion: Ability ~koto ga dekiru, Listing ~tari ~tari, Advice ~hou ga ii, Time sequence ~mae ni / ~ato de / ~te kara, Obligation ~nakereba naranai, Prohibition ~te wa ikenai, Negative requests ~naide kudasai, Excess ~sugiru, State changes ~ni naru / ~ku naru & decisions ~ni suru / ~ku suru, Reasons ~node vs ~kara, Comparisons ~yori ~hou ga) — **COMPLETE**.
 
 ### Implemented Scope
 
 - **Data Model (`GRAMMAR_ITEMS`)**:
-  - Expanded from 25 to 31 fundamental Japanese grammar items for JLPT N5 across 5 categories:
+  - Expanded to 46 fundamental Japanese grammar items (100% standard JLPT N5 curriculum) across 5 categories:
     - **Particles (`particle`, 10 items)**: `wa` (は), `ka` (か), `no` (の), `mo` (も), `o` (を), `ni` (に), `de` (で), `e` (へ), `to` (と), `ga` (が).
-    - **Verb Conjugation & Forms (`verb`, 11 items + 2 existence = 13 items)**:
+    - **Verb Conjugation & Forms (`verb`, 13 items)**:
       - Polite forms: `v_masu` (〜ます), `v_masen` (〜ません), `v_mashita` (〜ました), `v_masendeshita` (〜ませんでした).
       - Existence: `arimasu` (ある / あります – inanimate), `imasu` (いる / います – animate).
       - Te-forms & requests: `te_form` (〜て / 〜で), `te_kudasai` (〜てください), `te_imasu` (〜ています), `te_mo_ii` (〜てもいい / 〜てはいけません).
       - Ta-forms & experience: `ta_form` (〜た / 〜だ), `ta_koto_ga_aru` (〜た ことがあります), `v_nakatta` (〜なかった / 〜ませんでした).
     - **Adjectives (`adjective`, 2 items)**: `adj_i` (〜い / 〜くない – i-keiyoushi), `adj_na` (〜な / 〜です – na-keiyoushi).
-    - **Conversational Structures & Dialogues (`conversation`, 6 items)**:
+    - **Conversational & Sentence Structures (`conversation`, 21 items)**:
       - Desires & wants: `v_tai` (〜たい / 〜たくない),
       - Intentions & plans: `tsumori` (〜つもり / 〜予定),
       - Favors & gratitude: `te_ageru_kureru` (〜てあげる / 〜てくれる), `te_morau` (〜てもらう),
       - Invitations & proposals: `v_mashou` (〜ましょう / 〜ませんか),
-      - Movement purpose: `purpose_ni_iku` (〜に 行く / 来る / 帰る).
-  - 93 authentic example sentences with audio pronunciation and 93 cloze questions with rule explanations.
+      - Movement purpose: `purpose_ni_iku` (〜に 行く / 来る / 帰る),
+      - Ability & capacity: `koto_ga_dekiru` (〜ことができる / できます),
+      - Actions listing: `tari_tari_suru` (〜たり〜たりする),
+      - Advice & recommendation: `hou_ga_ii` (〜ほうがいい),
+      - Time sequence: `mae_ni` (〜まえに), `ato_de` (〜あとで), `te_kara` (〜てから),
+      - Obligation: `nakereba_naranai` (〜なければならない / いけません),
+      - Prohibition: `te_wa_ikenai` (〜てはいけない / いけません),
+      - Negative requests: `naide_kudasai` (〜ないでください),
+      - Excess: `sugiru` (〜すぎる),
+      - Natural state change: `ni_naru_ku_naru` (〜になる / 〜くなる),
+      - Active choice & decision: `ni_suru_ku_suru` (〜にする / 〜くする),
+      - Cause & reason (polite): `node` (〜ので),
+      - Causal contrast: `kara_node_comp` (〜から vs 〜ので),
+      - Comparisons: `yori_hou_ga` (〜より〜のほうが).
+  - 138 authentic example sentences with audio pronunciation and 138 cloze questions with rule explanations.
 - **Storage & Isolation (`hiragana-grammar`)**:
   - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
   - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
-  - Registered in `appStorageKeys()` (total 11 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
+  - Registered in `appStorageKeys()` (total 12 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
-    - Header with stats chips (mastered count out of 31, in-progress count, total answers, mini-progress percentage bar),
-    - Category pills (`all`: 31, `particle`: 10, `verb`: 13 — "Czasowniki i formy", `adjective`: 2, `conversation`: 6 — "Konwersacja") with active states and badge counters,
+    - Header with stats chips (mastered count out of 46, in-progress count, total answers, mini-progress percentage bar),
+    - Category pills (`all`: 46, `particle`: 10, `verb`: 13 — "Czasowniki i formy", `adjective`: 2, `conversation`: 21 — "Konwersacja") with active states and badge counters,
     - Responsive grid of grammar cards with mastery badges, syntax formulas, summaries, and accuracy scores,
     - Adaptive typography with `.is-long` modifier for multi-character tags.
   - **Detail View (`detail`)**:
@@ -2445,6 +2466,69 @@ Delivered:
 - Settings screen with appearance / sound / learning / data sections and an
   About card (local operation, character scope, KanjiVG attribution),
 - Reset Settings, Reset Progress and Clear All Data.
+
+---
+
+## T27 — JLPT N5 Mock Exam Engine & Curriculum Completion
+
+Status: **COMPLETE**.
+
+Goal:
+
+> Provide everything required to pass the JLPT N5 examination directly within Koto: 100% canonical N5 curriculum coverage (all 103 kanji, 46 grammar structures, essential vocabulary) alongside an authentic, fully interactive Mock Exam engine matching official Japanese Language Proficiency Test standards.
+
+Delivered:
+
+### 1. 100% JLPT N5 Curriculum Coverage
+
+- **Kanji (600 characters total)**: All 103 canonical JLPT N5 kanji characters completed. Added missing `週` (tydzień, 11 strokes, KanjiVG `09031`) as `k600`.
+- **Grammar (46 items across 5 categories)**: Expanded from 31 to 46 structures with Phase 5 completion, adding 15 structures: `koto_ga_dekiru` (〜ことができる), `tari_tari_suru` (〜たり〜たりする), `hou_ga_ii` (〜ほうがいい), `mae_ni` (〜まえに), `ato_de` (〜あとで), `te_kara` (〜てから), `nakereba_naranai` (〜なければならない), `te_wa_ikenai` (〜てはいけない), `naide_kudasai` (〜ないでください), `sugiru` (〜すぎる), `ni_naru_ku_naru` (〜になる / 〜くなる), `ni_suru_ku_suru` (〜にする / 〜くする), `node` (〜ので), `kara_node_comp` (〜から vs 〜ので), and `yori_hou_ga` (〜より〜のほうが). 138 authentic example sentences and 138 cloze training questions.
+
+### 2. JLPT N5 Mock Exam Engine (`JLPT_N5_QUESTIONS`, 43 authentic questions)
+
+Covering all official sections and test question formats:
+
+- **Section 1: Language Knowledge (Vocabulary & Kanji) — 23 questions**:
+  - Part 1: Kanji Reading (漢字読み) — 6 questions,
+  - Part 2: Kanji Writing / Orthography (表記) — 6 questions,
+  - Part 3: Contextual Vocabulary (文脈規定) — 6 questions,
+  - Part 4: Paraphrases / Synonyms (言い換え類義) — 5 questions.
+- **Section 2: Language Knowledge (Grammar & Reading) — 20 questions**:
+  - Part 5: Grammar Format Selection (文法形式) — 9 questions,
+  - Part 6: Star Sentence Ordering ★ (文の組み立て ★) — 5 questions with interactive slot-and-chip ordering mechanism,
+  - Part 7: Reading Comprehension (読解) — 6 questions based on 3 authentic passages (email from Tanaka-san, student diary about weekend trip, community library notice).
+
+### 3. Exam Modes & Interactivity
+
+- **Pełny Egzamin Czasowy (75 min, 43 Q)**: Complete timed simulation adhering to official JLPT N5 duration, question sequence, and scoring.
+- **Tryb Treningowy (Practice, untimed)**: Immediate feedback and thorough Polish rule explanations on every question.
+- **Mini-Mock N5 (20 min, 15 Q)**: Fast cross-sectional 15-question diagnostic covering all 7 test categories.
+- **Interactive Star Sentence Ordering (★)**: Four draggable/clickable chips can be placed into slots `＿ ＿ ★ ＿`, automatically selecting the answer designated by the star position, or chosen via standard option buttons.
+
+### 4. Official Scoring & Certification Verdict
+
+- **Scoring Scale (0–180 points)**:
+  - Language Knowledge (Section 1 + Grammar): 0–120 points (pass threshold: >= 38 points),
+  - Reading Comprehension (Section 2 Texts): 0–60 points (pass threshold: >= 19 points),
+  - Total Score: 0–180 points (overall pass threshold: >= 90 points).
+- **Certification Verdict**:
+  - **合格 (Gōkaku)**: Exam passed! Displays celebration banner, fan sound effect (`Audio.examWin()`), and sectional breakdown.
+  - **不合格 (Fugōkaku)**: Exam not yet passed, with sectional deficit indicators.
+- **Review Screen**: Full question-by-question review with color-coded correct/incorrect badges and in-depth Polish grammatical and vocabulary explanations.
+
+### 5. Reference Handbook (Kompendium Wiedzy N5)
+
+Dedicated quick-reference tabs available directly from the JLPT Hub:
+
+- **Liczniki (11 classifiers)**: `〜つ`, `〜人 (にん)`, `〜本 (ほん)`, `〜枚 (まい)`, `〜匹 (ひき)`, `〜台 (だい)`, `〜冊 (さつ)`, `〜杯 (はい)`, `〜階 (かい)`, `〜歳 (さい)`, and `〜回 (かい)` with irregulars and pronunciation audio.
+- **Dni i Czas**: Days of the month (1–31 with irregulars `tsuitachi`..`tooka`, `hatsuka`), relative time expressions, and question words.
+- **Ko-So-A-Do Matrix**: Spatial and demonstrative pronouns (kore, sore, are, dore, etc.).
+- **Kanji N5 (103)**: Searchable character grid with on'yomi, kun'yomi, and stroke count.
+
+### 6. Storage & Navigation Architecture
+
+- **Storage**: `JLPT_KEY = 'hiragana-jlpt'`, version `1`. Stores `attempts` history and `bestScore`. Registered in `appStorageKeys()` (now 12 keys total) for automated backup, restore, and clear.
+- **Navigation**: Dedicated 6th navigation item (`Egzamin N5`) in `#appNav` rail/bar and prominent 5th module card on Dashboard (`#btnDashJlptStart`, `#btnDashJlptPractice`, `#btnDashJlptHandbook`).
 
 ---
 
@@ -3109,7 +3193,7 @@ Shipped in Step 6. Accessible via the **Settings (`settings`)** panel.
   - `exportedAt`: ISO 8601 timestamp string,
   - `stores`: object mapping each storage key in `appStorageKeys()` to its current parsed or raw data.
 - **Scope**:
-  - Covers all 11 storage stores: settings (`hiragana-settings`, `hiragana-exam-settings`, legacy theme/muted), progress (`hiragana-progress`), daily stats & streaks (`hiragana-daily`), vocabulary (`hiragana-vocab`), kanji (`hiragana-kanji`), grammar (`hiragana-grammar`), achievements (`hiragana-achievements`), and bookmarks (`hiragana-bookmarks`).
+  - Covers all 12 storage stores: settings (`hiragana-settings`, `hiragana-exam-settings`, legacy theme/muted), progress (`hiragana-progress`), daily stats & streaks (`hiragana-daily`), vocabulary (`hiragana-vocab`), kanji (`hiragana-kanji`), grammar (`hiragana-grammar`), achievements (`hiragana-achievements`), bookmarks (`hiragana-bookmarks`), and JLPT mock exam history (`hiragana-jlpt`).
 - **Export (`exportBackup`)**:
   - Dynamically builds the JSON payload and triggers a download of `koto-backup-YYYY-MM-DD.json` using a Blob and temporary object URL.
 - **Import (`applyBackup`)**:
