@@ -3873,6 +3873,30 @@ homeBtn.onclick = () => {
     return;
   }
 
+  if (state.screen === 'jlpt') {
+    if (jlptSession.mode === 'handbook' || jlptSession.mode === 'results') {
+      jlptSession.mode = 'hub';
+      state.jlpt = jlptSession;
+      render();
+      return;
+    }
+    if (jlptSession.mode === 'exam' && !jlptSession.result) {
+      if (!confirm('Czy na pewno chcesz przerwać egzamin JLPT? Twój bieżący postęp w tej próbie zostanie utracony.'))
+        return;
+      if (jlptSession.timerInterval) {
+        clearInterval(jlptSession.timerInterval);
+        jlptSession.timerInterval = null;
+      }
+      jlptSession.mode = 'hub';
+      state.jlpt = jlptSession;
+      render();
+      return;
+    }
+    const target = screenHistory.pop() || 'dashboard';
+    setScreen(target, { isBack: true });
+    return;
+  }
+
   if (state.screen === 'menu') {
     const target = screenHistory.pop() || 'dashboard';
     setScreen(target, { isBack: true });
@@ -6698,9 +6722,11 @@ function renderKanjiDetail() {
                     .map(
                       ex => `
                     <div class="kanji-example-item">
-                      <div class="kanji-example-word font-japanese">${escapeHtml(ex.word)}</div>
-                      <div class="kanji-example-reading">${escapeHtml(ex.reading)}</div>
-                      <div class="kanji-example-meaning">${escapeHtml(ex.meaning)}</div>
+                      <div class="kanji-example-content">
+                        <div class="kanji-example-word font-japanese">${escapeHtml(ex.word)}</div>
+                        <div class="kanji-example-reading">${escapeHtml(ex.reading)}</div>
+                        <div class="kanji-example-meaning">${escapeHtml(ex.meaning)}</div>
+                      </div>
                       <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(ex.reading || ex.word)}" type="button" title="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}" aria-label="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}">
                         ${icon('volume')}
                       </button>
@@ -6981,7 +7007,9 @@ function renderKanjiFlashcard() {
                       .map(
                         ex => `
                       <span class="kanji-back-tag">
-                        <strong>${escapeHtml(ex.word)}</strong> (${escapeHtml(ex.reading)}) — ${escapeHtml(ex.meaning)}
+                        <span class="kanji-back-tag-text">
+                          <strong>${escapeHtml(ex.word)}</strong> (${escapeHtml(ex.reading)}) — ${escapeHtml(ex.meaning)}
+                        </span>
                         <button class="btn-speak-inline" data-speak="${escapeHtml(ex.reading || ex.word)}" type="button" title="Odsłuchaj" aria-label="Odsłuchaj ${escapeHtml(ex.reading || ex.word)}">
                           ${icon('volume')}
                         </button>
@@ -16306,16 +16334,6 @@ function renderJlptHub(main) {
 
   main.innerHTML = `
     <div class="jlpt-hub-container">
-      <div class="jlpt-top-actions">
-        <button class="hub-back-btn" id="btnJlptBackToDashboard" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Pulpit
-        </button>
-      </div>
-
       <div class="jlpt-hero">
         <div class="jlpt-hero-watermark" aria-hidden="true">合</div>
         <div class="jlpt-hero-content">
@@ -16483,14 +16501,6 @@ function renderJlptHub(main) {
   `;
 
   // Podpięcia zdarzeń
-  const btnBack = document.getElementById('btnJlptBackToDashboard');
-  if (btnBack) {
-    btnBack.onclick = () => {
-      Audio.click();
-      setScreen('dashboard');
-    };
-  }
-
   const btnFull = document.getElementById('btnStartJlptFull');
   if (btnFull)
     btnFull.onclick = () => {
@@ -17116,8 +17126,8 @@ function renderJlptHandbook(main) {
                       <span class="jlpt-ctr-kana">${it.kana}</span>
                       <span class="jlpt-ctr-romaji">${it.romaji}</span>
                       <span class="jlpt-ctr-pol">${it.polish}</span>
-                      <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${it.kana}" title="Odsłuchaj">
-                        🔊
+                      <button class="btn-speak btn-speak-sm" type="button" data-speak="${escapeHtml(it.kana)}" title="Odsłuchaj wymowę" aria-label="Odsłuchaj ${escapeHtml(it.kana)}">
+                        ${icon('volume')}
                       </button>
                     </div>
                   `
@@ -17149,12 +17159,12 @@ function renderJlptHandbook(main) {
               <div class="jlpt-day-header">
                 <span class="jlpt-day-kanji">${d.kanji}</span>
                 <span class="jlpt-day-kana">${d.kana}</span>
+                <button class="btn-speak btn-speak-sm" type="button" data-speak="${escapeHtml(d.kana)}" title="Odsłuchaj wymowę" aria-label="Odsłuchaj ${escapeHtml(d.kana)}">
+                  ${icon('volume')}
+                </button>
               </div>
               <div class="jlpt-day-romaji">${d.romaji}</div>
               <div class="jlpt-day-desc">${d.desc}</div>
-              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${d.kana}" title="Odsłuchaj">
-                🔊 Wymowa
-              </button>
             </div>
           `
             )
@@ -17175,8 +17185,8 @@ function renderJlptHandbook(main) {
               <span class="jlpt-rel-kana">${rt.kana}</span>
               <span class="jlpt-rel-romaji">${rt.romaji}</span>
               <span class="jlpt-rel-pol">${rt.polish}</span>
-              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${rt.kana}" title="Odsłuchaj">
-                🔊
+              <button class="btn-speak btn-speak-sm" type="button" data-speak="${escapeHtml(rt.kana)}" title="Odsłuchaj wymowę" aria-label="Odsłuchaj ${escapeHtml(rt.kana)}">
+                ${icon('volume')}
               </button>
             </div>
           `
@@ -17245,8 +17255,8 @@ function renderJlptHandbook(main) {
               <span class="jlpt-rel-kana">${q.kana}</span>
               <span class="jlpt-rel-romaji">${q.romaji}</span>
               <span class="jlpt-rel-pol">${q.polish}</span>
-              <button class="icon-btn jlpt-speak-btn" type="button" data-speak="${q.kana}" title="Odsłuchaj">
-                🔊
+              <button class="btn-speak btn-speak-sm" type="button" data-speak="${escapeHtml(q.kana)}" title="Odsłuchaj wymowę" aria-label="Odsłuchaj ${escapeHtml(q.kana)}">
+                ${icon('volume')}
               </button>
             </div>
           `
@@ -17291,16 +17301,6 @@ function renderJlptHandbook(main) {
 
   main.innerHTML = `
     <div class="jlpt-handbook-container">
-      <div class="jlpt-top-actions">
-        <button class="hub-back-btn" id="btnHandbookBack" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Wróć do Egzaminu
-        </button>
-      </div>
-
       <div class="jlpt-handbook-header">
         <h2 class="jlpt-hb-title">Kompendium Wiedzy JLPT N5</h2>
         <p class="jlpt-hb-desc">Tabele referencyjne i zbiory reguł wymaganych na oficjalnym egzaminie państwowym.</p>
@@ -17324,15 +17324,6 @@ function renderJlptHandbook(main) {
       ${tabContentHtml}
     </div>
   `;
-
-  const btnBack = document.getElementById('btnHandbookBack');
-  if (btnBack) {
-    btnBack.onclick = () => {
-      Audio.click();
-      jlptSession.mode = 'hub';
-      render();
-    };
-  }
 }
 
 function switchJlptHandbookTab(tab) {

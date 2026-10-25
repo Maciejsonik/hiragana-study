@@ -2353,6 +2353,10 @@
     eq('NAV15j tytuł huba egzaminu N5', title(), 'Egzamin JLPT N5');
     eq('NAV15k aktywna pozycja egzaminu N5', navButton('jlpt').getAttribute('aria-current'), 'page');
     ok('NAV15l powrót widoczny poza hubem kany', !homeBtn.classList.contains('is-hidden'));
+    ok(
+      'NAV15m brak redundantnego przycisku powrotu w karcie huba JLPT',
+      !document.getElementById('btnJlptBackToDashboard')
+    );
 
     ok('NAV16 nawigacja nie zawiera pozycji Ustawienia', !navButton('settings'));
     setScreen('settings');
@@ -3841,6 +3845,16 @@
       'JL12c renderJlptHandbook() renderuje tabele kompendium wiedzy',
       !!document.querySelector('.jlpt-handbook-tabs')
     );
+    ok('JL12d brak redundantnego przycisku powrotu w kompendium wiedzy', !document.getElementById('btnHandbookBack'));
+    ok(
+      'JL12e przyciski odsłuchu w kompendium używają standardowego .btn-speak',
+      document.querySelectorAll('.jlpt-handbook-container .btn-speak').length > 0 &&
+        document.querySelectorAll('.jlpt-handbook-container .jlpt-speak-btn').length === 0
+    );
+    state.screen = 'jlpt';
+    homeBtn.click();
+    await sleep(30);
+    eq('JL12f kliknięcie powrotu z kompendium prowadzi z powrotem do huba JLPT', jlptSession.mode, 'hub');
 
     // Przywrócenie stanu domyślnego
     jlptSession.mode = 'hub';

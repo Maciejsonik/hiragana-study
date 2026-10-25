@@ -6132,10 +6132,26 @@ body::before {
 }
 
 .kanji-example-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 8px 12px;
+  min-width: 0;
+}
+
+.kanji-example-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.kanji-example-item .btn-speak {
+  flex-shrink: 0;
 }
 
 .kanji-example-word {
@@ -6430,12 +6446,27 @@ body::before {
 }
 
 .kanji-back-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: var(--text-xs);
   color: var(--ink);
   background: var(--bg);
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
+  min-width: 0;
+}
+
+.kanji-back-tag-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.kanji-back-tag .btn-speak-inline {
+  flex-shrink: 0;
+  margin-left: 0;
 }
 
 /* SRS rating buttons */
@@ -7391,6 +7422,7 @@ body::before {
   height: 32px;
   min-width: 32px;
   min-height: 32px;
+  flex-shrink: 0;
   padding: 0;
   border-radius: var(--radius-md);
   background: var(--btn-secondary-bg);
@@ -7416,12 +7448,18 @@ body::before {
   transform: scale(0.95);
 }
 
-.btn-speak.is-speaking {
+.btn-speak.is-speaking,
+.btn-speak-reading.is-speaking {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent);
   animation: pulse-speak 0.4s ease-out;
+}
+
+.btn-speak-inline.is-speaking {
+  color: var(--accent);
+  transform: scale(1.2);
 }
 
 @keyframes pulse-speak {
@@ -7441,6 +7479,8 @@ body::before {
   width: 17px;
   height: 17px;
   stroke: currentColor;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .btn-speak-sm {
@@ -7448,6 +7488,7 @@ body::before {
   height: 26px;
   min-width: 26px;
   min-height: 26px;
+  flex-shrink: 0;
   border-radius: var(--radius-sm);
 }
 
@@ -7455,6 +7496,8 @@ body::before {
 .btn-speak-sm .icon {
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .btn-speak-inline {
@@ -7463,6 +7506,9 @@ body::before {
   justify-content: center;
   width: 22px;
   height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  flex-shrink: 0;
   margin-left: 6px;
   padding: 0;
   border-radius: 4px;
@@ -7471,7 +7517,9 @@ body::before {
   color: var(--ink-muted);
   cursor: pointer;
   vertical-align: middle;
-  transition: color var(--duration-fast) ease;
+  transition:
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .btn-speak-inline:hover {
@@ -7483,6 +7531,8 @@ body::before {
   width: 14px;
   height: 14px;
   stroke: currentColor;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .btn-speak-reading {
@@ -7494,11 +7544,20 @@ body::before {
   font-family: inherit;
   font-size: inherit;
   transition: all var(--duration-fast) var(--ease-standard);
+  flex-shrink: 0;
 }
 
 .btn-speak-reading:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
+}
+
+.btn-speak-reading .speak-tag-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .btn-speak-reading .speak-tag-icon svg,
@@ -7507,27 +7566,12 @@ body::before {
   height: 13px;
   vertical-align: middle;
   opacity: 0.7;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .btn-speak-reading:hover .speak-tag-icon svg {
   opacity: 1;
-}
-
-.kanji-example-item {
-  position: relative;
-  padding-right: 42px;
-}
-
-.kanji-example-item .btn-speak {
-  position: absolute;
-  right: 8px;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-}
-
-.kanji-example-item .btn-speak:hover {
-  transform: scale(1.08);
 }
 
 /* =========================================================
@@ -10995,11 +11039,6 @@ body::before {
   text-align: right;
 }
 
-.jlpt-speak-btn {
-  font-size: 0.8rem;
-  padding: 4px;
-}
-
 /* Kalendarz */
 .jlpt-days-grid {
   display: grid;
@@ -11022,7 +11061,8 @@ body::before {
 .jlpt-day-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 4px;
 }
 
