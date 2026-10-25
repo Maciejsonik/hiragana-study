@@ -2297,7 +2297,10 @@
     eq('NAV6 tytuł huba', title(), 'Kana');
     eq('NAV7 aktywna pozycja na hubie', navButton('kana').getAttribute('aria-current'), 'page');
     ok('NAV8 powrót widoczny na hubie kany', !homeBtn.classList.contains('is-hidden'));
-    ok('NAV8a obecny przycisk powrotu do pulpitu na hubie kany', !!document.getElementById('btnKanaBackToDashboard'));
+    ok(
+      'NAV8a brak redundantnego przycisku powrotu w karcie huba kany',
+      !document.getElementById('btnKanaBackToDashboard')
+    );
     homeBtn.click();
     await sleep(30);
     eq('NAV8b kliknięcie powrotu z huba kany prowadzi do pulpitu', state.screen, 'dashboard');
