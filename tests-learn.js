@@ -1726,6 +1726,15 @@
             document.querySelectorAll('[data-vocab-grade]').length === 2,
           document.querySelector('.vocab-learn-answer')?.textContent.trim().slice(0, 40) || 'brak'
         );
+        const correctGradeBtn = document.querySelector('.vocab-grade-correct');
+        const wrongGradeBtn = document.querySelector('.vocab-grade-wrong');
+        ok(
+          'F18a przycisk oceny Wiedziałem nie ma klasy btn-primary i zachowuje zieloną stylizację',
+          !!correctGradeBtn &&
+            !correctGradeBtn.classList.contains('btn-primary') &&
+            !!wrongGradeBtn &&
+            !wrongGradeBtn.classList.contains('btn-danger')
+        );
 
         document.querySelector('[data-vocab-grade="wrong"]').click();
         await wait(150);

@@ -5861,12 +5861,12 @@ function renderVocab() {
             session.revealed && !session.answered
               ? `
                 <div class="vocab-grade-actions">
-                  <button class="btn btn-danger vocab-grade-wrong" data-vocab-grade="wrong">
+                  <button class="btn vocab-grade-wrong" data-vocab-grade="wrong">
                     <span class="vocab-grade-icon" aria-hidden="true">${icon('x')}</span>
                     <span class="vocab-grade-text">Nie wiedziałem</span>
                     <span class="key-hint">1</span>
                   </button>
-                  <button class="btn btn-primary vocab-grade-correct" data-vocab-grade="correct">
+                  <button class="btn vocab-grade-correct" data-vocab-grade="correct">
                     <span class="vocab-grade-icon" aria-hidden="true">${icon('check')}</span>
                     <span class="vocab-grade-text">Wiedziałem</span>
                     <span class="key-hint">2</span>

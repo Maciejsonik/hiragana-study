@@ -3046,9 +3046,11 @@ body.focus-mode .app-shell {
   box-shadow: 0 4px 14px color-mix(in srgb, var(--bad) 12%, transparent);
 }
 
-.vocab-grade-wrong:hover {
+.vocab-grade-wrong:hover,
+.vocab-grade-wrong:hover:not(:disabled) {
   background: color-mix(in srgb, var(--bad) 18%, var(--card-solid));
   border-color: var(--bad);
+  color: var(--bad);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--bad) 28%, transparent);
 }
@@ -3060,9 +3062,11 @@ body.focus-mode .app-shell {
   box-shadow: 0 4px 14px color-mix(in srgb, var(--good) 12%, transparent);
 }
 
-.vocab-grade-correct:hover {
+.vocab-grade-correct:hover,
+.vocab-grade-correct:hover:not(:disabled) {
   background: color-mix(in srgb, var(--good) 20%, var(--card-solid));
   border-color: var(--good);
+  color: var(--good);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--good) 30%, transparent);
 }
