@@ -10,7 +10,7 @@ The app currently provides:
 
 - **Kana learning & exam**: 251 characters (Hiragana, Katakana, Dakuten, Handakuten, Yōon, Special Katakana) with animated stroke order, stroke descriptions, 4 adaptive exam modes, per-question timer, optional question limit, XP, confetti celebration, and swipe gestures.
 - **Kanji learning (600 characters)**: comprehensive L01–L28 + N5 dataset (100% of _Shokyū Nihongo_ and 100% of canonical JLPT N5 kanji) with stroke order animations, canvas drawing practice (guided & blind memory mode), searchable catalog with category/lesson filters, SRS flashcards, and 4-choice recognition quiz.
-- **Vocabulary (203 words / 273 learn cards)**: nouns, verbs, request expressions, adjectives, topic categorization, orthogonal lesson filters, flashcard learning, recognition tests, and keyboard typing input.
+- **Vocabulary (360 words / 471 learn cards)**: nouns, verbs, request expressions, adjectives, topic categorization, orthogonal lesson filters (0, 1ka–5ka), flashcard learning, recognition tests, and keyboard typing input.
 - **Grammar N5 (46 items across 5 categories)**: particles, verb conjugations and forms, adjectives, and conversational structures with 138 authentic example sentences and interactive cloze fill-in-the-blank practice.
 - **JLPT N5 Mock Exam Engine & Reference Handbook**:
   - Full official 43-question mock exam covering all 7 JLPT N5 sections (Kanji Reading, Kanji Writing, Contextual Vocabulary, Paraphrases, Grammar Selection, Star Sentence Ordering ★, and Reading Comprehension),
@@ -1439,7 +1439,7 @@ T14  Offline PWA                                  DONE
 T21  Spaced repetition engine                      DONE
 T15  Long-term multi-module statistics             DONE
 T18  Kanji (599 kanji, L01–L28 + N5, drawing, catalog, SRS, quiz) DONE
-T19  Vocabulary (203 words / 273 cards, topics, lessons, typed mode) DONE
+T19  Vocabulary (360 words / 471 cards, topics, lessons 1ka–5ka, typed mode) DONE
 T20  Grammar N5 (31 items, 16 lessons, cloze trainer) DONE
 T22  Daily Goals (configurable target, multi-module aggregation) DONE
 T23  Achievements (12 milestone badges, modal, celebration toasts) DONE
@@ -1957,17 +1957,17 @@ v01-verb  ききます        kikimasu          słuchać
 This is not a second table. Editing a verb in `VOCAB_ITEMS` changes both cards
 at once, so the two cannot drift apart. Ids are additive and stable
 (`<id>-verb`), and `hiragana-vocab` is keyed by id, so adding material needs no
-migration and no `VOCAB_VERSION` bump. The two verbs without a request
-expression (`v23`, `v24`) are explicit `type: 'verb'` entries.
+migration and no `VOCAB_VERSION` bump. The explicit verbs without a request
+expression (`v23`–`v42`) are `type: 'verb'` entries.
 
-`VOCAB_LEARN_ITEMS` is the 273-card list: 20 expressions, 22 verbs, 203 nouns,
-20 adjectives, 6 phrases and 2 patterns (253 raw entries in `VOCAB_ITEMS`). `vocabCard()` accepts every one of those types, so
+`VOCAB_LEARN_ITEMS` is the 471-card list: 20 expressions, 40 verbs, 360 nouns,
+32 adjectives, 17 phrases and 2 patterns (451 raw entries in `VOCAB_ITEMS`). `vocabCard()` accepts every one of those types, so
 `recordVocabAnswer('v01-verb', …)`, `recordVocabAnswer('n01', …)`, `recordVocabAnswer('a01', …)` and
 `recordVocabAnswer('v21', …)` create real records, while an unknown id such as
 `v99` still returns `null`.
 
-Covered by VO1–VO18: 20 derived cards plus two explicit verbs, the
-`<id>-verb` / `source` link, 273 unique kana, the fields copied from the source
+Covered by VO1–VO19: 20 derived cards plus 20 explicit verbs, the
+`<id>-verb` / `source` link, 471 unique kana, the fields copied from the source
 card, and `vocabCard()` accepting all material types while rejecting an
 unknown id.
 
@@ -2024,9 +2024,9 @@ stored preference):
 ```text
 Tryb      Nauka (default) | Test | Wpisywanie
 Kierunek  Japoński → znaczenie | Znaczenie → japoński
-Zakres    Polecenia (20) | Czasowniki (22) | Rzeczowniki (203)
-          Przymiotniki (20) | Zwroty (8) | Wszystko (273, default)
-Lekcja    Wszystkie (default) | Klasa | 1か | 2か
+Zakres    Polecenia (20) | Czasowniki (40) | Rzeczowniki (360)
+          Przymiotniki (32) | Zwroty (19) | Wszystko (471, default)
+Lekcja    Wszystkie (default) | Klasa | 1か | 2か | 3か | 4か | 5か
 Tematy    osobny folder tematów (13 kategorii), w tym Bez kategorii
 Kolejność Inteligentna (default) | Losowa
 Liczba    Wszystkie (default) | 10 | 20
@@ -2630,7 +2630,7 @@ Shared session frame: implemented
 SVG icon set: implemented
 Kana hub: implemented
 Kanji: implemented (487 characters, L01–L24 + N5, catalog, drawing, blind mode, SRS, quiz)
-Vocabulary: implemented (203 words / 273 learn cards, topics, lesson filters, recognition, typed mode)
+Vocabulary: implemented (360 words / 471 learn cards, topics, lesson filters 1ka–5ka, recognition, typed mode)
 Grammar: implemented (Phases 1–4, 31 items across 16 lessons, authentic sentences, audio, cloze trainer)
 Daily goals: implemented (configurable 10–50 target, celebration state, multi-module)
 Achievements: implemented (12 milestone badges, modal dialog, celebration toasts)
@@ -2680,14 +2680,14 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-1025 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+1026 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 
 ```text
 T18 Kanji (Core + L01-L28: 599 kanji, drawing, catalog, SRS, quiz) — COMPLETE
 ↓
-T19 Vocabulary (203 words / 273 cards, topics, lesson filters, typed mode) — COMPLETE
+T19 Vocabulary (360 words / 471 cards, topics, lesson filters 1ka–5ka, typed mode) — COMPLETE
 ↓
 T20 Grammar (Phases 1-4: 31 items, particles, verbs, adjectives, conversation) — COMPLETE
 ↓

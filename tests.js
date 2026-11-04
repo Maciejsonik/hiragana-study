@@ -1573,21 +1573,21 @@
     const extraVerbs = items.filter(item => item.type === 'verb');
 
     ok(
-      'VO1 jest 20 poleceń, 2 wzorce, 203 rzeczowniki, 20 przymiotników, 6 zwrotów i 2 czasowniki',
+      'VO1 jest 20 poleceń, 2 wzorce, 360 rzeczowników, 32 przymiotniki, 17 zwrotów i 20 czasowników',
       cards.length === 20 &&
         patterns.length === 2 &&
-        words.length === 203 &&
-        adjectives.length === 20 &&
-        phrases.length === 6 &&
-        extraVerbs.length === 2,
+        words.length === 360 &&
+        adjectives.length === 32 &&
+        phrases.length === 17 &&
+        extraVerbs.length === 20,
       [cards.length, patterns.length, words.length, adjectives.length, phrases.length, extraVerbs.length].join(' / ')
     );
 
     const expectedIds = [
-      ...Array.from({ length: 24 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 203 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 6 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 20 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
+      ...Array.from({ length: 42 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 360 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 17 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 32 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
     ].join(',');
     ok(
       'VO2 identyfikatory są stabilne i uporządkowane',
@@ -1647,10 +1647,10 @@
        uzupełnienia pól wyrażenia złamie VO10, a nie tylko UI.
     */
     ok(
-      'VO8 czasowniki powstają z poleceń, a dwa mają własny wpis',
-      VOCAB_VERB_ITEMS.length === 22 &&
+      'VO8 czasowniki powstają z poleceń, a 20 ma własny wpis',
+      VOCAB_VERB_ITEMS.length === 40 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).length === 20 &&
-        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 2 &&
+        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 20 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).every(
           item => item.type === 'verb' && item.id.endsWith('-verb') && item.source === item.id.replace('-verb', '')
         ),
@@ -1658,8 +1658,8 @@
     );
 
     ok(
-      'VO9 wszystkie 273 karty nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 273 &&
+      'VO9 wszystkie 471 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 471 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1733,10 +1733,10 @@
 
     ok(
       'VO15 filtr kategorii zwęża zakres, a suma kategorii daje jego wielkość',
-      vocabPool('words', 'school').length === 16 &&
-        vocabPool('words', 'people').length === 17 &&
-        vocabPool('words', CATEGORY_NONE).length === 1 &&
-        vocabPool('words').length === 203 &&
+      vocabPool('words', 'school').length === 20 &&
+        vocabPool('words', 'people').length === 21 &&
+        vocabPool('words', CATEGORY_NONE).length === 23 &&
+        vocabPool('words').length === 360 &&
         vocabPool('words', 'school').every(item => item.category === 'school'),
       ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
     );
@@ -1753,29 +1753,63 @@
 
     const l1Words = vocabPool('words', CATEGORY_ALL, '1ka');
     const l2Words = vocabPool('words', CATEGORY_ALL, '2ka');
+    const l3Words = vocabPool('words', CATEGORY_ALL, '3ka');
+    const l4Words = vocabPool('words', CATEGORY_ALL, '4ka');
+    const l5Words = vocabPool('words', CATEGORY_ALL, '5ka');
     const l2Adj = vocabPool('adjectives', CATEGORY_ALL, '2ka');
+    const l5Adj = vocabPool('adjectives', CATEGORY_ALL, '5ka');
     ok(
-      'VO17 filtr lekcji poprawnie izoluje zasoby 1か i 2か',
+      'VO17 filtr lekcji poprawnie izoluje zasoby od 1か do 5か',
       l1Words.length === 32 &&
         l2Words.length === 165 &&
+        l3Words.length === 27 &&
+        l4Words.length === 65 &&
+        l5Words.length === 65 &&
         l2Adj.length === 20 &&
+        l5Adj.length === 12 &&
         l1Words.every(item => item.lesson === '1ka') &&
-        l2Words.every(item => item.lesson === '2ka'),
-      'L1=' + l1Words.length + ' L2=' + l2Words.length + ' Adj=' + l2Adj.length
+        l2Words.every(item => item.lesson === '2ka') &&
+        l3Words.every(item => item.lesson === '3ka') &&
+        l4Words.every(item => item.lesson === '4ka') &&
+        l5Words.every(item => item.lesson === '5ka'),
+      'L1=' +
+        l1Words.length +
+        ' L2=' +
+        l2Words.length +
+        ' L3=' +
+        l3Words.length +
+        ' L4=' +
+        l4Words.length +
+        ' L5=' +
+        l5Words.length
     );
 
     const timeWords = vocabPool('words', 'time');
     ok(
-      'VO18 nowe słownictwo czasu i liczebników (n135-n203) jest obecne w kategorii time',
-      timeWords.length === 93 &&
+      'VO18 nowe słownictwo czasu i liczebników jest obecne w kategorii time',
+      timeWords.length === 189 &&
         vocabCard('n135')?.kana === 'いちじ' &&
         vocabCard('n148')?.kana === 'いっぷん' &&
         vocabCard('n161')?.kana === 'いちじ じゅうごふん すぎ' &&
         vocabCard('n165')?.kana === 'まいにち' &&
         vocabCard('n175')?.kana === 'ついたち' &&
         vocabCard('n192')?.kana === 'いちがつ' &&
-        vocabCard('n203')?.kana === 'じゅうにがつ',
+        vocabCard('n203')?.kana === 'じゅうにがつ' &&
+        vocabCard('n240')?.kana === 'たんじょうび' &&
+        vocabCard('n325')?.kana === 'いちにち',
       'timeWords=' + timeWords.length
+    );
+
+    ok(
+      'VO19 nowe lekcje 3ka, 4ka i 5ka zawierają czasowniki, przymiotniki i zwroty',
+      vocabPool('verbs', CATEGORY_ALL, '3ka').length === 10 &&
+        vocabPool('verbs', CATEGORY_ALL, '4ka').length === 6 &&
+        vocabPool('verbs', CATEGORY_ALL, '5ka').length === 2 &&
+        vocabPool('adjectives', CATEGORY_ALL, '5ka').length === 12 &&
+        vocabPool('phrases', CATEGORY_ALL, '3ka').length === 1 &&
+        vocabPool('phrases', CATEGORY_ALL, '4ka').length === 6 &&
+        vocabPool('phrases', CATEGORY_ALL, '5ka').length === 4,
+      '3ka/4ka/5ka zweryfikowane'
     );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
@@ -1812,7 +1846,7 @@
     renderVocabTopics();
     ok(
       'T19 topic folder follows selected scope',
-      document.querySelectorAll('.vocab-topics-card').length === 13 &&
+      document.querySelectorAll('.vocab-topics-card').length === 14 &&
         document.querySelector('.vocab-lead').textContent.includes('Rzeczowniki') &&
         vocabTopicNav.scope === 'words',
       'cards=' + document.querySelectorAll('.vocab-topics-card').length

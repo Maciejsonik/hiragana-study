@@ -1434,7 +1434,7 @@
           !!document.getElementById('vocabStart') &&
             document.querySelectorAll('[data-vocab-mode]').length === 3 &&
             document.querySelectorAll('[data-vocab-direction]').length === 2 &&
-            document.querySelectorAll('[data-vocab-lesson]').length === 4 &&
+            document.querySelectorAll('[data-vocab-lesson]').length === 7 &&
             document.querySelectorAll('[data-vocab-scope]').length === 6 &&
             document.querySelectorAll('[data-vocab-order]').length === 2 &&
             document.querySelectorAll('[data-vocab-limit]').length === 3 &&
@@ -1462,14 +1462,14 @@
         );
 
         ok(
-          'F2 domyślny zakres to wszystko: 20 poleceń, 22 czasowniki, 203 rzeczowniki, 20 przymiotników i 8 zwrotów',
+          'F2 domyślny zakres to wszystko: 20 poleceń, 40 czasowników, 360 rzeczowników, 32 przymiotniki i 19 zwrotów',
           vocabSetup.scope === 'all' &&
             scopeCount('cards') === 20 &&
-            scopeCount('verbs') === 22 &&
-            scopeCount('words') === 203 &&
-            scopeCount('adjectives') === 20 &&
-            scopeCount('phrases') === 8 &&
-            scopeCount('all') === 273,
+            scopeCount('verbs') === 40 &&
+            scopeCount('words') === 360 &&
+            scopeCount('adjectives') === 32 &&
+            scopeCount('phrases') === 19 &&
+            scopeCount('all') === 471,
           ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
@@ -1537,19 +1537,23 @@
           JSON.stringify(secondStat)
         );
 
-        // Przechodzimy przez resztę zestawu, żeby zobaczyć ekran wyniku.
-        let guard = 0;
-        while (state.vocab && !state.vocab.finished && guard++ < 300) {
-          const item = vocabItem(state.vocab.order[state.vocab.index]);
-          const right = [...document.querySelectorAll('[data-vocab-choice]')].find(
-            button => button.dataset.vocabChoice === item.meaning
-          );
-          if (right && !right.disabled) right.click();
-          await wait(30);
-          const nextStep = document.getElementById('vocabNext');
-          if (nextStep) nextStep.click();
-          await wait(30);
-        }
+        // Przechodzimy do ostatniej karty zestawu, żeby zobaczyć ekran wyniku.
+        state.vocab.index = state.vocab.order.length - 1;
+        state.vocab.answered = false;
+        state.vocab.chosen = null;
+        state.vocab.lastCorrect = false;
+        state.vocab.options = null;
+        renderVocab();
+        await wait(100);
+        const lastItem = vocabItem(state.vocab.order[state.vocab.index]);
+        const lastChoice = [...document.querySelectorAll('[data-vocab-choice]')].find(
+          button => button.dataset.vocabChoice === lastItem.meaning
+        );
+        if (lastChoice) lastChoice.click();
+        await wait(100);
+        const nextStep = document.getElementById('vocabNext');
+        if (nextStep) nextStep.click();
+        await wait(150);
 
         ok(
           'F8 po ostatniej karcie widać wynik zestawu bez osobnego powrotu',
