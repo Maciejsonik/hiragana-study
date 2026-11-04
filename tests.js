@@ -1573,10 +1573,10 @@
     const extraVerbs = items.filter(item => item.type === 'verb');
 
     ok(
-      'VO1 jest 20 poleceń, 2 wzorce, 134 rzeczowniki, 20 przymiotników, 6 zwrotów i 2 czasowniki',
+      'VO1 jest 20 poleceń, 2 wzorce, 203 rzeczowniki, 20 przymiotników, 6 zwrotów i 2 czasowniki',
       cards.length === 20 &&
         patterns.length === 2 &&
-        words.length === 134 &&
+        words.length === 203 &&
         adjectives.length === 20 &&
         phrases.length === 6 &&
         extraVerbs.length === 2,
@@ -1585,7 +1585,7 @@
 
     const expectedIds = [
       ...Array.from({ length: 24 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 134 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 203 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
       ...Array.from({ length: 6 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
       ...Array.from({ length: 20 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
     ].join(',');
@@ -1658,8 +1658,8 @@
     );
 
     ok(
-      'VO9 wszystkie 204 karty nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 204 &&
+      'VO9 wszystkie 273 karty nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 273 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1736,7 +1736,7 @@
       vocabPool('words', 'school').length === 16 &&
         vocabPool('words', 'people').length === 17 &&
         vocabPool('words', CATEGORY_NONE).length === 1 &&
-        vocabPool('words').length === 134 &&
+        vocabPool('words').length === 203 &&
         vocabPool('words', 'school').every(item => item.category === 'school'),
       ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
     );
@@ -1757,11 +1757,25 @@
     ok(
       'VO17 filtr lekcji poprawnie izoluje zasoby 1か i 2か',
       l1Words.length === 32 &&
-        l2Words.length === 96 &&
+        l2Words.length === 165 &&
         l2Adj.length === 20 &&
         l1Words.every(item => item.lesson === '1ka') &&
         l2Words.every(item => item.lesson === '2ka'),
       'L1=' + l1Words.length + ' L2=' + l2Words.length + ' Adj=' + l2Adj.length
+    );
+
+    const timeWords = vocabPool('words', 'time');
+    ok(
+      'VO18 nowe słownictwo czasu i liczebników (n135-n203) jest obecne w kategorii time',
+      timeWords.length === 93 &&
+        vocabCard('n135')?.kana === 'いちじ' &&
+        vocabCard('n148')?.kana === 'いっぷん' &&
+        vocabCard('n161')?.kana === 'いちじ じゅうごふん すぎ' &&
+        vocabCard('n165')?.kana === 'まいにち' &&
+        vocabCard('n175')?.kana === 'ついたち' &&
+        vocabCard('n192')?.kana === 'いちがつ' &&
+        vocabCard('n203')?.kana === 'じゅうにがつ',
+      'timeWords=' + timeWords.length
     );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
