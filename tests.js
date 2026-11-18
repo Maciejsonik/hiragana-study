@@ -1573,21 +1573,21 @@
     const extraVerbs = items.filter(item => item.type === 'verb');
 
     ok(
-      'VO1 jest 20 poleceń, 2 wzorce, 360 rzeczowników, 32 przymiotniki, 17 zwrotów i 20 czasowników',
+      'VO1 jest 20 poleceń, 2 wzorce, 427 rzeczowników, 38 przymiotników, 17 zwrotów i 32 czasowniki',
       cards.length === 20 &&
         patterns.length === 2 &&
-        words.length === 360 &&
-        adjectives.length === 32 &&
+        words.length === 427 &&
+        adjectives.length === 38 &&
         phrases.length === 17 &&
-        extraVerbs.length === 20,
+        extraVerbs.length === 32,
       [cards.length, patterns.length, words.length, adjectives.length, phrases.length, extraVerbs.length].join(' / ')
     );
 
     const expectedIds = [
-      ...Array.from({ length: 42 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 360 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 54 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 427 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
       ...Array.from({ length: 17 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 32 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
+      ...Array.from({ length: 38 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
     ].join(',');
     ok(
       'VO2 identyfikatory są stabilne i uporządkowane',
@@ -1647,10 +1647,10 @@
        uzupełnienia pól wyrażenia złamie VO10, a nie tylko UI.
     */
     ok(
-      'VO8 czasowniki powstają z poleceń, a 20 ma własny wpis',
-      VOCAB_VERB_ITEMS.length === 40 &&
+      'VO8 czasowniki powstają z poleceń, a 32 ma własny wpis',
+      VOCAB_VERB_ITEMS.length === 52 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).length === 20 &&
-        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 20 &&
+        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 32 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).every(
           item => item.type === 'verb' && item.id.endsWith('-verb') && item.source === item.id.replace('-verb', '')
         ),
@@ -1658,8 +1658,8 @@
     );
 
     ok(
-      'VO9 wszystkie 471 kart nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 471 &&
+      'VO9 wszystkie 556 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 556 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1733,10 +1733,10 @@
 
     ok(
       'VO15 filtr kategorii zwęża zakres, a suma kategorii daje jego wielkość',
-      vocabPool('words', 'school').length === 20 &&
-        vocabPool('words', 'people').length === 21 &&
-        vocabPool('words', CATEGORY_NONE).length === 23 &&
-        vocabPool('words').length === 360 &&
+      vocabPool('words', 'school').length === 25 &&
+        vocabPool('words', 'people').length === 30 &&
+        vocabPool('words', CATEGORY_NONE).length === 32 &&
+        vocabPool('words').length === 427 &&
         vocabPool('words', 'school').every(item => item.category === 'school'),
       ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
     );
@@ -1787,7 +1787,7 @@
     const timeWords = vocabPool('words', 'time');
     ok(
       'VO18 nowe słownictwo czasu i liczebników jest obecne w kategorii time',
-      timeWords.length === 189 &&
+      timeWords.length === 197 &&
         vocabCard('n135')?.kana === 'いちじ' &&
         vocabCard('n148')?.kana === 'いっぷん' &&
         vocabCard('n161')?.kana === 'いちじ じゅうごふん すぎ' &&
@@ -1810,6 +1810,16 @@
         vocabPool('phrases', CATEGORY_ALL, '4ka').length === 6 &&
         vocabPool('phrases', CATEGORY_ALL, '5ka').length === 4,
       '3ka/4ka/5ka zweryfikowane'
+    );
+
+    ok(
+      'VO20 zestaw kanji-40-60 izoluje nowe rzeczowniki, czasowniki i przymiotniki oraz poprawione czytania',
+      vocabPool('words', CATEGORY_ALL, 'kanji-40-60').length === 67 &&
+        vocabPool('verbs', CATEGORY_ALL, 'kanji-40-60').length === 12 &&
+        vocabPool('adjectives', CATEGORY_ALL, 'kanji-40-60').length === 6 &&
+        vocabCard('v51')?.kana === 'すく' &&
+        vocabCard('n412')?.kana === 'がんせき',
+      'kanji-40-60=' + vocabPool('all', CATEGORY_ALL, 'kanji-40-60').length
     );
   } catch (e) {
     ok('dane słownictwa', false, e.message);

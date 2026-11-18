@@ -895,6 +895,20 @@ const VOCAB_ITEMS = [
   { id: 'v41', type: 'verb', lesson: '5ka', kana: 'けんぶつします', kanji: '見物します', romaji: 'kembutsu shimasu', meaning: 'zwiedzać' },
   { id: 'v42', type: 'verb', lesson: '5ka', kana: 'かかります', kanji: '掛かります', romaji: 'kakarimasu', meaning: 'zajmuje / kosztuje (czas, pieniądze)' },
 
+  // Czasowniki z zestawu Kanji 40-60 (forma słownikowa)
+  { id: 'v43', type: 'verb', lesson: 'kanji-40-60', kana: 'わける', kanji: '分ける', romaji: 'wakeru', meaning: 'dzielić' },
+  { id: 'v44', type: 'verb', lesson: 'kanji-40-60', kana: 'わかれる', kanji: '分かれる', romaji: 'wakareru', meaning: 'być podzielonym' },
+  { id: 'v45', type: 'verb', lesson: 'kanji-40-60', kana: 'わかる', kanji: '分かる', romaji: 'wakaru', meaning: 'rozumieć / wiedzieć' },
+  { id: 'v46', type: 'verb', lesson: 'kanji-40-60', kana: 'あかす', kanji: '明かす', romaji: 'akasu', meaning: 'wyjawić (coś)' },
+  { id: 'v47', type: 'verb', lesson: 'kanji-40-60', kana: 'あける', kanji: '明ける', romaji: 'akeru', meaning: 'kończyć się (o okresie) / zaczynać się (o roku) / świtać' },
+  { id: 'v48', type: 'verb', lesson: 'kanji-40-60', kana: 'やすむ', kanji: '休む', romaji: 'yasumu', meaning: 'odpoczywać / być nieobecnym (w szkole, pracy)' },
+  { id: 'v49', type: 'verb', lesson: 'kanji-40-60', kana: 'やすめる', kanji: '休める', romaji: 'yasumeru', meaning: 'dać odpocząć / zrelaksować' },
+  { id: 'v50', type: 'verb', lesson: 'kanji-40-60', kana: 'やすまる', kanji: '休まる', romaji: 'yasumaru', meaning: 'odpoczywać / być zrelaksowanym' },
+  { id: 'v51', type: 'verb', lesson: 'kanji-40-60', kana: 'すく', kanji: '好く', romaji: 'suku', meaning: 'lubić / kochać' },
+  { id: 'v52', type: 'verb', lesson: 'kanji-40-60', kana: 'このむ', kanji: '好む', romaji: 'konomu', meaning: 'lubić / preferować' },
+  { id: 'v53', type: 'verb', lesson: 'kanji-40-60', kana: 'たりる', kanji: '足りる', romaji: 'tariru', meaning: 'wystarczać' },
+  { id: 'v54', type: 'verb', lesson: 'kanji-40-60', kana: 'たす', kanji: '足す', romaji: 'tasu', meaning: 'dodawać' },
+
   // Rzeczowniki i zwroty z sekcji „Przydatne rzeczowniki" oraz „Rzeczownik + を + czasownik"
   { id: 'n01', type: 'word', lesson: '0', category: 'people', kana: 'なまえ', romaji: 'namae', meaning: 'imię' },
   { id: 'n02', type: 'word', lesson: '0', kana: 'これ', romaji: 'kore', meaning: 'to' },
@@ -1295,6 +1309,75 @@ const VOCAB_ITEMS = [
   { id: 'n359', type: 'word', lesson: '5ka', category: 'time', kana: 'じゅうにかげつ', kanji: '12か月', romaji: 'juunikagetsu', meaning: '12 miesięcy (trwanie)' },
   { id: 'n360', type: 'word', lesson: '5ka', category: 'time', kana: 'なんかげつ', kanji: '何か月', romaji: 'nankagetsu', meaning: 'ile miesięcy?' },
 
+  // Słownictwo z zestawu Kanji 40-60
+  { id: 'n361', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'ほんじつ', kanji: '本日', romaji: 'honjitsu', meaning: 'dzisiaj (formalnie)' },
+  { id: 'n362', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'ほんにん', kanji: '本人', romaji: 'honnin', meaning: 'ten, dany człowiek' },
+  { id: 'n363', type: 'word', lesson: 'kanji-40-60', category: 'place', kana: 'にほん', kanji: '日本', romaji: 'nihon', alt: 'にっぽん', altRomaji: 'nippon', meaning: 'Japonia' },
+  { id: 'n364', type: 'word', lesson: 'kanji-40-60', category: 'place', kana: 'にほんいち', kanji: '日本一', romaji: 'nihonichi', alt: 'にっぽんいち', altRomaji: 'nipponichi', meaning: 'naj- w Japonii' },
+  { id: 'n365', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: '～ほん', kanji: '～本', romaji: '~hon', alt: '～ぼん', altRomaji: '~bon', meaning: 'klasyfikator do liczenia przedmiotów podłużnych (～ほん / ～ぼん / ～ぽん)' },
+  { id: 'n366', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: 'はん～', kanji: '半～', romaji: 'han~', meaning: 'pół / połowa (prefiks)' },
+  { id: 'n367', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: '～はん', kanji: '～半', romaji: '~han', meaning: 'pół / wpół do (przyrostek)' },
+  { id: 'n368', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: 'はんぶん', kanji: '半分', romaji: 'hanbun', meaning: 'połowa' },
+  { id: 'n369', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: 'はんはん', kanji: '半々', romaji: 'hanhan', meaning: 'pół na pół' },
+  { id: 'n370', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: 'たいはん', kanji: '大半', romaji: 'taihan', meaning: 'większa część' },
+  { id: 'n371', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'なかば', kanji: '半ば', romaji: 'nakaba', meaning: 'połowa / środek' },
+  { id: 'n372', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: '～ぶんの～', kanji: '～分の～', romaji: '~bun no ~', meaning: 'część (w ułamkach)' },
+  { id: 'n373', type: 'word', lesson: 'kanji-40-60', category: 'school', kana: 'ぶんし', kanji: '分子', romaji: 'bunshi', meaning: 'cząsteczka / molekuła / licznik (mat.)' },
+  { id: 'n374', type: 'word', lesson: 'kanji-40-60', kana: 'だいぶ', kanji: '大分', romaji: 'daibu', alt: 'だいぶん', altRomaji: 'daibun', meaning: 'całkiem / dużo / bardzo' },
+  { id: 'n375', type: 'word', lesson: 'kanji-40-60', kana: 'ぶん', kanji: '分', romaji: 'bun', meaning: 'część / ilość przeznaczona dla kogoś' },
+  { id: 'n376', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: '～ぶ', kanji: '～分', romaji: '~bu', alt: '～ぶん', altRomaji: '~bun', meaning: 'procent / kreska (na termometrze) / zawartość' },
+  { id: 'n377', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'すいぶん', kanji: '水分', romaji: 'suibun', meaning: 'zawartość wody / płynu (w czymś)' },
+  { id: 'n378', type: 'word', lesson: 'kanji-40-60', kana: 'ちから', kanji: '力', romaji: 'chikara', meaning: 'siła / zdolność / umiejętności' },
+  { id: 'n379', type: 'word', lesson: 'kanji-40-60', category: 'school', kana: 'がくりょく', kanji: '学力', romaji: 'gakuryoku', meaning: 'wiedza / umiejętności naukowe' },
+  { id: 'n380', type: 'word', lesson: 'kanji-40-60', category: 'school', kana: 'りきがく', kanji: '力学', romaji: 'rikigaku', meaning: 'dynamika (dział fizyki)' },
+  { id: 'n381', type: 'word', lesson: 'kanji-40-60', category: 'transport', kana: 'じんりきしゃ', kanji: '人力車', romaji: 'jinrikisha', meaning: 'riksza' },
+  { id: 'n382', type: 'word', lesson: 'kanji-40-60', kana: 'なにか', kanji: '何か', romaji: 'nanika', meaning: 'coś' },
+  { id: 'n383', type: 'word', lesson: 'kanji-40-60', kana: 'なにも', kanji: '何も', romaji: 'nanimo', meaning: 'nic (z przeczeniem)' },
+  { id: 'n384', type: 'word', lesson: 'kanji-40-60', kana: 'なん～', kanji: '何～', romaji: 'nan~', meaning: 'który / jaki / ile (prefiks)' },
+  { id: 'n385', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'なんにん', kanji: '何人', romaji: 'nannin', meaning: 'ile osób' },
+  { id: 'n386', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'なんぷん', kanji: '何分', romaji: 'nanpun', meaning: 'ile minut' },
+  { id: 'n387', type: 'word', lesson: 'kanji-40-60', category: 'home', kana: 'あかり', kanji: '明かり', romaji: 'akari', meaning: 'światło' },
+  { id: 'n388', type: 'word', lesson: 'kanji-40-60', kana: 'ひとやすみ', kanji: '一休み', romaji: 'hitoyasumi', alt: 'ひとやすみする', altRomaji: 'hitoyasumi suru', meaning: 'krótka przerwa / odpoczynek (zrobić krótką przerwę)' },
+  { id: 'n389', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'きゅうじつ', kanji: '休日', romaji: 'kyuujitsu', meaning: 'dzień wolny (od pracy, zajęć)' },
+  { id: 'n390', type: 'word', lesson: 'kanji-40-60', category: 'school', kana: 'きゅうがく', kanji: '休学', romaji: 'kyuugaku', alt: 'きゅうがくする', altRomaji: 'kyuugaku suru', meaning: 'przerwa w nauce (robić przerwę w nauce)' },
+  { id: 'n391', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'からだ', kanji: '体', romaji: 'karada', meaning: 'ciało' },
+  { id: 'n392', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'じんたい', kanji: '人体', romaji: 'jintai', meaning: 'ciało ludzkie' },
+  { id: 'n393', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'たいりょく', kanji: '体力', romaji: 'tairyoku', meaning: 'siła / tężyzna fizyczna' },
+  { id: 'n394', type: 'word', lesson: 'kanji-40-60', kana: 'だいたい', kanji: '大体', romaji: 'daitai', meaning: 'mniej więcej / prawie' },
+  { id: 'n395', type: 'word', lesson: 'kanji-40-60', kana: 'このみ', kanji: '好み', romaji: 'konomi', meaning: 'upodobanie / gust' },
+  { id: 'n396', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'おとこ', kanji: '男', romaji: 'otoko', meaning: 'mężczyzna' },
+  { id: 'n397', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'だんし', kanji: '男子', romaji: 'danshi', meaning: 'chłopiec / mężczyzna' },
+  { id: 'n398', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'だんじょ', kanji: '男女', romaji: 'danjo', meaning: 'kobieta i mężczyzna' },
+  { id: 'n399', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'さんりん', kanji: '山林', romaji: 'sanrin', meaning: 'górski las' },
+  { id: 'n400', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'もり', kanji: '森', romaji: 'mori', meaning: 'las / puszcza' },
+  { id: 'n401', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'しんりん', kanji: '森林', romaji: 'shinrin', meaning: 'las / lasy' },
+  { id: 'n402', type: 'word', lesson: 'kanji-40-60', category: 'direction', kana: '～ ～かん', kanji: '〜・〜間', romaji: '~ ~ kan', meaning: 'odległość między...' },
+  { id: 'n403', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'このあいだ', kanji: 'この間', romaji: 'konoaida', meaning: 'ostatnio' },
+  { id: 'n404', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'にんげん', kanji: '人間', romaji: 'ningen', meaning: 'człowiek / istota ludzka' },
+  { id: 'n405', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'いっぷんかん', kanji: '一分間', romaji: 'ippunkan', meaning: 'przez jedną minutę' },
+  { id: 'n406', type: 'word', lesson: 'kanji-40-60', category: 'home', kana: 'きゃくま', kanji: '客間', romaji: 'kyakuma', meaning: 'pokój gościnny' },
+  { id: 'n407', type: 'word', lesson: 'kanji-40-60', category: 'time', kana: 'いちにちかん', kanji: '一日間', romaji: 'ichinichikan', meaning: 'przez jeden dzień' },
+  { id: 'n408', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'はたけ', kanji: '畑', romaji: 'hatake', meaning: 'pole / branża' },
+  { id: 'n409', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: '～ばたけ', kanji: '～畑', romaji: '~batake', meaning: 'pole / plantacja (przyrostek)' },
+  { id: 'n410', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'たはた', kanji: '田畑', romaji: 'tahata', meaning: 'pola' },
+  { id: 'n411', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'いわ', kanji: '岩', romaji: 'iwa', meaning: 'skała' },
+  { id: 'n412', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'がんせき', kanji: '岩石', romaji: 'ganseki', meaning: 'skały' },
+  { id: 'n413', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'めうえ', kanji: '目上', romaji: 'meue', meaning: 'przełożony / zwierzchnik' },
+  { id: 'n414', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'めした', kanji: '目下', romaji: 'meshita', meaning: 'podwładny' },
+  { id: 'n415', type: 'word', lesson: 'kanji-40-60', category: 'people', kana: 'ひとめ', kanji: '人目', romaji: 'hitome', meaning: 'ludzkie spojrzenie' },
+  { id: 'n416', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: '～め', kanji: '～目', romaji: '~me', meaning: 'który z kolei (przyrostek liczebników porządkowych)' },
+  { id: 'n417', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'みみ', kanji: '耳', romaji: 'mimi', meaning: 'ucho / uszy' },
+  { id: 'n418', type: 'word', lesson: 'kanji-40-60', category: 'place', kana: 'じびか', kanji: '耳鼻科', romaji: 'jibika', meaning: 'laryngologia' },
+  { id: 'n419', type: 'word', lesson: 'kanji-40-60', category: 'school', kana: 'てほん', kanji: '手本', romaji: 'tehon', meaning: 'wzór' },
+  { id: 'n420', type: 'word', lesson: 'kanji-40-60', category: 'work', kana: '～しゅ', kanji: '～手', romaji: '~shu', alt: '～て', altRomaji: '~te', meaning: 'osoba wykonująca zawód / czynność (～しゅ / ～て)' },
+  { id: 'n421', type: 'word', lesson: 'kanji-40-60', category: 'work', kana: 'ひとで', kanji: '人手', romaji: 'hitode', meaning: 'ręce do pracy' },
+  { id: 'n422', type: 'word', lesson: 'kanji-40-60', category: 'work', kana: 'てま', kanji: '手間', romaji: 'tema', meaning: 'trud / wysiłek' },
+  { id: 'n423', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'あし', kanji: '足', romaji: 'ashi', meaning: 'noga' },
+  { id: 'n424', type: 'word', lesson: 'kanji-40-60', category: 'body', kana: 'てあし', kanji: '手足', romaji: 'teashi', meaning: 'ręce i nogi / kończyny' },
+  { id: 'n425', type: 'word', lesson: 'kanji-40-60', category: 'number', kana: '～そく', kanji: '～足', romaji: '~soku', meaning: 'klasyfikator do liczenia par (np. skarpet, butów)' },
+  { id: 'n426', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'あまみず', kanji: '雨水', romaji: 'amamizu', meaning: 'deszcz / deszczówka' },
+  { id: 'n427', type: 'word', lesson: 'kanji-40-60', category: 'nature', kana: 'おおあめ', kanji: '大雨', romaji: 'ooame', meaning: 'ulewa' },
+
   { id: 'p01', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを いってください', romaji: 'namae o itte kudasai', meaning: 'proszę podać imię' },
   { id: 'p02', type: 'phrase', lesson: '0', category: 'people', kana: 'なまえを かいてください', romaji: 'namae o kaite kudasai', meaning: 'proszę napisać imię' },
   { id: 'p03', type: 'phrase', lesson: '0', kana: 'これを みてください', romaji: 'kore o mite kudasai', meaning: 'proszę na to spojrzeć' },
@@ -1351,7 +1434,15 @@ const VOCAB_ITEMS = [
   { id: 'a29', type: 'adjective', lesson: '5ka', kana: 'さむい', kanji: '寒い', romaji: 'samui', meaning: 'zimny / chłodny (o pogodzie)' },
   { id: 'a30', type: 'adjective', lesson: '5ka', kana: 'あつい', kanji: '暑い', romaji: 'atsui', meaning: 'gorący (o pogodzie)' },
   { id: 'a31', type: 'adjective', lesson: '5ka', kana: 'おそい', kanji: '遅い', romaji: 'osoi', meaning: 'późny / wolny' },
-  { id: 'a32', type: 'adjective', lesson: '5ka', kana: 'はやい', kanji: '早い', romaji: 'hayai', meaning: 'wczesny / szybki' }
+  { id: 'a32', type: 'adjective', lesson: '5ka', kana: 'はやい', kanji: '早い', romaji: 'hayai', meaning: 'wczesny / szybki' },
+
+  // Przymiotniki -na z zestawu Kanji 40-60
+  { id: 'a33', type: 'adjective', lesson: 'kanji-40-60', kana: 'じゅうぶんな', kanji: '十分な', romaji: 'juubun na', alt: 'じゅうぶん', altRomaji: 'juubun', meaning: 'wystarczający' },
+  { id: 'a34', type: 'adjective', lesson: 'kanji-40-60', kana: 'あきらかな', kanji: '明らかな', romaji: 'akiraka na', alt: 'あきらか', altRomaji: 'akiraka', meaning: 'jasny / oczywisty / ewidentny' },
+  { id: 'a35', type: 'adjective', lesson: 'kanji-40-60', kana: 'すきな', kanji: '好きな', romaji: 'suki na', meaning: 'ulubiony' },
+  { id: 'a36', type: 'adjective', lesson: 'kanji-40-60', kana: 'だいすきな', kanji: '大好きな', romaji: 'daisuki na', meaning: 'bardzo lubiany' },
+  { id: 'a37', type: 'adjective', lesson: 'kanji-40-60', kana: 'じょうずな', kanji: '上手な', romaji: 'jouzu na', alt: 'じょうず', altRomaji: 'jouzu', meaning: 'dobry (w czymś)' },
+  { id: 'a38', type: 'adjective', lesson: 'kanji-40-60', kana: 'へたな', kanji: '下手な', romaji: 'heta na', alt: 'へた', altRomaji: 'heta', meaning: 'słaby (w czymś)' }
 ];
 
 /*
@@ -5098,7 +5189,7 @@ const VOCAB_SCOPE_LABELS = {
   all: 'Wszystko'
 };
 
-const VOCAB_LESSONS = ['all', '0', '1ka', '2ka', '3ka', '4ka', '5ka'];
+const VOCAB_LESSONS = ['all', '0', '1ka', '2ka', '3ka', '4ka', '5ka', 'kanji-40-60'];
 
 const VOCAB_LESSON_LABELS = {
   all: 'Wszystkie',
@@ -5107,7 +5198,8 @@ const VOCAB_LESSON_LABELS = {
   '2ka': '2か (Lekcja 2)',
   '3ka': '3か (Lekcja 3)',
   '4ka': '4か (Lekcja 4)',
-  '5ka': '5か (Lekcja 5)'
+  '5ka': '5か (Lekcja 5)',
+  'kanji-40-60': 'Kanji 40–60'
 };
 
 const VOCAB_LIMIT_LABELS = {
