@@ -2680,7 +2680,7 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-1027 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+1028 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 

@@ -2907,6 +2907,12 @@
       'znaleziono ' + kanjiSpeaks.length
     );
 
+    const indexHtmlForTts = await (await fetch('index.html')).text();
+    ok(
+      'AU20 index.html ustawia politykę referrer no-referrer dla żądań Google Translate TTS po HTTPS',
+      /<meta\s+name="referrer"\s+content="no-referrer"\s*\/?>/i.test(indexHtmlForTts)
+    );
+
     // Przywrócenie ekranu
     kanjiSession.mode = 'hub';
     setScreen('menu');
