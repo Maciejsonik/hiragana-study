@@ -1430,16 +1430,19 @@
         const scopeCount = scope => vocabPool(scope).length;
 
         ok(
-          'F1 wejście w fiszki pokazuje tryb, kierunek, zakres, kolejność i limit',
+          'F1 wejście w fiszki pokazuje tryb, zapis, kierunek, zakres, kolejność i limit',
           !!document.getElementById('vocabStart') &&
             document.querySelectorAll('[data-vocab-mode]').length === 3 &&
-            document.querySelectorAll('[data-vocab-direction]').length === 2 &&
+            document.querySelectorAll('[data-vocab-script]').length === 2 &&
+            document.querySelectorAll('[data-vocab-direction]').length === 3 &&
             document.querySelectorAll('[data-vocab-lesson]').length === 8 &&
             document.querySelectorAll('[data-vocab-scope]').length === 6 &&
             document.querySelectorAll('[data-vocab-order]').length === 2 &&
             document.querySelectorAll('[data-vocab-limit]').length === 3 &&
             !document.getElementById('vocabBack'),
           document.querySelectorAll('[data-vocab-mode]').length +
+            '/' +
+            document.querySelectorAll('[data-vocab-script]').length +
             '/' +
             document.querySelectorAll('[data-vocab-direction]').length +
             '/' +
@@ -1847,9 +1850,67 @@
         clearAllData();
         ok('F24 czyszczenie danych czyści stan fiszek', state.vocab === null, String(state.vocab));
 
+        // Tryb zapisu Kanji i kierunek Kanji -> czytanie
         vocabSetup.mode = 'learn';
+        vocabSetup.script = 'kanji';
         vocabSetup.direction = 'kana-meaning';
         vocabSetup.scope = 'all';
+        vocabSetup.lesson = 'kanji-40-60';
+        vocabSetup.category = CATEGORY_ALL;
+        vocabSetup.limit = 10;
+        renderVocab();
+        await wait(120);
+        document.getElementById('vocabStart').click();
+        await wait(180);
+        const kanjiFrontItem = vocabItem(state.vocab.order[0]);
+        ok(
+          'F25 tryb Kanji pokazuje zapis kanji na przodzie fiszki',
+          !!kanjiFrontItem?.kanji &&
+            document.querySelector('.vocab-learn-front')?.textContent.trim() === kanjiFrontItem.kanji &&
+            document.querySelector('.vocab-learn-side')?.textContent.trim() === 'KANJI',
+          document.querySelector('.vocab-learn-front')?.textContent.trim() || 'brak'
+        );
+
+        state.vocab = null;
+        vocabSetup.mode = 'test';
+        vocabSetup.direction = 'kanji-kana';
+        renderVocab();
+        await wait(120);
+        document.getElementById('vocabStart').click();
+        await wait(180);
+        const readingItem = vocabItem(state.vocab.order[0]);
+        const readingChoices = [...document.querySelectorAll('[data-vocab-choice]')];
+        ok(
+          'F26 kierunek Kanji -> czytanie pokazuje kanji bez przycisku audio na przodzie i 4 opcje czytania kana',
+          document.querySelector('.question-vocab')?.textContent.trim() === readingItem.kanji &&
+            !document.querySelector('.prompt [data-speak]') &&
+            readingChoices.length === 4 &&
+            readingChoices.some(b => b.dataset.vocabChoice === readingItem.kana),
+          readingChoices.map(b => b.dataset.vocabChoice).join(' | ')
+        );
+
+        state.vocab = null;
+        vocabSetup.mode = 'type';
+        vocabSetup.script = 'kanji';
+        vocabSetup.direction = 'meaning-kana';
+        renderVocab();
+        await wait(120);
+        document.getElementById('vocabStart').click();
+        await wait(180);
+        const typeKanjiItem = vocabItem(state.vocab.order[0]);
+        answerVocabTyped(typeKanjiItem.kanji);
+        await wait(120);
+        ok(
+          'F27 wpisywanie w trybie Kanji zalicza poprawny zapis kanji',
+          state.vocab.answered && state.vocab.lastCorrect === true,
+          typeKanjiItem.kanji
+        );
+
+        vocabSetup.mode = 'learn';
+        vocabSetup.script = 'kana';
+        vocabSetup.direction = 'kana-meaning';
+        vocabSetup.scope = 'all';
+        vocabSetup.lesson = 'all';
         vocabSetup.category = CATEGORY_ALL;
         vocabSetup.order = 'smart';
         vocabSetup.limit = 0;

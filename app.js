@@ -5161,7 +5161,8 @@ const VOCAB_OPTIONS = 4;
 const VOCAB_MODES = ['learn', 'test', 'type'];
 const VOCAB_ORDERS = ['smart', 'shuffle'];
 const VOCAB_LIMITS = [0, 10, 20];
-const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana'];
+const VOCAB_DIRECTIONS = ['kana-meaning', 'meaning-kana', 'kanji-kana'];
+const VOCAB_SCRIPTS = ['kana', 'kanji'];
 const VOCAB_SCOPES = ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'];
 
 const VOCAB_MODE_LABELS = {
@@ -5177,7 +5178,13 @@ const VOCAB_ORDER_LABELS = {
 
 const VOCAB_DIRECTION_LABELS = {
   'kana-meaning': 'Japoński → znaczenie',
-  'meaning-kana': 'Znaczenie → japoński'
+  'meaning-kana': 'Znaczenie → japoński',
+  'kanji-kana': 'Kanji → czytanie'
+};
+
+const VOCAB_SCRIPT_LABELS = {
+  kana: 'Kana',
+  kanji: 'Kanji'
 };
 
 const VOCAB_SCOPE_LABELS = {
@@ -5213,6 +5220,7 @@ let vocabTopicNav = { view: 'setup', topic: null, scope: 'all' };
 
 const vocabSetup = {
   mode: 'learn',
+  script: 'kana',
   direction: 'kana-meaning',
   scope: 'all',
   lesson: 'all',
@@ -5236,12 +5244,23 @@ function filterByLesson(items, lesson = 'all') {
   return items.filter(item => (item.lesson || '0') === lesson);
 }
 
-/* Temat i lekcja zawężają zestaw do nauki. Rozpraszacze nadal biorą się z całej
+function vocabNeedsKanji(script = vocabSetup?.script || 'kana', direction = vocabSetup?.direction || 'kana-meaning') {
+  return script === 'kanji' || direction === 'kanji-kana';
+}
+
+/* Temat, lekcja i tryb kanji zawężają zestaw do nauki. Rozpraszacze nadal biorą się z całej
    puli typu, bo wąski temat lub lekcja nie mogą ograniczać czterech odpowiedzi. */
-function vocabPool(scope, category = CATEGORY_ALL, lesson = vocabSetup?.lesson || 'all') {
+function vocabPool(
+  scope,
+  category = CATEGORY_ALL,
+  lesson = vocabSetup?.lesson || 'all',
+  script = vocabSetup?.script || 'kana',
+  direction = vocabSetup?.direction || 'kana-meaning'
+) {
   const scopeItems = vocabScopePool(scope);
   const lessonItems = filterByLesson(scopeItems, lesson);
-  return filterByCategory(lessonItems, category);
+  const categorized = filterByCategory(lessonItems, category);
+  return vocabNeedsKanji(script, direction) ? categorized.filter(item => !!item.kanji) : categorized;
 }
 
 function renderVocabTopics() {
@@ -5450,13 +5469,30 @@ function vocabItem(cardId) {
 
 /* Limit jest tylko skróceniem wybranego zakresu — nigdy nie powiększa go
    ponad liczbę dostępnych kart. */
-function vocabCardCount(scope, category, limit, lesson = vocabSetup?.lesson || 'all') {
-  const total = vocabPool(scope, category, lesson).length;
+function vocabCardCount(
+  scope,
+  category,
+  limit,
+  lesson = vocabSetup?.lesson || 'all',
+  script = vocabSetup?.script || 'kana',
+  direction = vocabSetup?.direction || 'kana-meaning'
+) {
+  const total = vocabPool(scope, category, lesson, script, direction).length;
   return limit > 0 ? Math.min(limit, total) : total;
 }
 
-function vocabSessionOrder(scope, category, { order = 'smart', limit = 0, lesson = vocabSetup?.lesson || 'all' } = {}) {
-  let entries = vocabPool(scope, category, lesson).map((item, index) => ({
+function vocabSessionOrder(
+  scope,
+  category,
+  {
+    order = 'smart',
+    limit = 0,
+    lesson = vocabSetup?.lesson || 'all',
+    script = vocabSetup?.script || 'kana',
+    direction = vocabSetup?.direction || 'kana-meaning'
+  } = {}
+) {
+  let entries = vocabPool(scope, category, lesson, script, direction).map((item, index) => ({
     id: item.id,
     index: index,
     stat: vocabStat(item.id)
@@ -5468,8 +5504,14 @@ function vocabSessionOrder(scope, category, { order = 'smart', limit = 0, lesson
     entries.sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index);
   }
 
-  const count = vocabCardCount(scope, category, limit, lesson);
+  const count = vocabCardCount(scope, category, limit, lesson, script, direction);
   return entries.slice(0, count).map(entry => entry.id);
+}
+
+function vocabExpectedChoice(item, direction, script = 'kana') {
+  if (direction === 'kanji-kana') return item.kana;
+  if (direction === 'meaning-kana') return script === 'kanji' ? item.kanji || item.kana : item.kana;
+  return item.meaning;
 }
 
 /*
@@ -5478,8 +5520,9 @@ function vocabSessionOrder(scope, category, { order = 'smart', limit = 0, lesson
    wyrażeniach prośby („proszę słuchać"). Wymieszanie ich dawałoby odpowiedzi,
    które różnią się tylko gramatyczną formą, a nie znaczeniem.
 */
-function vocabOptions(item, direction) {
-  const field = direction === 'meaning-kana' ? 'kana' : 'meaning';
+function vocabOptions(item, direction, script = 'kana') {
+  const asksKanjiChoice = direction === 'meaning-kana' && script === 'kanji';
+  const asksReadingChoice = direction === 'kanji-kana';
   const poolScope =
     item.type === 'verb'
       ? 'verbs'
@@ -5490,18 +5533,33 @@ function vocabOptions(item, direction) {
           : item.type === 'phrase' || item.type === 'pattern'
             ? 'phrases'
             : 'cards';
-  const pool = vocabPool(poolScope, CATEGORY_ALL, 'all');
-  const chosen = new Set([item[field]]);
+  const expected = vocabExpectedChoice(item, direction, script);
+  const chosen = new Set([expected]);
   const distractors = [];
 
-  for (const other of shuffle(pool)) {
-    if (other.id === item.id || chosen.has(other[field])) continue;
-    chosen.add(other[field]);
-    distractors.push(other[field]);
-    if (distractors.length === VOCAB_OPTIONS - 1) break;
+  const collect = candidates => {
+    for (const other of shuffle(candidates)) {
+      if (other.id === item.id) continue;
+      if (asksReadingChoice && item.kanji && other.kanji && other.kanji === item.kanji) continue;
+      const val = vocabExpectedChoice(other, direction, script);
+      if (!val || chosen.has(val)) continue;
+      chosen.add(val);
+      distractors.push(val);
+      if (distractors.length === VOCAB_OPTIONS - 1) break;
+    }
+  };
+
+  const primaryPool = asksKanjiChoice
+    ? vocabPool(poolScope, CATEGORY_ALL, 'all', 'kanji', direction)
+    : vocabPool(poolScope, CATEGORY_ALL, 'all', 'kana', 'kana-meaning');
+  collect(primaryPool);
+
+  // Jeśli wąski typ (np. zwroty) ma mniej niż 4 hasła z kanji, dopełniamy z całej puli kanji.
+  if (distractors.length < VOCAB_OPTIONS - 1 && asksKanjiChoice) {
+    collect(vocabPool('all', CATEGORY_ALL, 'all', 'kanji', direction));
   }
 
-  return shuffle([item[field], ...distractors]);
+  return shuffle([expected, ...distractors]);
 }
 
 /* Mapowanie romaji na hiragana dla wpisywania z klawiatury */
@@ -5566,7 +5624,17 @@ function transliterateRomajiToKana(text) {
   return res;
 }
 
-function matchVocabJapanese(typed, item) {
+function matchVocabKanji(typed, item) {
+  if (!typed || !item || !item.kanji) return false;
+  const clean = s => (s || '').trim().replace(/[\s\-_・~～〜]/g, '');
+  const t = clean(typed);
+  if (!t) return false;
+  if (t === clean(item.kanji)) return true;
+  if (item.altKanji && t === clean(item.altKanji)) return true;
+  return false;
+}
+
+function matchVocabJapanese(typed, item, { allowKanji = true } = {}) {
   if (!typed || !item) return false;
   const clean = s =>
     (s || '')
@@ -5578,9 +5646,9 @@ function matchVocabJapanese(typed, item) {
 
   const normKana = clean(item.kana);
   const normRomaji = clean(item.romaji);
-  const normKanji = clean(item.kanji);
+  const normKanji = allowKanji ? clean(item.kanji) : '';
 
-  // Bezpośrednie dopasowanie kana, romaji lub kanji
+  // Bezpośrednie dopasowanie kana, romaji lub (opcjonalnie) kanji
   if (t === normKana || t === normRomaji || (normKanji && t === normKanji)) return true;
 
   // Normalizacja makronów
@@ -5667,14 +5735,16 @@ function startVocabSession({
   lesson = vocabSetup.lesson || 'all',
   category = vocabSetup.category,
   mode = vocabSetup.mode,
+  script = vocabSetup.script || 'kana',
   direction = vocabSetup.direction,
   order = vocabSetup.order,
   limit = vocabSetup.limit
 } = {}) {
-  const sessionOrder = ids ? [...ids] : vocabSessionOrder(scope, category, { order, limit, lesson });
+  const sessionOrder = ids ? [...ids] : vocabSessionOrder(scope, category, { order, limit, lesson, script, direction });
 
   state.vocab = {
     mode,
+    script,
     direction,
     scope,
     lesson,
@@ -5716,7 +5786,7 @@ function answerVocab(choice) {
   const item = vocabItem(session.order[session.index]);
   if (!item) return;
 
-  const expected = session.direction === 'meaning-kana' ? item.kana : item.meaning;
+  const expected = vocabExpectedChoice(item, session.direction, session.script || 'kana');
   session.chosen = choice;
   recordVocabResult(session, item, choice === expected);
   renderVocab();
@@ -5730,10 +5800,18 @@ function answerVocabTyped(typed) {
   if (!item) return;
 
   session.typedValue = (typed || '').trim();
-  const asksKana = session.direction === 'meaning-kana';
-  const correct = asksKana
-    ? matchVocabJapanese(session.typedValue, item)
-    : matchVocabMeaning(session.typedValue, item.meaning);
+  const script = session.script || 'kana';
+  let correct = false;
+  if (session.direction === 'kanji-kana') {
+    correct = matchVocabJapanese(session.typedValue, item, { allowKanji: false });
+  } else if (session.direction === 'meaning-kana') {
+    correct =
+      script === 'kanji' && item.kanji
+        ? matchVocabKanji(session.typedValue, item)
+        : matchVocabJapanese(session.typedValue, item);
+  } else {
+    correct = matchVocabMeaning(session.typedValue, item.meaning);
+  }
 
   recordVocabResult(session, item, correct);
   renderVocab();
@@ -5785,7 +5863,7 @@ function nextVocab() {
 }
 
 /* Wspólne „skąd przyszła ta karta” dla obu trybów. */
-function vocabAnswerDetailsHTML(item) {
+function vocabAnswerDetailsHTML(item, { hideKanji = false, showKana = false } = {}) {
   const source = item.type === 'verb' && item.source ? vocabItem(item.source) : null;
   let detail = '';
 
@@ -5804,7 +5882,11 @@ function vocabAnswerDetailsHTML(item) {
     }
   }
 
-  if (item.kanji && item.type !== 'card') {
+  if (showKana) {
+    detail += `<div class="flash-meta">Czytanie: <b>${item.kana}</b></div>`;
+  }
+
+  if (!hideKanji && item.kanji && item.type !== 'card') {
     detail += `<div class="flash-meta vocab-kanji-meta">Kanji: <b>${item.kanji}</b></div>`;
   }
 
@@ -5812,32 +5894,42 @@ function vocabAnswerDetailsHTML(item) {
   return `${detail}${variant}`;
 }
 
-function vocabRevealHTML(item, correct) {
+function vocabRevealHTML(item, correct, script = 'kana') {
+  const useKanjiHeadline = script === 'kanji' && !!item.kanji;
   return `
     <div class="flashcard vocab-reveal ${correct ? 'vocab-correct' : ''}">
       <div class="flash-label">${correct ? '✓ Dobrze' : '✗ Poprawna odpowiedź'}</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:8px">
-        <div class="flash-kana vocab-kana">${item.kana}</div>
+        <div class="flash-kana vocab-kana">${useKanjiHeadline ? item.kanji : item.kana}</div>
         <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
       </div>
+      ${useKanjiHeadline ? `<div class="flash-meta">Czytanie: <b>${item.kana}</b></div>` : ''}
       <div class="flash-romaji">${item.romaji}</div>
       <div class="flash-meta">${item.meaning}</div>
-      ${vocabAnswerDetailsHTML(item)}
+      ${vocabAnswerDetailsHTML(item, { hideKanji: useKanjiHeadline })}
       <button class="btn btn-primary" id="vocabNext">Dalej <span class="key-hint">Enter</span> ${icon('chevron-right')}</button>
     </div>
   `;
 }
 
-function vocabLearnAnswerHTML(item, asksKana) {
+function vocabLearnAnswerHTML(item, asksKana, session = null) {
+  const script = session?.script || 'kana';
+  const direction = session?.direction || (asksKana ? 'meaning-kana' : 'kana-meaning');
+  const isKanjiReading = direction === 'kanji-kana';
+  const isKanjiTarget = direction === 'meaning-kana' && script === 'kanji' && !!item.kanji;
+  const isKanjiFrontMeaning = direction === 'kana-meaning' && script === 'kanji' && !!item.kanji;
+  const mainClass = isKanjiReading || asksKana ? 'question-vocab' : 'question-vocab-pl';
+  const mainText = isKanjiReading ? item.kana : isKanjiTarget ? item.kanji : asksKana ? item.kana : item.meaning;
+
   return `
     <div class="vocab-learn-answer">
       <div class="vocab-learn-label">Odpowiedź</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:8px">
-        <div class="${asksKana ? 'question-vocab' : 'question-vocab-pl'}">${asksKana ? item.kana : item.meaning}</div>
+        <div class="${mainClass}">${mainText}</div>
         <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
       </div>
       <div class="flash-romaji">${item.romaji}</div>
-      ${vocabAnswerDetailsHTML(item)}
+      ${vocabAnswerDetailsHTML(item, { hideKanji: isKanjiTarget || isKanjiFrontMeaning, showKana: isKanjiTarget || isKanjiFrontMeaning })}
     </div>
   `;
 }
@@ -5845,18 +5937,29 @@ function vocabLearnAnswerHTML(item, asksKana) {
 /* Ekran wyboru: tryb, kierunek, zakres, kolejność i długość sesji. Wszystkie
    decyzje są sesyjne, więc nie ruszają formatu `hiragana-vocab`. */
 function renderVocabSetup() {
-  const { mode, direction, scope, lesson = 'all', category, order, limit } = vocabSetup;
-  const pool = vocabPool(scope, category, lesson);
-  const count = vocabCardCount(scope, category, limit, lesson);
+  const { mode, script = 'kana', direction, scope, lesson = 'all', category, order, limit } = vocabSetup;
+  const pool = vocabPool(scope, category, lesson, script, direction);
+  const count = vocabCardCount(scope, category, limit, lesson, script, direction);
   const attempts = pool.reduce((sum, item) => sum + vocabStat(item.id).seen, 0);
   const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
   const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
   const started = pool.filter(item => vocabStat(item.id).seen > 0).length;
 
+  const scriptHint =
+    script === 'kanji'
+      ? 'Ćwiczysz słówka z zapisem kanji — przód fiszki, opcje testu i wpisywanie używają kanji.'
+      : 'Ćwiczysz zapis w hiraganie/katakanie (kanji pojawia się po odkryciu odpowiedzi).';
+
   const directionHint =
-    direction === 'meaning-kana'
-      ? 'Widzisz polskie znaczenie, a po odkryciu lub odpowiedzi — japońskie wyrażenie.'
-      : 'Widzisz japońskie wyrażenie, a po odkryciu lub odpowiedzi — polskie znaczenie.';
+    direction === 'kanji-kana'
+      ? 'Widzisz zapis kanji (ze znaczeniem pomocniczym), a podajesz czytanie w hiraganie/romaji.'
+      : direction === 'meaning-kana'
+        ? script === 'kanji'
+          ? 'Widzisz polskie znaczenie, a podajesz lub wybierasz zapis kanji.'
+          : 'Widzisz polskie znaczenie, a po odkryciu lub odpowiedzi — japońskie wyrażenie.'
+        : script === 'kanji'
+          ? 'Widzisz zapis kanji, a po odkryciu lub odpowiedzi — polskie znaczenie i czytanie.'
+          : 'Widzisz japońskie wyrażenie, a po odkryciu lub odpowiedzi — polskie znaczenie.';
 
   const modeHint =
     mode === 'learn'
@@ -5976,6 +6079,21 @@ function renderVocabSetup() {
         <div class="card vocab-setup-panel">
           <div class="vocab-setup-group">
             <div class="vocab-group-header">
+              <span class="settings-label" id="vocabScriptLabel">${icon('kanji')} Zapis</span>
+            </div>
+            <div class="vocab-pills" role="group" aria-labelledby="vocabScriptLabel">
+              ${VOCAB_SCRIPTS.map(
+                id => `
+                <button class="vocab-pill ${id === script ? 'active' : ''}" data-vocab-script="${id}" data-focus-key="vocab-script-${id}" aria-pressed="${id === script}">
+                  ${VOCAB_SCRIPT_LABELS[id]}
+                </button>`
+              ).join('')}
+            </div>
+            <small class="vocab-hint">${scriptHint}</small>
+          </div>
+
+          <div class="vocab-setup-group">
+            <div class="vocab-group-header">
               <span class="settings-label" id="vocabDirectionLabel">${icon('review')} Kierunek nauki</span>
             </div>
             <div class="vocab-pills" role="group" aria-labelledby="vocabDirectionLabel">
@@ -6032,6 +6150,10 @@ function renderVocabSetup() {
 
   document.querySelectorAll('[data-vocab-mode]').forEach(button => {
     button.onclick = () => rerender('mode', button.dataset.vocabMode, 'vocab-mode-' + button.dataset.vocabMode);
+  });
+
+  document.querySelectorAll('[data-vocab-script]').forEach(button => {
+    button.onclick = () => rerender('script', button.dataset.vocabScript, 'vocab-script-' + button.dataset.vocabScript);
   });
 
   document.querySelectorAll('[data-vocab-direction]').forEach(button => {
@@ -6143,6 +6265,7 @@ function renderVocab() {
         lesson: session.lesson,
         category: session.category,
         mode: session.mode,
+        script: session.script,
         direction: session.direction,
         limit: session.limit
       });
@@ -6158,6 +6281,7 @@ function renderVocab() {
           lesson: session.lesson,
           category: session.category,
           mode: session.mode,
+          script: session.script,
           direction: session.direction,
           limit: session.limit
         });
@@ -6179,8 +6303,13 @@ function renderVocab() {
     return;
   }
 
+  const script = session.script || 'kana';
+  const isKanjiReading = session.direction === 'kanji-kana';
   const asksKana = session.direction === 'meaning-kana';
-  const expected = asksKana ? item.kana : item.meaning;
+  const asksJapaneseInput = asksKana || isKanjiReading;
+  const showKanjiFront = (script === 'kanji' && !asksKana) || isKanjiReading;
+  const jpFrontText = showKanjiFront && item.kanji ? item.kanji : item.kana;
+  const expected = vocabExpectedChoice(item, session.direction, script);
   const total = session.order.length;
   const percentage = total === 0 ? 0 : Math.round((session.index / total) * 100);
   const modeLabel = VOCAB_MODE_LABELS[session.mode] || 'Fiszki';
@@ -6200,9 +6329,9 @@ function renderVocab() {
   `;
 
   if (session.mode === 'learn') {
-    const front = asksKana ? item.meaning : item.kana;
+    const front = asksKana ? item.meaning : jpFrontText;
     const frontClass = asksKana ? 'question-vocab-pl' : 'question-vocab';
-    const sideLabel = asksKana ? 'POLSKI' : 'JAPOŃSKI';
+    const sideLabel = asksKana ? 'POLSKI' : showKanjiFront ? 'KANJI' : 'JAPOŃSKI';
 
     app.innerHTML = sessionFrameHTML({
       eyebrow: 'SŁOWNICTWO',
@@ -6222,15 +6351,16 @@ function renderVocab() {
             <div style="display:flex;align-items:center;justify-content:center;gap:8px">
               <div class="${frontClass} vocab-learn-front">${front}</div>
               ${
-                !asksKana
+                !asksKana && !isKanjiReading
                   ? `<button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>`
                   : ''
               }
               <button class="vocab-card-star-btn ${isBookmarked('vocab', item.id) ? 'bookmarked' : ''}" data-star-type="vocab" data-star-id="${item.id}" type="button" title="Przełącz ulubione" aria-label="Ulubione">★</button>
             </div>
+            ${isKanjiReading ? `<div class="flash-meta">${item.meaning}</div>` : ''}
             ${
               session.revealed
-                ? vocabLearnAnswerHTML(item, asksKana)
+                ? vocabLearnAnswerHTML(item, asksKana, session)
                 : `<div class="vocab-learn-placeholder">
                     <span class="vocab-placeholder-eye" aria-hidden="true">${icon('eye')}</span>
                     <span class="vocab-placeholder-text">Odpowiedź jest ukryta</span>
@@ -6287,10 +6417,20 @@ function renderVocab() {
       button.onclick = () => gradeVocab(button.dataset.vocabGrade === 'correct');
     });
   } else if (session.mode === 'type') {
-    const promptLabel = asksKana ? 'Jak powiesz / napiszesz po japońsku:' : 'Co znaczy:';
-    const placeholder = asksKana
-      ? 'Wpisz romaji lub kana (np. ' + (item.romaji || '...') + ')'
-      : 'Wpisz polskie znaczenie...';
+    const promptLabel = isKanjiReading
+      ? 'Podaj czytanie (hiragana lub romaji):'
+      : asksKana
+        ? script === 'kanji'
+          ? 'Napisz w kanji:'
+          : 'Jak powiesz / napiszesz po japońsku:'
+        : 'Co znaczy:';
+    const placeholder = isKanjiReading
+      ? 'Wpisz czytanie (hiragana lub romaji)...'
+      : asksKana
+        ? script === 'kanji'
+          ? 'Wpisz zapis kanji...'
+          : 'Wpisz romaji lub kana (np. ' + (item.romaji || '...') + ')'
+        : 'Wpisz polskie znaczenie...';
 
     app.innerHTML = sessionFrameHTML({
       eyebrow: 'SŁOWNICTWO',
@@ -6304,14 +6444,16 @@ function renderVocab() {
           ${
             asksKana
               ? `<div class="question question-vocab-pl">${item.meaning}</div>`
-              : `<div style="display:flex;align-items:center;justify-content:center;gap:8px">
-                  <div class="question question-vocab">${item.kana}</div>
-                  <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
-                </div>`
+              : isKanjiReading
+                ? `<div class="question question-vocab">${jpFrontText}</div><div class="flash-meta">${item.meaning}</div>`
+                : `<div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                    <div class="question question-vocab">${jpFrontText}</div>
+                    <button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button>
+                  </div>`
           }
 
           <div class="type-input-wrap vocab-type-input-wrap">
-            <input type="text" id="vocabTypedInput" class="vocab-input ${asksKana ? 'font-japanese' : ''} ${session.answered ? (session.lastCorrect ? 'input-correct' : 'input-wrong') : ''}"
+            <input type="text" id="vocabTypedInput" class="vocab-input ${asksJapaneseInput ? 'font-japanese' : ''} ${session.answered ? (session.lastCorrect ? 'input-correct' : 'input-wrong') : ''}"
                    autocomplete="off" autofocus placeholder="${placeholder}"
                    value="${escapeHtml(session.typedValue || '')}"
                    ${session.answered ? 'disabled' : ''}>
@@ -6331,7 +6473,7 @@ function renderVocab() {
           </div>
         </div>
 
-        ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
+        ${session.answered ? vocabRevealHTML(item, session.lastCorrect, showKanjiFront || script === 'kanji' ? 'kanji' : 'kana') : ''}
       `,
       className: 'vocab-session'
     });
@@ -6357,7 +6499,14 @@ function renderVocab() {
   } else {
     // Opcje losujemy raz na kartę i trzymamy w sesji — inaczej każde
     // przerysowanie po odpowiedzi przestawiałoby przyciski pod palcem.
-    if (!session.options) session.options = vocabOptions(item, session.direction);
+    if (!session.options) session.options = vocabOptions(item, session.direction, script);
+    const testPromptLabel = isKanjiReading
+      ? 'Jakie jest czytanie tego kanji:'
+      : asksKana
+        ? script === 'kanji'
+          ? 'Wybierz zapis kanji:'
+          : 'Jak powiesz po japońsku:'
+        : 'Co znaczy:';
 
     app.innerHTML = sessionFrameHTML({
       eyebrow: 'SŁOWNICTWO',
@@ -6367,18 +6516,20 @@ function renderVocab() {
         ${progress}
 
         <div class="prompt">
-          <div class="polish">${asksKana ? 'Jak powiesz po japońsku:' : 'Co znaczy:'}</div>
+          <div class="polish">${testPromptLabel}</div>
           ${
             asksKana
               ? `<div class="question question-vocab-pl">${item.meaning}</div>`
-              : `<div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="question question-vocab">${item.kana}</div><button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button></div>`
+              : isKanjiReading
+                ? `<div class="question question-vocab">${jpFrontText}</div><div class="flash-meta">${item.meaning}</div>`
+                : `<div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="question question-vocab">${jpFrontText}</div><button class="btn-speak" data-speak="${escapeHtml(item.kana)}" type="button" title="Odsłuchaj wymowę" aria-label="Odsłuchaj wymowę">${icon('volume')}</button></div>`
           }
 
-          <div class="answers ${asksKana ? '' : 'answers-text'}">
+          <div class="answers ${asksJapaneseInput ? '' : 'answers-text'}">
             ${session.options
               .map(
                 (choice, i) => `
-              <button class="answer ${asksKana ? 'answer-kana' : 'answer-text'}" data-vocab-choice="${choice}">
+              <button class="answer ${asksJapaneseInput ? 'answer-kana' : 'answer-text'}" data-vocab-choice="${choice}">
                 <span class="answer-key">${i + 1}</span>
                 ${choice}
               </button>
@@ -6390,7 +6541,7 @@ function renderVocab() {
           <div class="feedback" id="vocabFeedback" role="status" aria-live="polite"></div>
         </div>
 
-        ${session.answered ? vocabRevealHTML(item, session.lastCorrect) : ''}
+        ${session.answered ? vocabRevealHTML(item, session.lastCorrect, showKanjiFront || script === 'kanji' ? 'kanji' : 'kana') : ''}
       `,
       className: 'vocab-session'
     });

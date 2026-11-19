@@ -1966,10 +1966,10 @@ expression (`v23`–`v54`) are `type: 'verb'` entries.
 `recordVocabAnswer('v21', …)` create real records, while an unknown id such as
 `v99` still returns `null`.
 
-Covered by VO1–VO20: 20 derived cards plus 32 explicit verbs, the
+Covered by VO1–VO23: 20 derived cards plus 32 explicit verbs, the
 `<id>-verb` / `source` link, 556 unique kana, the fields copied from the source
-card, and `vocabCard()` accepting all material types while rejecting an
-unknown id.
+card, kanji display/reading mode filtering and validation, and `vocabCard()`
+accepting all material types while rejecting an unknown id.
 
 Nothing has verified the translations against a Polish teacher; they are my
 own reading of the worksheet and Shokyū Nihongo textbook.
@@ -2023,7 +2023,8 @@ stored preference):
 
 ```text
 Tryb      Nauka (default) | Test | Wpisywanie
-Kierunek  Japoński → znaczenie | Znaczenie → japoński
+Zapis     Kana (default) | Kanji
+Kierunek  Japoński → znaczenie | Znaczenie → japoński | Kanji → czytanie
 Zakres    Polecenia (20) | Czasowniki (52) | Rzeczowniki (427)
           Przymiotniki (38) | Zwroty (19) | Wszystko (556, default)
 Lekcja    Wszystkie (default) | Klasa | 1か | 2か | 3か | 4か | 5か | Kanji 40–60
@@ -2680,7 +2681,7 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-1028 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+1034 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 

@@ -1821,6 +1821,43 @@
         vocabCard('n412')?.kana === 'がんせき',
       'kanji-40-60=' + vocabPool('all', CATEGORY_ALL, 'kanji-40-60').length
     );
+
+    const kanjiAll = vocabPool('all', CATEGORY_ALL, 'all', 'kanji', 'kana-meaning');
+    const kanji4060 = vocabPool('all', CATEGORY_ALL, 'kanji-40-60', 'kanji', 'kana-meaning');
+    const kanjiCards = vocabPool('cards', CATEGORY_ALL, 'all', 'kanji', 'kana-meaning');
+    ok(
+      'VO21 tryb kanji filtruje pulę wyłącznie do kart z zapisem kanji',
+      kanjiAll.length === 456 &&
+        kanjiAll.every(item => !!item.kanji) &&
+        kanji4060.length === 85 &&
+        kanjiCards.length === 0,
+      'kanjiAll=' + kanjiAll.length + ' k40-60=' + kanji4060.length
+    );
+
+    const phraseKanjiOpts = vocabOptions(vocabCard('p08'), 'meaning-kana', 'kanji');
+    const dayReadingOpts = vocabOptions(vocabCard('n175'), 'kanji-kana', 'kanji');
+    ok(
+      'VO22 vocabOptions zwraca 4 opcje kanji oraz niejednoznaczne czytania nie konkurują w kanji-kana',
+      phraseKanjiOpts.length === 4 &&
+        phraseKanjiOpts.includes('どこの国') &&
+        dayReadingOpts.length === 4 &&
+        dayReadingOpts.includes('ついたち') &&
+        !dayReadingOpts.includes('いちにち'),
+      phraseKanjiOpts.join(' | ') + ' // ' + dayReadingOpts.join(' | ')
+    );
+
+    ok(
+      'VO23 matchVocabKanji i tryb czytania kanji-kana poprawnie walidują odpowiedzi',
+      matchVocabKanji('本日', vocabCard('n361')) &&
+        matchVocabKanji('本', vocabCard('n365')) &&
+        matchVocabKanji('取ります', vocabCard('v37')) &&
+        !matchVocabKanji('honjitsu', vocabCard('n361')) &&
+        !matchVocabKanji('ほんじつ', vocabCard('n361')) &&
+        matchVocabJapanese('honjitsu', vocabCard('n361'), { allowKanji: false }) &&
+        matchVocabJapanese('ほんじつ', vocabCard('n361'), { allowKanji: false }) &&
+        !matchVocabJapanese('本日', vocabCard('n361'), { allowKanji: false }),
+      'walidacja kanji/czytania'
+    );
   } catch (e) {
     ok('dane słownictwa', false, e.message);
   }
