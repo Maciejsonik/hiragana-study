@@ -1976,20 +1976,23 @@ own reading of the worksheet and Shokyū Nihongo textbook.
 
 ### Vocabulary progress store
 
-`hiragana-vocab` (`VOCAB_VERSION = 1`) is a **third, disjoint store**, next to
-`hiragana-progress` and `hiragana-daily`. It answers "how is this card going",
-not "what does this kana look like today" and not "what did I do on a given
-day".
+`hiragana-vocab` (`VOCAB_VERSION = 2`, migrated automatically from `v1` via
+`migrateVocab()`) is a **third, disjoint store**, next to `hiragana-progress`
+and `hiragana-daily`. It answers "how is this card going", not "what does this
+kana look like today" and not "what did I do on a given day".
 
-Shape: `{ version, cards: { v01: { seen, correct, wrong, recent, last } } }`,
-with `recent` capped at `VOCAB_MAX_RECENT = 6` — the same record shape a
-character gets, minus confusion data.
+Shape: `{ version, cards: { v01: { seen, correct, wrong, recent, last, interval, due } } }`,
+with `recent` capped at `VOCAB_MAX_RECENT = 6`, plus interval SRS scheduling
+(`computeNextIntervalSrs()`: `1 → 3 → round(interval * 2.2)` days; wrong resets
+`interval` to `1`).
 
-Two deliberate omissions define the layer:
+Key behaviors defining the layer:
 
-- **no SRS** — cards carry no schedule. The card order (layer 3) will be
-  computed from the counters, not stored, so nothing here advances or resets
-  a spaced-repetition schedule.
+- **interval SRS & `v1 → v2` migration** — `loadVocab()` transparently migrates
+  `v1` stores (and `v1` JSON backups via `applyBackup()`), preserving counters,
+  seeding `interval = 3` for strong cards (`correct >= 3 && correct / seen >= 0.8`)
+  and `interval = 1` otherwise, setting `due = last + interval * DAY` (or `due = 1`
+  when `last === 0`), and discarding unknown IDs.
 - **daily history integration (T22)** — answering a card, kanji or grammar exercise
   reports to `hiragana-daily` (so daily goals and streaks reflect all learning across
   modules), while individual progress stores remain strictly decoupled per AGENTS.md §2.2.
@@ -2260,8 +2263,8 @@ Polish meanings remain an unverified translation.
       - Comparisons: `yori_hou_ga` (〜より〜のほうが).
   - 138 authentic example sentences with audio pronunciation and 138 cloze questions with rule explanations.
 - **Storage & Isolation (`hiragana-grammar`)**:
-  - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `1`.
-  - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`), `totalAnswers`, `lastPracticed`.
+  - Key: `GRAMMAR_KEY = 'hiragana-grammar'`, version `2` (migrated automatically from `v1` via `migrateGrammar()`).
+  - Tracks per-item metrics (`seen`, `correct`, `wrong`, `mastered`, `last`, `interval`, `due`), `totalAnswers`, `lastPracticed` with shared interval SRS (`computeNextIntervalSrs()`).
   - Registered in `appStorageKeys()` (total 12 keys in app), `resetProgressData()`, `clearAllData()`, and JSON backup/restore.
 - **UI Architecture (`renderGrammar`)**:
   - **Hub (`hub`)**:
@@ -2663,9 +2666,8 @@ SVG icon set) and 4 (the Kana hub summary card, primary `Nauka` action,
 accessible script state and a single-row script switcher at 320 px) are
 implemented and accepted.
 
-The vocabulary module includes its **topic axis** (13 categories) and **lesson axis**:
-orthogonal lesson filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items,
-i-adjectives are present with distractor isolation, and kanji writings are surfaced on reveals.
+The vocabulary module includes its **topic axis** (13 categories), **lesson axis**:
+orthogonal lesson filters (`Wszystkie`, `Klasa`, `1か`–`5か`, `Kanji 40–60`), interval SRS (`hiragana-vocab` v2 with automatic `v1 → v2` migration, `dueVocabList()`, smart-order due prioritization, `#btnVocabDueReview`, Dashboard & Focus integration), i-adjective distractor isolation, and kanji writings surfaced on reveals.
 
 The kanji module provides 600 characters across 29 lessons (L01–L28 + N5, 100% of _Shokyū Nihongo_), all verified against
 KanjiVG CDN, with animated stroke order, canvas drawing (with blind memory mode), catalog search,
@@ -2674,8 +2676,8 @@ SRS flashcards, and 4-choice recognition quiz. Kanji detail views link dynamical
 and filtered practice sessions) plus visually similar character navigation (`Podobne znaki`), while vocabulary
 answer/reveal cards surface clickable `[data-open-kanji]` chips to jump directly to constituent kanji details.
 
-The grammar module provides 31 items across 16 lessons with 93 authentic example sentences, audio
-pronunciation, and interactive cloze fill-in-the-blank practice with rule explanations.
+The grammar module provides 46 items across 16+ lessons with 138 authentic example sentences, audio
+pronunciation, interactive cloze fill-in-the-blank practice with rule explanations, and interval SRS (`hiragana-grammar` v2 with automatic `v1 → v2` migration, non-mutating `dueGrammarList()`, `.badge-due` badges, `#btnStartGrammarDue`, and Dashboard integration).
 
 The audio subsystem provides organic Japanese-inspired sound synthesis (Suzu bell, Hyōshigi clappers,
 wooden block tap, Hirajōshi pentatonic flourish, temple gong), 3 volume buses (master, sfx, ambient)
@@ -2684,7 +2686,7 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 12 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings (including a pre-import backup summary preview via `summarizeBackup`) and an on-demand Settings control (`#offlinePackGroup` / `downloadKanjiVgOfflinePack`) to pre-download all KanjiVG stroke SVGs for offline study.
-1078 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+1119 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 

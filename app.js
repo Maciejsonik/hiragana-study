@@ -4385,7 +4385,7 @@ function getKanaSummaryStats() {
   };
 }
 
-function getVocabSummaryStats() {
+function getVocabSummaryStats(now = Date.now()) {
   const cards = vocab && vocab.cards ? vocab.cards : {};
   let seenCount = 0;
   let masteredCount = 0;
@@ -4403,6 +4403,7 @@ function getVocabSummaryStats() {
     total,
     seen: seenCount,
     mastered: masteredCount,
+    due: dueVocabCount(now),
     percent
   };
 }
@@ -4422,7 +4423,7 @@ function renderDashboard() {
   const goalPercent = Math.min(100, Math.round((todayAnswers / dailyGoal) * 100));
   const isGoalCompleted = todayAnswers >= dailyGoal;
 
-  const totalDue = kana.due + kanji.due;
+  const totalDue = kana.due + kanji.due + vocabStats.due + grammarStats.due;
   checkAchievements();
   const unlockedCount = Object.keys(achievements.unlocked).length;
 
@@ -4510,7 +4511,17 @@ function renderDashboard() {
           </p>
         </div>
         <button class="dashboard-smart-btn" id="btnDashboardSmartAction" type="button">
-          ${totalDue > 0 ? (kana.due > 0 ? 'Powtórz Kanę →' : 'Powtórz Kanji →') : 'Ucz się Kany →'}
+          ${
+            totalDue > 0
+              ? kana.due > 0
+                ? 'Powtórz Kanę →'
+                : vocabStats.due > 0
+                  ? 'Powtórz Słownictwo →'
+                  : kanji.due > 0
+                    ? 'Powtórz Kanji →'
+                    : 'Powtórz Gramatykę →'
+              : 'Ucz się Kany →'
+          }
         </button>
       </div>
 
@@ -4625,8 +4636,8 @@ function renderDashboard() {
               <span class="dashboard-metric-lbl">Poznane</span>
             </div>
             <div class="dashboard-metric-item">
-              <span class="dashboard-metric-val">${categoriesIn(VOCAB_LEARN_ITEMS).filter(c => c.id !== CATEGORY_NONE).length}</span>
-              <span class="dashboard-metric-lbl">Kategorii</span>
+              <span class="dashboard-metric-val">${vocabStats.due}</span>
+              <span class="dashboard-metric-lbl">Do powtórki</span>
             </div>
             <div class="dashboard-metric-item">
               <span class="dashboard-metric-val">${vocabStats.total}</span>
@@ -4738,8 +4749,8 @@ function renderDashboard() {
               <span class="dashboard-metric-lbl">Partykuł</span>
             </div>
             <div class="dashboard-metric-item">
-              <span class="dashboard-metric-val">${grammarStats.totalAnswers}</span>
-              <span class="dashboard-metric-lbl">Ćwiczeń</span>
+              <span class="dashboard-metric-val">${grammarStats.due}</span>
+              <span class="dashboard-metric-lbl">Do powtórki</span>
             </div>
           </div>
 
@@ -4821,10 +4832,26 @@ function renderDashboard() {
     btnSmart.onclick = () => {
       Audio.click();
       if (totalDue > 0) {
-        if (kana.due > 0) setScreen('review');
-        else {
+        if (kana.due > 0) {
+          setScreen('review');
+        } else if (vocabStats.due > 0) {
+          const dueIds = dueVocabList().map(v => v.id);
+          vocabTopicNav.view = 'setup';
+          startVocabSession({
+            ids: dueIds,
+            scope: 'all',
+            lesson: 'all',
+            category: CATEGORY_ALL,
+            mode: vocabSetup.mode || 'learn',
+            script: vocabSetup.script || 'kana',
+            direction: vocabSetup.direction || 'kana-meaning'
+          });
+          setScreen('vocab');
+        } else if (kanji.due > 0) {
           startKanjiSession({ mode: 'flashcard' });
           setScreen('kanji');
+        } else {
+          startGrammarPractice({ particleIds: dueGrammarList().map(p => p.id) });
         }
       } else {
         setScreen('learn');
@@ -5520,7 +5547,14 @@ function vocabSessionOrder(
   if (order === 'shuffle') {
     entries = shuffle(entries);
   } else {
-    entries.sort((a, b) => a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index);
+    const now = Date.now();
+    entries.sort((a, b) => {
+      const aDue = a.stat.seen > 0 && a.stat.due > 0 && a.stat.due <= now;
+      const bDue = b.stat.seen > 0 && b.stat.due > 0 && b.stat.due <= now;
+      if (aDue !== bDue) return aDue ? -1 : 1;
+      if (aDue && bDue) return a.stat.due - b.stat.due || a.stat.accuracy - b.stat.accuracy || a.index - b.index;
+      return a.stat.seen - b.stat.seen || a.stat.accuracy - b.stat.accuracy || a.index - b.index;
+    });
   }
 
   const count = vocabCardCount(scope, category, limit, lesson, script, direction);
@@ -5984,6 +6018,9 @@ function renderVocabSetup() {
   const correct = pool.reduce((sum, item) => sum + vocabStat(item.id).correct, 0);
   const accuracy = attempts ? `${Math.round((correct / attempts) * 100)}%` : '—';
   const started = pool.filter(item => vocabStat(item.id).seen > 0).length;
+  const dueInFilter = dueVocabList(Date.now(), { scope, category, lesson, script, direction });
+  const allDueVocab = dueVocabList(Date.now());
+  const dueTarget = dueInFilter.length > 0 ? dueInFilter : allDueVocab;
 
   const scriptHint =
     script === 'kanji'
@@ -6051,6 +6088,13 @@ function renderVocabSetup() {
       </div>
 
       <div class="vocab-smart-banner">
+        ${
+          allDueVocab.length > 0
+            ? `<button class="btn btn-secondary vocab-due-btn" id="btnVocabDueReview" type="button">
+                🔁 Powtórki SRS na dziś (${dueTarget.length})
+              </button>`
+            : ''
+        }
         <button class="btn btn-secondary vocab-smart-btn" id="btnVocabSmartPractice" type="button">
           ⭐ Inteligentna powtórka (${getSmartPracticePool('vocab').length} słówek z gwiazdką lub &lt; 60%)
         </button>
@@ -6229,6 +6273,23 @@ function renderVocabSetup() {
     Audio.click();
     startVocabSession();
   };
+
+  const btnVocabDue = document.getElementById('btnVocabDueReview');
+  if (btnVocabDue) {
+    btnVocabDue.onclick = () => {
+      Audio.click();
+      if (!dueTarget.length) return;
+      startVocabSession({
+        ids: dueTarget.map(v => v.id),
+        scope: 'all',
+        lesson: 'all',
+        category: CATEGORY_ALL,
+        mode: vocabSetup.mode || 'learn',
+        script: vocabSetup.script || 'kana',
+        direction: vocabSetup.direction || 'kana-meaning'
+      });
+    };
+  }
 
   const btnVocabSmart = document.getElementById('btnVocabSmartPractice');
   if (btnVocabSmart) {
@@ -8107,12 +8168,32 @@ function renderKanjiSessionSummary(mode) {
   };
 }
 
+const SRS_DAY_MS = 86400000;
+
+function computeNextIntervalSrs(prevInterval, correct, now = Date.now()) {
+  const safePrev = Number.isFinite(prevInterval) && prevInterval > 0 ? prevInterval : 0;
+  let interval;
+  if (!correct) {
+    interval = 1;
+  } else if (safePrev < 1) {
+    interval = 1;
+  } else if (safePrev === 1) {
+    interval = 3;
+  } else {
+    interval = Math.round(safePrev * 2.2);
+  }
+  return {
+    interval,
+    due: now + interval * SRS_DAY_MS
+  };
+}
+
 /* =========================================================
    T20 — MODUŁ GRAMATYKI (JAPANESE GRAMMAR & PARTICLES)
    ========================================================= */
 
 const GRAMMAR_KEY = 'hiragana-grammar';
-const GRAMMAR_VERSION = 1;
+const GRAMMAR_VERSION = 2;
 
 // prettier-ignore
 const GRAMMAR_ITEMS = [
@@ -10032,16 +10113,76 @@ const GRAMMAR_ITEMS = [
 
 let grammarProgress = loadGrammar();
 
+function migrateGrammar(data) {
+  const empty = { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data) ||
+    !data.particles ||
+    typeof data.particles !== 'object' ||
+    Array.isArray(data.particles)
+  ) {
+    return empty;
+  }
+
+  if (data.version === GRAMMAR_VERSION) return data;
+  if (data.version !== 1) return empty;
+
+  const totalAnswers = Number.isFinite(data.totalAnswers) ? data.totalAnswers : 0;
+  const lastPracticed = Number.isFinite(data.lastPracticed) ? data.lastPracticed : null;
+  const particles = {};
+
+  for (const [id, raw] of Object.entries(data.particles)) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const seen = Number.isFinite(raw.seen) ? raw.seen : 0;
+    const correct = Number.isFinite(raw.correct) ? raw.correct : 0;
+    const wrong = Number.isFinite(raw.wrong) ? raw.wrong : 0;
+    const mastered = Boolean(raw.mastered);
+    const last =
+      Number.isFinite(raw.last) && raw.last > 0
+        ? raw.last
+        : Number.isFinite(lastPracticed) && lastPracticed > 0
+          ? lastPracticed
+          : 0;
+
+    let interval = 0;
+    let due = 0;
+    if (seen > 0) {
+      interval = mastered ? 3 : 1;
+      due = last > 0 ? last + interval * SRS_DAY_MS : 1;
+    }
+
+    particles[id] = { seen, correct, wrong, mastered, last, interval, due };
+  }
+
+  return { version: GRAMMAR_VERSION, particles, totalAnswers, lastPracticed };
+}
+
 function loadGrammar() {
+  const empty = { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
   try {
     const raw = localStorage.getItem(GRAMMAR_KEY);
-    if (!raw) return { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+    if (!raw) return empty;
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.version === GRAMMAR_VERSION && typeof parsed.particles === 'object') {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return empty;
+    if (parsed.version === 1) {
+      const migrated = migrateGrammar(parsed);
+      try {
+        localStorage.setItem(GRAMMAR_KEY, JSON.stringify(migrated));
+      } catch (e) {}
+      return migrated;
+    }
+    if (
+      parsed.version === GRAMMAR_VERSION &&
+      parsed.particles &&
+      typeof parsed.particles === 'object' &&
+      !Array.isArray(parsed.particles)
+    ) {
       return parsed;
     }
   } catch (e) {}
-  return { version: GRAMMAR_VERSION, particles: {}, totalAnswers: 0, lastPracticed: null };
+  return empty;
 }
 
 function saveGrammar() {
@@ -10059,14 +10200,22 @@ function grammarItem(id) {
   return GRAMMAR_ITEMS.find(item => item.id === id);
 }
 
-function grammarParticleStat(id) {
-  if (!grammarProgress.particles[id]) {
-    grammarProgress.particles[id] = { seen: 0, correct: 0, wrong: 0, mastered: false };
-  }
-  return grammarProgress.particles[id];
+function grammarEntry(id) {
+  return grammarProgress && grammarProgress.particles ? grammarProgress.particles[id] || null : null;
 }
 
-function recordGrammarAnswer(particleId, isCorrect) {
+function grammarParticleStat(id) {
+  if (!grammarProgress.particles[id]) {
+    grammarProgress.particles[id] = { seen: 0, correct: 0, wrong: 0, mastered: false, last: 0, interval: 0, due: 0 };
+  }
+  const entry = grammarProgress.particles[id];
+  if (!Number.isFinite(entry.last)) entry.last = 0;
+  if (!Number.isFinite(entry.interval)) entry.interval = 0;
+  if (!Number.isFinite(entry.due)) entry.due = 0;
+  return entry;
+}
+
+function recordGrammarAnswer(particleId, isCorrect, now = Date.now()) {
   const stat = grammarParticleStat(particleId);
   stat.seen++;
   if (isCorrect) stat.correct++;
@@ -10078,19 +10227,49 @@ function recordGrammarAnswer(particleId, isCorrect) {
     stat.mastered = false;
   }
 
+  stat.last = now;
+  const next = computeNextIntervalSrs(stat.interval, isCorrect, now);
+  stat.interval = next.interval;
+  stat.due = next.due;
+
   grammarProgress.totalAnswers = (grammarProgress.totalAnswers || 0) + 1;
-  grammarProgress.lastPracticed = Date.now();
+  grammarProgress.lastPracticed = now;
   saveGrammar();
   recordDailyAnswer(isCorrect);
 }
 
-function getGrammarSummaryStats() {
+function grammarMatchesCategory(item, category = 'all') {
+  const cat = item && item.category ? item.category : 'particle';
+  if (!category || category === 'all') return true;
+  if (category === 'verb') return cat === 'verb' || cat === 'existence';
+  return cat === category;
+}
+
+function dueGrammarList(now = Date.now(), category = 'all') {
+  return GRAMMAR_ITEMS.filter(item => {
+    if (!grammarMatchesCategory(item, category)) return false;
+    const entry = grammarEntry(item.id);
+    return !!(entry && entry.seen > 0 && Number.isFinite(entry.due) && entry.due > 0 && entry.due <= now);
+  }).sort((a, b) => {
+    const ea = grammarEntry(a.id);
+    const eb = grammarEntry(b.id);
+    const accA = ea.seen ? ea.correct / ea.seen : 0;
+    const accB = eb.seen ? eb.correct / eb.seen : 0;
+    return ea.due - eb.due || accA - accB || a.id.localeCompare(b.id);
+  });
+}
+
+function dueGrammarCount(now = Date.now(), category = 'all') {
+  return dueGrammarList(now, category).length;
+}
+
+function getGrammarSummaryStats(now = Date.now()) {
   let mastered = 0;
   let learning = 0;
   let unpracticed = 0;
 
   GRAMMAR_ITEMS.forEach(p => {
-    const stat = grammarProgress.particles[p.id];
+    const stat = grammarEntry(p.id);
     if (stat && stat.mastered) mastered++;
     else if (stat && stat.seen > 0) learning++;
     else unpracticed++;
@@ -10099,8 +10278,9 @@ function getGrammarSummaryStats() {
   const total = GRAMMAR_ITEMS.length;
   const percent = total ? Math.round((mastered / total) * 100) : 0;
   const totalAnswers = grammarProgress.totalAnswers || 0;
+  const due = dueGrammarCount(now, 'all');
 
-  return { mastered, learning, unpracticed, total, percent, totalAnswers };
+  return { mastered, learning, unpracticed, total, percent, totalAnswers, due };
 }
 
 const grammarSession = {
@@ -10110,26 +10290,36 @@ const grammarSession = {
   practice: null
 };
 
-function startGrammarPractice({ particleId = null, category = grammarSession.category || 'all' } = {}) {
+function startGrammarPractice({
+  particleId = null,
+  category = grammarSession.category || 'all',
+  particleIds = null
+} = {}) {
   let pool = [];
   if (particleId) {
     const p = grammarItem(particleId);
     if (p && p.questions) {
       pool = p.questions.map(q => ({ ...q, particleId: p.id }));
     }
+  } else if (Array.isArray(particleIds) && particleIds.length > 0) {
+    particleIds.forEach(pid => {
+      const p = grammarItem(pid);
+      if (p && p.questions) {
+        p.questions.forEach(q => pool.push({ ...q, particleId: p.id }));
+      }
+    });
   } else {
     GRAMMAR_ITEMS.forEach(p => {
-      const cat = p.category || 'particle';
-      const matches =
-        category === 'all' || cat === category || (category === 'verb' && (cat === 'verb' || cat === 'existence'));
-      if (matches && p.questions) {
+      if (grammarMatchesCategory(p, category) && p.questions) {
         p.questions.forEach(q => pool.push({ ...q, particleId: p.id }));
       }
     });
   }
 
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, 10);
+  const selected =
+    Array.isArray(particleIds) && particleIds.length > 0
+      ? pool.slice(0, 10)
+      : [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
 
   const prepared = selected.map(q => {
     const opts = [q.answer, ...q.distractors].sort(() => Math.random() - 0.5);
@@ -10214,8 +10404,12 @@ function renderGrammar() {
 }
 
 function renderGrammarHub() {
-  const stats = getGrammarSummaryStats();
+  const now = Date.now();
+  const stats = getGrammarSummaryStats(now);
   const activeCat = grammarSession.category || 'all';
+  const dueInCat = dueGrammarList(now, activeCat);
+  const allDueGrammar = dueGrammarList(now, 'all');
+  const dueTarget = dueInCat.length > 0 ? dueInCat : allDueGrammar;
 
   const countAll = GRAMMAR_ITEMS.length;
   const countParticles = GRAMMAR_ITEMS.filter(p => !p.category || p.category === 'particle').length;
@@ -10223,15 +10417,7 @@ function renderGrammarHub() {
   const countAdjectives = GRAMMAR_ITEMS.filter(p => p.category === 'adjective').length;
   const countConversation = GRAMMAR_ITEMS.filter(p => p.category === 'conversation').length;
 
-  const filteredItems = GRAMMAR_ITEMS.filter(p => {
-    const cat = p.category || 'particle';
-    if (activeCat === 'all') return true;
-    if (activeCat === 'particle') return cat === 'particle';
-    if (activeCat === 'verb') return cat === 'verb' || cat === 'existence';
-    if (activeCat === 'adjective') return cat === 'adjective';
-    if (activeCat === 'conversation') return cat === 'conversation';
-    return true;
-  });
+  const filteredItems = GRAMMAR_ITEMS.filter(p => grammarMatchesCategory(p, activeCat));
 
   let sectionTitle = `Katalog zagadnień gramatycznych (${filteredItems.length})`;
   if (activeCat === 'particle') sectionTitle = `Partykuły japońskie (${countParticles})`;
@@ -10261,6 +10447,10 @@ function renderGrammarHub() {
               <span class="grammar-stat-lbl">W trakcie nauki</span>
             </div>
             <div class="grammar-stat-chip">
+              <span class="grammar-stat-val">${stats.due}</span>
+              <span class="grammar-stat-lbl">Do powtórki SRS</span>
+            </div>
+            <div class="grammar-stat-chip">
               <span class="grammar-stat-val">${stats.totalAnswers}</span>
               <span class="grammar-stat-lbl">Rozwiązanych ćwiczeń</span>
             </div>
@@ -10274,6 +10464,13 @@ function renderGrammarHub() {
           </div>
 
           <div class="grammar-hero-actions">
+            ${
+              allDueGrammar.length > 0
+                ? `<button class="btn btn-secondary grammar-hero-btn" id="btnStartGrammarDue" type="button">
+                    ${icon('review')} Powtórki SRS (${dueTarget.length})
+                  </button>`
+                : ''
+            }
             <button class="btn btn-primary grammar-hero-btn" id="btnStartGrammarCloze" type="button">
               ${icon('quiz')} Rozpocznij trening luk (10 pytań)
             </button>
@@ -10310,9 +10507,23 @@ function renderGrammarHub() {
       <div class="grammar-particle-grid">
         ${filteredItems
           .map(p => {
-            const stat = grammarParticleStat(p.id);
-            const badgeClass = stat.mastered ? 'badge-mastered' : stat.seen > 0 ? 'badge-learning' : 'badge-new';
-            const badgeText = stat.mastered ? 'Opanowane' : stat.seen > 0 ? 'W nauce' : 'Nowe';
+            const entry = grammarEntry(p.id);
+            const stat = entry || { seen: 0, correct: 0, wrong: 0, mastered: false };
+            const isDue = !!(
+              entry &&
+              entry.seen > 0 &&
+              Number.isFinite(entry.due) &&
+              entry.due > 0 &&
+              entry.due <= now
+            );
+            const badgeClass = isDue
+              ? 'badge-due'
+              : stat.mastered
+                ? 'badge-mastered'
+                : stat.seen > 0
+                  ? 'badge-learning'
+                  : 'badge-new';
+            const badgeText = isDue ? 'Do powtórki' : stat.mastered ? 'Opanowane' : stat.seen > 0 ? 'W nauce' : 'Nowe';
             const isLong = p.kana.length > 3;
 
             return `
@@ -10342,6 +10553,15 @@ function renderGrammarHub() {
       </div>
     </div>
   `;
+
+  const btnStartGrammarDue = document.getElementById('btnStartGrammarDue');
+  if (btnStartGrammarDue) {
+    btnStartGrammarDue.onclick = () => {
+      Audio.click();
+      if (!dueTarget.length) return;
+      startGrammarPractice({ particleIds: dueTarget.map(p => p.id) });
+    };
+  }
 
   document.getElementById('btnStartGrammarCloze').onclick = () => {
     Audio.click();
@@ -11984,8 +12204,11 @@ function buildFocusPool(scope = 'smart') {
   }
 
   if (scope === 'vocab') {
-    const all = [...VOCAB_LEARN_ITEMS].sort(() => Math.random() - 0.5);
-    all.forEach(v => pool.push(makeVocabItem(v)));
+    const dueItems = typeof dueVocabList === 'function' ? dueVocabList() : [];
+    const dueIds = new Set(dueItems.map(v => v.id));
+    const rest = VOCAB_LEARN_ITEMS.filter(v => !dueIds.has(v.id)).sort(() => Math.random() - 0.5);
+    dueItems.forEach(v => pool.push(makeVocabItem(v)));
+    rest.forEach(v => pool.push(makeVocabItem(v)));
     return pool;
   }
 
@@ -12007,6 +12230,13 @@ function buildFocusPool(scope = 'smart') {
     const dueKanji = dueKanjiList();
     dueKanji.slice(0, 10).forEach(k => {
       pool.push(makeKanjiItem(k));
+    });
+  }
+
+  if (typeof dueVocabList === 'function') {
+    const dueVocab = dueVocabList();
+    dueVocab.slice(0, 10).forEach(v => {
+      if (!pool.some(p => p.id === v.id)) pool.push(makeVocabItem(v));
     });
   }
 
@@ -13748,7 +13978,7 @@ function masteryLevel(kana) {
 ========================================================= */
 
 const VOCAB_KEY = 'hiragana-vocab';
-const VOCAB_VERSION = 1;
+const VOCAB_VERSION = 2;
 const VOCAB_MAX_RECENT = 6;
 
 /*
@@ -13778,13 +14008,64 @@ function isVocabRecord(entry) {
    słownictwa, a nie awaria aplikacji. Każdy niepoprawny kształt kończy
    się pustym magazynem, nigdy wyjątkiem.
 */
+function migrateVocab(data) {
+  const empty = { version: VOCAB_VERSION, cards: {} };
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    Array.isArray(data) ||
+    !data.cards ||
+    typeof data.cards !== 'object' ||
+    Array.isArray(data.cards)
+  ) {
+    return empty;
+  }
+
+  if (data.version === VOCAB_VERSION) return { version: VOCAB_VERSION, cards: data.cards };
+  if (data.version !== 1) return empty;
+
+  const cards = {};
+  for (const [cardId, raw] of Object.entries(data.cards)) {
+    if (!vocabCard(cardId) || !raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const seen = Number.isFinite(raw.seen) && raw.seen >= 0 ? raw.seen : 0;
+    const correct = Number.isFinite(raw.correct) && raw.correct >= 0 ? raw.correct : 0;
+    const wrong = Number.isFinite(raw.wrong) && raw.wrong >= 0 ? raw.wrong : Math.max(0, seen - correct);
+    const recent = Array.isArray(raw.recent) ? raw.recent.slice(-VOCAB_MAX_RECENT) : [];
+    const last = Number.isFinite(raw.last) && raw.last > 0 ? raw.last : 0;
+    let interval = 0;
+    let due = 0;
+    if (seen > 0) {
+      interval = correct >= 3 && correct / seen >= 0.8 ? 3 : 1;
+      due = last > 0 ? last + interval * SRS_DAY_MS : 1;
+    }
+    cards[cardId] = {
+      seen,
+      correct,
+      wrong,
+      recent,
+      last,
+      interval,
+      due
+    };
+  }
+
+  return { version: VOCAB_VERSION, cards };
+}
+
 function loadVocab() {
   const empty = { version: VOCAB_VERSION, cards: {} };
   try {
     const data = JSON.parse(localStorage.getItem(VOCAB_KEY));
     if (!data || typeof data !== 'object' || Array.isArray(data)) return empty;
-    if (data.version !== VOCAB_VERSION) return empty;
     if (!data.cards || typeof data.cards !== 'object' || Array.isArray(data.cards)) return empty;
+    if (data.version === 1) {
+      const migrated = migrateVocab(data);
+      try {
+        localStorage.setItem(VOCAB_KEY, JSON.stringify(migrated));
+      } catch (error) {}
+      return migrated;
+    }
+    if (data.version !== VOCAB_VERSION) return empty;
     return { version: VOCAB_VERSION, cards: data.cards };
   } catch (error) {
     /* brak klucza albo uszkodzony JSON */
@@ -13808,11 +14089,11 @@ function saveVocab() {
    zastępujemy świeżym — alternatywą są liczniki `NaN`, które zatruwają
    każdy późniejszy odczyt.
 */
-function recordVocabAnswer(cardId, correct) {
+function recordVocabAnswer(cardId, correct, now = Date.now()) {
   if (!vocabCard(cardId)) return false;
 
   if (!isVocabRecord(vocab.cards[cardId])) {
-    vocab.cards[cardId] = { seen: 0, correct: 0, wrong: 0, recent: [], last: 0 };
+    vocab.cards[cardId] = { seen: 0, correct: 0, wrong: 0, recent: [], last: 0, interval: 0, due: 0 };
   }
 
   const entry = vocab.cards[cardId];
@@ -13821,7 +14102,11 @@ function recordVocabAnswer(cardId, correct) {
   else entry.wrong++;
   entry.recent.push(correct ? 1 : 0);
   if (entry.recent.length > VOCAB_MAX_RECENT) entry.recent.shift();
-  entry.last = Date.now();
+  entry.last = now;
+
+  const next = computeNextIntervalSrs(entry.interval, correct, now);
+  entry.interval = next.interval;
+  entry.due = next.due;
 
   saveVocab();
   recordDailyAnswer(correct);
@@ -13842,8 +14127,30 @@ function vocabStat(cardId) {
     wrong: progressStat(entry, 'wrong'),
     accuracy: seen ? correct / seen : 0,
     recent: entry && Array.isArray(entry.recent) ? entry.recent : [],
-    last: progressStat(entry, 'last')
+    last: progressStat(entry, 'last'),
+    interval: progressStat(entry, 'interval'),
+    due: progressStat(entry, 'due')
   };
+}
+
+function dueVocabList(
+  now = Date.now(),
+  { scope = 'all', category = CATEGORY_ALL, lesson = 'all', script = 'kana', direction = 'kana-meaning' } = {}
+) {
+  return vocabPool(scope, category, lesson, script, direction)
+    .filter(item => {
+      const s = vocabStat(item.id);
+      return s.seen > 0 && s.due > 0 && s.due <= now;
+    })
+    .sort((a, b) => {
+      const sa = vocabStat(a.id);
+      const sb = vocabStat(b.id);
+      return sa.due - sb.due || sa.accuracy - sb.accuracy || a.id.localeCompare(b.id);
+    });
+}
+
+function dueVocabCount(now = Date.now(), opts = {}) {
+  return dueVocabList(now, opts).length;
 }
 
 /* =========================================================

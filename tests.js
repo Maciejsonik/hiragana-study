@@ -4286,6 +4286,249 @@
   }
 
   /* =====================================================
+     C1 — SRS DLA SŁOWNICTWA (v2) I GRAMATYKI (v2)
+     ===================================================== */
+  try {
+    // VG1: wersje magazynów v2
+    ok('VG1 VOCAB_VERSION === 2 oraz GRAMMAR_VERSION === 2', VOCAB_VERSION === 2 && GRAMMAR_VERSION === 2);
+
+    // VG2: progresja interwałów słownictwa (1 -> 3 -> 7, błąd -> 1)
+    resetVocabData();
+    const vgT0 = 1700000000000;
+    recordVocabAnswer('v01', true, vgT0);
+    eq('VG2a pierwsza poprawna odpowiedź ustawia interval=1', vocabStat('v01').interval, 1);
+    eq('VG2b pierwsza poprawna odpowiedź ustawia due=+1d', vocabStat('v01').due, vgT0 + SRS_DAY_MS);
+    recordVocabAnswer('v01', true, vgT0 + SRS_DAY_MS);
+    eq('VG2c druga poprawna odpowiedź ustawia interval=3', vocabStat('v01').interval, 3);
+    recordVocabAnswer('v01', true, vgT0 + 4 * SRS_DAY_MS);
+    eq('VG2d trzecia poprawna odpowiedź ustawia interval=7', vocabStat('v01').interval, 7);
+    recordVocabAnswer('v01', false, vgT0 + 11 * SRS_DAY_MS);
+    eq('VG2e błędna odpowiedź resetuje interval do 1', vocabStat('v01').interval, 1);
+    eq('VG2f błędna odpowiedź wyznacza due=+1d', vocabStat('v01').due, vgT0 + 12 * SRS_DAY_MS);
+
+    // VG3: kolejka dueVocabList i priorytet w vocabSessionOrder('smart')
+    resetVocabData();
+    const vgNow = Date.now();
+    recordVocabAnswer('v02', true, vgNow - 5 * SRS_DAY_MS); // due = -4d (najbardziej zaległe)
+    recordVocabAnswer('v01', true, vgNow - 3 * SRS_DAY_MS); // due = -2d (zaległe)
+    recordVocabAnswer('v03', true, vgNow); // due = +1d (niezaległe)
+    const dueVocab = dueVocabList(vgNow);
+    eq(
+      'VG3a dueVocabList zwraca tylko zaległe słówka posortowane po due',
+      dueVocab.map(v => v.id).join(','),
+      'v02,v01'
+    );
+    const smartOrder = vocabSessionOrder('all', CATEGORY_ALL, { order: 'smart' });
+    eq(
+      'VG3b vocabSessionOrder(smart) umieszcza zaległe słówka na początku sesji',
+      smartOrder.slice(0, 2).join(','),
+      'v02,v01'
+    );
+
+    // VG4: migracja hiragana-vocab v1 -> v2 z zachowaniem liczników i czyszczeniem nieznanych ID
+    localStorage.setItem(
+      VOCAB_KEY,
+      JSON.stringify({
+        version: 1,
+        cards: {
+          v01: { seen: 4, correct: 4, wrong: 0, recent: [1, 1, 1, 1], last: 1000000 },
+          v02: { seen: 2, correct: 1, wrong: 1, recent: [1, 0], last: 0 },
+          nieznany_klucz_xyz: { seen: 5, correct: 5, wrong: 0, recent: [1, 1, 1, 1, 1], last: 1000000 }
+        }
+      })
+    );
+    vocab = loadVocab();
+    eq('VG4a migracja vocab podnosi wersję do 2', vocab.version, 2);
+    eq(
+      'VG4b migracja vocab zachowuje seen/correct silnej karty',
+      `${vocab.cards.v01.seen}/${vocab.cards.v01.correct}`,
+      '4/4'
+    );
+    eq('VG4c silna karta z v1 dostaje seed interval=3', vocab.cards.v01.interval, 3);
+    eq('VG4d silna karta z v1 wylicza due=last+3d', vocab.cards.v01.due, 1000000 + 3 * SRS_DAY_MS);
+    eq(
+      'VG4e karta słabsza bez last dostaje interval=1 i due=1',
+      `${vocab.cards.v02.interval}:${vocab.cards.v02.due}`,
+      '1:1'
+    );
+    ok('VG4f migracja vocab pomija nieznane id', !vocab.cards.nieznany_klucz_xyz);
+    eq(
+      'VG4g loadVocab zapisuje zmigrowany magazyn v2 w localStorage',
+      JSON.parse(localStorage.getItem(VOCAB_KEY)).version,
+      2
+    );
+
+    // VG5: import kopii zapasowej w formacie v1 automatycznie migruje vocab i grammar do v2
+    const snapV1 = createBackupData();
+    snapV1.stores[VOCAB_KEY] = JSON.stringify({
+      version: 1,
+      cards: {
+        v01: { seen: 4, correct: 4, wrong: 0, recent: [1, 1, 1, 1], last: 3000000 }
+      }
+    });
+    snapV1.stores[GRAMMAR_KEY] = JSON.stringify({
+      version: 1,
+      particles: {
+        wa: { seen: 3, correct: 3, wrong: 0, mastered: true }
+      },
+      totalAnswers: 3,
+      lastPracticed: 5000000
+    });
+    applyBackup(snapV1);
+    ok('VG5a import backupu v1 migruje słownictwo do v2 z SRS', vocab.version === 2 && vocab.cards.v01.interval === 3);
+    ok(
+      'VG5b import backupu v1 migruje gramatykę do v2 z SRS',
+      grammarProgress.version === 2 &&
+        grammarProgress.particles.wa.interval === 3 &&
+        grammarProgress.particles.wa.due === 5000000 + 3 * SRS_DAY_MS
+    );
+
+    // VG6: SRS gramatyki (recordGrammarAnswer, mastered, niemutujący dueGrammarList)
+    resetGrammarData();
+    recordGrammarAnswer('wa', true, vgT0);
+    eq('VG6a pierwsza poprawna odpowiedź gramatyki daje interval=1', grammarProgress.particles.wa.interval, 1);
+    recordGrammarAnswer('wa', true, vgT0 + SRS_DAY_MS);
+    eq('VG6b druga poprawna odpowiedź gramatyki daje interval=3', grammarProgress.particles.wa.interval, 3);
+    recordGrammarAnswer('wa', true, vgT0 + 4 * SRS_DAY_MS);
+    ok(
+      'VG6c trzecia poprawna odpowiedź awansuje interval=7 oraz zachowuje mastered=true',
+      grammarProgress.particles.wa.interval === 7 && grammarProgress.particles.wa.mastered === true
+    );
+    recordGrammarAnswer('wa', false, vgT0 + 11 * SRS_DAY_MS);
+    eq('VG6d błędna odpowiedź gramatyki resetuje interval do 1', grammarProgress.particles.wa.interval, 1);
+
+    const keysBeforeDue = Object.keys(grammarProgress.particles).join(',');
+    const dueAtFuture = dueGrammarList(vgT0 + 20 * SRS_DAY_MS);
+    const keysAfterDue = Object.keys(grammarProgress.particles).join(',');
+    eq(
+      'VG6e dueGrammarList nie mutuje grammarProgress.particles dla niećwiczonych pozycji',
+      keysAfterDue,
+      keysBeforeDue
+    );
+    ok(
+      'VG6f dueGrammarList wykrywa zaległą partykułę wa',
+      dueAtFuture.some(p => p.id === 'wa')
+    );
+
+    // VG7: migracja hiragana-grammar v1 -> v2 oraz ochrona przed wyższą wersją
+    localStorage.setItem(
+      GRAMMAR_KEY,
+      JSON.stringify({
+        version: 1,
+        particles: {
+          wa: { seen: 3, correct: 3, wrong: 0, mastered: true }
+        },
+        totalAnswers: 3,
+        lastPracticed: 2000000
+      })
+    );
+    grammarProgress = loadGrammar();
+    eq('VG7a migracja grammar podnosi wersję do 2', grammarProgress.version, 2);
+    eq('VG7b migracja grammar ustawia interval=3 dla mastered', grammarProgress.particles.wa.interval, 3);
+    eq('VG7c migracja grammar liczy due z lastPracticed', grammarProgress.particles.wa.due, 2000000 + 3 * SRS_DAY_MS);
+    eq('VG7d loadGrammar zapisuje v2 w localStorage', JSON.parse(localStorage.getItem(GRAMMAR_KEY)).version, 2);
+
+    localStorage.setItem(
+      GRAMMAR_KEY,
+      JSON.stringify({ version: GRAMMAR_VERSION + 1, particles: { wa: { seen: 5 } }, totalAnswers: 5 })
+    );
+    grammarProgress = loadGrammar();
+    eq('VG7e loadGrammar ignoruje nieznaną wyższą wersję', Object.keys(grammarProgress.particles).length, 0);
+
+    // VG8: integracja UI (Pulpit, Hub Słownictwa, Hub Gramatyki, Tryb Skupienia)
+    clearProgress();
+    resetKanjiData();
+    resetVocabData();
+    resetGrammarData();
+
+    recordVocabAnswer('v01', true, Date.now() - 2 * SRS_DAY_MS);
+    eq('VG8a getVocabSummaryStats zwraca due=1', getVocabSummaryStats().due, 1);
+    setScreen('dashboard');
+    const smartBtnV = document.getElementById('btnDashboardSmartAction');
+    ok(
+      'VG8b Pulpit wskazuje powtórkę Słownictwa gdy tylko słownictwo jest zaległe',
+      !!smartBtnV && smartBtnV.textContent.includes('Powtórz Słownictwo')
+    );
+    smartBtnV.click();
+    ok(
+      'VG8c kliknięcie rekomendacji na Pulpicie uruchamia zaległe słówka',
+      state.screen === 'vocab' && state.vocab && state.vocab.order.join(',') === 'v01'
+    );
+
+    state.vocab = null;
+    vocabTopicNav.view = 'setup';
+    setScreen('vocab');
+    const vocabDueBtn = document.getElementById('btnVocabDueReview');
+    ok(
+      'VG8d Hub Słownictwa wyświetla #btnVocabDueReview dla zaległych kart',
+      !!vocabDueBtn && vocabDueBtn.textContent.includes('(1)')
+    );
+    vocabDueBtn.click();
+    ok(
+      'VG8e #btnVocabDueReview uruchamia sesję z zaległą kartą v01',
+      state.vocab && state.vocab.order.join(',') === 'v01'
+    );
+
+    // Focus Mode (vocab & smart) priorytet dla zaległych słówek
+    eq('VG8f buildFocusPool(vocab) stawia zaległe słówko na pierwszym miejscu', buildFocusPool('vocab')[0].id, 'v01');
+    ok(
+      'VG8g buildFocusPool(smart) zawiera zaległe słówko v01',
+      buildFocusPool('smart').some(it => it.id === 'v01')
+    );
+
+    // Dashboard & Hub Gramatyki gdy tylko gramatyka jest zaległa
+    state.vocab = null;
+    resetVocabData();
+    recordGrammarAnswer('wa', true, Date.now() - 2 * SRS_DAY_MS);
+    eq('VG8h getGrammarSummaryStats zwraca due=1', getGrammarSummaryStats().due, 1);
+    setScreen('dashboard');
+    const smartBtnG = document.getElementById('btnDashboardSmartAction');
+    ok(
+      'VG8i Pulpit wskazuje powtórkę Gramatyki gdy tylko gramatyka jest zaległa',
+      !!smartBtnG && smartBtnG.textContent.includes('Powtórz Gramatykę')
+    );
+    smartBtnG.click();
+    ok(
+      'VG8j kliknięcie rekomendacji na Pulpicie otwiera trening luk dla zaległej partykuły wa',
+      state.screen === 'grammar' &&
+        grammarSession.mode === 'practice' &&
+        grammarSession.practice &&
+        grammarSession.practice.questions.every(q => q.particleId === 'wa')
+    );
+
+    grammarSession.mode = 'hub';
+    grammarSession.practice = null;
+    state.grammar = grammarSession;
+    renderGrammarHub();
+    const grammarDueBtn = document.getElementById('btnStartGrammarDue');
+    const waBadgeDue = document.querySelector('.grammar-particle-card[data-particle-id="wa"] .badge-due');
+    ok(
+      'VG8k Hub Gramatyki pokazuje przycisk #btnStartGrammarDue oraz odznakę .badge-due',
+      !!grammarDueBtn && !!waBadgeDue
+    );
+    grammarDueBtn.click();
+    ok(
+      'VG8l #btnStartGrammarDue uruchamia trening zaległych zagadnień gramatycznych',
+      grammarSession.mode === 'practice' && grammarSession.practice.questions.every(q => q.particleId === 'wa')
+    );
+
+    // Sprzątanie po C1
+    resetVocabData();
+    resetGrammarData();
+    grammarSession.mode = 'hub';
+    grammarSession.practice = null;
+    state.grammar = grammarSession;
+    state.vocab = null;
+    clearProgress();
+    resetKanjiData();
+    clearDailyStats();
+    dailyStats = loadDailyStats();
+    setScreen('menu');
+  } catch (e) {
+    ok('C1 SRS słownictwa i gramatyki', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

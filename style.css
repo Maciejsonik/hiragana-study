@@ -8114,6 +8114,11 @@ body::before {
   color: var(--good);
 }
 
+.badge-due {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-dark);
+}
+
 .badge-learning {
   background: color-mix(in srgb, #3949ab 15%, transparent);
   color: #3949ab;
@@ -9088,7 +9093,31 @@ body::before {
 }
 
 .vocab-smart-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
   margin-bottom: var(--space-4, 16px);
+}
+
+.vocab-due-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent-dark);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vocab-due-btn:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
 }
 
 .vocab-smart-btn {
