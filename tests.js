@@ -4529,6 +4529,86 @@
   }
 
   /* =====================================================
+     ULUBIONE PODCZAS SESJI NAUKI I EGZAMINU
+     ===================================================== */
+  try {
+    resetBookmarksData();
+
+    // Słownictwo: tryb test
+    state.screen = 'vocab';
+    startVocabSession({ mode: 'test', ids: ['v01'] });
+    const vTestStar = document.querySelector('.session-star-btn[data-star-type="vocab"][data-star-id="v01"]');
+    ok('BM20a test słownictwa renderuje przycisk ulubionych .session-star-btn', !!vTestStar);
+    if (vTestStar) {
+      vTestStar.click();
+      ok(
+        'BM20b kliknięcie gwiazdki w teście słownictwa dodaje v01 do ulubionych bez przerywania pytania',
+        isBookmarked('vocab', 'v01') === true &&
+          vTestStar.classList.contains('bookmarked') &&
+          vTestStar.getAttribute('aria-pressed') === 'true' &&
+          state.vocab &&
+          state.vocab.index === 0 &&
+          state.vocab.answered === false
+      );
+    }
+
+    // Słownictwo: tryb type
+    startVocabSession({ mode: 'type', ids: ['v02'] });
+    const vTypeStar = document.querySelector('.session-star-btn[data-star-type="vocab"][data-star-id="v02"]');
+    ok('BM20c tryb wpisywania słownictwa renderuje .session-star-btn', !!vTypeStar);
+    if (vTypeStar) {
+      vTypeStar.click();
+      ok(
+        'BM20d kliknięcie gwiazdki w trybie wpisywania słownictwa dodaje v02 do ulubionych',
+        isBookmarked('vocab', 'v02')
+      );
+    }
+    state.vocab = null;
+
+    // Kanji: fiszki i quiz
+    state.screen = 'kanji';
+    startKanjiSession({ mode: 'flashcard', lesson: 'L01' });
+    const kFlashStar = document.querySelector('.kanji-session-header .session-star-btn[data-star-type="kanji"]');
+    const kFlashId = kFlashStar ? kFlashStar.getAttribute('data-star-id') : '';
+    ok('BM20e fiszki kanji renderują .session-star-btn', !!kFlashStar && !!kFlashId);
+    if (kFlashStar) {
+      kFlashStar.click();
+      ok('BM20f kliknięcie gwiazdki w fiszkach kanji zapisuje znak w ulubionych', isBookmarked('kanji', kFlashId));
+    }
+
+    resetBookmarksData();
+    startKanjiSession({ mode: 'quiz', lesson: 'L01' });
+    const kQuizStar = document.querySelector('.kanji-session-header .session-star-btn[data-star-type="kanji"]');
+    const kQuizId = kQuizStar ? kQuizStar.getAttribute('data-star-id') : '';
+    ok('BM20g quiz kanji renderuje .session-star-btn', !!kQuizStar && !!kQuizId);
+    if (kQuizStar) {
+      kQuizStar.click();
+      ok('BM20h kliknięcie gwiazdki w quizie kanji zapisuje znak w ulubionych', isBookmarked('kanji', kQuizId));
+    }
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+
+    // Kana: egzamin
+    startExam([], { kanaList: ['あ', 'い'], modes: { romajiKanaPick: true }, options: 2, timer: 0 });
+    const examStar = document.querySelector('.session-star-btn[data-star-type="kana"]');
+    const examKanaId = examStar ? examStar.getAttribute('data-star-id') : '';
+    ok('BM20i egzamin kany renderuje .session-star-btn dla bieżącego znaku', !!examStar && !!examKanaId);
+    if (examStar) {
+      examStar.click();
+      ok(
+        'BM20j kliknięcie gwiazdki podczas egzaminu kany zapisuje znak w ulubionych',
+        isBookmarked('kana', examKanaId)
+      );
+    }
+
+    stopExam();
+    resetBookmarksData();
+    setScreen('menu');
+  } catch (e) {
+    ok('Ulubione podczas sesji', false, e.message);
+  }
+
+  /* =====================================================
      PODSUMOWANIE
      ===================================================== */
   clearProgress();

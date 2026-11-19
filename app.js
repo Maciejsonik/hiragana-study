@@ -6420,6 +6420,7 @@ function renderVocab() {
     <div class="badge session-score-badge" aria-label="Wynik: ${session.correct} dobrze, ${session.wrong} błędnie">
       <span class="score-correct">${session.correct} ✓</span> &nbsp; <span class="score-wrong">${session.wrong} ✗</span>
     </div>
+    ${session.mode !== 'learn' ? sessionStarButtonHTML('vocab', item.id) : ''}
   `;
 
   const progress = `
@@ -7808,7 +7809,10 @@ function renderKanjiFlashcard() {
             <div class="kanji-session-bar" style="width: ${progressPct}%"></div>
           </div>
         </div>
-        <span class="kanji-session-lesson-badge">${current.lesson}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${sessionStarButtonHTML('kanji', current.id)}
+          <span class="kanji-session-lesson-badge">${current.lesson}</span>
+        </div>
       </div>
 
       <div class="kanji-flashcard-wrap">
@@ -7980,7 +7984,10 @@ function renderKanjiQuiz() {
             <div class="kanji-session-bar" style="width: ${progressPct}%"></div>
           </div>
         </div>
-        <span class="kanji-session-score-pill">Wynik: ${s.score}/${s.index}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${sessionStarButtonHTML('kanji', current.id)}
+          <span class="kanji-session-score-pill">Wynik: ${s.score}/${s.index}</span>
+        </div>
       </div>
 
       <div class="kanji-quiz-card">
@@ -15469,10 +15476,12 @@ function sessionFrameHTML({ eyebrow, title, stats = '', content = '', footer = '
 
 function examChromeHTML(exam, contentHTML) {
   const percentage = exam.total === 0 ? 0 : Math.round((exam.score / exam.total) * 100);
+  const currentKana = exam.current && exam.current.kana ? exam.current.kana : null;
   const stats = `
     ${exam.xp > 0 ? `<span class="xp-badge">${icon('star')} ${exam.xp} XP</span>` : ''}
     ${exam.streak >= 3 ? `<span class="streak-badge">${icon('flame')} ${exam.streak}</span>` : ''}
     <div class="badge">${exam.score} ✓ &nbsp; ${exam.wrong} ✗</div>
+    ${currentKana ? sessionStarButtonHTML('kana', currentKana, 'Dodaj bieżący znak do ulubionych') : ''}
   `;
   const progress = `
     <div class="progress session-progress" role="progressbar" aria-label="Postęp egzaminu"
@@ -16396,6 +16405,12 @@ document.addEventListener('click', e => {
    ULUBIONE I GWIAZDKI (delegacja [data-star-type])
 ========================================================= */
 
+function sessionStarButtonHTML(type, id, title = 'Dodaj do ulubionych') {
+  if (!type || !id) return '';
+  const starred = isBookmarked(type, id);
+  return `<button class="session-star-btn ${starred ? 'bookmarked' : ''}" data-star-type="${escapeHtml(type)}" data-star-id="${escapeHtml(id)}" type="button" title="${starred ? 'Usuń z ulubionych' : escapeHtml(title)}" aria-label="${starred ? 'Usuń z ulubionych' : escapeHtml(title)}" aria-pressed="${starred ? 'true' : 'false'}">★</button>`;
+}
+
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-star-type]');
   if (!btn) return;
@@ -16407,6 +16422,10 @@ document.addEventListener('click', e => {
     const isNow = toggleBookmark(type, id);
     Audio.click();
     btn.classList.toggle('bookmarked', isNow);
+    if (btn.classList.contains('session-star-btn')) {
+      btn.setAttribute('aria-pressed', isNow ? 'true' : 'false');
+      btn.title = isNow ? 'Usuń z ulubionych' : 'Dodaj do ulubionych';
+    }
     if (btn.id === 'btnStarKanjiDetail') {
       btn.innerHTML = `<span>★</span><span class="kanji-star-btn-label">${isNow ? 'Ulubiony' : 'Do ulubionych'}</span>`;
     }

@@ -2686,7 +2686,7 @@ and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pil
 and summary modal).
 
 All 12 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings (including a pre-import backup summary preview via `summarizeBackup`) and an on-demand Settings control (`#offlinePackGroup` / `downloadKanjiVgOfflinePack`) to pre-download all KanjiVG stroke SVGs for offline study.
-1119 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+1129 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 
