@@ -2667,9 +2667,12 @@ The vocabulary module includes its **topic axis** (13 categories) and **lesson a
 orthogonal lesson filters (`Wszystkie`, `Klasa`, `1か`, `2か`). Nouns expanded to 64 items,
 i-adjectives are present with distractor isolation, and kanji writings are surfaced on reveals.
 
-The kanji module provides 599 characters across 29 lessons (L01–L28 + N5, 100% of _Shokyū Nihongo_), all 100% verified against
+The kanji module provides 600 characters across 29 lessons (L01–L28 + N5, 100% of _Shokyū Nihongo_), all verified against
 KanjiVG CDN, with animated stroke order, canvas drawing (with blind memory mode), catalog search,
-SRS flashcards, and 4-choice recognition quiz.
+SRS flashcards, and 4-choice recognition quiz. Kanji detail views link dynamically into `VOCAB_LEARN_ITEMS`
+(sharing `hiragana-vocab` IDs, progress stats, and bookmarks with a collapsed `<details>` thematic vocabulary section
+and filtered practice sessions) plus visually similar character navigation (`Podobne znaki`), while vocabulary
+answer/reveal cards surface clickable `[data-open-kanji]` chips to jump directly to constituent kanji details.
 
 The grammar module provides 31 items across 16 lessons with 93 authentic example sentences, audio
 pronunciation, and interactive cloze fill-in-the-blank practice with rule explanations.
@@ -2680,8 +2683,8 @@ with sliders in Settings, an offline procedural noise ambient soundscape generat
 and a distraction-free Zen Focus study session (15/20/25 min Pomodoro, multi-pillar practice pool, live controls,
 and summary modal).
 
-All 11 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings.
-1034 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
+All 12 storage keys are unified under `appStorageKeys()` with full JSON backup & restore in Settings (including a pre-import backup summary preview via `summarizeBackup`) and an on-demand Settings control (`#offlinePackGroup` / `downloadKanjiVgOfflinePack`) to pre-download all KanjiVG stroke SVGs for offline study.
+1078 automated regression tests guard all systems across `tests.html`, `tests-learn.html`, and `tests-daily.html`.
 
 ### Current recommended roadmap
 

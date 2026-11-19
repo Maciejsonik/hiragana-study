@@ -1572,7 +1572,7 @@ const KANJI_ITEMS = [
   { id: 'k032', kanji: '夕', meaning: 'wieczór', onyomi: ['セキ'], kunyomi: ['ゆう'], strokes: 3, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '夕方', reading: 'ゆうがた', meaning: 'wieczór' }, { word: '夕日', reading: 'ゆうひ', meaning: 'zachodzące słońce' }] },
   { id: 'k033', kanji: '古', meaning: 'stary', onyomi: ['コ'], kunyomi: ['ふる-い'], strokes: 5, lesson: 'L05', category: 'nature', grade: 'N5', examples: [{ word: '古い', reading: 'ふるい', meaning: 'stary' }, { word: '中古', reading: 'ちゅうこ', meaning: 'używany' }] },
   { id: 'k034', kanji: '寺', meaning: 'świątynia buddyjska', onyomi: ['ジ'], kunyomi: ['てら'], strokes: 6, lesson: 'L05', category: 'place', grade: 'N5', examples: [{ word: 'お寺', reading: 'おてら', meaning: 'świątynia buddyjska' }, { word: '金閣寺', reading: 'きんかくじ', meaning: 'Złoty Pawilon' }] },
-  { id: 'k035', kanji: '早', meaning: 'wczesny / szybko', onyomi: ['ソウ'], kunyomi: ['はや-い'], strokes: 6, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '早い', reading: 'はやい', meaning: 'wczesny' }, { word: '早く', reading: 'haku', meaning: 'wcześnie' }] },
+  { id: 'k035', kanji: '早', meaning: 'wczesny / szybko', onyomi: ['ソウ'], kunyomi: ['はや-い'], strokes: 6, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '早い', reading: 'はやい', meaning: 'wczesny' }, { word: '早く', reading: 'はやく', meaning: 'wcześnie' }] },
   { id: 'k036', kanji: '冬', meaning: 'zima', onyomi: ['トウ'], kunyomi: ['ふゆ'], strokes: 5, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '冬', reading: 'ふゆ', meaning: 'zima' }, { word: '冬休み', reading: 'ふゆやすみ', meaning: 'ferie zimowe' }] },
   { id: 'k037', kanji: '春', meaning: 'wiosna', onyomi: ['シュン'], kunyomi: ['はる'], strokes: 9, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '春', reading: 'はる', meaning: 'wiosna' }, { word: '春休み', reading: 'はるやすみ', meaning: 'przerwa wiosenna' }] },
   { id: 'k038', kanji: '秋', meaning: 'jesień', onyomi: ['シュウ'], kunyomi: ['あき'], strokes: 9, lesson: 'L05', category: 'time', grade: 'N5', examples: [{ word: '秋', reading: 'あき', meaning: 'jesień' }, { word: '秋分', reading: 'しゅうぶん', meaning: 'równonoc jesienna' }] },
@@ -1590,7 +1590,7 @@ const KANJI_ITEMS = [
   { id: 'k048', kanji: '牛', meaning: 'krowa / byk', onyomi: ['ギュウ'], kunyomi: ['うし'], strokes: 4, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '牛', reading: 'うし', meaning: 'krowa' }, { word: '牛乳', reading: 'ぎゅうにゅう', meaning: 'mleko' }, { word: '牛肉', reading: 'ぎゅうにく', meaning: 'wołowina' }] },
   { id: 'k049', kanji: '犬', meaning: 'pies', onyomi: ['ケン'], kunyomi: ['いぬ'], strokes: 4, lesson: 'L06', category: 'nature', grade: 'N5', examples: [{ word: '犬', reading: 'いぬ', meaning: 'pies' }, { word: '子犬', reading: 'こいぬ', meaning: 'szczeniak' }] },
   { id: 'k050', kanji: '本', meaning: 'książka / źródło', onyomi: ['ホン'], kunyomi: ['もと'], strokes: 5, lesson: 'L06', category: 'school', grade: 'N5', examples: [{ word: '本', reading: 'ほん', meaning: 'książka' }, { word: '日本', reading: 'にほん', meaning: 'Japonia' }, { word: '山本', reading: 'やまもと', meaning: 'Yamamoto' }] },
-  { id: 'k051', kanji: '間', meaning: 'między / przedział czasu', onyomi: ['カン', 'ケン'], kunyomi: ['あいだ', 'ま'], strokes: 12, lesson: 'L06', category: 'time', grade: 'N5', examples: [{ word: '間', reading: 'あいだ', meaning: 'między' }, { word: '時間', reading: 'じかん', meaning: 'czas / godzina' }, { word: '間に合う', reading: 'まニアう', meaning: 'zdążyć' }] },
+  { id: 'k051', kanji: '間', meaning: 'między / przedział czasu', onyomi: ['カン', 'ケン'], kunyomi: ['あいだ', 'ま'], strokes: 12, lesson: 'L06', category: 'time', grade: 'N5', examples: [{ word: '間', reading: 'あいだ', meaning: 'między' }, { word: '時間', reading: 'じかん', meaning: 'czas / godzina' }, { word: '間に合う', reading: 'まにあう', meaning: 'zdążyć' }] },
 
   // L07
   { id: 'k052', kanji: '天', meaning: 'niebo / niebiosa', onyomi: ['テン'], kunyomi: ['あめ'], strokes: 4, lesson: 'L07', category: 'nature', grade: 'N5', examples: [{ word: '天気', reading: 'てんき', meaning: 'pogoda' }, { word: '天国', reading: 'てんごく', meaning: 'raj / niebiosa' }] },
@@ -2995,6 +2995,9 @@ function isFocusMode() {
   if (state.screen === 'grammar') {
     return !!(state.grammar && state.grammar.mode === 'practice' && !state.grammar.finished);
   }
+  if (state.screen === 'jlpt') {
+    return !!(typeof jlptSession !== 'undefined' && jlptSession.mode === 'exam' && !jlptSession.result);
+  }
   return false;
 }
 
@@ -4165,7 +4168,23 @@ function setupSettingsToggle() {
 const screenHistory = [];
 
 function setScreen(screen, { isBack = false } = {}) {
-  if (state.screen !== screen) {
+  const prevScreen = state.screen;
+  if (prevScreen !== screen) {
+    // Sprzątanie timerów sesji czasowych przy opuszczeniu ekranu focus / jlpt
+    if (prevScreen === 'focus' && typeof focusSession !== 'undefined' && focusSession) {
+      if (focusSession.timerInterval) {
+        clearInterval(focusSession.timerInterval);
+        focusSession.timerInterval = null;
+      }
+      if (typeof Audio !== 'undefined' && Audio.ambient) {
+        Audio.ambient.stop();
+      }
+    }
+    if (prevScreen === 'jlpt' && typeof jlptSession !== 'undefined' && jlptSession && jlptSession.timerInterval) {
+      clearInterval(jlptSession.timerInterval);
+      jlptSession.timerInterval = null;
+    }
+
     if (!isBack) {
       if (['dashboard', 'menu', 'vocab', 'kanji', 'grammar'].includes(screen)) {
         if (screen === 'dashboard') {
@@ -4175,7 +4194,7 @@ function setScreen(screen, { isBack = false } = {}) {
           screenHistory.push('dashboard');
         }
       } else {
-        screenHistory.push(state.screen);
+        screenHistory.push(prevScreen);
       }
     }
     state.screen = screen;
@@ -5890,6 +5909,27 @@ function vocabAnswerDetailsHTML(item, { hideKanji = false, showKana = false } = 
     detail += `<div class="flash-meta vocab-kanji-meta">Kanji: <b>${item.kanji}</b></div>`;
   }
 
+  if (item.kanji && item.type !== 'card') {
+    const linkedKanji = vocabKanjiItems(item.kanji);
+    if (linkedKanji.length) {
+      detail += `
+        <div class="vocab-kanji-links">
+          <span class="vocab-kanji-links-label">Znaki kanji:</span>
+          ${linkedKanji
+            .map(
+              k => `
+                <button class="vocab-kanji-chip" type="button" data-open-kanji="${escapeHtml(k.id)}" title="Otwórz kartę kanji: ${escapeHtml(k.kanji)} (${escapeHtml(k.meaning)})">
+                  <span class="vocab-kanji-chip-char font-japanese">${escapeHtml(k.kanji)}</span>
+                  <span class="vocab-kanji-chip-meaning">${escapeHtml(k.meaning)}</span>
+                </button>
+              `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+  }
+
   const variant = item.alt ? `<div class="flash-meta">Wariant: <b>${item.alt}</b> (${item.altRomaji})</div>` : '';
   return `${detail}${variant}`;
 }
@@ -6486,6 +6526,7 @@ function renderVocab() {
       input.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
           e.preventDefault();
+          e.stopPropagation();
           answerVocabTyped(input.value);
         }
       });
@@ -7128,6 +7169,98 @@ function renderKanjiCatalog() {
 }
 
 /* =========================================================
+   INTEGRACJA KANJI ↔ SŁOWNICTWO & PODOBNE ZNAKI
+   ========================================================= */
+
+// prettier-ignore
+const KANJI_SIMILAR_GROUPS = [
+  ['人', '入', '八'],
+  ['大', '太', '犬', '天'],
+  ['日', '目', '白', '自', '百'],
+  ['月', '明', '用', '青'],
+  ['木', '本', '体', '休', '林', '森'],
+  ['土', '上', '下', '工', '王', '玉'],
+  ['千', '午', '牛', '半'],
+  ['右', '左', '石', '友'],
+  ['力', '刀', '方', '万'],
+  ['小', '少', '水', '氷'],
+  ['田', '由', '申', '男', '思'],
+  ['口', '中', '四', '回', '国'],
+  ['女', '安', '好', '母'],
+  ['子', '字', '学'],
+  ['見', '貝', '買', '員'],
+  ['間', '問', '聞', '門', '開', '閉'],
+  ['来', '米', '未'],
+  ['待', '持', '時', '寺'],
+  ['行', '後', '役'],
+  ['話', '語', '読', '記']
+];
+
+function similarKanjiFor(char) {
+  if (!char) return [];
+  const seen = new Set([char]);
+  const out = [];
+  KANJI_SIMILAR_GROUPS.forEach(group => {
+    if (!group.includes(char)) return;
+    group.forEach(ch => {
+      if (seen.has(ch)) return;
+      seen.add(ch);
+      const item = kanjiItem(ch);
+      if (item) out.push(item);
+    });
+  });
+  return out;
+}
+
+function kanjiVocabWords(kanjiChar) {
+  if (!kanjiChar) return [];
+  const seenIds = new Set();
+  return VOCAB_LEARN_ITEMS.filter(w => {
+    if (!w || !w.id || seenIds.has(w.id)) return false;
+    const matchesPrimary = w.kanji && w.kanji.includes(kanjiChar);
+    const matchesAlt = w.altKanji && w.altKanji.includes(kanjiChar);
+    if (!matchesPrimary && !matchesAlt) return false;
+    seenIds.add(w.id);
+    return true;
+  });
+}
+
+function kanjiExtraLessonWords(kanjiChar, vocabWords) {
+  if (!kanjiChar) return [];
+  const coveredForms = new Set();
+  (vocabWords || []).forEach(w => {
+    if (w.kanji) coveredForms.add(`${w.kanji}|${w.kana}`);
+    if (w.altKanji) coveredForms.add(`${w.altKanji}|${w.kana}`);
+  });
+  return KANJI_LESSON_WORDS.filter(w => {
+    if (!w.kanji || !w.kanji.includes(kanjiChar)) return false;
+    return !coveredForms.has(`${w.kanji}|${w.kana}`);
+  });
+}
+
+function kanjiThematicVocab(item, excludeIds) {
+  if (!item || !item.category || !isKnownCategory(item.category)) return [];
+  const excluded = excludeIds instanceof Set ? excludeIds : new Set(excludeIds || []);
+  return VOCAB_LEARN_ITEMS.filter(w => {
+    if (!w || !w.id || excluded.has(w.id)) return false;
+    return itemCategory(w) === item.category;
+  });
+}
+
+function vocabKanjiItems(kanjiText) {
+  if (!kanjiText) return [];
+  const seen = new Set();
+  const out = [];
+  for (const ch of kanjiText) {
+    if (seen.has(ch)) continue;
+    seen.add(ch);
+    const k = kanjiItem(ch);
+    if (k) out.push(k);
+  }
+  return out;
+}
+
+/* =========================================================
    C. WIDOK: KARTA SZCZEGÓŁÓW ZNAKU & ANIMACJA KANJIVG & CANVAS
    ========================================================= */
 function renderKanjiDetail() {
@@ -7139,8 +7272,28 @@ function renderKanjiDetail() {
   const prevItem = currentIndex > 0 ? KANJI_ITEMS[currentIndex - 1] : null;
   const nextItem = currentIndex < KANJI_ITEMS.length - 1 ? KANJI_ITEMS[currentIndex + 1] : null;
 
-  // Dopasuj słówka lekcyjne z KANJI_LESSON_WORDS zawierające ten znak
-  const matchingLessonWords = KANJI_LESSON_WORDS.filter(w => w.kanji.includes(item.kanji));
+  // Dynamiczne dopasowanie słownictwa (bez duplikowania statystyk i wpisów)
+  const matchingVocabWords = kanjiVocabWords(item.kanji);
+  const extraLessonWords = kanjiExtraLessonWords(item.kanji, matchingVocabWords);
+  const thematicVocab = kanjiThematicVocab(item, new Set(matchingVocabWords.map(w => w.id)));
+  const similarChars = similarKanjiFor(item.kanji);
+
+  const renderVocabRow = w => {
+    const badgeLabel = VOCAB_LESSON_LABELS[w.lesson] || (w.category ? categoryLabel(w.category) : 'Słownictwo');
+    const starred = isBookmarked('vocab', w.id);
+    return `
+      <div class="kanji-lesson-word-item">
+        <span class="kanji-lesson-word-badge">${escapeHtml(badgeLabel)}</span>
+        ${w.kanji ? `<span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>` : ''}
+        <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
+        <span class="kanji-lesson-word-gloss" title="${escapeHtml(w.meaning)}">${escapeHtml(w.meaning)}</span>
+        <button class="btn-speak btn-speak-sm" data-speak="${escapeHtml(w.kana)}" type="button" title="Odsłuchaj ${escapeHtml(w.kana)}" aria-label="Odsłuchaj ${escapeHtml(w.kana)}">
+          ${icon('volume')}
+        </button>
+        <button class="btn-star kanji-lesson-word-star ${starred ? 'bookmarked' : ''}" type="button" data-star-type="vocab" data-star-id="${escapeHtml(w.id)}" title="${starred ? 'Usuń słówko z ulubionych' : 'Dodaj słówko do ulubionych'}" aria-label="${starred ? 'Usuń słówko z ulubionych' : 'Dodaj słówko do ulubionych'}">★</button>
+      </div>
+    `;
+  };
 
   app.innerHTML = `
     <div class="kanji-detail-screen animate-fade">
@@ -7280,16 +7433,29 @@ function renderKanjiDetail() {
             }
 
             ${
-              matchingLessonWords.length
+              matchingVocabWords.length
+                ? `
+              <div class="kanji-lesson-words-section">
+                <h3 class="kanji-section-heading">Słówka zawierające znak (${matchingVocabWords.length})</h3>
+                <div class="kanji-lesson-words-list">
+                  ${matchingVocabWords.map(renderVocabRow).join('')}
+                </div>
+              </div>
+            `
+                : ''
+            }
+
+            ${
+              extraLessonWords.length
                 ? `
               <div class="kanji-lesson-words-section">
                 <h3 class="kanji-section-heading">Słówka z podręcznika Shokyū Nihongo</h3>
                 <div class="kanji-lesson-words-list">
-                  ${matchingLessonWords
+                  ${extraLessonWords
                     .map(
                       w => `
                     <div class="kanji-lesson-word-item">
-                      <span class="kanji-lesson-word-badge">${w.lesson}</span>
+                      <span class="kanji-lesson-word-badge">${escapeHtml(w.lesson)}</span>
                       <span class="kanji-lesson-word-kanji font-japanese">${escapeHtml(w.kanji)}</span>
                       <span class="kanji-lesson-word-kana">${escapeHtml(w.kana)}</span>
                       <span class="kanji-lesson-word-gloss" title="${escapeHtml(w.meaning)}">${escapeHtml(w.meaning)}</span>
@@ -7306,10 +7472,67 @@ function renderKanjiDetail() {
                 : ''
             }
 
+            ${
+              thematicVocab.length
+                ? `
+              <details class="kanji-thematic-details">
+                <summary class="kanji-thematic-summary">
+                  <span class="kanji-thematic-summary-title">Słówka z tego samego tematu: ${escapeHtml(categoryLabel(item.category))} (${thematicVocab.length})</span>
+                  <span class="kanji-thematic-chevron" aria-hidden="true">${icon('chevron-right')}</span>
+                </summary>
+                <div class="kanji-thematic-body">
+                  <div class="kanji-lesson-words-list">
+                    ${thematicVocab.slice(0, 12).map(renderVocabRow).join('')}
+                  </div>
+                  ${
+                    thematicVocab.length > 12
+                      ? `<p class="kanji-thematic-more">Pokazano 12 z ${thematicVocab.length} pozycji z tego tematu.</p>`
+                      : ''
+                  }
+                  <div class="kanji-info-actions">
+                    <button class="kanji-action-btn" id="btnPracticeKanjiThemeVocab" type="button">
+                      Ćwicz słówka tematyczne (${thematicVocab.length}) →
+                    </button>
+                  </div>
+                </div>
+              </details>
+            `
+                : ''
+            }
+
+            ${
+              similarChars.length
+                ? `
+              <div class="kanji-similar-section">
+                <h3 class="kanji-section-heading">Podobne znaki</h3>
+                <div class="kanji-similar-chips">
+                  ${similarChars
+                    .map(
+                      sk => `
+                    <button class="kanji-similar-chip" type="button" data-open-kanji="${escapeHtml(sk.id)}" title="${escapeHtml(sk.kanji)} — ${escapeHtml(sk.meaning)}">
+                      <span class="kanji-similar-chip-char font-japanese">${escapeHtml(sk.kanji)}</span>
+                      <span class="kanji-similar-chip-meaning">${escapeHtml(sk.meaning)}</span>
+                    </button>
+                  `
+                    )
+                    .join('')}
+                </div>
+              </div>
+            `
+                : ''
+            }
+
             <div class="kanji-info-actions">
               <button class="kanji-action-btn accent" id="btnPracticeThisCard" type="button">
                 Ćwicz ten znak w fiszkach →
               </button>
+              ${
+                matchingVocabWords.length
+                  ? `<button class="kanji-action-btn" id="btnPracticeKanjiVocab" type="button">
+                      Ćwicz słówka z tym znakiem (${matchingVocabWords.length}) →
+                    </button>`
+                  : ''
+              }
             </div>
           </div>
         </div>
@@ -7346,6 +7569,40 @@ function renderKanjiDetail() {
     Audio.click();
     startKanjiSession({ mode: 'flashcard', lesson: item.lesson });
   };
+
+  const btnPracticeKanjiVocab = document.getElementById('btnPracticeKanjiVocab');
+  if (btnPracticeKanjiVocab) {
+    btnPracticeKanjiVocab.onclick = () => {
+      Audio.click();
+      startVocabSession({
+        ids: matchingVocabWords.map(w => w.id),
+        scope: 'all',
+        lesson: 'all',
+        category: CATEGORY_ALL,
+        mode: vocabSetup.mode || 'learn',
+        script: 'kanji',
+        direction: 'kana-meaning'
+      });
+      setScreen('vocab');
+    };
+  }
+
+  const btnPracticeKanjiThemeVocab = document.getElementById('btnPracticeKanjiThemeVocab');
+  if (btnPracticeKanjiThemeVocab) {
+    btnPracticeKanjiThemeVocab.onclick = () => {
+      Audio.click();
+      startVocabSession({
+        ids: thematicVocab.map(w => w.id),
+        scope: 'all',
+        lesson: 'all',
+        category: CATEGORY_ALL,
+        mode: vocabSetup.mode || 'learn',
+        script: vocabSetup.script || 'kana',
+        direction: 'kana-meaning'
+      });
+      setScreen('vocab');
+    };
+  }
 
   // Okablowanie animacji kresek KanjiVG i Canvasu
   const stage = document.getElementById('kanjiSvgStage');
@@ -10493,6 +10750,132 @@ function validateBackup(data) {
   return { valid: true };
 }
 
+function summarizeBackup(data) {
+  const stores = data && data.stores && typeof data.stores === 'object' ? data.stores : {};
+  const parseStore = key => {
+    const raw = stores[key];
+    if (raw && typeof raw === 'object') return raw;
+    if (typeof raw !== 'string') return null;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const allowed = new Set(appStorageKeys());
+  const storeCount = Object.keys(stores).filter(k => allowed.has(k)).length;
+
+  const progData = parseStore(PROGRESS_KEY);
+  const vocabData = parseStore(VOCAB_KEY);
+  const kanjiData = parseStore(KANJI_KEY);
+  const grammarData = parseStore(GRAMMAR_KEY);
+  const dailyData = parseStore(DAILY_STATS_KEY);
+  const achData = parseStore(ACHIEVEMENTS_KEY);
+  const bmData = parseStore(BOOKMARKS_KEY);
+  const jlptData = parseStore(JLPT_KEY);
+
+  const kana =
+    progData && progData.chars && typeof progData.chars === 'object' ? Object.keys(progData.chars).length : 0;
+  const vocab =
+    vocabData && vocabData.cards && typeof vocabData.cards === 'object' ? Object.keys(vocabData.cards).length : 0;
+  const kanji =
+    kanjiData && kanjiData.items && typeof kanjiData.items === 'object' ? Object.keys(kanjiData.items).length : 0;
+  const grammar =
+    grammarData && grammarData.particles && typeof grammarData.particles === 'object'
+      ? Object.keys(grammarData.particles).length
+      : 0;
+  const days =
+    dailyData && dailyData.days && typeof dailyData.days === 'object' ? Object.keys(dailyData.days).length : 0;
+  const achievements =
+    achData && achData.unlocked && typeof achData.unlocked === 'object' ? Object.keys(achData.unlocked).length : 0;
+  const bookmarks = bmData
+    ? (Array.isArray(bmData.kana) ? bmData.kana.length : 0) +
+      (Array.isArray(bmData.kanji) ? bmData.kanji.length : 0) +
+      (Array.isArray(bmData.vocab) ? bmData.vocab.length : 0)
+    : 0;
+  const jlptAttempts = jlptData && Array.isArray(jlptData.attempts) ? jlptData.attempts.length : 0;
+
+  const lines = [
+    `• Magazyny danych: ${storeCount}`,
+    `• Kana: ${kana} znaków`,
+    `• Słownictwo: ${vocab} kart`,
+    `• Kanji: ${kanji} znaków`,
+    `• Gramatyka: ${grammar} partykuł`,
+    `• Historia dzienna: ${days} dni`,
+    `• Osiągnięcia: ${achievements} odznak`,
+    `• Ulubione: ${bookmarks}`,
+    `• Próby JLPT: ${jlptAttempts}`
+  ];
+
+  return { storeCount, kana, vocab, kanji, grammar, days, achievements, bookmarks, jlptAttempts, lines };
+}
+
+async function downloadKanjiVgOfflinePack(
+  onProgress = null,
+  {
+    fetchFn = typeof fetch === 'function' ? fetch : null,
+    cacheApi = typeof caches !== 'undefined' ? caches : null,
+    items = KANJI_ITEMS,
+    concurrency = 6
+  } = {}
+) {
+  const urlSet = new Set();
+  (items || []).forEach(it => {
+    if (it && it.kanji) {
+      urlSet.add(SVG_SOURCES[0](kanaHex(it.kanji)));
+    }
+  });
+  const urls = [...urlSet];
+
+  if (!cacheApi || !fetchFn) {
+    return { supported: false, cacheName: null, total: urls.length, downloaded: 0, cached: 0, failed: urls.length };
+  }
+
+  const keys = typeof cacheApi.keys === 'function' ? await cacheApi.keys() : [];
+  const cacheName = keys.find(k => k.startsWith('koto-kanjivg-')) || 'koto-kanjivg-v12';
+  const cache = await cacheApi.open(cacheName);
+
+  let done = 0;
+  let downloaded = 0;
+  let cached = 0;
+  let failed = 0;
+  let nextIdx = 0;
+
+  const workerCount = Math.max(1, Math.min(concurrency, urls.length || 1));
+
+  async function worker() {
+    while (nextIdx < urls.length) {
+      const idx = nextIdx++;
+      const url = urls[idx];
+      try {
+        const existing = await cache.match(url);
+        if (existing) {
+          cached++;
+        } else {
+          const res = await fetchFn(url);
+          if (res && res.ok) {
+            await cache.put(url, typeof res.clone === 'function' ? res.clone() : res);
+            downloaded++;
+          } else {
+            failed++;
+          }
+        }
+      } catch (err) {
+        failed++;
+      } finally {
+        done++;
+        if (typeof onProgress === 'function') {
+          onProgress({ done, total: urls.length, downloaded, cached, failed });
+        }
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return { supported: true, cacheName, total: urls.length, downloaded, cached, failed };
+}
+
 function applyBackup(data) {
   const validation = validateBackup(data);
   if (!validation.valid) {
@@ -10529,6 +10912,9 @@ function applyBackup(data) {
   vocab = loadVocab();
   kanjiProgress = loadKanjiProgress();
   grammarProgress = loadGrammar();
+  achievements = loadAchievements();
+  bookmarks = loadBookmarks();
+  jlptHistory = loadJlptHistory();
 
   state.script = settings.script;
   state.theme = settings.theme;
@@ -10565,6 +10951,8 @@ function resetProgressData() {
   resetGrammarData();
   resetAchievementsData();
   resetBookmarksData();
+  resetJlptData();
+  resetJlptSessionState();
   state.vocab = null;
   state.grammar = null;
   if (state.kanji) state.kanji.mode = 'hub';
@@ -10600,6 +10988,8 @@ function clearAllData() {
   grammarProgress = loadGrammar();
   achievements = loadAchievements();
   bookmarks = loadBookmarks();
+  jlptHistory = loadJlptHistory();
+  resetJlptSessionState();
 
   state.script = settings.script;
   state.theme = settings.theme; // surowa preferencja, tak jak przy starcie
@@ -10726,6 +11116,19 @@ function renderSettings() {
           <input type="file" id="importBackupFile" accept=".json,application/json" style="display: none" />
         </div>
         <div id="backupStatusMsg" class="backup-status-msg" aria-live="polite"></div>
+      </div>
+
+      <div class="settings-group card" id="offlinePackGroup">
+        <h3>Paczka KanjiVG offline</h3>
+        <p class="settings-copy">
+          Pobierz z góry wszystkie ${KANJI_ITEMS.length} plików SVG kolejności kresek KanjiVG do pamięci podręcznej przeglądarki, aby animacje i szablony Kanji działały także bez połączenia z siecią.
+        </p>
+        <div class="settings-actions">
+          <button class="btn btn-secondary" id="btnDownloadKanjiOffline" data-focus-key="offline-kanji" type="button">
+            ${icon('download')} Pobierz paczkę Kanji (${KANJI_ITEMS.length} SVG)
+          </button>
+        </div>
+        <div id="offlinePackStatus" class="backup-status-msg" aria-live="polite"></div>
       </div>
 
       <div class="settings-group card" id="aboutApp">
@@ -10927,9 +11330,11 @@ function renderSettings() {
           }
 
           const dateStr = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleString() : 'nieznanej daty';
+          const summary = summarizeBackup(parsed);
           if (
             !confirm(
               `Przywrócić kopię zapasową utworzoną: ${dateStr}?\n\n` +
+                `Zawartość kopii:\n${summary.lines.join('\n')}\n\n` +
                 'Uwaga: Wszystkie bieżące postępy na tym urządzeniu zostaną zastąpione danymi z pliku kopii.'
             )
           ) {
@@ -10960,6 +11365,39 @@ function renderSettings() {
       };
 
       reader.readAsText(file);
+    };
+  }
+
+  const btnDownloadKanjiOffline = document.getElementById('btnDownloadKanjiOffline');
+  if (btnDownloadKanjiOffline) {
+    btnDownloadKanjiOffline.onclick = async () => {
+      Audio.click();
+      const packStatusEl = document.getElementById('offlinePackStatus');
+      btnDownloadKanjiOffline.disabled = true;
+      if (packStatusEl) {
+        packStatusEl.className = 'backup-status-msg';
+        packStatusEl.textContent = `Pobieranie: 0 / ${KANJI_ITEMS.length}...`;
+      }
+
+      const res = await downloadKanjiVgOfflinePack(progress => {
+        if (packStatusEl) {
+          packStatusEl.textContent = `Pobieranie: ${progress.done} / ${progress.total} (nowe: ${progress.downloaded}, w pamięci: ${progress.cached})...`;
+        }
+      });
+
+      btnDownloadKanjiOffline.disabled = false;
+      if (!packStatusEl) return;
+
+      if (!res.supported) {
+        packStatusEl.className = 'backup-status-msg is-error';
+        packStatusEl.textContent = 'Pamięć offline (Cache API) jest niedostępna w tej przeglądarce.';
+      } else if (res.failed === 0) {
+        packStatusEl.className = 'backup-status-msg is-success';
+        packStatusEl.textContent = `Gotowe! Pobrano ${res.downloaded}, już w pamięci ${res.cached} (łącznie ${res.total} SVG).`;
+      } else {
+        packStatusEl.className = 'backup-status-msg is-error';
+        packStatusEl.textContent = `Zakończono z błędami: pobrano ${res.downloaded}, w pamięci ${res.cached}, nieudane ${res.failed} z ${res.total}.`;
+      }
     };
   }
 }
@@ -15245,9 +15683,34 @@ function answerExam(button, question) {
 ========================================================= */
 
 document.addEventListener('keydown', event => {
-  // Escape → powrót
-  if (event.key === 'Escape' && state.screen !== 'dashboard') {
-    homeBtn.click();
+  const activeEl = document.activeElement;
+  const isTypingInInput =
+    activeEl &&
+    (activeEl.tagName === 'INPUT' ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.tagName === 'SELECT' ||
+      activeEl.isContentEditable);
+  const openModal = document.querySelector('[role="dialog"][aria-modal="true"]');
+
+  // Gdy otwarte jest okno modalne, nie przechwytuj Escape ani skrótów ekranu w tle
+  if (openModal) {
+    return;
+  }
+
+  // Escape → najpierw usuń fokus z aktywnego pola formularza; inaczej powrót
+  if (event.key === 'Escape') {
+    if (isTypingInInput) {
+      activeEl.blur();
+      return;
+    }
+    if (state.screen !== 'dashboard') {
+      homeBtn.click();
+      return;
+    }
+  }
+
+  // Nie uruchamiaj globalnych skrótów klawiszowych podczas pisania w polu tekstowym / select
+  if (isTypingInInput) {
     return;
   }
 
@@ -15392,7 +15855,7 @@ document.addEventListener('keydown', event => {
           return;
         }
       }
-    } else if (!vocabSession.answered) {
+    } else if (vocabSession.mode === 'test' && !vocabSession.answered) {
       const num = parseInt(event.key);
       if (num >= 1 && num <= VOCAB_OPTIONS) {
         const buttons = [...document.querySelectorAll('[data-vocab-choice]')];
@@ -15647,6 +16110,29 @@ document.addEventListener('click', e => {
     if (starFilterBtn && bookmarks.kanji) {
       starFilterBtn.textContent = `★ Ulubione (${bookmarks.kanji.length})`;
     }
+  }
+});
+
+/* =========================================================
+   NAWIGACJA DO KARTY KANJI (delegacja [data-open-kanji])
+   ========================================================= */
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-open-kanji]');
+  if (!btn) return;
+  const raw = btn.getAttribute('data-open-kanji');
+  const k = raw ? kanjiItem(raw) : null;
+  if (!k) return;
+  e.preventDefault();
+  e.stopPropagation();
+  Audio.click();
+  kanjiSession.mode = 'detail';
+  kanjiSession.charId = k.id;
+  state.kanji = kanjiSession;
+  if (state.screen === 'kanji') {
+    renderKanji();
+  } else {
+    setScreen('kanji');
   }
 });
 
@@ -16516,6 +17002,21 @@ function saveJlptHistory(data = jlptHistory) {
   try {
     localStorage.setItem(JLPT_KEY, JSON.stringify(data));
   } catch (e) {}
+}
+
+function resetJlptData() {
+  jlptHistory = { version: JLPT_VERSION, attempts: [], bestScore: 0, passed: false };
+  saveJlptHistory();
+}
+
+function resetJlptSessionState() {
+  if (typeof jlptSession === 'undefined') return;
+  if (jlptSession.timerInterval) {
+    clearInterval(jlptSession.timerInterval);
+    jlptSession.timerInterval = null;
+  }
+  jlptSession.mode = 'hub';
+  jlptSession.result = null;
 }
 
 let jlptHistory = loadJlptHistory();

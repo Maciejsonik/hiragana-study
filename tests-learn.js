@@ -1906,6 +1906,34 @@
           typeKanjiItem.kanji
         );
 
+        state.vocab = null;
+        vocabSetup.mode = 'type';
+        vocabSetup.script = 'kanji';
+        vocabSetup.direction = 'meaning-kana';
+        vocabSetup.lesson = 'kanji-40-60';
+        vocabSetup.limit = 10;
+        renderVocab();
+        await wait(120);
+        document.getElementById('vocabStart').click();
+        await wait(180);
+        const firstTypeItem = vocabItem(state.vocab.order[0]);
+        const typedInput = document.getElementById('vocabTypedInput');
+        typedInput.value = firstTypeItem.kanji;
+        typedInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        await wait(80);
+        ok(
+          'F28 pierwszy Enter w trybie wpisywania zatrzymuje się na feedbacku tej samej karty',
+          state.vocab.index === 0 && state.vocab.answered === true && state.vocab.lastCorrect === true,
+          'index=' + state.vocab.index + ' answered=' + state.vocab.answered
+        );
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        await wait(80);
+        ok(
+          'F28a drugi Enter przechodzi do następnej karty',
+          state.vocab.index === 1 && state.vocab.answered === false,
+          'index=' + state.vocab.index + ' answered=' + state.vocab.answered
+        );
+
         vocabSetup.mode = 'learn';
         vocabSetup.script = 'kana';
         vocabSetup.direction = 'kana-meaning';

@@ -3297,6 +3297,15 @@
     eq('BK6 odrzucenie braku obiektu stores', validateBackup({ app: 'koto', version: 1 }).valid, false);
 
     // BK7: Przywracanie danych przez applyBackup
+    achievements = { version: ACHIEVEMENTS_VERSION, unlocked: { stale_badge: 1 }, drawingsCount: 99, perfectExams: 9 };
+    bookmarks = { version: BOOKMARKS_VERSION, kana: ['ん'], kanji: ['k999'], vocab: ['stale_vocab'] };
+    jlptHistory = {
+      version: JLPT_VERSION,
+      attempts: [{ date: '2020-01-01', totalScore: 10, passed: false }],
+      bestScore: 10,
+      passed: false
+    };
+
     const testBackup = {
       app: 'koto',
       version: 1,
@@ -3311,7 +3320,20 @@
           totalAnswers: 12
         },
         [DAILY_STATS_KEY]: { version: 1, days: { '2026-10-24': { answers: 10, correct: 9 } } },
-        [SETTINGS_STORE_KEY]: { theme: 'light', muted: true, script: 'both', hideGuide: true }
+        [SETTINGS_STORE_KEY]: { theme: 'light', muted: true, script: 'both', hideGuide: true },
+        [ACHIEVEMENTS_KEY]: {
+          version: ACHIEVEMENTS_VERSION,
+          unlocked: { first_step: 1700000000000 },
+          drawingsCount: 2,
+          perfectExams: 1
+        },
+        [BOOKMARKS_KEY]: { version: BOOKMARKS_VERSION, kana: ['あ'], kanji: ['k001'], vocab: ['n01'] },
+        [JLPT_KEY]: {
+          version: JLPT_VERSION,
+          attempts: [{ date: '2026-11-01', mode: 'mini', totalScore: 120, passed: true }],
+          bestScore: 120,
+          passed: true
+        }
       }
     };
 
@@ -3330,6 +3352,21 @@
     );
     eq('BK7f applyBackup przywraca motyw ustawień', settings.theme, 'light');
     eq('BK7g applyBackup przywraca stan wyciszenia', settings.muted, true);
+    ok(
+      'BK7h applyBackup przeładowuje odznaki w pamięci',
+      achievements.unlocked && achievements.unlocked.first_step === 1700000000000 && !achievements.unlocked.stale_badge
+    );
+    ok(
+      'BK7i applyBackup przeładowuje zakładki w pamięci',
+      bookmarks.kana.includes('あ') &&
+        bookmarks.kanji.includes('k001') &&
+        bookmarks.vocab.includes('n01') &&
+        !bookmarks.vocab.includes('stale_vocab')
+    );
+    ok(
+      'BK7j applyBackup przeładowuje historię JLPT w pamięci',
+      jlptHistory.bestScore === 120 && jlptHistory.passed === true && jlptHistory.attempts.length === 1
+    );
 
     // BK8: Odrzucenie uszkodzonej kopii bez psucia stanu
     let threw = false;
@@ -3906,6 +3943,42 @@
     eq('JL9a stan początkowy historii podejść jest pusty', initialHist.attempts.length, 0);
     eq('JL9b stan początkowy bestScore wynosi 0', initialHist.bestScore, 0);
 
+    jlptHistory = {
+      version: JLPT_VERSION,
+      attempts: [{ date: '2026-11-01', mode: 'mini', totalScore: 110, passed: true }],
+      bestScore: 110,
+      passed: true
+    };
+    saveJlptHistory();
+    localStorage.setItem(
+      DAILY_STATS_KEY,
+      JSON.stringify({ version: DAILY_STATS_VERSION, days: { '2026-11-01': { answers: 1 } } })
+    );
+    resetProgressData();
+    ok(
+      'JL9c resetProgressData czyści historię JLPT przy zachowaniu historii dziennej',
+      jlptHistory.attempts.length === 0 &&
+        jlptHistory.bestScore === 0 &&
+        jlptHistory.passed === false &&
+        !!localStorage.getItem(DAILY_STATS_KEY)
+    );
+
+    jlptHistory = {
+      version: JLPT_VERSION,
+      attempts: [{ date: '2026-11-02', mode: 'full', totalScore: 140, passed: true }],
+      bestScore: 140,
+      passed: true
+    };
+    saveJlptHistory();
+    clearAllData();
+    ok(
+      'JL9d clearAllData usuwa magazyn JLPT i zeruje stan jlptHistory w pamięci',
+      localStorage.getItem(JLPT_KEY) === null &&
+        jlptHistory.attempts.length === 0 &&
+        jlptHistory.bestScore === 0 &&
+        jlptHistory.passed === false
+    );
+
     // JL10: Tryby uruchamiania egzaminu (full, practice, mini)
     startJlptExam('mini');
     eq('JL10a startJlptExam("mini") tworzy arkusz z 15 pytań', jlptSession.questions.length, 15);
@@ -3961,6 +4034,255 @@
     jlptSession.mode = 'hub';
   } catch (e) {
     ok('T24 błąd w module JLPT N5', false, e.message);
+  }
+
+  /* =====================================================
+     P2 REGRESJE: KANJI READING, FOCUS/NAV TIMERS, KEYBOARD
+     ===================================================== */
+  try {
+    // KJ20: przykłady kanji mają reading wyłącznie w kanie (bez ASCII romaji i bez katakany w czytaniu słówek bez katakany)
+    const badKanjiReadings = [];
+    KANJI_ITEMS.forEach(item => {
+      (item.examples || []).forEach(ex => {
+        if (/[A-Za-z]/.test(ex.reading)) {
+          badKanjiReadings.push(`${item.id}:${ex.word}=${ex.reading}(latin)`);
+        }
+        if (/[ァ-ヶ]/.test(ex.reading) && !/[ァ-ヶ]/.test(ex.word)) {
+          badKanjiReadings.push(`${item.id}:${ex.word}=${ex.reading}(katakana)`);
+        }
+      });
+    });
+    eq('KJ20 brak literówek ASCII lub mieszanej katakany w reading przykładów kanji', badKanjiReadings.length, 0);
+
+    // NAV20: isFocusMode() obejmuje aktywny egzamin JLPT oraz setScreen() zatrzymuje timery focusSession i jlptSession
+    startJlptExam('mini');
+    state.screen = 'jlpt';
+    ok('NAV20a aktywny egzamin JLPT włącza tryb skupienia', isFocusMode() === true);
+    ok('NAV20b aktywny egzamin JLPT uruchamia timer', jlptSession.timerInterval !== null);
+    setScreen('dashboard');
+    ok('NAV20c wyjście z ekranu jlpt czyści timer egzaminu JLPT', jlptSession.timerInterval === null);
+    jlptSession.mode = 'hub';
+    jlptSession.result = null;
+
+    const prevFocus = focusSession;
+    focusSession = {
+      finished: false,
+      isPaused: false,
+      timerInterval: setInterval(() => {}, 10000)
+    };
+    state.screen = 'focus';
+    setScreen('dashboard');
+    ok('NAV20d wyjście z ekranu focus czyści focusSession.timerInterval', focusSession.timerInterval === null);
+    focusSession = prevFocus;
+
+    // KB1: Escape nie nawiguje z menu/ekranu gdy otwarty jest modal lub aktywne pole tekstowe
+    setScreen('menu');
+    openAchievementsModal();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    eq('KB1a Escape przy otwartym modalu osiągnięć nie zmienia ekranu', state.screen, 'menu');
+    document.getElementById('btnCloseAchievementsModal')?.click();
+    const achBackdrop = document.getElementById('achievementsModalBackdrop');
+    if (achBackdrop) achBackdrop.remove();
+
+    setScreen('kanji');
+    kanjiSession.mode = 'catalog';
+    state.kanji = kanjiSession;
+    renderKanji();
+    const kanjiSearchEl = document.getElementById('kanjiSearchInput');
+    ok('KB1b input katalogu kanji istnieje', !!kanjiSearchEl);
+    if (kanjiSearchEl) {
+      kanjiSearchEl.focus();
+      kanjiSearchEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      eq('KB1c Escape w polu #kanjiSearchInput pozostaje w katalogu kanji', state.screen, 'kanji');
+      eq('KB1d Escape w polu #kanjiSearchInput pozostawia tryb catalog', kanjiSession.mode, 'catalog');
+      ok(
+        'KB1e Escape w polu #kanjiSearchInput usuwa fokus z pola tekstowego',
+        document.activeElement !== kanjiSearchEl
+      );
+    }
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+    setScreen('menu');
+  } catch (e) {
+    ok('P2 regresje', false, e.message);
+  }
+
+  /* =====================================================
+     INTEGRACJA KANJI ↔ SŁOWNICTWO, PODGLĄD BACKUPU, PACZKA OFFLINE
+     ===================================================== */
+  try {
+    // KJ21: słownictwo zawierające znak, sekcja tematyczna (<details>), brak duplikacji z KANJI_LESSON_WORDS
+    const hitoVocab = kanjiVocabWords('人');
+    ok(
+      "KJ21a kanjiVocabWords('人') zwraca słówka z VOCAB_LEARN_ITEMS ze wspólnym id",
+      hitoVocab.length > 0 && hitoVocab.every(w => !!vocabItem(w.id))
+    );
+    const hitoExtra = kanjiExtraLessonWords('人', hitoVocab);
+    const hitoKeys = new Set(hitoVocab.map(w => `${w.kanji}|${w.kana}`));
+    ok(
+      "KJ21b kanjiExtraLessonWords('人') nie duplikuje wpisów z kanjiVocabWords",
+      hitoExtra.every(w => !hitoKeys.has(`${w.kanji}|${w.kana}`))
+    );
+    const hitoThematic = kanjiThematicVocab(kanjiItem('k001'), new Set(hitoVocab.map(w => w.id)));
+    ok(
+      'KJ21c kanjiThematicVocab nie powtarza słówek zawierających ten znak',
+      hitoThematic.length > 0 && hitoThematic.every(w => !hitoVocab.some(v => v.id === w.id))
+    );
+
+    kanjiSession.mode = 'detail';
+    kanjiSession.charId = 'k001';
+    state.kanji = kanjiSession;
+    state.screen = 'kanji';
+    renderKanji();
+    const themeDetails = document.querySelector('.kanji-thematic-details');
+    ok(
+      'KJ21d sekcja tematyczna <details> w detalach kanji jest domyślnie zwinięta',
+      !!themeDetails && !themeDetails.open
+    );
+    ok(
+      'KJ21e summary sekcji tematycznej nie zawiera nagłówka h1-h6',
+      !!themeDetails &&
+        !themeDetails.querySelector('summary h1, summary h2, summary h3, summary h4, summary h5, summary h6')
+    );
+    const practiceKanjiVocabBtn = document.getElementById('btnPracticeKanjiVocab');
+    ok('KJ21f przycisk #btnPracticeKanjiVocab istnieje w widoku detali kanji', !!practiceKanjiVocabBtn);
+    if (practiceKanjiVocabBtn) {
+      practiceKanjiVocabBtn.click();
+      eq('KJ21g kliknięcie #btnPracticeKanjiVocab przechodzi do ekranu vocab', state.screen, 'vocab');
+      eq('KJ21h sesja słówek uruchomiona ze znaku używa script=kanji', state.vocab && state.vocab.script, 'kanji');
+      eq(
+        'KJ21i pula sesji słówek odpowiada id z kanjiVocabWords',
+        state.vocab && state.vocab.order.join(','),
+        hitoVocab.map(w => w.id).join(',')
+      );
+      state.vocab = null;
+    }
+
+    // KJ22: podobne znaki kanji i klikalna nawigacja między kartami kanji
+    ok(
+      'KJ22a wszystkie znaki w KANJI_SIMILAR_GROUPS istnieją w KANJI_ITEMS',
+      KANJI_SIMILAR_GROUPS.every(g => g.every(ch => !!kanjiItem(ch)))
+    );
+    const simHito = similarKanjiFor('人');
+    ok(
+      "KJ22b similarKanjiFor('人') zawiera 入 i 八 oraz pomija samo 人",
+      simHito.some(k => k.kanji === '入') && simHito.some(k => k.kanji === '八') && !simHito.some(k => k.kanji === '人')
+    );
+    kanjiSession.mode = 'detail';
+    kanjiSession.charId = 'k001';
+    state.kanji = kanjiSession;
+    state.screen = 'kanji';
+    renderKanji();
+    const simChip = document.querySelector('.kanji-similar-chip[data-open-kanji]');
+    const simTargetId = simChip ? simChip.getAttribute('data-open-kanji') : '';
+    if (simChip) simChip.click();
+    ok(
+      'KJ22c kliknięcie podobnego znaku otwiera jego kartę kanji',
+      !!simTargetId && kanjiSession.charId === simTargetId && state.screen === 'kanji'
+    );
+
+    // KJ23: klikalne chipy kanji [data-open-kanji] na rewersie słówka prowadzą do detali kanji
+    const sampleVocab = hitoVocab.find(w => w.kanji && w.type !== 'card');
+    ok('KJ23a istnieje słówko ze znakiem 人 do testu chipów kanji', !!sampleVocab);
+    if (sampleVocab) {
+      const chipWrap = document.createElement('div');
+      chipWrap.innerHTML = vocabAnswerDetailsHTML(sampleVocab, { hideKanji: true });
+      document.body.appendChild(chipWrap);
+      const openKanjiChip = chipWrap.querySelector('[data-open-kanji]');
+      ok('KJ23b vocabAnswerDetailsHTML renderuje [data-open-kanji] nawet przy hideKanji=true', !!openKanjiChip);
+      if (openKanjiChip) {
+        const targetId = openKanjiChip.getAttribute('data-open-kanji');
+        state.screen = 'vocab';
+        openKanjiChip.click();
+        eq('KJ23c kliknięcie [data-open-kanji] w słownictwie przechodzi na ekran kanji', state.screen, 'kanji');
+        eq(
+          'KJ23d kliknięcie [data-open-kanji] otwiera tryb detail właściwego znaku',
+          `${kanjiSession.mode}:${kanjiSession.charId}`,
+          `detail:${targetId}`
+        );
+      }
+      chipWrap.remove();
+    }
+
+    // BK11: podsumowanie zawartości kopii zapasowej przed importem
+    recordAnswer('あ', true, null, 'review');
+    if (hitoVocab[0]) {
+      recordVocabAnswer(hitoVocab[0].id, true);
+      toggleBookmark('vocab', hitoVocab[0].id);
+    }
+    const bkSum = summarizeBackup(createBackupData());
+    ok('BK11a summarizeBackup zlicza wpisy kana >= 1', bkSum.kana >= 1);
+    ok('BK11b summarizeBackup zlicza słownictwo i historię dzienną', bkSum.vocab >= 1 && bkSum.days >= 1);
+    ok('BK11c summarizeBackup zlicza ulubione i magazyny', bkSum.bookmarks >= 1 && bkSum.storeCount >= 4);
+    ok(
+      'BK11d summarizeBackup zwraca czytelne linie podsumowania',
+      Array.isArray(bkSum.lines) && bkSum.lines.some(l => l.includes('Słownictwo:'))
+    );
+    resetBookmarksData();
+    resetVocabData();
+    clearDailyStats();
+    dailyStats = loadDailyStats();
+
+    // OFF1: paczka KanjiVG offline z kontrolą cache i raportowaniem postępu
+    const memStore = new Map();
+    let fetchCalls = 0;
+    const mockCacheApi = {
+      async keys() {
+        return ['koto-kanjivg-v12'];
+      },
+      async open() {
+        return {
+          async match(url) {
+            return memStore.get(url) || null;
+          },
+          async put(url, res) {
+            memStore.set(url, res);
+          }
+        };
+      }
+    };
+    const mockFetch = async url => {
+      fetchCalls++;
+      return {
+        ok: true,
+        clone() {
+          return { url, cached: true };
+        }
+      };
+    };
+    const progressEvents = [];
+    const sampleItems = KANJI_ITEMS.slice(0, 3);
+    const offRes1 = await downloadKanjiVgOfflinePack(p => progressEvents.push(p), {
+      fetchFn: mockFetch,
+      cacheApi: mockCacheApi,
+      items: sampleItems,
+      concurrency: 2
+    });
+    eq('OFF1a pierwsze pobranie pobiera 3 brakujące pliki SVG', offRes1.downloaded, 3);
+    eq('OFF1b pierwsze pobranie kończy się bez błędów', offRes1.failed, 0);
+    eq('OFF1c callback postępu wywołuje się dla każdego z 3 plików', progressEvents.length, 3);
+
+    const offRes2 = await downloadKanjiVgOfflinePack(null, {
+      fetchFn: mockFetch,
+      cacheApi: mockCacheApi,
+      items: sampleItems,
+      concurrency: 2
+    });
+    eq('OFF1d drugie pobranie odczytuje pliki z cache (cached=3)', offRes2.cached, 3);
+    eq('OFF1e drugie pobranie pomija sieć (downloaded=0)', offRes2.downloaded, 0);
+    eq('OFF1f liczba wywołań fetch pozostaje równa 3', fetchCalls, 3);
+
+    setScreen('settings');
+    ok(
+      'OFF1g ustawienia renderują sekcję #offlinePackGroup oraz przycisk #btnDownloadKanjiOffline',
+      !!document.getElementById('offlinePackGroup') && !!document.getElementById('btnDownloadKanjiOffline')
+    );
+
+    kanjiSession.mode = 'hub';
+    state.kanji = kanjiSession;
+    setScreen('menu');
+  } catch (e) {
+    ok('Nowe funkcje integracji i P3', false, e.message);
   }
 
   /* =====================================================
