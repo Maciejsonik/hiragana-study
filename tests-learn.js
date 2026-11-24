@@ -1465,14 +1465,14 @@
         );
 
         ok(
-          'F2 domyślny zakres to wszystko: 20 poleceń, 52 czasowniki, 427 rzeczowników, 38 przymiotników i 19 zwrotów',
+          'F2 domyślny zakres to wszystko: 20 poleceń, 67 czasowników, 455 rzeczowników, 40 przymiotników i 19 zwrotów',
           vocabSetup.scope === 'all' &&
             scopeCount('cards') === 20 &&
-            scopeCount('verbs') === 52 &&
-            scopeCount('words') === 427 &&
-            scopeCount('adjectives') === 38 &&
+            scopeCount('verbs') === 67 &&
+            scopeCount('words') === 455 &&
+            scopeCount('adjectives') === 40 &&
             scopeCount('phrases') === 19 &&
-            scopeCount('all') === 556,
+            scopeCount('all') === 601,
           ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
