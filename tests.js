@@ -1573,21 +1573,21 @@
     const extraVerbs = items.filter(item => item.type === 'verb');
 
     ok(
-      'VO1 jest 20 poleceń, 2 wzorce, 455 rzeczowników, 40 przymiotników, 17 zwrotów i 47 czasowników',
+      'VO1 jest 20 poleceń, 2 wzorce, 522 rzeczowników, 58 przymiotników, 24 zwrotów i 73 czasowników',
       cards.length === 20 &&
         patterns.length === 2 &&
-        words.length === 455 &&
-        adjectives.length === 40 &&
-        phrases.length === 17 &&
-        extraVerbs.length === 47,
+        words.length === 522 &&
+        adjectives.length === 58 &&
+        phrases.length === 24 &&
+        extraVerbs.length === 73,
       [cards.length, patterns.length, words.length, adjectives.length, phrases.length, extraVerbs.length].join(' / ')
     );
 
     const expectedIds = [
-      ...Array.from({ length: 69 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 455 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 17 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
-      ...Array.from({ length: 40 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
+      ...Array.from({ length: 95 }, (_, index) => 'v' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 522 }, (_, index) => 'n' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 24 }, (_, index) => 'p' + String(index + 1).padStart(2, '0')),
+      ...Array.from({ length: 58 }, (_, index) => 'a' + String(index + 1).padStart(2, '0'))
     ].join(',');
     ok(
       'VO2 identyfikatory są stabilne i uporządkowane',
@@ -1647,10 +1647,10 @@
        uzupełnienia pól wyrażenia złamie VO10, a nie tylko UI.
     */
     ok(
-      'VO8 czasowniki powstają z poleceń, a 47 ma własny wpis',
-      VOCAB_VERB_ITEMS.length === 67 &&
+      'VO8 czasowniki powstają z poleceń, a 73 ma własny wpis',
+      VOCAB_VERB_ITEMS.length === 93 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).length === 20 &&
-        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 47 &&
+        VOCAB_VERB_ITEMS.filter(item => !item.source).length === 73 &&
         VOCAB_VERB_ITEMS.filter(item => item.source).every(
           item => item.type === 'verb' && item.id.endsWith('-verb') && item.source === item.id.replace('-verb', '')
         ),
@@ -1658,8 +1658,8 @@
     );
 
     ok(
-      'VO9 wszystkie 601 kart nauki mają unikalną kana',
-      VOCAB_LEARN_ITEMS.length === 601 &&
+      'VO9 wszystkie 719 kart nauki mają unikalną kana',
+      VOCAB_LEARN_ITEMS.length === 719 &&
         new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size === VOCAB_LEARN_ITEMS.length,
       new Set(VOCAB_LEARN_ITEMS.map(item => item.kana)).size + '/' + VOCAB_LEARN_ITEMS.length
     );
@@ -1733,10 +1733,10 @@
 
     ok(
       'VO15 filtr kategorii zwęża zakres, a suma kategorii daje jego wielkość',
-      vocabPool('words', 'school').length === 33 &&
-        vocabPool('words', 'people').length === 34 &&
-        vocabPool('words', CATEGORY_NONE).length === 35 &&
-        vocabPool('words').length === 455 &&
+      vocabPool('words', 'school').length === 34 &&
+        vocabPool('words', 'people').length === 46 &&
+        vocabPool('words', CATEGORY_NONE).length === 52 &&
+        vocabPool('words').length === 522 &&
         vocabPool('words', 'school').every(item => item.category === 'school'),
       ['school', 'people', CATEGORY_NONE].map(id => id + '=' + vocabPool('words', id).length).join(' ')
     );
@@ -1787,7 +1787,7 @@
     const timeWords = vocabPool('words', 'time');
     ok(
       'VO18 nowe słownictwo czasu i liczebników jest obecne w kategorii time',
-      timeWords.length === 201 &&
+      timeWords.length === 202 &&
         vocabCard('n135')?.kana === 'いちじ' &&
         vocabCard('n148')?.kana === 'いっぷん' &&
         vocabCard('n161')?.kana === 'いちじ じゅうごふん すぎ' &&
@@ -1827,7 +1827,7 @@
     const kanjiCards = vocabPool('cards', CATEGORY_ALL, 'all', 'kanji', 'kana-meaning');
     ok(
       'VO21 tryb kanji filtruje pulę wyłącznie do kart z zapisem kanji',
-      kanjiAll.length === 501 &&
+      kanjiAll.length === 584 &&
         kanjiAll.every(item => !!item.kanji) &&
         kanji4060.length === 130 &&
         kanjiCards.length === 0,

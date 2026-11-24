@@ -1435,7 +1435,7 @@
             document.querySelectorAll('[data-vocab-mode]').length === 3 &&
             document.querySelectorAll('[data-vocab-script]').length === 2 &&
             document.querySelectorAll('[data-vocab-direction]').length === 3 &&
-            document.querySelectorAll('[data-vocab-lesson]').length === 8 &&
+            document.querySelectorAll('[data-vocab-lesson]').length === 11 &&
             document.querySelectorAll('[data-vocab-scope]').length === 6 &&
             document.querySelectorAll('[data-vocab-order]').length === 2 &&
             document.querySelectorAll('[data-vocab-limit]').length === 3 &&
@@ -1465,14 +1465,14 @@
         );
 
         ok(
-          'F2 domyślny zakres to wszystko: 20 poleceń, 67 czasowników, 455 rzeczowników, 40 przymiotników i 19 zwrotów',
+          'F2 domyślny zakres to wszystko: 20 poleceń, 93 czasowniki, 522 rzeczowników, 58 przymiotników i 26 zwrotów',
           vocabSetup.scope === 'all' &&
             scopeCount('cards') === 20 &&
-            scopeCount('verbs') === 67 &&
-            scopeCount('words') === 455 &&
-            scopeCount('adjectives') === 40 &&
-            scopeCount('phrases') === 19 &&
-            scopeCount('all') === 601,
+            scopeCount('verbs') === 93 &&
+            scopeCount('words') === 522 &&
+            scopeCount('adjectives') === 58 &&
+            scopeCount('phrases') === 26 &&
+            scopeCount('all') === 719,
           ['cards', 'verbs', 'words', 'adjectives', 'phrases', 'all'].map(scopeCount).join('/')
         );
 
